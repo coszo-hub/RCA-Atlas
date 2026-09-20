@@ -13,8 +13,8 @@ not accumulate full binary copies on every update.
 Install Git, GitHub CLI, Docker, and `zstd`, authenticate GitHub CLI, then run:
 
 ```sh
-git clone https://github.com/coszo-hub/rca-coszo-graphrag.git
-cd rca-coszo-graphrag
+git clone https://github.com/coszo-hub/RCA-Atlas.git
+cd RCA-Atlas
 ./scripts/bootstrap_machine.sh --release latest
 cd src/graphrag_runtime
 docker compose up -d db
@@ -40,3 +40,9 @@ gh release create corpus-YYYYMMDD transfer_dist/* \
 Release archives contain data only. Credentials, local virtual environments,
 Python caches, and macOS metadata are excluded.
 
+## License
+
+RCA Atlas software and original documentation are proprietary and all rights
+are reserved. Reuse requires prior written permission; see `LICENSE`. External
+data, publications, figures, website content, and vendored components retain
+their source-specific rights and licenses; see `THIRD_PARTY_NOTICES.md`.
