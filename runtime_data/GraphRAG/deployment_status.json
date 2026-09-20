@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "prepared_at_utc": "2026-09-20T13:20:00Z",
+  "catalog_fingerprint_sha256": "9a31ca841c13534a8c72c7ee0cc23eb4e809ad7e403e7d04e568580924178a1c",
+  "normalized_build": {
+    "status": "complete",
+    "collections": 13,
+    "chunks": 6565,
+    "nodes": 21938,
+    "node_records": 23404,
+    "edge_facts": 29538,
+    "edge_records": 30242,
+    "structured_records": 76984
+  },
+  "embeddings": {
+    "status": "complete",
+    "model_id": "BAAI/bge-small-en-v1.5",
+    "dimensions": 384,
+    "rows": 6565,
+    "matrix_sha256": "a765e875a7f30ec7e2d35181f9227ac640783819cc6e8bf0f2682d56b2d54cd8"
+  },
+  "postgresql_load": {
+    "status": "not_run",
+    "reason": "No PostgreSQL/pgvector server or Docker executable is installed on this host."
+  },
+  "public_api": {
+    "status": "packaged_not_deployed",
+    "reason": "Deployment host/domain/TLS ingress are not configured."
+  },
+  "validation": {
+    "unit_contract_tests": 13,
+    "catalog_tests": 5,
+    "network_audit_passed": true,
+    "sensitive_findings": 0
+  }
+}

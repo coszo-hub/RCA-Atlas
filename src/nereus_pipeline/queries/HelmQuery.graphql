@@ -1,0 +1,221 @@
+query HelmQuery {
+    instruments(order_by: { designator: asc }) {
+      ...HelmInstrumentFragment
+    }
+    nodes(order_by: { designator: asc }) {
+      ...HelmNodeFragment
+    }
+  }
+  fragment HelmInstrumentFragment on instruments {
+    __typename
+    id
+    designator
+    details
+    ipAddress: ip_address
+    operationalStatusCode: operational_status_code
+    alertsAreEnabled: alerts_are_enabled
+    alertStateCode: alert_state_code
+    alertStateEndsAt: alert_state_ends_at
+    dataCheckIsEnabled: data_check_is_enabled
+    pingCheckIsEnabled: ping_check_is_enabled
+    fileCheckIsEnabled: file_check_is_enabled
+    gfdCheckIsEnabled: gfd_check_is_enabled
+    powerCheckIsEnabled: power_check_is_enabled
+    isPiInstrument: is_pi_instrument
+    emsPortType: ems_port_type
+    emsPortNumber: ems_port_number
+    latestDataStatusConnection: latest_data_status_connection {
+      __typename
+      status: data_status {
+        __typename
+        instrumentId: instrument_id
+        code
+        delay
+        endedAt: ended_at
+        checkedAt: checked_at
+      }
+    }
+    latestFileStatusConnection: latest_file_status_connection {
+      __typename
+      status: file_status {
+        __typename
+        instrumentId: instrument_id
+        code
+        checkedAt: checked_at
+      }
+    }
+    latestPingStatusConnection: latest_ping_status_connection {
+      __typename
+      status: ping_status {
+        __typename
+        instrumentId: instrument_id
+        code
+        checkedAt: checked_at
+      }
+    }
+    latestGfdStatusConnection: latest_gfd_status_connection {
+      __typename
+      status: gfd_status {
+        __typename
+        instrumentId: instrument_id
+        code
+        codeHigh: code_high
+        codeLow: code_low
+        valueHigh: value_high
+        valueLow: value_low
+        checkedAt: checked_at
+      }
+    }
+    latestPowerStatusConnection: latest_power_status_connection {
+      __typename
+      status: power_status {
+        __typename
+        instrumentId: instrument_id
+        powerState: power_state
+        current
+        voltage
+        checkedAt: checked_at
+      }
+    }
+    currentDeploymentConnection: current_deployment_connection {
+      __typename
+      deployment {
+        id
+        assetId: asset_id
+        cruiseName: cruise_name
+        number
+        startedAt: started_at
+        endedAt: ended_at
+        latitude
+        longitude
+        depth
+        waterDepth: water_depth
+        notes
+        asset {
+          id
+          description
+          manufacturer
+          model
+          type
+          uid
+          serialNumber: serial_number
+        }
+      }
+    }
+    latestDeploymentConnection: latest_deployment_connection {
+      __typename
+      deployment {
+        id
+        assetId: asset_id
+        cruiseName: cruise_name
+        number
+        startedAt: started_at
+        endedAt: ended_at
+        latitude
+        longitude
+        depth
+        waterDepth: water_depth
+        notes
+        asset {
+          id
+          description
+          manufacturer
+          model
+          type
+          uid
+          serialNumber: serial_number
+        }
+      }
+    }
+  }
+
+  fragment HelmNodeFragment on nodes {
+    __typename
+    id
+    parentId: parent_id
+    designator
+    description
+    ipAddress: ip_address
+    mooringUid: mooring_uid
+    site: site
+    type
+    subtype
+    operationalStatusCode: operational_status_code
+    alertsAreEnabled: alerts_are_enabled
+    alertStateCode: alert_state_code
+    alertStateEndsAt: alert_state_ends_at
+    pingCheckIsEnabled: ping_check_is_enabled
+    powerCheckIsEnabled: power_check_is_enabled
+    emsPortType: ems_port_type
+    emsPortNumber: ems_port_number
+    latestPingStatusConnection: latest_ping_status_connection {
+      __typename
+      status: ping_status {
+        __typename
+        nodeId: node_id
+        code
+        checkedAt: checked_at
+      }
+    }
+    latestPowerStatusConnection: latest_power_status_connection {
+      __typename
+      status: power_status {
+        __typename
+        nodeId: node_id
+        powerState: power_state
+        current
+        voltage
+        checkedAt: checked_at
+      }
+    }
+    currentDeploymentConnection: current_deployment_connection {
+      __typename
+      deployment {
+        id
+        assetId: asset_id
+        cruiseName: cruise_name
+        number
+        startedAt: started_at
+        endedAt: ended_at
+        latitude
+        longitude
+        depth
+        waterDepth: water_depth
+        notes
+        asset {
+          id
+          description
+          manufacturer
+          model
+          type
+          uid
+          serialNumber: serial_number
+        }
+      }
+    }
+    latestDeploymentConnection: latest_deployment_connection {
+      __typename
+      deployment {
+        id
+        assetId: asset_id
+        cruiseName: cruise_name
+        number
+        startedAt: started_at
+        endedAt: ended_at
+        latitude
+        longitude
+        depth
+        waterDepth: water_depth
+        notes
+        asset {
+          id
+          description
+          manufacturer
+          model
+          type
+          uid
+          serialNumber: serial_number
+        }
+      }
+    }
+  }

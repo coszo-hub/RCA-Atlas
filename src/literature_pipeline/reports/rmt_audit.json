@@ -1,0 +1,416 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-09-18T23:17:46+00:00",
+  "collection": "Regional Cabled Array",
+  "collection_key": "RMTSE2IH",
+  "scope": {
+    "input_files": [
+      "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/coszo_products/zotero_RMTSE2IH_top1.json",
+      "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/coszo_products/zotero_RMTSE2IH_top2.json"
+    ],
+    "items_audited": 142,
+    "read_only_audit": true
+  },
+  "methodology": [
+    "Inspected Zotero abstractNote, title, DOI, item type, and URL fields.",
+    "Compared normalized DOI and title keys for exact duplicates and reviewed high-similarity title pairs.",
+    "Compared normalized abstract hashes across all records to detect copied abstracts.",
+    "Validated every supplied DOI against the Crossref works API and compared returned titles.",
+    "Compared Zotero abstracts with available Crossref abstracts to detect gross misattribution; Crossref editorial summaries were not treated as replacements for formal abstracts."
+  ],
+  "summary": {
+    "item_count": 142,
+    "item_types": {
+      "bookSection": 3,
+      "journalArticle": 138,
+      "thesis": 1
+    },
+    "abstract_present_count": 131,
+    "abstract_empty_count": 11,
+    "empty_with_crossref_abstract_available_count": 5,
+    "wrong_or_misattributed_abstract_count": 2,
+    "non_abstract_text_in_abstract_field_count": 1,
+    "placeholder_text_count": 0,
+    "html_entity_artifact_count": 2,
+    "exact_duplicate_doi_group_count": 0,
+    "exact_duplicate_title_group_count": 0,
+    "duplicate_abstract_group_count": 1,
+    "doi_present_count": 141,
+    "doi_validated_count": 141,
+    "doi_title_identity_mismatch_count": 0,
+    "local_title_quality_issue_count": 4,
+    "missing_doi_count": 1
+  },
+  "findings": {
+    "wrong_or_misattributed_abstracts": [
+      {
+        "zotero_key": "5Y85SKAW",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Learning features from georeferenced seafloor imagery with location guided autoencoders",
+        "doi": "10.1002/rob.21961",
+        "url": "https://app.dimensions.ai/details/publication/pub.1127976526",
+        "severity": "critical",
+        "problem": "Abstract is copied from a different paper in this collection (DLSBXNKZ, DOI 10.1029/2020EA001269). It describes COVIS hydrothermal discharge rather than location-guided autoencoders.",
+        "evidence": "The abstract text is an exact normalized duplicate of DLSBXNKZ. Crossref supplies a different, title-consistent abstract for DOI 10.1002/rob.21961.",
+        "copied_from_zotero_key": "DLSBXNKZ",
+        "current_abstract_length": 1791,
+        "correct_crossref_abstract_available": true,
+        "crossref_source_url": "https://api.crossref.org/works/10.1002%2Frob.21961",
+        "recommendation": "Replace only after checking the Crossref text against the publisher abstract."
+      },
+      {
+        "zotero_key": "XYD5BSMF",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Toward a Universal Frequency of Occurrence Distribution for Tsunamis: Statistical Analysis of a 32-Year Bottom Pressure Record at Axial Seamount",
+        "doi": "10.1029/2020gl087372",
+        "url": "https://app.dimensions.ai/details/publication/pub.1126751179",
+        "severity": "critical",
+        "problem": "Abstract is for an Atlantic Meridional Overturning Circulation review, not the cited tsunami-frequency paper.",
+        "evidence": "Crossref supplies a title-consistent abstract about a 32-year Axial Seamount bottom-pressure record for DOI 10.1029/2020GL087372. The current text instead describes AMOC observing and matches the subject of collection item 7AWSQDK3.",
+        "likely_copied_from_zotero_key": "7AWSQDK3",
+        "current_abstract_length": 1604,
+        "correct_crossref_abstract_available": true,
+        "crossref_source_url": "https://api.crossref.org/works/10.1029%2F2020gl087372",
+        "recommendation": "Replace only after checking the Crossref text against the publisher abstract."
+      }
+    ],
+    "non_abstract_or_standfirst_text": [
+      {
+        "zotero_key": "2CV2IYZL",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Vulcan rule beneath the sea",
+        "doi": "10.1038/ngeo2929",
+        "url": null,
+        "severity": "high",
+        "problem": "The 37-word text is a publisher standfirst for a Nature Geoscience News & Views commentary, not a formal abstract.",
+        "evidence": {
+          "publisher_page": "https://www.nature.com/articles/ngeo2929",
+          "local_publisher_capture": "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/coszo_products/retrieval_a/raw/COSZO-REF-144_publisher.html",
+          "publisher_content_type": "news & views"
+        },
+        "recommendation": "Clear abstractNote or store the text in a separately labeled description/standfirst field."
+      }
+    ],
+    "empty_abstracts": [
+      {
+        "zotero_key": "L6K9PNTP",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "A Tale of Two Eruptions HOW DATA FROM AXIAL SEAMOUNT LED TO A DISCOVERY ON THE EAST PACIFIC RISE",
+        "doi": "10.5670/oceanog.2018.118",
+        "url": null,
+        "severity": "medium",
+        "crossref_abstract_available": false,
+        "crossref_abstract_length": 0,
+        "crossref_source_url": "https://api.crossref.org/works/10.5670%2Foceanog.2018.118",
+        "recommendation": "Check the publisher or an institutional repository; leave empty if no formal abstract exists."
+      },
+      {
+        "zotero_key": "7AWSQDK3",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Atlantic Meridional Overturning Circulation: Observed Transport and Variability",
+        "doi": "10.3389/fmars.2019.00260",
+        "url": "https://app.dimensions.ai/details/publication/pub.1116893735 https://www.frontiersin.org/articles/10.3389/fmars.2019.00260/pdf",
+        "severity": "medium",
+        "crossref_abstract_available": false,
+        "crossref_abstract_length": 0,
+        "crossref_source_url": "https://api.crossref.org/works/10.3389%2Ffmars.2019.00260",
+        "recommendation": "Check the publisher or an institutional repository; leave empty if no formal abstract exists."
+      },
+      {
+        "zotero_key": "QN9YEA8A",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Tidal triggering of micro-seismicity associated with caldera dynamics in the Juan de Fuca ridge",
+        "doi": "10.1016/j.jvolgeores.2021.107319",
+        "url": "https://app.dimensions.ai/details/publication/pub.1138891969",
+        "severity": "medium",
+        "crossref_abstract_available": false,
+        "crossref_abstract_length": 0,
+        "crossref_source_url": "https://api.crossref.org/works/10.1016%2Fj.jvolgeores.2021.107319",
+        "recommendation": "Check the publisher or an institutional repository; leave empty if no formal abstract exists."
+      },
+      {
+        "zotero_key": "P69NEY8M",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Variability of Natural Methane Bubble Release at Southern Hydrate Ridge",
+        "doi": "10.1029/2021gc009894",
+        "url": "https://app.dimensions.ai/details/publication/pub.1141266962",
+        "severity": "high",
+        "crossref_abstract_available": true,
+        "crossref_abstract_length": 1749,
+        "crossref_source_url": "https://api.crossref.org/works/10.1029%2F2021gc009894",
+        "recommendation": "Retrieve and verify the formal abstract from Crossref/publisher metadata."
+      },
+      {
+        "zotero_key": "WLS5VYTM",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Tracking Microbial Evolution in the Subseafloor Biosphere",
+        "doi": "10.1128/msystems.00731-21",
+        "url": "https://app.dimensions.ai/details/publication/pub.1140464244 https://doi.org/10.1128/msystems.00731-21",
+        "severity": "high",
+        "crossref_abstract_available": true,
+        "crossref_abstract_length": 334,
+        "crossref_source_url": "https://api.crossref.org/works/10.1128%2Fmsystems.00731-21",
+        "recommendation": "Retrieve and verify the formal abstract from Crossref/publisher metadata."
+      },
+      {
+        "zotero_key": "9AZHN5UT",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Statistical analysis and modeling of underwater wind noise at the northeast pacific continental margin",
+        "doi": "10.1121/10.0007463",
+        "url": "https://app.dimensions.ai/details/publication/pub.1143712938 https://asa.scitation.org/doi/pdf/10.1121/10.0007463",
+        "severity": "high",
+        "crossref_abstract_available": true,
+        "crossref_abstract_length": 1204,
+        "crossref_source_url": "https://api.crossref.org/works/10.1121%2F10.0007463",
+        "recommendation": "Retrieve and verify the formal abstract from Crossref/publisher metadata."
+      },
+      {
+        "zotero_key": "RSANY2VW",
+        "source_file": "zotero_RMTSE2IH_top2.json",
+        "item_type": "journalArticle",
+        "title": "Role of Deep-Sea Equipment in Promoting the Forefront of Studies on Life in extreme environments",
+        "doi": "10.1016/j.isci.2021.103299",
+        "url": "https://app.dimensions.ai/details/publication/pub.1141939143",
+        "severity": "medium",
+        "crossref_abstract_available": false,
+        "crossref_abstract_length": 0,
+        "crossref_source_url": "https://api.crossref.org/works/10.1016%2Fj.isci.2021.103299",
+        "recommendation": "Check the publisher or an institutional repository; leave empty if no formal abstract exists."
+      },
+      {
+        "zotero_key": "Y7BN8X2L",
+        "source_file": "zotero_RMTSE2IH_top2.json",
+        "item_type": "journalArticle",
+        "title": "The PLUM Earthquake Early Warning Algorithm: A Retrospective Case Study of West Coast, USA, Data",
+        "doi": "10.1029/2020jb021053",
+        "url": "https://app.dimensions.ai/details/publication/pub.1138776791 https://authors.library.caltech.edu/109556/10/2020JB021053.pdf",
+        "severity": "high",
+        "crossref_abstract_available": true,
+        "crossref_abstract_length": 1943,
+        "crossref_source_url": "https://api.crossref.org/works/10.1029%2F2020jb021053",
+        "recommendation": "Retrieve and verify the formal abstract from Crossref/publisher metadata."
+      },
+      {
+        "zotero_key": "7HLK4VFF",
+        "source_file": "zotero_RMTSE2IH_top2.json",
+        "item_type": "journalArticle",
+        "title": "Characterizing underwater noise during rain at the northeast Pacific continental margin",
+        "doi": "10.1121/10.0005440",
+        "url": "https://app.dimensions.ai/details/publication/pub.1139189404 https://asa.scitation.org/doi/pdf/10.1121/10.0005440",
+        "severity": "high",
+        "crossref_abstract_available": true,
+        "crossref_abstract_length": 1305,
+        "crossref_source_url": "https://api.crossref.org/works/10.1121%2F10.0005440",
+        "recommendation": "Retrieve and verify the formal abstract from Crossref/publisher metadata."
+      },
+      {
+        "zotero_key": "TR4V5WW5",
+        "source_file": "zotero_RMTSE2IH_top2.json",
+        "item_type": "journalArticle",
+        "title": "Earthquake location and detection modeling for a future seafloor observatory along Mayotte&⋕x27;s volcanic ridge",
+        "doi": "10.1016/j.jvolgeores.2021.107322",
+        "url": "https://app.dimensions.ai/details/publication/pub.1138943481 https://doi.org/10.1016/j.jvolgeores.2021.107322",
+        "severity": "medium",
+        "crossref_abstract_available": false,
+        "crossref_abstract_length": 0,
+        "crossref_source_url": "https://api.crossref.org/works/10.1016%2Fj.jvolgeores.2021.107322",
+        "recommendation": "Check the publisher or an institutional repository; leave empty if no formal abstract exists."
+      },
+      {
+        "zotero_key": "4PPSSLTB",
+        "source_file": "zotero_RMTSE2IH_top2.json",
+        "item_type": "bookSection",
+        "title": "Hydrate Ridge—A Gas Hydrate System in a Subduction Zone Setting",
+        "doi": "10.1007/978-3-030-81186-0_7",
+        "url": "https://app.dimensions.ai/details/publication/pub.1144317993",
+        "severity": "medium",
+        "crossref_abstract_available": false,
+        "crossref_abstract_length": 0,
+        "crossref_source_url": "https://api.crossref.org/works/10.1007%2F978-3-030-81186-0_7",
+        "recommendation": "Check the publisher or an institutional repository; leave empty if no formal abstract exists."
+      }
+    ],
+    "html_entities_in_abstracts": [
+      {
+        "zotero_key": "ZV7QT6SP",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "Submarine Volcanic Eruptions and Their Impacts on Hydrothermal Systems and Biological Communities",
+        "doi": "10.1146/annurev-earth-040522-095654",
+        "url": "https://www.annualreviews.org/content/journals/10.1146/annurev-earth-040522-095654",
+        "severity": "low",
+        "field": "abstractNote",
+        "artifact": "&apos;",
+        "replacement": "'",
+        "recommendation": "Decode the HTML entity while preserving the abstract text."
+      },
+      {
+        "zotero_key": "CW9HX8FH",
+        "source_file": "zotero_RMTSE2IH_top1.json",
+        "item_type": "journalArticle",
+        "title": "DAS-N2N: machine learning distributed acoustic sensing (DAS) signal denoising without clean data",
+        "doi": "10.1093/gji/ggad460",
+        "url": "https://doi.org/10.1093/gji/ggad460",
+        "severity": "low",
+        "field": "abstractNote",
+        "artifact": "&lt;",
+        "replacement": "<",
+        "recommendation": "Decode the HTML entity while preserving the abstract text."
+      }
+    ],
+    "duplicates": {
+      "exact_doi_duplicates": [],
+      "exact_normalized_title_duplicates": [],
+      "duplicate_abstracts": [
+        {
+          "sha256_normalized_abstract": "f4166e6d79ffc9021e27946b1a36ee7ef98ddc35758b0dfab6453939d81ae6b3",
+          "items": [
+            {
+              "zotero_key": "DLSBXNKZ",
+              "source_file": "zotero_RMTSE2IH_top1.json",
+              "item_type": "journalArticle",
+              "title": "Acoustic and In-Situ Observations of Deep Seafloor Hydrothermal Discharge: An OOI Cabled Array ASHES Vent Field Case Study",
+              "doi": "10.1029/2020ea001269",
+              "url": "https://onlinelibrary.wiley.com/doi/abs/10.1029/2020EA001269"
+            },
+            {
+              "zotero_key": "5Y85SKAW",
+              "source_file": "zotero_RMTSE2IH_top1.json",
+              "item_type": "journalArticle",
+              "title": "Learning features from georeferenced seafloor imagery with location guided autoencoders",
+              "doi": "10.1002/rob.21961",
+              "url": "https://app.dimensions.ai/details/publication/pub.1127976526"
+            }
+          ],
+          "assessment": "Erroneous cross-item abstract duplication; DLSBXNKZ is correct and 5Y85SKAW is misattributed."
+        }
+      ],
+      "near_duplicate_review": [
+        {
+          "assessment": "not_duplicate",
+          "reason": "Titles are nearly identical but cover different observation intervals and have different verified DOIs.",
+          "items": [
+            {
+              "zotero_key": "U9ERWZJH",
+              "source_file": "zotero_RMTSE2IH_top1.json",
+              "item_type": "journalArticle",
+              "title": "Drift-corrected seafloor pressure observations of vertical deformation at Axial Seamount 2013–2014",
+              "doi": "10.1002/2016ea000190",
+              "url": "https://doi.org/10.1002/2016EA000190"
+            },
+            {
+              "zotero_key": "FPG6IR74",
+              "source_file": "zotero_RMTSE2IH_top2.json",
+              "item_type": "journalArticle",
+              "title": "Drift Corrected Seafloor Pressure Observations of Vertical Deformation at Axial Seamount 2018–2021",
+              "doi": "10.1029/2022ea002434",
+              "url": "https://onlinelibrary.wiley.com/doi/abs/10.1029/2022EA002434"
+            }
+          ]
+        }
+      ]
+    },
+    "doi_title_consistency": {
+      "crossref_validation_file": "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/zotero_expansion/crossref_validations.json",
+      "raw_crossref_directory": "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/zotero_expansion/raw_crossref",
+      "doi_records_checked": 141,
+      "identity_mismatches": [],
+      "assessment": "All 141 supplied DOIs resolve to the expected work title. Four local titles contain transcription or formatting differences that should be cleaned.",
+      "local_title_artifacts": [
+        {
+          "zotero_key": "6YM2JGUS",
+          "source_file": "zotero_RMTSE2IH_top1.json",
+          "item_type": "journalArticle",
+          "title": "Stress Drops on the Blanco Oceanic Transform Fault from Interstation Phase CoherenceStress Drops on the Blanco Oceanic Transform Fault from Interstation Phase Coherence",
+          "doi": "10.1785/0120180319",
+          "url": "https://app.dimensions.ai/details/publication/pub.1113957538 http://eprints.whiterose.ac.uk/145490/1/manuscriptrevised2.pdf",
+          "severity": "high",
+          "problem": "The complete title is concatenated twice without a separator.",
+          "crossref_title": "Stress Drops on the Blanco Oceanic Transform Fault from Interstation Phase Coherence",
+          "crossref_source_url": "https://api.crossref.org/works/10.1785%2F0120180319",
+          "doi_identity_consistent": true,
+          "recommendation": "Normalize the local title to the verified Crossref/publisher title."
+        },
+        {
+          "zotero_key": "TR4V5WW5",
+          "source_file": "zotero_RMTSE2IH_top2.json",
+          "item_type": "journalArticle",
+          "title": "Earthquake location and detection modeling for a future seafloor observatory along Mayotte&⋕x27;s volcanic ridge",
+          "doi": "10.1016/j.jvolgeores.2021.107322",
+          "url": "https://app.dimensions.ai/details/publication/pub.1138943481 https://doi.org/10.1016/j.jvolgeores.2021.107322",
+          "severity": "medium",
+          "problem": "The apostrophe in “Mayotte's” is corrupted as “&⋕x27;”.",
+          "crossref_title": "Earthquake location and detection modeling for a future seafloor observatory along Mayotte's volcanic ridge",
+          "crossref_source_url": "https://api.crossref.org/works/10.1016%2Fj.jvolgeores.2021.107322",
+          "doi_identity_consistent": true,
+          "recommendation": "Normalize the local title to the verified Crossref/publisher title."
+        },
+        {
+          "zotero_key": "8CE3B94W",
+          "source_file": "zotero_RMTSE2IH_top1.json",
+          "item_type": "journalArticle",
+          "title": "Compact representation of temporal processes in echosounder time series via matrix decompositiona)",
+          "doi": "10.1121/10.0002670",
+          "url": null,
+          "severity": "low",
+          "problem": "A trailing “a)” footnote marker is appended to the title.",
+          "crossref_title": "Compact representation of temporal processes in echosounder time series via matrix decomposition",
+          "crossref_source_url": "https://api.crossref.org/works/10.1121%2F10.0002670",
+          "doi_identity_consistent": true,
+          "recommendation": "Normalize the local title to the verified Crossref/publisher title."
+        },
+        {
+          "zotero_key": "6TJ5GJUQ",
+          "source_file": "zotero_RMTSE2IH_top1.json",
+          "item_type": "journalArticle",
+          "title": "High-Resolution AUV Mapping and Targeted ROV Observations of Three Historic Lava Flows at Axial Seamount",
+          "doi": "10.5670/oceanog.2017.426",
+          "url": null,
+          "severity": "low",
+          "problem": "Zotero says “Historic Lava Flows”; Crossref says “Historical Lava Flows”.",
+          "crossref_title": "High-Resolution AUV Mapping and Targeted ROV Observations of Three Historical Lava Flows at Axial Seamount",
+          "crossref_source_url": "https://api.crossref.org/works/10.5670%2Foceanog.2017.426",
+          "doi_identity_consistent": true,
+          "recommendation": "Normalize the local title to the verified Crossref/publisher title."
+        }
+      ]
+    },
+    "missing_doi": [
+      {
+        "zotero_key": "Y6T5G5L3",
+        "source_file": "zotero_RMTSE2IH_top2.json",
+        "item_type": "thesis",
+        "title": "Is the tidal triggering of earthquakes at Axial Seamount predictive of eruptions?",
+        "doi": null,
+        "url": "https://digital.lib.washington.edu:443/researchworks/handle/1773/48372",
+        "severity": "informational",
+        "assessment": "No DOI is expected for this University of Washington senior thesis; its institutional repository URL is present."
+      }
+    ],
+    "crossref_abstract_comparison_notes": [
+      {
+        "zotero_keys": [
+          "IRMCKSVY",
+          "Y92YQGKU"
+        ],
+        "assessment": "Zotero contains paper-specific formal abstracts. Crossref returns the same Science editor summary for both papers; the Crossref text is a lower-quality replacement and should not overwrite the Zotero abstracts."
+      }
+    ]
+  },
+  "recommended_order": [
+    "Replace the two misattributed abstracts after publisher verification.",
+    "Remove or relabel the Nature News & Views standfirst.",
+    "Fill the five empty abstractNote fields for which Crossref already exposes an abstract; investigate the other six at publisher/repository sources.",
+    "Repair the four local title artifacts and decode the two HTML entities.",
+    "Retain the existing Science paper abstracts rather than Crossref editorial summaries."
+  ]
+}

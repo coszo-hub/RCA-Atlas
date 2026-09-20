@@ -1,0 +1,67 @@
+query StatusHistoryChartInstrumentQuery(
+    $id: Int!
+    $days: Int!
+    $interval: SampleInterval!
+    $startedAt: DateTime
+  ) {
+    statistics {
+      data: instrument_activity_status_history(
+        instrument_id: $id
+        type: DATA
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+      file: instrument_activity_status_history(
+        instrument_id: $id
+        type: FILE
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+      gfd: instrument_activity_status_history(
+        instrument_id: $id
+        type: GFD
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+      ping: instrument_activity_status_history(
+        instrument_id: $id
+        type: PING
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+      operational: instrument_operational_status_history(
+        instrument_id: $id
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+      power: instrument_power_status_history(
+        instrument_id: $id
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+    }
+  }

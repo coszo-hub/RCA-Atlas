@@ -1,0 +1,23 @@
+query AppLayoutQuery {
+    info {
+      mode
+      label
+    }
+    banners(order_by: { order: asc }) {
+      id
+      icon
+      message
+      color
+      textColor: text_color
+    }
+    alertOverrides: alert_overrides(
+      where: {
+        _or: [
+          { started_at: { _lt: now }, ended_at: { _is_null: true } }
+          { started_at: { _lt: now }, ended_at: { _gt: now } }
+        ]
+      }
+    ) {
+      id
+    }
+  }

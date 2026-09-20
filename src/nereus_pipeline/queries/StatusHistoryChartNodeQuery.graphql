@@ -1,0 +1,37 @@
+query StatusHistoryChartNodeQuery(
+    $id: Int!
+    $days: Int!
+    $interval: SampleInterval!
+    $startedAt: DateTime
+  ) {
+    statistics {
+      ping: node_activity_status_history(
+        node_id: $id
+        type: PING
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+      operational: node_operational_status_history(
+        node_id: $id
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+      power: node_power_status_history(
+        node_id: $id
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        code
+      }
+    }
+  }

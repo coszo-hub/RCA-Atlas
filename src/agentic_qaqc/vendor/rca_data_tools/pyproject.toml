@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rca_data_tools"
+version = "2.1.0"
+description = "Utilities for working with Regional Cabled Array Data."
+authors = [
+  { name = "RCA Data Team", email = "jduprey@uw.edu" },
+]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "bs4",
+    "cmislib3",
+    "cmocean",
+    "dask",
+    "fsspec",
+    "gspread<5.2",
+    "humanfriendly",
+    "loguru",
+    "matplotlib",
+    "netcdf4",
+    "numba",
+    "numpy>2",
+    "pandas>2",
+    "pathlib",
+    "prefect>3.0.3",
+    "prefect-aws",
+    "requests",
+    "s3fs>=2024",
+    "scipy",
+    "xarray>=2024.1.1",
+    "zarr<3.0.0",
+]
+
+[project.scripts]
+    generate_hitl_tables = "rca_data_tools.qaqc.notes:main"
+    qaqc_pipeline = "rca_data_tools.qaqc.pipeline:main"
+    qaqc_index = "rca_data_tools.qaqc.index:main"
+
+[tool.ruff]
+line-length = 95
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra"
+testpaths = ["tests"]

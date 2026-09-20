@@ -1,0 +1,45 @@
+# Local and generated files
+.DS_Store
+**/.DS_Store
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Build and transfer output
+/transfer_dist/
+/.artifacts/
+*.tar.zst
+
+# The repository stores code, contracts, and bootstrap logic. Versioned data
+# snapshots are attached to GitHub Releases and restored by the bootstrap tool.
+/data/**
+!/data/README.md
+!/data/CORPUS_METHOD.md
+!/data/cleanup_validation.json
+
+/source_material/**
+!/source_material/README.md
+
+/runtime_data/**
+!/runtime_data/README.md
+!/runtime_data/GraphRAG/
+/runtime_data/GraphRAG/**
+!/runtime_data/GraphRAG/deployment_status.json
+
+# Large provenance trees are included in the source-material release asset.
+/src/literature_pipeline/provenance/
+/src/literature_pipeline/archive/
+/src/arcada_pipeline/source_snapshot/
+
+# Runtime state and credentials never enter ordinary Git history.
+*.sqlite
+*.sqlite3
+*.db
+*.pem
+*.key
+

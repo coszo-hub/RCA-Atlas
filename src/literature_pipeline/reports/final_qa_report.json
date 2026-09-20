@@ -1,0 +1,145 @@
+{
+  "generated_at": "2026-09-19T01:13:55.346053+00:00",
+  "package": "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/zotero_expansion/package",
+  "result": "pass",
+  "issues": [],
+  "checks": {
+    "counts": {
+      "coszo_records": 183,
+      "new_ooi_records": 153,
+      "canonical_records": 336,
+      "ooi_occurrences": 180,
+      "all_occurrences": 398,
+      "zotero_existing_matches": 20,
+      "unique_zotero_keys": 173
+    },
+    "identity_uniqueness": {
+      "unique_ids": 336,
+      "unique_canonical_ids": 336,
+      "records_with_resolved_doi": 299,
+      "duplicate_resolved_doi_groups": {},
+      "same_normalized_title_distinct_work_groups": [
+        {
+          "normalized_title": "the ocean observatories initiative",
+          "record_ids": [
+            "COSZO-REF-089",
+            "COSZO-REF-104"
+          ],
+          "reason": "Distinct authors, years, and DOIs; title-only collision is not a duplicate."
+        }
+      ]
+    },
+    "ooi_abstract_provenance": {
+      "records": 153,
+      "status_counts": {
+        "retrieved": 153
+      },
+      "nonempty_abstracts": 153,
+      "valid_http_source_urls": 153,
+      "provenance_matches": {
+        "exact_packaged_zotero_abstractNote": 131,
+        "exact_packaged_override_or_retrieval_result": 22
+      }
+    },
+    "abstract_duplicates": {
+      "abstracts_checked": 291,
+      "exact_duplicate_groups": [],
+      "near_duplicate_threshold": 0.8,
+      "near_duplicate_candidates": []
+    },
+    "known_corrections": {
+      "5Y85SKAW": {
+        "record_id": "OOI-ZOT-078",
+        "resolved_doi": "10.1002/rob.21961",
+        "resolved_title": "Learning features from georeferenced seafloor imagery with location guided autoencoders",
+        "abstract_source_url": "https://api.crossref.org/works/10.1002%2Frob.21961",
+        "verified": true
+      },
+      "XYD5BSMF": {
+        "record_id": "OOI-ZOT-077",
+        "resolved_doi": "10.1029/2020gl087372",
+        "resolved_title": "Toward a Universal Frequency of Occurrence Distribution for Tsunamis: Statistical Analysis of a 32‐Year Bottom Pressure Record at Axial Seamount",
+        "abstract_source_url": "https://api.crossref.org/works/10.1029%2F2020gl087372",
+        "verified": true
+      },
+      "92BSGBND": {
+        "record_id": "OOI-ZOT-133",
+        "resolved_doi": "10.1016/j.csr.2014.05.010",
+        "resolved_title": "Dynamics of the benthic boundary layer and seafloor contributions to oxygen depletion on the Oregon inner shelf",
+        "abstract_source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0278434314001915",
+        "verified": true
+      }
+    },
+    "pu7bmbhb_mapping": {
+      "match_table": [
+        {
+          "canonical_id": "COSZO-REF-019",
+          "identity": "doi:10.1029/2023jb026413",
+          "zotero_key": "PU7BMBHB",
+          "collections": [
+            "RMTSE2IH"
+          ]
+        }
+      ],
+      "occurrence_edges": [
+        {
+          "occurrence_id": "ZOTERO-RMTSE2IH-PU7BMBHB",
+          "zotero_key": "PU7BMBHB",
+          "collection_key": "RMTSE2IH",
+          "collection_name": "Regional Cabled Array",
+          "title": "Calibrated Absolute Seafloor Pressure Measurements for Geodesy in Cascadia",
+          "doi": "10.1029/2023jb026413",
+          "item_type": "journalArticle",
+          "date": "2023",
+          "zotero_item_url": "https://www.zotero.org/groups/ooipublications/items/PU7BMBHB",
+          "zotero_api_url": "https://api.zotero.org/groups/5351356/items/PU7BMBHB",
+          "canonical_id": "COSZO-REF-019"
+        }
+      ]
+    },
+    "occurrence_edges": {
+      "all_edges": 398,
+      "unique_occurrence_ids": 398,
+      "ooi_edges": 180,
+      "all_targets_exist": true,
+      "record_edge_bijection_valid": true,
+      "ooi_edges_embedded_unchanged": true
+    },
+    "markdown_artifacts": {
+      "record_files_verified": 336,
+      "abstract_files_verified": 291
+    },
+    "checksums": {
+      "coszo_collection_checksums.json": {
+        "entries": 1297,
+        "missing": [],
+        "mismatches": []
+      },
+      "literature_collection_checksums.json": {
+        "entries": 1826,
+        "missing": [],
+        "mismatches": []
+      },
+      "package_wide_coverage": {
+        "actual_files_excluding_self": 1826,
+        "manifest_entries": 1826,
+        "omitted_files": [],
+        "stale_entries": []
+      }
+    },
+    "manifest_abstract_count": {
+      "declared": 291,
+      "observed": 291
+    }
+  },
+  "package_edits_during_qa": [
+    {
+      "reason": "Objective defect: nested COSZO checksum manifest had 181 stale hashes after shared Markdown regeneration.",
+      "files": [
+        "coszo_collection_checksums.json",
+        "literature_collection_checksums.json"
+      ],
+      "action": "Recomputed nested hashes from staged bytes and updated its hash in the package-wide checksum manifest."
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": "2.0-graph",
+  "created_at": "2026-09-19T02:42:12.791978+00:00",
+  "canonical_work_file": "literature.jsonl",
+  "canonical_works": 336,
+  "documents": 336,
+  "works_with_abstracts": 291,
+  "chunks": 353,
+  "glossary_terms": 8,
+  "entities": 250,
+  "entities_by_type": {
+    "author": 190,
+    "glossary_term": 8,
+    "resource_type": 24,
+    "research_topic": 6,
+    "place": 5,
+    "observatory": 1,
+    "project": 1,
+    "web_resource": 8,
+    "zotero_collection": 2,
+    "proposal_section": 5
+  },
+  "relationships": 2122,
+  "relationships_by_predicate": {
+    "HAS_CHUNK": 353,
+    "HAS_RESOURCE_TYPE": 336,
+    "MENTIONS": 410,
+    "CITES": 398,
+    "LISTED_IN": 384,
+    "NEXT_CHUNK": 9,
+    "AUTHORED_BY": 212,
+    "DEFINES": 8,
+    "REFERENCES_RESOURCE": 9,
+    "MODERNIZES": 1,
+    "STREAMS_FORMAT": 1,
+    "IMPLEMENTS_PROTOCOL": 1
+  },
+  "verified_author_entities": 190,
+  "source_occurrences": 398,
+  "citation_evidence_records": 398,
+  "source_documents": 3,
+  "canonical_literature_sha256": "be0036a3b2ff32d44c2e46a977fb9a6bd409920bf4d589a844bbb4129a28c75c",
+  "glossary_sha256": "ebe2de4092dbc9394bb4513acf1f7de81346dd16a7d624864d5efcb98db72197",
+  "embedding_input": "chunks.jsonl",
+  "graph_node_inputs": [
+    "documents.jsonl",
+    "entities.jsonl",
+    "chunks.jsonl",
+    "source_documents.jsonl"
+  ],
+  "graph_edge_input": "relationships.jsonl",
+  "evidence_input": "citations.jsonl",
+  "source_urls_retained": true,
+  "limitations": [
+    "Author entities are emitted only where verified structured author metadata exists; citation strings are not guessed.",
+    "Relationships are metadata-derived or literal/curated matches, not model-inferred scientific claims.",
+    "Full paper text is not embedded unless present in the canonical record; most chunks contain abstracts or bibliographic metadata."
+  ]
+}

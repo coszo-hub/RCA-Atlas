@@ -1,0 +1,299 @@
+{
+  "audit_version": 1,
+  "audited_at": "2026-09-18T23:16:26.222963+00:00",
+  "source_file": "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/coszo_products/zotero_E5UH7L89_top1.json",
+  "collection": {
+    "key": "E5UH7L89",
+    "name": "Coastal Endurance Array",
+    "library": "OOIPublications",
+    "reported_num_items": 38
+  },
+  "summary": {
+    "items_audited": 38,
+    "items_with_abstract": 34,
+    "items_with_empty_abstract": 4,
+    "abstract_quality_issues": 6,
+    "title_issues": 2,
+    "creator_issues": 1,
+    "within_collection_duplicates": 0,
+    "regional_cabled_array_overlaps": 7,
+    "existing_coszo_package_matches": 1,
+    "doi_bearing_items": 36,
+    "non_doi_items": [
+      "A9I7PXNB",
+      "TA25X5ZF"
+    ]
+  },
+  "issues": [
+    {
+      "severity": "high",
+      "category": "missing_abstract",
+      "zotero_key": "6M94A5XU",
+      "item_position_1_based": 25,
+      "title": "Relationship between ocean ecosystem indicators and year class strength of the invasive European green crab (Carcinus maenas)",
+      "doi": "10.1016/j.pocean.2021.102618",
+      "observed": "abstractNote is empty",
+      "evidence_url": "https://www.sciencedirect.com/science/article/abs/pii/S0079661121001051",
+      "recommendation": "Retrieve the published abstract from the cited primary page or its linked scholarly record and preserve its source URL."
+    },
+    {
+      "severity": "high",
+      "category": "missing_abstract",
+      "zotero_key": "9AZHN5UT",
+      "item_position_1_based": 26,
+      "title": "Statistical analysis and modeling of underwater wind noise at the northeast pacific continental margin",
+      "doi": "10.1121/10.0007463",
+      "observed": "abstractNote is empty",
+      "evidence_url": "https://pubmed.ncbi.nlm.nih.gov/34972298/",
+      "recommendation": "Retrieve the published abstract from the cited primary page or its linked scholarly record and preserve its source URL."
+    },
+    {
+      "severity": "high",
+      "category": "missing_abstract",
+      "zotero_key": "6HLEIGXZ",
+      "item_position_1_based": 27,
+      "title": "Satellite Remote Sensing and the Marine Biodiversity Observation Network: Current Science and Future Steps",
+      "doi": "10.5670/oceanog.2021.215",
+      "observed": "abstractNote is empty",
+      "evidence_url": "https://tos.org/oceanography/article/satellite-remote-sensing-and-the-marine-biodiversity-observation-network-current-science-and-future-steps",
+      "recommendation": "Retrieve the published abstract from the cited primary page or its linked scholarly record and preserve its source URL."
+    },
+    {
+      "severity": "high",
+      "category": "missing_abstract",
+      "zotero_key": "7HLK4VFF",
+      "item_position_1_based": 28,
+      "title": "Characterizing underwater noise during rain at the northeast Pacific continental margin",
+      "doi": "10.1121/10.0005440",
+      "observed": "abstractNote is empty",
+      "evidence_url": "https://pubmed.ncbi.nlm.nih.gov/34241418/",
+      "recommendation": "Retrieve the published abstract from the cited primary page or its linked scholarly record and preserve its source URL."
+    },
+    {
+      "severity": "high",
+      "category": "contaminated_abstract",
+      "zotero_key": "92BSGBND",
+      "item_position_1_based": 11,
+      "title": "Dynamics of the benthic boundary layer and seafloor contributions to oxygen depletion on the Oregon inner shelf",
+      "doi": "10.1016/j.csr.2014.05.010",
+      "observed": "abstractNote begins with 1,961 characters of ScienceDirect navigation, figure/table listings, citation metadata, and highlights before the literal 'Abstract' heading; the actual abstract follows that heading.",
+      "evidence_url": "https://doi.org/10.1016/j.csr.2014.05.010",
+      "recommendation": "Discard the scraped page preamble and retain only the published abstract beginning 'Measurement of in situ O2 consumption…'."
+    },
+    {
+      "severity": "low",
+      "category": "abstract_formatting",
+      "zotero_key": "A9I7PXNB",
+      "item_position_1_based": 5,
+      "title": "Across-Scale Energy Transfer in the Southern Ocean",
+      "doi": null,
+      "observed": "abstractNote contains 39 hard line breaks copied from page layout; the prose itself appears complete.",
+      "recommendation": "Normalize line wrapping to spaces while preserving paragraph boundaries."
+    },
+    {
+      "severity": "medium",
+      "category": "title_transcription",
+      "zotero_key": "I35B9SNE",
+      "item_position_1_based": 17,
+      "title": "Warm Blobs, Low-Oxygen Events, and an Eclipse THE OCEAN OBSERVATORIES INITIATIVE ENDURANCE ARRAY CAPTURES THEM ALL",
+      "doi": "10.5670/oceanog.2018.114",
+      "observed": "The subtitle separator is missing and the subtitle is stored in all caps.",
+      "canonical_title": "Warm Blobs, Low-Oxygen Events, and an Eclipse: The Ocean Observatories Initiative Endurance Array Captures Them All",
+      "evidence_url": "https://tos.org/oceanography/article/warm-blobs-low-oxygen-events-and-an-eclipse-the-ocean-observatories-initiat",
+      "recommendation": "Replace the title with the publisher title; the DOI is consistent with that work."
+    },
+    {
+      "severity": "high",
+      "category": "title_transcription",
+      "zotero_key": "JXHU5NG7",
+      "item_position_1_based": 22,
+      "title": "USING AUTHENTIC DATA FROM NSF’S OCEAN OBSERVATORIES INTIATIVE IN UNDERGRADUATE TEACHING An Invitation",
+      "doi": "10.5670/oceanog.2020.103",
+      "observed": "The title misspells 'Initiative' as 'Intiative', omits the colon before the subtitle, and is stored mostly in all caps.",
+      "canonical_title": "Using Authentic Data from NSF’s Ocean Observatories Initiative in Undergraduate Teaching: An Invitation",
+      "evidence_url": "https://tos.org/oceanography/article/using-authentic-data-fromnsfs-ocean-observatories-initiativein-undergraduate-teaching-an-invitation",
+      "recommendation": "Replace the title with the publisher title; the DOI is consistent with that work."
+    },
+    {
+      "severity": "high",
+      "category": "creator_contamination",
+      "zotero_key": "6HLEIGXZ",
+      "item_position_1_based": 27,
+      "title": "Satellite Remote Sensing and the Marine Biodiversity Observation Network: Current Science and Future Steps",
+      "doi": "10.5670/oceanog.2021.215",
+      "observed": "'Oregon State University' is encoded as the second personal author. The publisher author list proceeds from Maria T. Kavanaugh directly to Tom Bell.",
+      "evidence_url": "https://tos.org/oceanography/article/satellite-remote-sensing-and-the-marine-biodiversity-observation-network-current-science-and-future-steps",
+      "recommendation": "Remove the spurious institutional creator and add the missing pages 62–79."
+    }
+  ],
+  "url_metadata_issues": [
+    {
+      "severity": "medium",
+      "category": "invalid_url_value",
+      "problem": "Web of Science pseudo-URLs are not valid resolvable URLs.",
+      "items": [
+        {
+          "zotero_key": "92BSGBND",
+          "title": "Dynamics of the benthic boundary layer and seafloor contributions to oxygen depletion on the Oregon inner shelf",
+          "url": "<Go to ISI>://WOS:000339696200009"
+        },
+        {
+          "zotero_key": "JWJHGWBR",
+          "title": "Temporal and Spatial Dynamics of Physical and Biological Properties along the Endurance Array of the California Current Ecosystem",
+          "url": "<Go to ISI>://WOS:000427367300013"
+        },
+        {
+          "zotero_key": "I35B9SNE",
+          "title": "Warm Blobs, Low-Oxygen Events, and an Eclipse THE OCEAN OBSERVATORIES INITIATIVE ENDURANCE ARRAY CAPTURES THEM ALL",
+          "url": "<Go to ISI>://WOS:000427367300014"
+        },
+        {
+          "zotero_key": "KGY4AKME",
+          "title": "The impact of wave energy converter arrays on wave-induced forcing in the surf zone",
+          "url": "<Go to ISI>://WOS:000437819800026"
+        }
+      ],
+      "recommendation": "Move the WOS accession to an archive/catalog field and use the DOI landing page as URL."
+    },
+    {
+      "severity": "medium",
+      "category": "invalid_url_value",
+      "problem": "Two URLs are concatenated with a space in one Zotero URL field.",
+      "items": [
+        {
+          "zotero_key": "9AZHN5UT",
+          "title": "Statistical analysis and modeling of underwater wind noise at the northeast pacific continental margin",
+          "url": "https://app.dimensions.ai/details/publication/pub.1143712938 https://asa.scitation.org/doi/pdf/10.1121/10.0007463"
+        },
+        {
+          "zotero_key": "6HLEIGXZ",
+          "title": "Satellite Remote Sensing and the Marine Biodiversity Observation Network: Current Science and Future Steps",
+          "url": "https://app.dimensions.ai/details/publication/pub.1142458909 https://tos.org/oceanography/assets/docs/34-2_kavanaugh.pdf"
+        },
+        {
+          "zotero_key": "7HLK4VFF",
+          "title": "Characterizing underwater noise during rain at the northeast Pacific continental margin",
+          "url": "https://app.dimensions.ai/details/publication/pub.1139189404 https://asa.scitation.org/doi/pdf/10.1121/10.0005440"
+        },
+        {
+          "zotero_key": "292ISJJB",
+          "title": "The Importance of Marine Research Infrastructures in Capturing Processes and Impacts of Extreme Events",
+          "url": "https://app.dimensions.ai/details/publication/pub.1136473721 https://www.frontiersin.org/articles/10.3389/fmars.2021.626668/pdf"
+        }
+      ],
+      "recommendation": "Keep one canonical landing URL in url and store the other as an attachment or related link."
+    }
+  ],
+  "doi_title_audit": {
+    "conclusion": "No DOI appears to identify a different work. Two titles need transcription/formatting correction while retaining their existing DOIs.",
+    "crossref_exact_doi_records_retrieved": 17,
+    "crossref_exact_doi_records_rate_limited": 19,
+    "retrieved_records_title_assessment": "All 17 retrieved Crossref records match the Zotero work identity; the only material title formatting issue among them is I35B9SNE.",
+    "additional_primary_publisher_checks": [
+      "I35B9SNE",
+      "JXHU5NG7",
+      "6HLEIGXZ",
+      "6M94A5XU"
+    ],
+    "rate_limited_dois": [
+      "10.1016/j.margeo.2025.107516",
+      "10.1016/j.renene.2021.08.127",
+      "10.1029/2023GL105387",
+      "10.1029/2023JC020565",
+      "10.1038/s41598-024-54476-0",
+      "10.1121/10.0005440",
+      "10.1121/10.0010547",
+      "10.1121/10.0024146",
+      "10.3389/fmars.2019.00074",
+      "10.3389/fmars.2019.00093",
+      "10.3389/fmars.2019.00423",
+      "10.3389/fmars.2021.626668",
+      "10.3389/fmars.2022.1018751",
+      "10.3389/fmars.2023.1025464",
+      "10.5194/bg-22-7309-2025",
+      "10.5194/essd-16-219-2024",
+      "10.5670/oceanog.2018.113",
+      "10.5670/oceanog.2020.103",
+      "10.5670/oceanog.2021.215"
+    ],
+    "raw_crossref_file": "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/zotero_expansion/endurance_crossref.json",
+    "note": "Crossref returned HTTP 429 for 19 DOI lookups. The audit records this limitation rather than treating an unavailable lookup as a mismatch."
+  },
+  "within_collection_duplicates": {
+    "duplicate_dois": {},
+    "duplicate_normalized_titles": {},
+    "duplicate_keys": [],
+    "assessment": "No duplicate Zotero records were found within the Coastal Endurance Array export."
+  },
+  "cross_collection_overlaps": {
+    "regional_cabled_array": [
+      {
+        "zotero_key": "GBWZL49K",
+        "title": "The Ocean Observatories Initiative",
+        "doi": "10.3389/fmars.2019.00074",
+        "other_collection": "Regional Cabled Array",
+        "other_collection_key": "RMTSE2IH",
+        "relationship": "same Zotero item is intentionally assigned to both collections; this is collection overlap, not a duplicate library record"
+      },
+      {
+        "zotero_key": "ZKC53RJB",
+        "title": "Better Regional Ocean Observing Through Cross-National Cooperation: A Case Study From the Northeast Pacific",
+        "doi": "10.3389/fmars.2019.00093",
+        "other_collection": "Regional Cabled Array",
+        "other_collection_key": "RMTSE2IH",
+        "relationship": "same Zotero item is intentionally assigned to both collections; this is collection overlap, not a duplicate library record"
+      },
+      {
+        "zotero_key": "9AZHN5UT",
+        "title": "Statistical analysis and modeling of underwater wind noise at the northeast pacific continental margin",
+        "doi": "10.1121/10.0007463",
+        "other_collection": "Regional Cabled Array",
+        "other_collection_key": "RMTSE2IH",
+        "relationship": "same Zotero item is intentionally assigned to both collections; this is collection overlap, not a duplicate library record"
+      },
+      {
+        "zotero_key": "7HLK4VFF",
+        "title": "Characterizing underwater noise during rain at the northeast Pacific continental margin",
+        "doi": "10.1121/10.0005440",
+        "other_collection": "Regional Cabled Array",
+        "other_collection_key": "RMTSE2IH",
+        "relationship": "same Zotero item is intentionally assigned to both collections; this is collection overlap, not a duplicate library record"
+      },
+      {
+        "zotero_key": "LIQNQ5SM",
+        "title": "Bottom boundary layer oxygen fluxes during winter on the Oregon Shelf",
+        "doi": "10.1029/2020jc016828",
+        "other_collection": "Regional Cabled Array",
+        "other_collection_key": "RMTSE2IH",
+        "relationship": "same Zotero item is intentionally assigned to both collections; this is collection overlap, not a duplicate library record"
+      },
+      {
+        "zotero_key": "EZDGM2RG",
+        "title": "Ocean observation system design of mooring buoy and benthic node with electro-optical-mechanical cable",
+        "doi": "10.3389/fmars.2022.1018751",
+        "other_collection": "Regional Cabled Array",
+        "other_collection_key": "RMTSE2IH",
+        "relationship": "same Zotero item is intentionally assigned to both collections; this is collection overlap, not a duplicate library record"
+      },
+      {
+        "zotero_key": "IL57KJIF",
+        "title": "Acoustic indices respond to specific marine mammal vocalizations and sources of anthropogenic noise",
+        "doi": "10.3389/fmars.2023.1025464",
+        "other_collection": "Regional Cabled Array",
+        "other_collection_key": "RMTSE2IH",
+        "relationship": "same Zotero item is intentionally assigned to both collections; this is collection overlap, not a duplicate library record"
+      }
+    ],
+    "assembled_coszo_literature": [
+      {
+        "zotero_key": "GBWZL49K",
+        "title": "The Ocean Observatories Initiative",
+        "doi": "10.3389/fmars.2019.00074",
+        "other_record": "COSZO-REF-104",
+        "other_file": "/Users/quakehunter/Documents/ChatGPT/RCA Agent/tmp/coszo_abstracts/package/coszo_literature.jsonl",
+        "relationship": "same published work already exists in the assembled COSZO literature package"
+      }
+    ],
+    "assessment": "The seven Regional Cabled Array matches reuse identical Zotero keys and are shared collection membership, not duplicate records. The COSZO package match should be deduplicated by DOI during any future merge."
+  }
+}

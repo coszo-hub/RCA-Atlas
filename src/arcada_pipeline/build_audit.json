@@ -1,0 +1,97 @@
+{
+  "created_at": "2026-09-19T03:01:29.005739+00:00",
+  "source_rows": 802,
+  "retained_rows": 802,
+  "excluded_rows": [],
+  "repaired_rows": [
+    {
+      "source_row_index": 181,
+      "source_chunk_id": "PI-OVRSRA101",
+      "reason": "placeholder_only_duplicate_source_row_repaired_and_retained",
+      "canonical_source_row_index": 117,
+      "graph_source_record_key": "PI-OVRSRA101::source-row-181",
+      "inferred_fields": [
+        "type",
+        "source",
+        "location",
+        "keywords",
+        "pi_base_url",
+        "ooi_page"
+      ]
+    },
+    {
+      "source_row_index": 184,
+      "source_chunk_id": "PI-DAS-OPTASENSE",
+      "reason": "placeholder_only_duplicate_source_row_repaired_and_retained",
+      "canonical_source_row_index": 119,
+      "graph_source_record_key": "PI-DAS-OPTASENSE::source-row-184",
+      "inferred_fields": [
+        "type",
+        "source",
+        "location",
+        "keywords",
+        "pi_base_url"
+      ]
+    },
+    {
+      "source_row_index": 185,
+      "source_chunk_id": "PI-DAS24",
+      "reason": "placeholder_only_duplicate_source_row_repaired_and_retained",
+      "canonical_source_row_index": 121,
+      "graph_source_record_key": "PI-DAS24::source-row-185",
+      "inferred_fields": [
+        "type",
+        "source",
+        "location",
+        "keywords",
+        "pi_base_url",
+        "ooi_page"
+      ]
+    },
+    {
+      "source_row_index": 186,
+      "source_chunk_id": "PI-DAS25",
+      "reason": "placeholder_only_duplicate_source_row_repaired_and_retained",
+      "canonical_source_row_index": 123,
+      "graph_source_record_key": "PI-DAS25::source-row-186",
+      "inferred_fields": [
+        "type",
+        "source",
+        "location",
+        "keywords",
+        "pi_base_url",
+        "ooi_page"
+      ]
+    },
+    {
+      "source_row_index": 183,
+      "source_chunk_id": "PI-COVIS",
+      "reason": "placeholder_only_duplicate_source_row_repaired_and_retained",
+      "canonical_source_row_index": 125,
+      "graph_source_record_key": "PI-COVIS::source-row-183",
+      "inferred_fields": [
+        "type",
+        "source",
+        "location",
+        "keywords",
+        "pi_base_url"
+      ]
+    },
+    {
+      "source_row_index": 182,
+      "source_chunk_id": "PI-QNTSRA101",
+      "reason": "placeholder_only_duplicate_source_row_repaired_and_retained",
+      "canonical_source_row_index": 127,
+      "graph_source_record_key": "PI-QNTSRA101::source-row-182",
+      "inferred_fields": [
+        "type",
+        "source",
+        "location",
+        "keywords",
+        "pi_base_url",
+        "ooi_page"
+      ]
+    }
+  ],
+  "source_sha256": "59a4ad21eff60131addc8cada275b2073a946e90998fac9951ab0bbebcde9964"
+}

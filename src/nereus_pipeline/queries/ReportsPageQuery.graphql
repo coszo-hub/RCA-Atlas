@@ -1,0 +1,58 @@
+query ReportsPageQuery($cutoff: timestamptz) {
+    instruments(order_by: { designator: asc }) {
+      id
+      designator
+      operationalStatusCode: operational_status_code
+      alertsAreEnabled: alerts_are_enabled
+      isPIinstrument: is_pi_instrument
+    }
+    alertOverrides: alert_overrides(order_by: { started_at: desc }) {
+      id
+      note {
+        id
+        categoryCode: category_code
+      }
+      startedAt: started_at
+      endedAt: ended_at
+    }
+    nodes(order_by: { designator: asc }) {
+      id
+      designator
+      operationalStatusCode: operational_status_code
+    }
+    notes(
+      order_by: { created_at: desc }
+      where: { _not: { alert_override: {} }, started_at: { _gte: $cutoff } }
+    ) {
+      id
+      title
+      message
+      categoryCode: category_code
+      isOneTime: is_one_time
+      startedAt: started_at
+      endedAt: ended_at
+      instrumentConnections: instrument_connections {
+        instrument {
+          designator
+        }
+      }
+    }
+    statistics {
+      instrumentOperationalStatusOverview: instrument_operational_status_overview {
+        counts {
+          code
+          count
+        }
+      }
+      instrumentOperationalStatusOverviewHistory: instrument_operational_status_overview_history(
+        days: 3650
+        interval: WEEK
+      ) {
+        date
+        counts {
+          code
+          count
+        }
+      }
+    }
+  }

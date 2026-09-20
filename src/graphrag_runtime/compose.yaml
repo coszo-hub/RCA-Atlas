@@ -1,0 +1,38 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: graphrag
+      POSTGRES_USER: graphrag_owner
+      POSTGRES_PASSWORD: change-me
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations/001_initial.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./migrations/002_local_api_role.sql:/docker-entrypoint-initdb.d/002-api-role.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graphrag_owner -d graphrag"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://graphrag_api_role:local-development-api-password@db:5432/graphrag
+      GRAPHRAG_API_KEY_SHA256: 4c88089bdf15cb0dffde5c179461a2f99fa7cfb0bed250a8d87f8aa1d80eaa11
+      GRAPHRAG_STATEMENT_TIMEOUT_MS: "4000"
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+  loader:
+    profiles: ["load"]
+    build: .
+    environment:
+      DATABASE_URL: postgresql://graphrag_owner:change-me@db:5432/graphrag
+    command: ["python", "load_postgres.py", "--dsn", "postgresql://graphrag_owner:change-me@db:5432/graphrag", "--normalized", "/corpus/normalized", "--embeddings", "/corpus/embeddings", "--activate"]
+    volumes:
+      - ../../runtime_data/GraphRAG/normalized:/corpus/normalized:ro
+      - ../../runtime_data/GraphRAG/embeddings:/corpus/embeddings:ro
+    depends_on:
+      db: {condition: service_healthy}
+volumes:
+  pgdata:

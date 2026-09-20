@@ -1,0 +1,17 @@
+{
+  "source_url": "https://nereus.ooirsn.uw.edu/",
+  "graphql_url": "https://nereus.ooirsn.uw.edu/hasura/v1/graphql",
+  "frontend_bundle_url": "https://nereus.ooirsn.uw.edu/assets/index-C6D8iJuH.js",
+  "frontend_bundle_sha256": "93d2687fbf7ea984e080039324b606d7571385ace403c1de5b1dc11c4554cf04",
+  "retrieved_at": "2026-09-19T07:37:26.848353+00:00",
+  "operations": [
+    "AppLayoutQuery",
+    "HelmQuery",
+    "ReportsPageQuery",
+    "EngineeringQuery",
+    "PowerCurrentChartInstrumentQuery",
+    "PowerCurrentChartNodeQuery",
+    "StatusHistoryChartInstrumentQuery",
+    "StatusHistoryChartNodeQuery"
+  ]
+}

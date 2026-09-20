@@ -1,0 +1,18 @@
+query PowerCurrentChartInstrumentQuery(
+    $id: Int!
+    $days: Int!
+    $interval: SampleInterval!
+    $startedAt: DateTime
+  ) {
+    statistics {
+      history: instrument_power_current_history(
+        instrument_id: $id
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        current
+      }
+    }
+  }

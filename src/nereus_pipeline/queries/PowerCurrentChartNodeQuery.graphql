@@ -1,0 +1,18 @@
+query PowerCurrentChartNodeQuery(
+    $id: Int!
+    $days: Int!
+    $interval: SampleInterval!
+    $startedAt: DateTime
+  ) {
+    statistics {
+      history: node_power_current_history(
+        node_id: $id
+        days: $days
+        interval: $interval
+        started_at: $startedAt
+      ) {
+        date
+        current
+      }
+    }
+  }

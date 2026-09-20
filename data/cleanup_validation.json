@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "moved_file_count": 76,
+  "moved_bytes": 376103260,
+  "normalized_mpo_images": 0,
+  "removed_ds_store": 1,
+  "station_metadata": null,
+  "remaining_unapproved_files": [],
+  "allowed_data_extensions": [
+    ".jpeg",
+    ".jpg",
+    ".json",
+    ".jsonl",
+    ".md",
+    ".png"
+  ],
+  "validated_at_utc": "2026-09-19T19:35:26.992191Z"
+}

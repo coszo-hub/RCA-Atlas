@@ -1,0 +1,150 @@
+query EngineeringQuery {
+    engineering {
+      nodeStatuses: node_statuses {
+        designator
+        cibBoardState: cib_board_state {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        cibErrorState: cib_error_state {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        pitch {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        roll {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        internalPressure: internal_pressure {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        ambientTemperature: ambient_temperature {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        relativeHumidity: relative_humidity {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        cibHotelCurrent: cib_hotel_current {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        cibHotelVoltage: cib_hotel_voltage {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        cib5vCurrent: cib_5v_current {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        hpbBoardState: hpb_board_state {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        hpbErrorState: hpb_error_state {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        hpbInputVoltage: hpb_input_voltage {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        hpbHotelVoltage: hpb_hotel_voltage {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        hpbHotelCurrent: hpb_hotel_current {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        hpbHotelTemperature: hpb_hotel_temperature {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        gfdHigh: gfd_high {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        gfdLow: gfd_low {
+          value
+          timestamp
+          retrievedAt: retrieved_at
+        }
+        ports {
+          designator
+          powerState: power_state {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          errorState: error_state {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          boardState: board_state {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          outputCurrent: output_current {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          outputVoltage: output_voltage {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          unitTemperature: unit_temperature {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          gfdHigh: gfd_high {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          gfdLow: gfd_low {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          ocdCurrent: ocd_current {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+          gpIoState: gp_io_state {
+            value
+            timestamp
+            retrievedAt: retrieved_at
+          }
+        }
+      }
+    }
+  }

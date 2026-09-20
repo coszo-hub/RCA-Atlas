@@ -1,0 +1,126 @@
+import pandas as pd
+import yaml
+from pathlib import Path
+
+from rca_data_tools.qaqc.utils import build_function_registry, load_calc_metadata, load_site_calculations, load_max_coordinate_sizes
+
+# visual data constants
+CAM_URL_DICT = {
+    'RS01SUM2-MJ01B-05-CAMDSB103': 'https://rawdata.oceanobservatories.org/files/RS01SUM2/MJ01B/CAMDSB103/',
+    'RS03INT1-MJ03C-05-CAMDSB303': 'https://rawdata.oceanobservatories.org/files/RS03INT1/MJ03C/CAMDSB303/',
+    'RS03AXPS-PC03A-07-CAMDSC302': 'https://rawdata.oceanobservatories.org/files/RS03AXPS/PC03A/CAMDSC302/',
+    'CE02SHBP-MJ01C-08-CAMDSB107': 'https://rawdata.oceanobservatories.org/files/CE02SHBP/MJ01C/CAMDSB107/',
+    'CE04OSBP-LV01C-06-CAMDSB106': 'https://rawdata.oceanobservatories.org/files/CE04OSBP/LV01C/CAMDSB106/',
+    'RS01SBPS-PC01A-07-CAMDSC102': 'https://rawdata.oceanobservatories.org/files/RS01SBPS/PC01A/CAMDSC102/',
+    'RS03ASHS-PN03B-06-CAMHDA301': 'https://rawdata.oceanobservatories.org/files/RS03ASHS/PN03B/CAMHDA301/',
+    }
+N_EXPECTED_IMGS = 145
+
+S3_BUCKET = 'ooi-rca-qaqc-prod'
+
+# CSV config constants 
+HERE = Path(__file__).parent.absolute()
+PARAMS_DIR = HERE.joinpath('params')
+PLOT_DIR = Path('QAQC_plots')
+
+SPAN_DICT = {
+    '1': 'day',
+    '7': 'week',
+    '30': 'month',
+    '365': 'year',
+    '0': 'deploy',
+}
+
+CAM_SPANS = {
+    '7': 'week', 
+    '30': 'month', 
+    '365': 'year',
+    '0': 'deploy'
+}
+
+THROTTLE_SPANS = {
+    '1': 'day',
+    '7': 'week',
+}
+
+STATUS_COLORS = {
+    'OPERATIONAL': 'green',
+    'FAILED': 'red',
+    'TROUBLESHOOTING': 'red',
+    'RECOVERED': 'blue',
+    'PARTIALLY_FUNCTIONAL': 'red',
+    'OFFLINE': 'blue',
+    'UNCABLED': 'blue',
+    'DATA_QUALITY': 'red',
+    'NOT_DEPLOYED': 'blue',
+    'UNAVAILABLE': 'gray'
+}
+
+QC_FLAGS = {
+        'qartod_grossRange':{'symbol':'+', 'param':'_qartod_executed_gross_range_test'},
+        'qartod_climatology':{'symbol':'x','param':'_qartod_executed_climatology_test'},
+        #'qartod_summary':{'symbol':'1','param':'_qartod_results'},
+        #'qc':{'symbol':'s','param':'_qc_summary_flag'}, # TODO add back after qartod done
+    }
+
+# create dictionary of sites key for filePrefix, nearestNeighbors
+_all_sites_df = (
+    pd.read_csv(PARAMS_DIR.joinpath('sitesDictionary.csv'))
+    .set_index('refDes')
+)
+
+SITES_DICT = _all_sites_df[_all_sites_df['stage'] == 1].drop(columns='stage').T.to_dict('series')
+STAGE2_DICT = _all_sites_df[_all_sites_df['stage'] == 2].drop(columns='stage').T.to_dict('series')
+STAGE3_DICT = _all_sites_df[_all_sites_df['stage'] == 3].drop(columns='stage').T.to_dict('series')
+ALL_CONFIGS_DICT = _all_sites_df.drop(columns='stage').T.to_dict('series')
+
+# create dictionary of parameter vs variable Name
+VARIABLE_DICT = pd.read_csv(PARAMS_DIR.joinpath('variableMap.csv'), index_col=0).iloc[:, 0].to_dict()
+
+# create dictionary of instrumet key for plot parameters
+INSTRUMENT_DICT = (
+    pd.read_csv(PARAMS_DIR.joinpath('plotParameters.csv'))
+    .set_index('instrument')
+    .T.to_dict('series')
+)
+
+# create dictionary of variable parameters for plotting
+VARIABLE_PARAM_DICT = (
+    pd.read_csv(PARAMS_DIR.joinpath('variableParameters.csv'))
+    .set_index('variable')
+    .T.to_dict('series')
+)
+
+# create dictionary of multi-parameter instrumet variables
+MULTI_PARAMETER_DICT = (
+    pd.read_csv(PARAMS_DIR.joinpath('multiParameters.csv'))
+    .set_index('instrument')
+    .T.to_dict('series')
+)
+
+
+LOCAL_RANGE_DICT = yaml.safe_load(open(PARAMS_DIR.joinpath("localRanges.yaml")))
+
+# create a dictonary of sites with partially active coordinates for current deployment
+DEPLOYED_RANGE_DICT = (
+    pd.read_csv(PARAMS_DIR.joinpath('deployedRanges.csv'))
+    .set_index('refDes')
+    .T.to_dict('series')
+)
+
+QARTOD_SKIP_DICT = yaml.safe_load(open(PARAMS_DIR.joinpath("qartod_skip.yaml"))) 
+
+MAX_COORD_SIZES = load_max_coordinate_sizes(PARAMS_DIR / 'maxCoordinateSizes.csv')
+
+# create a dictonary of auxilliary parameters to be calculated
+CALCULATE_DICT = load_site_calculations(PARAMS_DIR.joinpath('siteCalculations.csv'), during_harvest=False)
+
+# create a dictonary of calculations and inputs as executable strings
+CALCULATE_CALLS_DICT = (load_calc_metadata(PARAMS_DIR.joinpath('calculateCalls.csv')))
+
+# function registry of calculation commands
+FUNCTION_REGISTRY = build_function_registry(CALCULATE_CALLS_DICT, module_name="rca_data_tools.qaqc.advanced_qaqc.calculateFunctions")
+
+PLOT_DIR_STR = str(PLOT_DIR) + '/'
+
+COMPUTE_EXCEPTIONS = yaml.safe_load(open(PARAMS_DIR.joinpath("compute_exceptions.yaml")))
