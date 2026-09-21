@@ -1,10 +1,9 @@
-import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BorderBeam } from "border-beam";
 import { ThinkingOrb } from "thinking-orbs";
 import "./style.css";
 
-const ForceGraph3D = lazy(() => import("react-force-graph-3d"));
 const WORKER_URL = "https://rca-atlas.quakehunt.workers.dev";
 
 function evidenceGraph(result) {
@@ -27,6 +26,28 @@ function evidenceGraph(result) {
   return { nodes, links };
 }
 
+function EvidenceGraph({ graph }) {
+  const width = 720;
+  const height = 360;
+  const center = { x: width / 2, y: height / 2 };
+  const positions = new Map(graph.nodes.map((node, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(1, graph.nodes.length) - Math.PI / 2;
+    const radius = node.group === "evidence" ? 88 : 138;
+    return [node.id, { x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius, group: node.group }];
+  }));
+  return <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Evidence relationship map">
+    {graph.links.map((link, index) => {
+      const source = positions.get(link.source);
+      const target = positions.get(link.target);
+      return source && target && <line key={`${link.source}-${link.target}-${index}`} x1={source.x} y1={source.y} x2={target.x} y2={target.y}/>;
+    })}
+    {graph.nodes.map((node) => {
+      const point = positions.get(node.id);
+      return <g key={node.id}><title>{node.id}</title><circle cx={point.x} cy={point.y} r={point.group === "evidence" ? 5 : 3}/></g>;
+    })}
+  </svg>;
+}
+
 function App() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,7 +56,6 @@ function App() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("How many earthquakes occurred at Axial Seamount yesterday?");
   const [askedQuestion, setAskedQuestion] = useState("");
-  const graphRef = useRef(null);
   const graph = useMemo(() => evidenceGraph(result), [result]);
   const answer = result?.answer || "";
 
@@ -92,7 +112,7 @@ function App() {
         {error && <p className="error">{error}</p>}
         {answer && <div className="generated">{typed}<span className={complete ? "cursor done" : "cursor"}>|</span></div>}
         {complete && <div className="sources"><span>Sources</span>{(result.answer_citations || []).map((source) => source.url ? <a key={`${source.id}-${source.url}`} href={source.url} target="_blank" rel="noreferrer">{source.title || source.id} ↗</a> : <span className="source-label" key={source.id}>{source.title || source.id}</span>)}</div>}
-        {complete && graph.nodes.length > 1 && <section className="graph-view"><div className="graph-caption"><span>Evidence graph</span><small>Drag to orbit · select a node</small></div><div className="graph-stage"><Suspense fallback={<p className="graph-loading">Loading graph…</p>}><ForceGraph3D ref={graphRef} graphData={graph} backgroundColor="#000000" nodeLabel="id" nodeColor={() => "#ffffff"} nodeVal={(node) => node.group === "evidence" ? 4.5 : 2.5} nodeOpacity={0.96} linkColor={() => "#252525"} linkWidth={0.55} linkOpacity={0.9} warmupTicks={100} cooldownTicks={0} d3AlphaDecay={0.045} d3VelocityDecay={0.42} onEngineStop={() => graphRef.current?.zoomToFit(450, 72)}/></Suspense></div></section>}
+        {complete && graph.nodes.length > 1 && <section className="graph-view"><div className="graph-caption"><span>Evidence map</span><small>Hover a dot for its source</small></div><div className="graph-stage"><EvidenceGraph graph={graph}/></div></section>}
       </section>}
     </main>
   </div>;
