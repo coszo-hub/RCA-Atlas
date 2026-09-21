@@ -7,6 +7,7 @@
 .venv/
 venv/
 node_modules/
+**/.wrangler/
 src/atlas_ui/dist/
 .env
 .env.*
