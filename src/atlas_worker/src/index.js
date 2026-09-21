@@ -60,21 +60,27 @@ function citations(hits) {
   });
 }
 
-function evidencePackage(context, question) {
-  const sections = [];
-  let remaining = MAX_EVIDENCE_CHARS;
+function prioritizedHits(context, question) {
   const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])];
-  const ranked = [...(context.hits || [])].map((hit, index) => {
+  return [...(context.hits || [])].map((hit, index) => {
     const title = String(hit.title || "").toLowerCase();
     const text = String(hit.text || "").toLowerCase();
+    const collection = String(hit.collection_id || "").toLowerCase();
     const relevance = terms.reduce((score, term) => score +
       (title.includes(term) ? 12 : 0) + (text.includes(term) ? 2 : 0), 0);
-    return { hit, index, relevance };
-  }).sort((a, b) => b.relevance - a.relevance || a.index - b.index).slice(0, 6);
-  for (const { hit } of ranked) {
+    const rcaScope = /(regional cabled array|cabled array|coszo|axial|hydrate ridge|oregon shelf|oregon offshore)/.test(`${title}\n${text}`) ? 10 : 0;
+    const primaryCorpus = /^(instruments|websites|arcada|coszo)/.test(collection) ? 4 : 0;
+    return { hit, index, score: relevance + rcaScope + primaryCorpus };
+  }).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, 6).map(({ hit }) => hit);
+}
+
+function evidencePackage(hits, sourceNumbers) {
+  const sections = [];
+  let remaining = MAX_EVIDENCE_CHARS;
+  for (const hit of hits) {
     if (remaining <= 0) break;
-    const citationIds = (hit.citations || []).map((c) => c.source_id).filter(Boolean).join(", ");
-    const header = `[${hit.chunk_id}] ${hit.title}${citationIds ? ` | sources: ${citationIds}` : ""}\n`;
+    const refs = (hit.citations || []).map((c) => sourceNumbers.get(c.source_id || hit.chunk_id)).filter(Boolean);
+    const header = `${hit.title}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
     const text = String(hit.text || "").slice(0, Math.max(0, remaining - header.length));
     sections.push(`${header}${text}`);
     remaining -= header.length + text.length + 2;
@@ -97,10 +103,13 @@ async function postJson(url, body, headers = {}) {
 }
 
 async function generateAnswer(question, context, env) {
-  const evidence = evidencePackage(context, question);
+  const evidenceHits = prioritizedHits(context, question);
+  const sourceList = citations(evidenceHits);
+  const sourceNumbers = new Map(sourceList.map((source, index) => [source.id, index + 1]));
+  const evidence = evidencePackage(evidenceHits, sourceNumbers);
   if (!evidence) throw new Error("no retrieved evidence");
-  const citationList = citations(context.hits || []).map((c) => `[${c.id}]`).join(", ");
-  const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nFirst compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist. Write a complete, useful research answer from the evidence, not a one-line summary. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Use short sections or bullets when useful. State clearly what the evidence does not establish. Cite every factual claim using the stable source IDs shown in square brackets. Do not invent URLs, live values, or tool results. Available source IDs: ${citationList}`;
+  const sourceListText = sourceList.map((c) => c.title).join("; ");
+  const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
   const model = env.ANSWER_MODEL || "gemini-2.5-flash";
   const upstream = await postJson(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`,
@@ -137,10 +146,11 @@ export default {
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
         query, limit: MAX_HITS, graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
+      const evidenceHits = prioritizedHits(context, query);
       const generated = await generateAnswer(query, context, env);
       return response({
         query, answer: generated.answer, answer_model: generated.model,
-        answer_citations: citations(context.hits || []),
+        answer_citations: citations(evidenceHits),
         hits: (context.hits || []).map(publicHit),
         neighbors: context.neighbors || [],
         tool_hints: context.tool_hints || [],

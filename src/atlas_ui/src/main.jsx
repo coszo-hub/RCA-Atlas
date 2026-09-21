@@ -90,7 +90,7 @@ function App() {
         <div className="question-bubble">{askedQuestion}</div>
         {loading && <div className="solving"><ThinkingOrb state="solving" size={64} theme="dark" aria-label="Synthesizing evidence"/><span>Retrieving evidence</span></div>}
         {error && <p className="error">{error}</p>}
-        {answer && <p className="generated">{typed}<span className={complete ? "cursor done" : "cursor"}>|</span></p>}
+        {answer && <div className="generated">{typed}<span className={complete ? "cursor done" : "cursor"}>|</span></div>}
         {complete && <div className="sources"><span>Sources</span>{(result.answer_citations || []).map((source) => source.url ? <a key={`${source.id}-${source.url}`} href={source.url} target="_blank" rel="noreferrer">{source.title || source.id} ↗</a> : <span className="source-label" key={source.id}>{source.title || source.id}</span>)}</div>}
         {complete && graph.nodes.length > 1 && <section className="graph-view"><div className="graph-caption"><span>Evidence graph</span><small>Drag to orbit · select a node</small></div><div className="graph-stage"><Suspense fallback={<p className="graph-loading">Loading graph…</p>}><ForceGraph3D ref={graphRef} graphData={graph} backgroundColor="#000000" nodeLabel="id" nodeColor={() => "#ffffff"} nodeVal={(node) => node.group === "evidence" ? 4.5 : 2.5} nodeOpacity={0.96} linkColor={() => "#252525"} linkWidth={0.55} linkOpacity={0.9} warmupTicks={100} cooldownTicks={0} d3AlphaDecay={0.045} d3VelocityDecay={0.42} onEngineStop={() => graphRef.current?.zoomToFit(450, 72)}/></Suspense></div></section>}
       </section>}
