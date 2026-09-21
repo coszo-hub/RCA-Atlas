@@ -8,7 +8,7 @@ identity. It must preserve every JSONL row in `node_records` or
 
 | Collection | Node file -> local ID | Chunk links | Edge mapping |
 |---|---|---|---|
-| arcada | documents->document_id; chunks->chunk_id; entities->entity_id; source_documents->source_document_id | document_id, parent_id | source_id, predicate, target_id; no raw edge ID |
+| RCA Information (`arcada`) | documents->document_id; chunks->chunk_id; entities->entity_id; source_documents->source_document_id | document_id, parent_id | source_id, predicate, target_id; no raw edge ID |
 | axial_earthquakes | chunks->chunk_id; entities->entity_id; sources->source_id | entity_ids[], source_ids[] | relationship_id; source_id, relationship_type, target_id |
 | coszo_documents | chunks->chunk_id; entities->entity_id; figures->figure_id; pages->page_id; source_documents->source_id; documents->document_id | document_id, page_id, source_id, entity_ids[] | relationship_id; source_id, relationship_type, target_id |
 | coszo_hub | chunks/entities/figures/repositories/tools->id | entity_ids[] | id; from, predicate, to |
@@ -58,7 +58,7 @@ PI portal 84/84; QAQC 33/33; station metadata 825/427; websites
 10,981/10,981. Total: 23,404 source records and 21,938 logical nodes.
 
 Important irregularities: `schema_version` is null for Axial and Station
-Metadata; Arcada `units`, Literature `license`/`notes`, and COSZO metric
+Metadata; RCA Information (upstream Arcada) `units`, Literature `license`/`notes`, and COSZO metric
 `figure_generated` have mixed JSON types; COSZO document chunks lack titles;
 Nereus repeats 151 relationship rows exactly; Website figure rows include
 failed and unavailable downloads; IDs contain `:`, `@`, and hyphens and must

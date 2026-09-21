@@ -21,6 +21,10 @@ class CorpusCatalogTests(unittest.TestCase):
         self.assertEqual(ids, expected)
         self.assertEqual(self.catalog["totals"]["collections"], 13)
 
+    def test_rca_information_has_a_friendly_display_name(self) -> None:
+        collection = next(row for row in self.catalog["collections"] if row["collection_id"] == "arcada")
+        self.assertEqual(collection["name"], "RCA Information")
+
     def test_every_collection_has_valid_embedding_input(self) -> None:
         for collection in self.catalog["collections"]:
             self.assertEqual(len(collection["embedding_inputs"]), 1, collection["collection_id"])

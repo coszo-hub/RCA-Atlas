@@ -152,7 +152,7 @@ build can be retained for rollback. Current normalized outputs live under
 
 | Collection | Primary retrieval input | Main graph/structured records | Refresh model |
 |---|---|---|---|
-| `Arcada` | `chunks.jsonl` | documents, entities, relationships, source document | rebuild from pinned repository snapshot |
+| `RCA Information` | `chunks.jsonl` | documents, entities, relationships, source document | rebuild from pinned upstream snapshot |
 | `Literature` | `chunks.jsonl` | works, citation occurrences, authors/topics, glossary | rerun literature acquisition and graph build |
 | `Websites` | `chunks.jsonl` | pages, figures, links, entities | recrawl public sites and repackage |
 | `Instruments` | `chunks.jsonl` | instruments, types, sources, infrastructure | rebuild after upstream corpus changes |
@@ -171,7 +171,12 @@ edge file, embedding input, record counts, source revision, and known
 limitations. Counts below describe the current 2026-09-19 snapshot and will
 change when a collection is rebuilt.
 
-## Arcada
+## RCA Information (upstream Arcada provenance)
+
+**Name and source.** RCA Atlas presents this collection as **RCA Information**.
+Its stable internal collection ID remains `arcada`, and its upstream source is
+preserved as Arcada for reproducibility and attribution; neither its original
+identifiers nor its source URLs are renamed.
 
 **Source and selection.** The source is
 `https://github.com/mhemmett/arcada/`, pinned at commit

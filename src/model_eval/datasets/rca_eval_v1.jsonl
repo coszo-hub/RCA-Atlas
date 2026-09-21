@@ -13,9 +13,9 @@
 {"id":"download-003","category":"data_availability","question":"Where can I download MARUM CTD-DO data?","answer_mode":"corpus","expected_collections":["PIPortal","Instruments"],"expected_entities":["CTDPFA110"]}
 {"id":"download-004","category":"data_availability","question":"Which RCA waveform data can be obtained from EarthScope?","answer_mode":"corpus","expected_collections":["StationMetadata","COSZOHub"],"expected_entities":[]}
 {"id":"download-005","category":"data_availability","question":"Plan an OOI M2M request for a known RCA reference designator.","answer_mode":"tool","expected_tool":"ooi_m2m_plan_request","expected_collections":["COSZOHub"]}
-{"id":"concept-001","category":"concepts","question":"What is the Regional Cabled Array?","answer_mode":"corpus","expected_collections":["Websites","Arcada"],"expected_entities":["RCA"]}
+{"id":"concept-001","category":"concepts","question":"What is the Regional Cabled Array?","answer_mode":"corpus","expected_collections":["Websites","RCA Information"],"expected_entities":["RCA"]}
 {"id":"concept-002","category":"concepts","question":"What is COSZO and how does it relate to RCA?","answer_mode":"corpus","expected_collections":["coszo","Websites"],"expected_entities":["COSZO","RCA"]}
-{"id":"concept-003","category":"concepts","question":"What is an OOI reference designator?","answer_mode":"corpus","expected_collections":["Arcada","Instruments"],"expected_entities":[]}
+{"id":"concept-003","category":"concepts","question":"What is an OOI reference designator?","answer_mode":"corpus","expected_collections":["RCA Information","Instruments"],"expected_entities":[]}
 {"id":"concept-004","category":"concepts","question":"Explain the difference between a data product and a channel.","answer_mode":"corpus","expected_collections":["Datasheets","StationMetadata"],"expected_entities":[]}
 {"id":"concept-005","category":"concepts","question":"What role do science junction boxes play in RCA?","answer_mode":"corpus","expected_collections":["Instruments","Websites"],"expected_entities":[]}
 {"id":"literature-001","category":"literature","question":"Find publications about Axial Seamount seismicity.","answer_mode":"corpus","expected_collections":["Literature"],"expected_entities":["Axial Seamount"]}
@@ -51,7 +51,7 @@
 {"id":"tool-001","category":"tool_selection","question":"Download one bounded EarthScope MiniSEED waveform for an exact station and 1-hour window.","answer_mode":"tool","expected_tool":"earthscope_download_waveform","expected_collections":["COSZOHub"]}
 {"id":"tool-002","category":"tool_selection","question":"Search the live PI portal for current COVIS files without downloading them.","answer_mode":"tool","expected_tool":"pi_portal_search","expected_collections":["PIPortal"]}
 {"id":"tool-003","category":"tool_selection","question":"Discover newly generated COSZO output files in the configured directories.","answer_mode":"tool","expected_tool":"coszo_output_discovery","expected_collections":["COSZOHub"]}
-{"id":"tool-004","category":"tool_selection","question":"Retrieve an Arcada record for a named RCA instrument.","answer_mode":"tool","expected_tool":"arcada_retrieval","expected_collections":["Arcada"]}
+{"id":"tool-004","category":"tool_selection","question":"Retrieve RCA Information for a named RCA instrument.","answer_mode":"corpus","expected_collections":["RCA Information"]}
 {"id":"tool-005","category":"tool_avoidance","question":"What is the definition of a hydrophone?","answer_mode":"corpus","expected_collections":["Literature","Instruments"],"expected_entities":[]}
 {"id":"graph-001","category":"graph_edges","question":"Trace an instrument from its site to its data-download endpoint.","answer_mode":"corpus","expected_collections":["Instruments","PIPortal"],"expected_edge_types":["LOCATED_AT","DOWNLOADABLE_FROM"]}
 {"id":"graph-002","category":"graph_edges","question":"Connect a publication to its authors, topic, and source collection.","answer_mode":"corpus","expected_collections":["Literature"],"expected_edge_types":["AUTHORED_BY","MENTIONS","LISTED_IN"]}

@@ -1,10 +1,10 @@
 # RCA and COSZO instrument inventory pipeline
 
-`build_instrument_inventory.py` compiles the instrument-level records already present in the project's Arcada, Websites, Literature, COSZO document, workbook, and StationXML collections.
+`build_instrument_inventory.py` compiles instrument-level records already present in the project's RCA Information collection (preserved upstream Arcada provenance), Websites, Literature, COSZO document, workbook, and StationXML collections.
 
 The inventory preserves six source distinctions:
 
-- RCA instrument or deployment records catalogued by Arcada;
+- RCA instrument or deployment records catalogued by RCA Information;
 - the site-specific COSZO sensor suite;
 - additional confirmed RCA PI instruments;
 - time-bounded RCA experiments;

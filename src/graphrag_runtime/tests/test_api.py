@@ -21,7 +21,7 @@ class FakeRepository:
     def health(self): return True
     def search(self, query, embedding, **kwargs):
         self.calls.append(("search", query, kwargs))
-        return [{"chunk_id": "c1", "collection_id": "axial_earthquakes", "title": "Axial", "text": "Evidence",
+        return [{"chunk_id": "c1", "collection_id": "axial_earthquakes", "collection_label": "axial_earthquakes", "title": "Axial", "text": "Evidence",
                  "score": .9, "lexical_score": .8, "vector_score": .95,
                  "citations": [{"source_id": "s1", "title": "Catalog", "url": "https://example.test"}],
                  "metadata": {"node_local_id": "e1", "locator": None}}]

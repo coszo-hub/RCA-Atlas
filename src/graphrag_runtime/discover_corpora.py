@@ -21,7 +21,9 @@ from typing import Any, Iterable
 CATALOG_SCHEMA_VERSION = "1.0"
 
 COLLECTION_NAMES = {
-    "Arcada": ("arcada", "Arcada"),
+    # ``arcada`` is the stable internal/provenance ID for the pinned upstream
+    # package.  It is presented to RCA Atlas users as RCA Information.
+    "Arcada": ("arcada", "RCA Information"),
     "AxialEarthquakes/graphrag": ("axial_earthquakes", "Axial Seamount earthquakes"),
     "COSZOHub": ("coszo_hub", "COSZO Hub computational outputs"),
     "Datasheets/graphrag": ("datasheets", "Instrument datasheets"),

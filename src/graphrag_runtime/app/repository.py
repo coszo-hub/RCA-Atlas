@@ -4,6 +4,9 @@ from contextlib import contextmanager
 from typing import Any, Iterator, Protocol, Sequence
 
 
+COLLECTION_LABELS = {"arcada": "RCA Information"}
+
+
 class Repository(Protocol):
     def health(self) -> bool: ...
     def search(self, query: str, embedding: Sequence[float], *, limit: int,
@@ -97,6 +100,7 @@ class PostgresRepository:
                 "url": source_url,
             }]
             row["metadata"] = {"node_local_id": row.pop("node_local_id"), "locator": row.pop("locator")}
+            row["collection_label"] = COLLECTION_LABELS.get(row["collection_id"], row["collection_id"])
             result.append(row)
         return result
 

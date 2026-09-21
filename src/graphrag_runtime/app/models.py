@@ -48,6 +48,7 @@ class Citation(BaseModel):
 class SearchHit(BaseModel):
     chunk_id: str
     collection_id: str
+    collection_label: str
     title: str
     text: str
     score: float
