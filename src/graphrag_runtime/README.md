@@ -4,6 +4,15 @@ This package normalizes the 13 RCA/COSZO collections into an immutable build,
 loads it into PostgreSQL 16 with pgvector, and exposes bounded hybrid retrieval,
 graph traversal, and tool-routing functions through a small authenticated API.
 
+## Evidence workspace
+
+The API container also serves a private, evidence-first user interface at its
+root URL (for example `http://127.0.0.1:18000/`). It visualizes hybrid
+retrieval, graph neighbors, citations, and optional tool guidance; it does not
+claim to be an answering model. Enter `GRAPHRAG_API_KEY` from the local `.env`
+file through its settings control. The browser keeps that key only in memory
+for the current tab—never in local storage, source, or a URL.
+
 ## Build and load
 
 Before starting Compose, create a local `.env` from the root `.env.example`.

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07151f"><title>RCA Atlas · Evidence workspace</title>
+  <link rel="stylesheet" href="/assets/atlas.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="mark"><i></i><i></i><i></i></span><span><strong>RCA Atlas</strong><small>Regional Cabled Array · COSZO</small></span></a>
+    <div class="top-actions"><span class="mode"><i></i> Evidence mode</span><button id="settings-button" class="round" type="button" aria-label="Connection settings">⚙</button></div>
+  </header>
+  <main class="layout">
+    <nav class="rail" aria-label="Workspace sections">
+      <span class="rail-title">EXPLORE</span>
+      <button class="rail-item active" data-panel="evidence" type="button"><b>⌕</b>Evidence</button>
+      <button class="rail-item" data-panel="graph" type="button"><b>◌</b>Graph</button>
+      <button class="rail-item" data-panel="tools" type="button"><b>⌘</b>Tools</button>
+      <div class="rail-bottom"><b>13</b><span>collections</span></div>
+    </nav>
+    <section class="research" aria-labelledby="page-title">
+      <span class="eyebrow">PRIVATE RESEARCH WORKSPACE</span>
+      <h1 id="page-title">Ask the <em>observatory.</em></h1>
+      <p class="intro">Search the RCA and COSZO corpus, follow graph connections, and inspect cited evidence before a model synthesizes it.</p>
+      <form id="query-form" class="query-shell">
+        <span class="beam" aria-hidden="true"></span>
+        <label class="sr-only" for="query">Research question</label>
+        <textarea id="query" rows="2" maxlength="1000" placeholder="What do you want to investigate?" required></textarea>
+        <div class="query-bottom"><span>Evidence retrieval <kbd>⌘</kbd><kbd>↵</kbd></span><button id="search-button" class="primary" type="submit"><span>Search atlas</span><b>→</b></button></div>
+      </form>
+      <div class="suggestions"><button type="button" data-question="Where can I get COVIS data?">COVIS data access</button><button type="button" data-question="What Chronfix correction applies to HYS14?">HYS14 Chronfix</button><button type="button" data-question="What earthquakes occurred at Axial yesterday?">Axial earthquakes</button></div>
+      <section id="empty-state" class="empty"><div class="orbs" aria-hidden="true"><i></i><i></i><i></i></div><h2>Evidence, not guesswork.</h2><p>Every result is tied to a stable chunk, source, and graph context. Connect your local API key through settings to begin.</p></section>
+      <section id="results" hidden aria-live="polite"><div class="result-header"><div><span class="eyebrow">EVIDENCE PACKAGE</span><h2 id="result-title">Retrieved evidence</h2></div><span id="result-count"></span></div><div id="result-list" class="result-list"></div></section>
+    </section>
+    <aside class="inspector">
+      <div class="inspector-head"><span>RESEARCH TRACE</span><span id="connection-state">Not connected</span></div>
+      <section class="trace"><div><b>01</b><p><strong>Hybrid retrieval</strong><small>Keyword + semantic candidates</small></p></div><i></i><div><b>02</b><p><strong>Graph expansion</strong><small>Entities and relationships</small></p></div><i></i><div><b>03</b><p><strong>Evidence package</strong><small>Citations and tool guidance</small></p></div></section>
+      <section id="graph-panel" class="side-section"><h3>GRAPH CONNECTIONS <b id="graph-count">—</b></h3><div id="graph-list"><p class="muted">Run a search to reveal related entities.</p></div></section>
+      <section id="tool-panel" class="side-section"><h3>OPTIONAL LIVE TOOLS <b id="tool-count">—</b></h3><div id="tool-list"><p class="muted">Tools are suggested only when deeper or current data may help.</p></div></section>
+    </aside>
+  </main>
+  <dialog id="settings-dialog"><form id="settings-form" method="dialog"><button class="close" value="cancel" aria-label="Close">×</button><span class="eyebrow">LOCAL CONNECTION</span><h2>Connect RCA Atlas</h2><p>Your API key stays only in this browser tab’s memory. It is never saved to local storage or included in a URL.</p><label for="api-key">Graph-RAG API key</label><input id="api-key" type="password" autocomplete="off" placeholder="Paste local API key"><p id="settings-error" class="error" role="alert"></p><button id="connect-button" class="primary wide" type="submit">Connect securely <b>→</b></button></form></dialog>
+  <script src="/assets/atlas.js" defer></script>
+</body>
+</html>

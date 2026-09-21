@@ -4,9 +4,12 @@ import hmac
 import hashlib
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated, Any, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .config import Settings
 from .embeddings import BGE384Provider, EmbeddingProvider, checked_embedding
@@ -36,6 +39,8 @@ def create_app(*, settings: Settings | None = None, repository: Repository | Non
 
     app = FastAPI(title="Graph-RAG Public API", version="0.1.0", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
+    static_root = Path(__file__).with_name("static")
+    app.mount("/assets", StaticFiles(directory=static_root), name="assets")
     app.state.repository = repo
     app.state.embedding_provider = embedder
     app.state.settings = resolved
@@ -44,6 +49,11 @@ def create_app(*, settings: Settings | None = None, repository: Repository | Non
         presented = hashlib.sha256((x_api_key or "").encode("utf-8")).hexdigest()
         if x_api_key is None or not any(hmac.compare_digest(presented, key) for key in resolved.api_key_sha256):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid API key")
+
+    @app.get("/", include_in_schema=False)
+    def atlas_workspace() -> FileResponse:
+        """Serve the local evidence workspace without exposing credentials."""
+        return FileResponse(static_root / "index.html", headers={"Cache-Control": "no-store"})
 
     @app.get("/health")
     def health() -> dict[str, str]:
