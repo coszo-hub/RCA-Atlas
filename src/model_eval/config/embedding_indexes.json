@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "fusion": {"method": "reciprocal_rank_fusion", "k": 60},
+  "indexes": [
+    {"name": "local_bge_small", "model": "BAAI/bge-small-en-v1.5", "provider": "local", "dimension": 384, "content_types": ["text", "offline"], "version": "52398278842ec682c6f32300af41344b1c0b0bb2", "status": "production"},
+    {"name": "contextual_text_voyage", "model": "voyage-context-4", "provider": "voyage", "dimension": 1024, "content_types": ["text", "contextual_text"], "version": "candidate-2026-09", "api_key_env": "VOYAGE_API_KEY", "base_url": "https://api.voyageai.com/v1"},
+    {"name": "general_text_voyage", "model": "voyage-4-large", "provider": "voyage", "dimension": 1024, "content_types": ["text"], "version": "candidate-2026-09", "api_key_env": "VOYAGE_API_KEY", "base_url": "https://api.voyageai.com/v1"},
+    {"name": "visual_gemini", "model": "gemini-embedding-2", "provider": "google", "dimension": 1536, "content_types": ["visual", "text", "pdf"], "version": "candidate-2026-09", "api_key_env": "GEMINI_API_KEY", "base_url": "https://generativelanguage.googleapis.com/v1beta"},
+    {"name": "visual_jina", "model": "jina-embeddings-v4", "provider": "jina", "dimension": 2048, "content_types": ["visual", "text", "pdf"], "version": "candidate-2026-09", "api_key_env": "JINA_API_KEY", "base_url": "https://api.jina.ai/v1"},
+    {"name": "visual_cohere", "model": "embed-v4.0", "provider": "cohere", "dimension": 1024, "content_types": ["visual", "text", "pdf"], "version": "candidate-2026-09", "api_key_env": "COHERE_API_KEY", "base_url": "https://api.cohere.com/v2"},
+    {"name": "local_qwen3", "model": "Qwen/Qwen3-Embedding-4B", "provider": "local", "dimension": 2560, "content_types": ["text", "offline"], "version": "candidate-unpinned"},
+    {"name": "local_bge_m3", "model": "BAAI/bge-m3", "provider": "local", "dimension": 1024, "content_types": ["text", "offline"], "version": "candidate-unpinned"},
+    {"name": "local_arctic", "model": "Snowflake/snowflake-arctic-embed-l-v2.0", "provider": "local", "dimension": 1024, "content_types": ["text", "offline"], "version": "candidate-unpinned"},
+    {"name": "local_nomic", "model": "nomic-ai/nomic-embed-text-v1.5", "provider": "local", "dimension": 768, "content_types": ["text", "offline"], "version": "candidate-unpinned"},
+    {"name": "scientific_specter2", "model": "allenai/specter2_base", "provider": "local", "dimension": 768, "content_types": ["scientific"], "version": "candidate-unpinned"},
+    {"name": "openai_baseline", "model": "text-embedding-3-large", "provider": "openai_compatible", "dimension": 3072, "content_types": ["text"], "version": "candidate-2026-09", "api_key_env": "OPENAI_API_KEY", "base_url": "https://api.openai.com/v1"}
+  ]
+}

@@ -1,12 +1,13 @@
 -- Development-only role used by compose.yaml. Production should provision the
 -- equivalent role and password through its secret manager/IaC.
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'graphrag_api_role') THEN
-        CREATE ROLE graphrag_api_role LOGIN PASSWORD 'local-development-api-password';
-    END IF;
-END
-$$;
+\getenv graphrag_api_database_password GRAPHRAG_API_DATABASE_PASSWORD
+\if :{?graphrag_api_database_password}
+SELECT format('CREATE ROLE graphrag_api_role LOGIN PASSWORD %L', :'graphrag_api_database_password')
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'graphrag_api_role') \gexec
+SELECT format('ALTER ROLE graphrag_api_role PASSWORD %L', :'graphrag_api_database_password') \gexec
+\else
+\quit
+\endif
 
 ALTER ROLE graphrag_api_role NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION
     CONNECTION LIMIT 20;

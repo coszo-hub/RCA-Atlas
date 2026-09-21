@@ -12,7 +12,7 @@ from discover_corpora import COLLECTION_NAMES, build_catalog, write_catalog
 class CorpusCatalogTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.project_root = Path("/Users/quakehunter/Documents/RCN Agent ")
+        cls.project_root = Path(__file__).resolve().parents[2]
         cls.catalog = build_catalog(cls.project_root, generated_at="2026-09-19T00:00:00Z")
 
     def test_discovers_every_collection_manifest(self) -> None:

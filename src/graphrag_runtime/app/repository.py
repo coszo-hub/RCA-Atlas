@@ -21,16 +21,28 @@ class PostgresRepository:
                  statement_timeout_ms: int = 4_000,
                  embedding_model: str = "BAAI/bge-small-en-v1.5") -> None:
         try:
+            from pgvector import Vector
             from pgvector.psycopg import register_vector
             from psycopg_pool import ConnectionPool
         except ImportError as error:  # pragma: no cover
             raise RuntimeError("install psycopg, psycopg-pool, and pgvector") from error
 
         def configure(connection: Any) -> None:
+            # The local migration installs the extension in ``public``, while
+            # the service role intentionally keeps ``public`` out of its
+            # steady-state search_path. Expose it only long enough for the
+            # pgvector client to resolve the type OIDs, then restore the
+            # restricted function-only path before the connection is pooled.
+            with connection.cursor() as cursor:
+                cursor.execute("SET search_path = pg_catalog, public")
             register_vector(connection)
+            with connection.cursor() as cursor:
+                cursor.execute("SET search_path = pg_catalog, graphrag_api")
+            connection.commit()
 
         self.statement_timeout_ms = statement_timeout_ms
         self.embedding_model = embedding_model
+        self._vector_type = Vector
         self.pool = ConnectionPool(database_url, min_size=min_size, max_size=max_size,
                                    kwargs={"autocommit": False}, configure=configure, open=True)
 
@@ -66,7 +78,7 @@ class PostgresRepository:
         with self._cursor() as cursor:
             cursor.execute(
                 "SELECT * FROM graphrag_api.hybrid_search(%s,%s,%s,%s,%s,%s,%s)",
-                (query, list(embedding), limit, list(collection_ids) or None,
+                (query, self._vector_type(embedding), limit, list(collection_ids) or None,
                  self.embedding_model, lexical_weight, vector_weight),
             )
             rows = self._dict_rows(cursor)

@@ -1,0 +1,12 @@
+# Optional override for rootless Docker hosts where iptables/NAT setup is not
+# available. It affects image build networking only; runtime services remain on
+# the private Compose network declared in compose.yaml.
+services:
+  api:
+    build:
+      context: .
+      network: host
+  loader:
+    build:
+      context: .
+      network: host

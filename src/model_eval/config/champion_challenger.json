@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "production_retrieval_champion": {"index": "local_bge_small", "basis": "existing validated RCA Atlas deployment"},
+  "answer_champion": null,
+  "answer_selection_status": "unselected_pending_credentialed_RCA_evaluation",
+  "answer_challengers": ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5-20251001", "kimi-k3", "kimi-k2.6", "kimi-k2-thinking", "gemini-3.1-pro-preview", "gemini-3.8-flash"],
+  "selection_policy": "Select only from frozen-evidence and end-to-end RCA Atlas results; public benchmarks are not selection evidence."
+}

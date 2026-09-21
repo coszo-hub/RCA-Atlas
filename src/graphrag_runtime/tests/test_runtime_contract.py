@@ -44,8 +44,15 @@ class RuntimeContractTests(unittest.TestCase):
         source = (ROOT / "app/repository.py").read_text()
         for name in ("runtime_health", "hybrid_search", "graph_neighbors", "route_tools"):
             self.assertIn(f"graphrag_api.{name}", source)
+        self.assertIn("self._vector_type(embedding)", source)
         for table in ("graphrag.chunks", "graphrag.nodes", "graphrag.edge_facts", "graphrag.tools"):
             self.assertNotIn(table, source)
+
+    def test_pgvector_registration_restores_restricted_search_path(self):
+        source = (ROOT / "app/repository.py").read_text()
+        registration = source.index("register_vector(connection)")
+        restricted = source.index("SET search_path = pg_catalog, graphrag_api", registration)
+        self.assertGreater(restricted, registration)
 
 
 if __name__ == "__main__":

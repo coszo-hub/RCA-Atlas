@@ -6,6 +6,17 @@ graph traversal, and tool-routing functions through a small authenticated API.
 
 ## Build and load
 
+Before starting Compose, create a local `.env` from the root `.env.example`.
+Set unique `POSTGRES_PASSWORD` and `GRAPHRAG_API_DATABASE_PASSWORD` values,
+set `GRAPHRAG_API_KEY` for clients, and put only its SHA-256 digest in
+`GRAPHRAG_API_KEY_SHA256`. The `.env` file is ignored by Git; Compose
+deliberately has no usable checked-in credentials.
+
+```sh
+cp ../../.env.example ../../.env
+printf %s "$GRAPHRAG_API_KEY" | sha256sum | awk '{print $1}'
+```
+
 Run the normalizer against the project that owns `runtime_data/GraphRAG/corpus_catalog.json`:
 
 ```sh
@@ -50,6 +61,15 @@ depth, predicate filters, and execution time.
 
 The checked-in Compose credentials are development-only. Bindings expose the
 API only on loopback and do not expose PostgreSQL on the host.
+
+For rootless Docker hosts without NAT, include the rootless override and choose
+an available loopback port:
+
+```sh
+GRAPHRAG_API_PORT=18000 docker compose -f compose.yaml -f compose.rootless.yaml up -d db
+GRAPHRAG_API_PORT=18000 docker compose -f compose.yaml -f compose.rootless.yaml --profile load run --rm loader
+GRAPHRAG_API_PORT=18000 docker compose -f compose.yaml -f compose.rootless.yaml up -d api
+```
 
 ## Verification
 
