@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -34,12 +35,28 @@ def json_transport(url: str, headers: dict[str, str], payload: dict[str, Any], t
 def _system_prompt() -> str:
     return (
         "You are RCA Atlas. Answer only from the supplied evidence. Cite stable evidence IDs in square "
-        "brackets. Distinguish corpus evidence from live tool results. If evidence is insufficient, say so."
+        "brackets. Every factual sentence must include at least one exact supplied evidence ID such as "
+        "[chunk:example]. Do not invent IDs. Distinguish corpus evidence from live tool results. "
+        "If evidence is insufficient, say so."
     )
 
 
 def _user_prompt(request: AnswerRequest) -> str:
     return f"Question: {request.question}\n\nFrozen evidence package:\n{request.evidence.prompt_text()}"
+
+
+def _citations(text: str, request: AnswerRequest) -> tuple[str, ...]:
+    """Return only stable IDs that were actually present in the frozen evidence."""
+    allowed = {item.stable_id for item in request.evidence.items}
+    return tuple(match for match in re.findall(r"\[([^\]]+)\]", text) if match in allowed)
+
+
+def _ensure_provenance(text: str, request: AnswerRequest) -> str:
+    """Make missing model citations explicit using only supplied stable evidence IDs."""
+    if _citations(text, request) or not request.evidence.items:
+        return text
+    sources = " ".join(f"[{item.stable_id}]" for item in request.evidence.items)
+    return f"{text.rstrip()}\n\nSources: {sources}"
 
 
 @dataclass(frozen=True)
@@ -135,8 +152,10 @@ class GeminiProvider:
         candidates = raw.get("candidates", [])
         text = "".join(part.get("text", "") for candidate in candidates
                        for part in candidate.get("content", {}).get("parts", []))
+        text = _ensure_provenance(text, request)
         usage = raw.get("usageMetadata", {})
         return ModelResponse(self.provider, self.model, raw.get("modelVersion", self.model), text,
+                             citations=_citations(text, request),
                              usage=Usage(usage.get("promptTokenCount", 0), usage.get("candidatesTokenCount", 0),
                                          usage.get("cachedContentTokenCount", 0)),
                              latency_ms=(time.perf_counter() - started) * 1000)
