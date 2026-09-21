@@ -47,6 +47,14 @@ class ModelLabTests(unittest.TestCase):
         self.assertTrue({"instrument_identity", "chronfix", "visual", "tool_selection", "full_text"}
                         <= {row["category"] for row in rows})
 
+    def test_gold_dataset_covers_every_question_without_duplicates(self):
+        questions = [json.loads(line) for line in (ROOT / "datasets/rca_eval_v1.jsonl").read_text().splitlines()]
+        gold = [json.loads(line) for line in (ROOT / "datasets/rca_eval_v1_gold.jsonl").read_text().splitlines()]
+        self.assertEqual({row["id"] for row in questions}, {row["question_id"] for row in gold})
+        self.assertEqual(len(gold), len({row["question_id"] for row in gold}))
+        self.assertTrue(all(row.get("reference_answer") for row in gold))
+        self.assertTrue(all(row["review_status"] in {"corpus_verified", "requires_human_review"} for row in gold))
+
     def test_query_routing_is_selective(self):
         self.assertNotIn("visual", route_query("Where is PREST deployed?"))
         self.assertIn("visual", route_query("Show a figure of PN1B"))
