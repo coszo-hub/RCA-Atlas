@@ -13,6 +13,13 @@ claim to be an answering model. Enter `GRAPHRAG_API_KEY` from the local `.env`
 file through its settings control. The browser keeps that key only in memory
 for the current tab—never in local storage, source, or a URL.
 
+When `GEMINI_API_KEY` is configured, `POST /v1/answer` runs the complete
+private answer path: bounded hybrid retrieval, graph expansion, a frozen
+evidence package, Gemini synthesis, and stable chunk citations. Set
+`GRAPHRAG_ANSWER_MODEL=gemini-2.5-flash` (the default) or another model exposed
+to that key. The Gemini key is passed only to the API container; never expose
+it to a browser or the public Pages preview.
+
 ## Build and load
 
 Before starting Compose, create a local `.env` from the root `.env.example`.
@@ -79,6 +86,7 @@ GRAPHRAG_API_PORT=18000 docker compose -f compose.yaml -f compose.rootless.yaml 
 GRAPHRAG_API_PORT=18000 docker compose -f compose.yaml -f compose.rootless.yaml --profile load run --rm loader
 GRAPHRAG_API_PORT=18000 docker compose -f compose.yaml -f compose.rootless.yaml up -d api
 ```
+
 
 ## Verification
 

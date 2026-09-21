@@ -20,6 +20,8 @@ services:
     environment:
       DATABASE_URL: postgresql://graphrag_api_role:${GRAPHRAG_API_DATABASE_PASSWORD:?set GRAPHRAG_API_DATABASE_PASSWORD in .env}@db:5432/graphrag
       GRAPHRAG_API_KEY_SHA256: ${GRAPHRAG_API_KEY_SHA256:?set GRAPHRAG_API_KEY_SHA256 in .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GRAPHRAG_ANSWER_MODEL: ${GRAPHRAG_ANSWER_MODEL:-gemini-2.5-flash}
       GRAPHRAG_STATEMENT_TIMEOUT_MS: "4000"
     ports: ["127.0.0.1:${GRAPHRAG_API_PORT:-8000}:8000"]
     depends_on:

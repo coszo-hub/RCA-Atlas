@@ -12,6 +12,8 @@ class Settings:
     pool_min_size: int = 1
     pool_max_size: int = 10
     embedding_model: str = "BAAI/bge-small-en-v1.5"
+    gemini_api_key: str = ""
+    answer_model: str = "gemini-2.5-flash"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -27,4 +29,6 @@ class Settings:
         pool_min = min(20, max(1, int(os.environ.get("GRAPHRAG_POOL_MIN", "1"))))
         pool_max = min(50, max(pool_min, int(os.environ.get("GRAPHRAG_POOL_MAX", "10"))))
         return cls(database_url, keys, timeout, pool_min, pool_max,
-                   os.environ.get("GRAPHRAG_EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"))
+                   os.environ.get("GRAPHRAG_EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"),
+                   os.environ.get("GEMINI_API_KEY", ""),
+                   os.environ.get("GRAPHRAG_ANSWER_MODEL", "gemini-2.5-flash"))

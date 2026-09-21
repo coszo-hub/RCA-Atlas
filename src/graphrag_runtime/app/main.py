@@ -11,9 +11,10 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from .answering import AnsweringError, GeminiAnswerer
 from .config import Settings
 from .embeddings import BGE384Provider, EmbeddingProvider, checked_embedding
-from .models import (ContextRequest, ContextResponse, NeighborsRequest, NeighborsResponse,
+from .models import (AnswerRequest, AnswerResponse, ContextRequest, ContextResponse, NeighborsRequest, NeighborsResponse,
                      SearchRequest, SearchResponse, ToolsRequest, ToolsResponse)
 from .repository import PostgresRepository, Repository
 
@@ -119,6 +120,40 @@ def create_app(*, settings: Settings | None = None, repository: Repository | Non
         except Exception:
             LOGGER.exception("context lookup failed")
             raise HTTPException(503, "context temporarily unavailable") from None
+
+    @app.post("/v1/answer", response_model=AnswerResponse)
+    def answer(body: AnswerRequest, _: None = Depends(authorize)) -> dict[str, Any]:
+        if not resolved.gemini_api_key:
+            raise HTTPException(503, "answer model is not configured")
+        if body.lexical_weight + body.vector_weight <= 0:
+            raise HTTPException(422, "at least one retrieval weight must be positive")
+        try:
+            vector = checked_embedding(embedder, body.query)
+            hits = repo.search(body.query, vector, limit=body.limit,
+                               lexical_weight=body.lexical_weight, vector_weight=body.vector_weight,
+                               collection_ids=body.collection_ids)
+            seeds, seen = [], set()
+            for hit in hits:
+                key = (hit["collection_id"], hit.get("metadata", {}).get("node_local_id"))
+                if key[1] and key not in seen:
+                    seeds.append({"collection_id": key[0], "local_id": key[1]})
+                    seen.add(key)
+            neighbors = repo.neighbors(seeds[:20], hops=body.graph_hops,
+                                       limit=min(100, body.neighbors_per_seed * max(1, len(seeds)))) \
+                if seeds and body.graph_hops else []
+            tool_hints = repo.route_tools(body.query, limit=body.tool_limit) if body.tool_limit else []
+            generated = GeminiAnswerer(resolved.gemini_api_key, model=resolved.answer_model).answer(
+                body.query, hits, neighbors, body.max_output_tokens)
+            return {"query": body.query, "hits": hits, "neighbors": neighbors, "tool_hints": tool_hints,
+                    "answer": generated["answer"], "answer_model": generated["model"],
+                    "answer_latency_ms": generated["latency_ms"], "input_tokens": generated["input_tokens"],
+                    "output_tokens": generated["output_tokens"], "answer_citations": generated["citations"]}
+        except AnsweringError:
+            LOGGER.exception("answer synthesis failed")
+            raise HTTPException(503, "answer model temporarily unavailable") from None
+        except Exception:
+            LOGGER.exception("answer lookup failed")
+            raise HTTPException(503, "answer temporarily unavailable") from None
 
     return app
 

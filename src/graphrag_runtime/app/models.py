@@ -87,6 +87,25 @@ class ContextResponse(SearchResponse):
     tool_hints: list[ToolHint]
 
 
+class AnswerRequest(ContextRequest):
+    max_output_tokens: int = Field(default=600, ge=64, le=1_000)
+
+
+class AnswerCitation(BaseModel):
+    id: str
+    title: str
+    url: str = ""
+
+
+class AnswerResponse(ContextResponse):
+    answer: str
+    answer_model: str
+    answer_latency_ms: float
+    input_tokens: int
+    output_tokens: int
+    answer_citations: list[AnswerCitation]
+
+
 class NeighborsResponse(BaseModel):
     neighbors: list[Neighbor]
 
