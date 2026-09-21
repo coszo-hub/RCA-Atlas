@@ -1,0 +1,16 @@
+name = "rca-atlas"
+main = "src/index.js"
+compatibility_date = "2026-09-21"
+
+# This is a public value, not a secret. Set ATLAS_API_ORIGIN to the HTTPS
+# Cloudflare Tunnel URL after the private Graph-RAG API is tunnelled.
+[vars]
+ALLOWED_ORIGIN = "https://coszo.org"
+ANSWER_MODEL = "gemini-2.5-flash"
+
+# Secrets, never committed. Configure after deployment:
+#   wrangler secret put GEMINI_API_KEY
+#   wrangler secret put ATLAS_API_KEY
+#   wrangler secret put ATLAS_API_ORIGIN
+# Optional when Turnstile protection is added:
+#   wrangler secret put TURNSTILE_SECRET

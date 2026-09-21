@@ -1,0 +1,8 @@
+{
+  "name": "rca-atlas-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npx --yes wrangler deploy --dry-run"
+  }
+}
