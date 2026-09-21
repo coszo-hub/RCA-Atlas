@@ -6,6 +6,8 @@
 .pytest_cache/
 .venv/
 venv/
+node_modules/
+src/atlas_ui/dist/
 .env
 .env.*
 !.env.example
@@ -42,4 +44,3 @@ venv/
 *.db
 *.pem
 *.key
-
