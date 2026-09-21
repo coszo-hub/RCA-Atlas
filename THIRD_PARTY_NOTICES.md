@@ -23,7 +23,8 @@ In particular:
   `src/agentic_qaqc/vendor/rca_data_tools`.
 - The optional React user interface under `src/atlas_ui` bundles the
   MIT-licensed `border-beam` and `thinking-orbs` packages by Jakub Antalik
-  from Libraries.dev. Its directory contains the applicable package notice.
+  from Libraries.dev, plus `react-force-graph-3d` and `three` for the 3D
+  graph view. Its directory contains the applicable package notice.
 - Source URLs, citations, identifiers, and provenance records are retained in
   the corpus so downstream systems can identify and attribute each source.
 

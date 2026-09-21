@@ -1,0 +1,9 @@
+.graph-view { margin-top: 56px; }
+.graph-note { max-width: 690px; color: #9bb2b7; font-size: 13px; }
+.graph-stage { height: 530px; position: relative; overflow: hidden; border: 1px solid #29434a; border-radius: 14px; background: #091216; }
+.graph-readout { position: absolute; left: 17px; bottom: 17px; padding: 12px 14px; border: 1px solid rgba(126,218,215,.23); border-radius: 9px; background: rgba(7,16,20,.84); backdrop-filter: blur(8px); pointer-events: none; }
+.graph-readout strong, .graph-readout span { display: block; }
+.graph-readout strong { margin-top: 3px; font-size: 15px; }
+.graph-readout span { font-size: 11px; color: #9cb6bb; }
+.graph-loading { padding: 22px; color: #9cb6bb; }
+@media (max-width: 800px) { .graph-stage { height: 390px; } }
