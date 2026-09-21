@@ -37,7 +37,7 @@ function App() {
     <main className="atlas-main">
       <form className="query-form" onSubmit={(event) => { event.preventDefault(); setSearched(true); }}>
         <BorderBeam size="md" colorVariant="colorful" strength={0.7}>
-          <div className="search-box"><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question"/><button type="submit" aria-label="Search Ask Atlas">↵</button></div>
+          <div className="search-box"><span className="atlas-chip">Atlas</span><textarea value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question" rows="2"/><div className="composer-footer"><span className="composer-chip">Evidence⌄</span><span className="composer-chip">Auto⌄</span><button type="submit" aria-label="Search Ask Atlas">↑</button></div></div>
         </BorderBeam>
       </form>
       {searched && <section className="response" aria-live="polite">
