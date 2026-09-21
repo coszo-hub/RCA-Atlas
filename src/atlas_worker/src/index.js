@@ -60,10 +60,18 @@ function citations(hits) {
   });
 }
 
-function evidencePackage(context) {
+function evidencePackage(context, question) {
   const sections = [];
   let remaining = MAX_EVIDENCE_CHARS;
-  for (const hit of context.hits || []) {
+  const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])];
+  const ranked = [...(context.hits || [])].map((hit, index) => {
+    const title = String(hit.title || "").toLowerCase();
+    const text = String(hit.text || "").toLowerCase();
+    const relevance = terms.reduce((score, term) => score +
+      (title.includes(term) ? 12 : 0) + (text.includes(term) ? 2 : 0), 0);
+    return { hit, index, relevance };
+  }).sort((a, b) => b.relevance - a.relevance || a.index - b.index).slice(0, 6);
+  for (const { hit } of ranked) {
     if (remaining <= 0) break;
     const citationIds = (hit.citations || []).map((c) => c.source_id).filter(Boolean).join(", ");
     const header = `[${hit.chunk_id}] ${hit.title}${citationIds ? ` | sources: ${citationIds}` : ""}\n`;
@@ -89,16 +97,20 @@ async function postJson(url, body, headers = {}) {
 }
 
 async function generateAnswer(question, context, env) {
-  const evidence = evidencePackage(context);
+  const evidence = evidencePackage(context, question);
   if (!evidence) throw new Error("no retrieved evidence");
   const citationList = citations(context.hits || []).map((c) => `[${c.id}]`).join(", ");
-  const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nAnswer only from the evidence. If it is insufficient, say so. Cite every factual claim using the stable source IDs shown in square brackets. Do not invent URLs, live values, or tool results. Available source IDs: ${citationList}`;
+  const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nFirst compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist. Write a complete, useful research answer from the evidence, not a one-line summary. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Use short sections or bullets when useful. State clearly what the evidence does not establish. Cite every factual claim using the stable source IDs shown in square brackets. Do not invent URLs, live values, or tool results. Available source IDs: ${citationList}`;
   const model = env.ANSWER_MODEL || "gemini-2.5-flash";
   const upstream = await postJson(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`,
     {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.15, maxOutputTokens: 700 },
+      generationConfig: {
+        temperature: 0.15,
+        maxOutputTokens: 4096,
+        thinkingConfig: { thinkingBudget: 1024 },
+      },
     },
   );
   const answer = upstream.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
