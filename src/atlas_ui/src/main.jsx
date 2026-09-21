@@ -34,6 +34,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("How many earthquakes occurred at Axial Seamount yesterday?");
+  const [askedQuestion, setAskedQuestion] = useState("");
   const graph = useMemo(() => evidenceGraph(result), [result]);
   const answer = result?.answer || "";
 
@@ -55,6 +56,7 @@ function App() {
     const question = query.trim();
     if (question.length < 2 || loading) return;
     setSearched(true);
+    setAskedQuestion(question);
     setLoading(true);
     setResult(null);
     setTyped("");
@@ -84,6 +86,7 @@ function App() {
         </BorderBeam>
       </form>
       {searched && <section className="response" aria-live="polite">
+        <div className="question-bubble">{askedQuestion}</div>
         {loading && <div className="solving"><ThinkingOrb state="solving" size={64} theme="dark" aria-label="Synthesizing evidence"/><span>Retrieving evidence</span></div>}
         {error && <p className="error">{error}</p>}
         {answer && <p className="generated">{typed}<span className={complete ? "cursor done" : "cursor"}>|</span></p>}
