@@ -36,7 +36,7 @@ function App() {
     <div className="wordmark">Ask Atlas</div>
     <main className="atlas-main">
       <form className="query-form" onSubmit={(event) => { event.preventDefault(); setSearched(true); }}>
-        <BorderBeam size="md" colorVariant="colorful" strength={0.7} active={!searched} theme="dark">
+        <BorderBeam size="md" colorVariant="colorful" strength={0.7}>
           <div className="search-box"><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question"/><button type="submit" aria-label="Search Ask Atlas">↵</button></div>
         </BorderBeam>
       </form>
