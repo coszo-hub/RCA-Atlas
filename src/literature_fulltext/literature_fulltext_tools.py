@@ -663,7 +663,9 @@ class LiteratureFullTextToolkit:
         metadata={
             "schema_version":"1.0","extraction_version":EXTRACTION_VERSION,"work_id":row["id"],
             "title":row.get("resolved_title") or row.get("citation"),"doi":normalize_doi(row.get("resolved_doi")),
-            "source_url":_safe_url_for_record(response["final_url"]),"retrieved_at":utc_now(),
+            "source_url":_safe_url_for_record(response["final_url"]) if response.get("final_url") else None,"retrieved_at":utc_now(),
+            "source_origin":response.get("source_origin", "public_web"),
+            "source_descriptor":response.get("source_descriptor"),
             "content_type":response["content_type"],"byte_size":len(body),"sha256":digest,"payload_file":payload_name,
             "etag":response.get("etag"),"last_modified":response.get("last_modified"),"page_count":extraction.get("page_count"),
             "pages_processed":extraction.get("pages_processed"),"truncated":extraction.get("truncated",False),"ocr_pages":extraction.get("ocr_pages",[]),
@@ -674,6 +676,21 @@ class LiteratureFullTextToolkit:
         for name,data in (("chunks.jsonl",chunks_payload),("metadata.json",json.dumps(metadata,indent=2,ensure_ascii=False)+"\n")):
             temporary=root/f".{name}.{uuid.uuid4().hex}.tmp"; temporary.write_text(data,encoding="utf-8"); os.chmod(temporary,0o600); os.replace(temporary,root/name)
         return {"ok":True,"cache":{"metadata":metadata,"chunks":chunks,"root":root}}
+
+    def ingest_user_pdf(self, row: dict, path: Path, *, max_pages: int = DEFAULT_MAX_PAGES,
+                        max_ocr_pages: int = DEFAULT_MAX_OCR_PAGES) -> dict:
+        """Cache a locally supplied PDF with no invented public source URL."""
+        body = path.read_bytes()
+        if not body.startswith(b"%PDF-"):
+            raise ValueError("supplied file is not a PDF")
+        extraction = self._extract_pdf(path, max_pages=max_pages, max_ocr_pages=max_ocr_pages)
+        chunks = self._chunk_units(row["id"], extraction["units"])
+        response = {
+            "final_url": None, "content_type": "application/pdf", "etag": None,
+            "last_modified": None, "source_origin": "user_supplied",
+            "source_descriptor": path.name,
+        }
+        return self._write_cache(row, body, "pdf", response, extraction, chunks)
 
     def _cache_pdf(self, row: dict, body: bytes, response: dict, *, max_pages: int, max_ocr_pages: int) -> dict:
         with tempfile.TemporaryDirectory(prefix="rcn-fulltext-download-") as temp:

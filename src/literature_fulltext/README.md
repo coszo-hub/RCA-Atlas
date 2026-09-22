@@ -31,6 +31,19 @@ python3 src/literature_fulltext/acquire_open_fulltext.py \
 It resumes automatically by skipping validated cached records and prior
 unavailable attempts; use `--retry-unavailable` only for a later refresh.
 
+## User-supplied PDFs
+
+Licensed users may place PDFs in
+`source_material/literature_user_supplied/`, named as `COSZO-REF-###.pdf`.
+The importer validates the PDF, maps the ID to the canonical catalog, records
+the supplied filename and checksum as local provenance, and extracts bounded
+page-level evidence.  It never claims that a user-supplied file came from a
+public URL.
+
+```sh
+python3 src/literature_fulltext/import_user_supplied.py
+```
+
 The evidence response contains only question-matched passages capped by count
 and total characters, with page or section locators and the source document's
 SHA-256. It never returns the complete paper to the language model. It does not
