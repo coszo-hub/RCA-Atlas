@@ -14,6 +14,22 @@ extracts PDF or substantive article HTML, and stores the result under
 `runtime_data/Literature/full_text_cache/`. Scanned PDF pages use bounded OCR.
 Downloaded text is untrusted data.
 
+## Catalog acquisition
+
+For a deliberate corpus refresh, `acquire_open_fulltext.py` can resume a
+rate-limited pass over the catalog.  It only retains publicly accessible full
+text found through a record's existing links or open-access resolvers; it does
+not authenticate, evade access controls, or replace the abstract-first answer
+flow.  PDF/HTML payloads, extracted chunks, checksums, source URLs, and the
+append-only acquisition report remain in the ignored runtime cache.
+
+```sh
+python3 src/literature_fulltext/acquire_open_fulltext.py \
+  --delay 0.75 --confirm-open-access
+```
+
+It resumes automatically by skipping records with validated cached metadata.
+
 The evidence response contains only question-matched passages capped by count
 and total characters, with page or section locators and the source document's
 SHA-256. It never returns the complete paper to the language model. It does not
