@@ -6,6 +6,7 @@ const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
 const MAX_GRAPH_HOPS = 2;
 const MAX_EVIDENCE_CHARS = 18_000;
+const AXIAL_CATALOG = "http://axial.ocean.washington.edu";
 
 function corsHeaders(env, origin) {
   const allowed = env.ALLOWED_ORIGIN || "https://coszo.org";
@@ -127,6 +128,39 @@ async function generateAnswer(question, context, env) {
   return { answer, model };
 }
 
+function axialCountDay(question) {
+  const q = question.toLowerCase();
+  if (!/axial/.test(q) || !/(how many|count|number of)/.test(q) || !/earthquake/.test(q)) return null;
+  const explicit = q.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  if (explicit) return explicit[1];
+  const now = new Date();
+  if (q.includes("yesterday")) now.setUTCDate(now.getUTCDate() - 1);
+  else if (!q.includes("today")) return null;
+  return now.toISOString().slice(0, 10);
+}
+
+async function liveAxialCount(question) {
+  const day = axialCountDay(question);
+  if (!day) return null;
+  const stamp = day.replaceAll("-", "");
+  const sourceUrl = `${AXIAL_CATALOG}/hypo71/hypo71_${stamp}.dat`;
+  const upstream = await fetch(sourceUrl, { signal: AbortSignal.timeout(20_000) });
+  if (!upstream.ok) throw new Error(`Axial catalog ${upstream.status}`);
+  const catalog = await upstream.text();
+  const count = catalog.split(/\r?\n/).filter((line) => {
+    const parts = line.trim().split(/\s+/);
+    return parts.length >= 18 && parts[0] === stamp;
+  }).length;
+  return {
+    query: question,
+    answer: `There were ${count} Axial Seamount earthquakes in the live catalog for ${day} UTC.`,
+    answer_model: "axial_count_events (live catalog)",
+    answer_citations: [{ id: "axial-live-catalog", title: "Axial Seamount Earthquake Catalog", url: sourceUrl }],
+    hits: [], neighbors: [],
+    tool_hints: [{ name: "axial_count_events", description: "Executed against the live daily Axial catalog", score: 1, required_arguments: ["day"], input_schema: { day } }],
+  };
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("origin") || "";
@@ -136,13 +170,15 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") return response({ status: "ok" }, 200, cors);
     if (request.method !== "POST" || url.pathname !== "/v1/answer") return response({ error: "not found" }, 404, cors);
     if (!validOrigin(origin, env)) return response({ error: "origin not allowed" }, 403, cors);
-    if (!env.GEMINI_API_KEY || !env.ATLAS_API_KEY || !env.ATLAS_API_ORIGIN) {
-      return response({ error: "service is not configured" }, 503, cors);
-    }
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
+      const liveToolResult = await liveAxialCount(query);
+      if (liveToolResult) return response(liveToolResult, 200, cors);
+      if (!env.GEMINI_API_KEY || !env.ATLAS_API_KEY || !env.ATLAS_API_ORIGIN) {
+        return response({ error: "service is not configured" }, 503, cors);
+      }
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
         query, limit: MAX_HITS, graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
