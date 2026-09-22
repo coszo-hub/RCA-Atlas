@@ -1,0 +1,21 @@
+# Copy into an ignored Microsoft GraphRAG pilot directory after `graphrag init`.
+# Pin the Microsoft GraphRAG package version in the pilot environment.
+completion_models:
+  default_chat_model:
+    model_provider: openai
+    model: gpt-4.1-mini
+    auth_method: api_key
+    api_key: ${GRAPHRAG_API_KEY}
+embedding_models:
+  default_embedding_model:
+    model_provider: openai
+    model: text-embedding-3-large
+    auth_method: api_key
+    api_key: ${GRAPHRAG_API_KEY}
+input:
+  type: text
+extract_graph:
+  entity_types: [instrument, site, deployment, parameter, data_product, publication, figure, qa_rule, data_access_system]
+  max_gleanings: 1
+extract_claims:
+  enabled: true
