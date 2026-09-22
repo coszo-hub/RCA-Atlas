@@ -28,7 +28,8 @@ python3 src/literature_fulltext/acquire_open_fulltext.py \
   --delay 0.75 --confirm-open-access
 ```
 
-It resumes automatically by skipping records with validated cached metadata.
+It resumes automatically by skipping validated cached records and prior
+unavailable attempts; use `--retry-unavailable` only for a later refresh.
 
 The evidence response contains only question-matched passages capped by count
 and total characters, with page or section locators and the source document's

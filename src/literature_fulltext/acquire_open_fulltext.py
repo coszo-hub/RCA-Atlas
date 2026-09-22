@@ -34,11 +34,28 @@ def cached_work_ids(cache_dir: Path) -> set[str]:
     }
 
 
+def completed_work_ids(report: Path) -> set[str]:
+    """Return prior non-error attempts so ordinary resumes do not hammer hosts."""
+    if not report.is_file():
+        return set()
+    completed = set()
+    for line in report.read_text(encoding="utf-8").splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        work_id = event.get("work_id")
+        if work_id and event.get("access_status") not in {"error", None}:
+            completed.add(str(work_id).casefold())
+    return completed
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=0, help="Maximum uncached works to attempt; 0 means all.")
     parser.add_argument("--delay", type=float, default=0.75, help="Seconds between works (default: 0.75).")
     parser.add_argument("--report", type=Path, default=CACHE / "acquisition_report.jsonl")
+    parser.add_argument("--retry-unavailable", action="store_true", help="Retry records already recorded as unavailable.")
     parser.add_argument("--confirm-open-access", action="store_true", help="Required before making network requests.")
     args = parser.parse_args()
     if not args.confirm_open_access:
@@ -47,7 +64,12 @@ def main() -> int:
     CACHE.mkdir(parents=True, exist_ok=True)
     toolkit = LiteratureFullTextToolkit(CATALOG, CACHE)
     already_cached = cached_work_ids(CACHE)
-    records = [row for row in toolkit.rows if str(row["id"]).casefold() not in already_cached]
+    completed = set() if args.retry_unavailable else completed_work_ids(args.report)
+    records = [
+        row for row in toolkit.rows
+        if str(row["id"]).casefold() not in already_cached
+        and str(row["id"]).casefold() not in completed
+    ]
     # Existing direct full-text candidates first; all remaining DOI-resolvable
     # records follow.  Stable ordering makes interrupted jobs reproducible.
     records.sort(key=lambda row: (not bool(row.get("full_text_url")), not bool(row.get("resolved_doi")), row["id"]))
