@@ -24,6 +24,8 @@ docker compose up -d api
 
 The bootstrap command downloads the release manifest and three versioned
 archives, verifies every SHA-256 digest, and restores their original paths.
+Supplemental releases may declare a base release; the bootstrap tool restores
+the verified base archives first and then the supplemental runtime archive.
 See `src/DATA_CORPUS_METHOD.md` for the complete collection and tool method.
 
 ## Create a transfer release

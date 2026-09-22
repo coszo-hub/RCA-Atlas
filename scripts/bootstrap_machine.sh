@@ -31,36 +31,51 @@ else
   gh release download "$release" --repo "$repo" --dir "$download_dir" --pattern 'release-manifest.json' --clobber
 fi
 
-python3 - "$download_dir/release-manifest.json" <<'PY' > "$download_dir/asset-names.txt"
+base_release=$(python3 - "$download_dir/release-manifest.json" <<'PY'
 import json,sys
-for row in json.load(open(sys.argv[1]))["assets"]:
-    print(row["name"])
+print(json.load(open(sys.argv[1])).get("base_release", ""))
+PY
+)
+
+if [ -n "$base_release" ]; then
+  mkdir -p "$download_dir/base-release"
+  gh release download "$base_release" --repo "$repo" --dir "$download_dir/base-release" --pattern 'release-manifest.json' --clobber
+  nested_base=$(python3 - "$download_dir/base-release/release-manifest.json" <<'PY'
+import json,sys
+print(json.load(open(sys.argv[1])).get("base_release", ""))
+PY
+)
+  test -z "$nested_base" || { echo "Nested base_release is not supported" >&2; exit 1; }
+fi
+
+python3 - "$release" "$download_dir/release-manifest.json" "$base_release" "${download_dir}/base-release/release-manifest.json" <<'PY' > "$download_dir/assets.tsv"
+import json,pathlib,sys
+release,manifest_path,base_release,base_manifest_path=sys.argv[1:]
+def emit(tag, path):
+    for row in json.load(open(path))["assets"]:
+        print("\t".join((tag, row["name"], row["sha256"], str(row["bytes"]))))
+if base_release:
+    emit(base_release, base_manifest_path)
+emit(release, manifest_path)
 PY
 
-while IFS= read -r asset; do
-  if [ "$release" = latest ]; then
+while IFS="$(printf '\t')" read -r asset_release asset sha256 bytes; do
+  if [ "$asset_release" = latest ]; then
     gh release download --repo "$repo" --dir "$download_dir" --pattern "$asset" --clobber
   else
-    gh release download "$release" --repo "$repo" --dir "$download_dir" --pattern "$asset" --clobber
+    gh release download "$asset_release" --repo "$repo" --dir "$download_dir" --pattern "$asset" --clobber
   fi
-done < "$download_dir/asset-names.txt"
+  actual_sha256=$(sha256sum "$download_dir/$asset" | awk '{print $1}')
+  actual_bytes=$(wc -c < "$download_dir/$asset" | tr -d ' ')
+  test "$actual_sha256" = "$sha256" && test "$actual_bytes" = "$bytes" || {
+    echo "Integrity check failed for $asset" >&2; exit 1;
+  }
+  echo "verified $asset"
+done < "$download_dir/assets.tsv"
 
-python3 - "$download_dir/release-manifest.json" "$download_dir" <<'PY'
-import hashlib,json,pathlib,sys
-manifest=json.load(open(sys.argv[1]))
-root=pathlib.Path(sys.argv[2])
-for row in manifest["assets"]:
-    path=root/row["name"]
-    digest=hashlib.sha256(path.read_bytes()).hexdigest()
-    if digest != row["sha256"] or path.stat().st_size != row["bytes"]:
-        raise SystemExit(f"Integrity check failed for {path.name}")
-    print(f"verified {path.name}")
-PY
-
-while IFS= read -r asset; do
+while IFS="$(printf '\t')" read -r asset_release asset sha256 bytes; do
   echo "Restoring $asset"
   zstd -dc "$download_dir/$asset" | tar -xf -
-done < "$download_dir/asset-names.txt"
+done < "$download_dir/assets.tsv"
 
 echo "Restore complete. Review src/graphrag_runtime/README.md to start PostgreSQL and the API."
-
