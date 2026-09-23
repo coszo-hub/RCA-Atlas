@@ -45,6 +45,19 @@ public URL.
 python3 src/literature_fulltext/import_user_supplied.py
 ```
 
+## Candidate paper-to-RCA graph
+
+`build_candidate_graph.py` creates a separate, reviewable graph from cached
+full-text passages.  It links a paper passage only to canonical instrument
+identifiers and carefully bounded site names found literally on that page; it
+does not use an LLM or infer relationships from topical similarity.  Every
+edge includes the matched literal, page/section locator, and document SHA-256.
+The result remains a candidate layer until graph validation approves a merge.
+
+```sh
+python3 src/literature_fulltext/build_candidate_graph.py
+```
+
 The evidence response contains only question-matched passages capped by count
 and total characters, with page or section locators and the source document's
 SHA-256. It never returns the complete paper to the language model. It does not
