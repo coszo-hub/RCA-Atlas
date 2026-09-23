@@ -35,6 +35,7 @@ unavailable attempts; use `--retry-unavailable` only for a later refresh.
 
 Licensed users may place PDFs in
 `source_material/literature_user_supplied/`, named as `COSZO-REF-###.pdf`.
+`OOI-ZOT-###.pdf` is also accepted for the OOI literature catalog.
 The importer validates the PDF, maps the ID to the canonical catalog, records
 the supplied filename and checksum as local provenance, and extracts bounded
 page-level evidence.  It never claims that a user-supplied file came from a
