@@ -1,0 +1,14 @@
+.chat { top: 16px; left: 16px; bottom: 16px; width: 380px; display: flex; flex-direction: column; padding: 12px; z-index: 6; }
+.chat-head { display: flex; justify-content: space-between; align-items: center; }
+.chat-head button { background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 26px; height: 24px; cursor: pointer; }
+.chat-log { flex: 1; overflow-y: auto; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.msg p { margin: 0; line-height: 1.5; white-space: pre-wrap; }
+.msg.user p { color: var(--text-secondary); }
+.msg.error p { color: var(--text-secondary); font-style: italic; }
+.cites { margin: 6px 0 0; padding-left: 18px; font-size: 12px; } .cites a { color: var(--text-secondary); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.chips button { background: transparent; border: 1px solid var(--hairline-strong); border-radius: 12px; padding: 3px 9px; font-size: 11.5px; color: var(--text-secondary); cursor: pointer; text-align: left; }
+.chat-input { display: flex; gap: 6px; }
+.chat-input textarea { flex: 1; resize: none; background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--hairline-strong); border-radius: 4px; padding: 6px 8px; font: inherit; }
+.chat-input button { background: var(--text-primary); color: var(--surface-0); border: 0; border-radius: 4px; padding: 0 12px; cursor: pointer; }
+.chat-tab { left: 16px; bottom: 16px; padding: 8px 12px; cursor: pointer; z-index: 6; }

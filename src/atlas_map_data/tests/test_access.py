@@ -1,0 +1,117 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from atlas_map_data import access
+
+EXT = {"erddap": {"ooi-rs03axps-pc03a-4a-ctdpfa303"}, "qaqc": {"RS03AXPS-PC03A-4A-CTDPFA303"}, "warnings": []}
+PI = {"INSTRUMENT-pi": [{"instrument_key": "PI-COVIS", "endpoint_id": "PI-PORTAL-ENDPOINT-d95fe5064a76d7af06",
+                         "label": "COVIS raw", "url": "http://piweb.ooirsn.uw.edu/covis/data/COVIS/raw/"}],
+      "INSTRUMENT-offsite": [{"instrument_key": "PI-OFF", "endpoint_id": "PI-PORTAL-ENDPOINT-0ff",
+                              "label": "mirror", "url": "https://mirror.example.com/off/"}]}
+
+
+def rec(**kw):
+    base = {"id": "X", "instrumentId": "INSTRUMENT-x", "refdes": None, "sources": []}
+    base.update(kw)
+    return base
+
+
+class AccessTest(unittest.TestCase):
+    def test_erddap_id_pattern(self):
+        self.assertEqual(access.erddap_dataset_id("RS03AXPS-PC03A-4A-CTDPFA303"), "ooi-rs03axps-pc03a-4a-ctdpfa303")
+
+    def test_ooi_sensor_with_feed_and_plots(self):
+        routes = access.build_access(rec(refdes="RS03AXPS-PC03A-4A-CTDPFA303"), EXT, PI, {})
+        kinds = [r["kind"] for r in routes]
+        self.assertEqual(kinds[:3], ["erddap", "qaqc", "ooi_explorer"])
+        erd = routes[0]
+        self.assertEqual(erd["datasetId"], "ooi-rs03axps-pc03a-4a-ctdpfa303")
+        self.assertTrue(erd["url"].startswith("https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/"))
+
+    def test_ooi_sensor_without_public_feed_has_no_erddap(self):
+        routes = access.build_access(rec(refdes="RS01SBPD-DP01A-01-CTDPFL104"), EXT, PI, {})
+        self.assertNotIn("erddap", [r["kind"] for r in routes])
+        self.assertIn("ooi_explorer", [r["kind"] for r in routes])
+
+    def test_earthscope_station(self):
+        r = rec(id="EARTHSCOPE-OO-AXCC1")
+        self.assertEqual(access.earthscope_station(r), ("OO", "AXCC1"))
+        routes = access.build_access(r, EXT, PI, {"OO.AXCC1": "HHZ"})
+        es = [x for x in routes if x["kind"] == "earthscope"][0]
+        self.assertEqual((es["network"], es["station"], es["channel"]), ("OO", "AXCC1", "HHZ"))
+
+    def test_earthscope_channel_falls_back_to_hhz(self):
+        routes = access.build_access(rec(id="EARTHSCOPE-OO-AXCC1"), EXT, PI, {})
+        es = [x for x in routes if x["kind"] == "earthscope"][0]
+        self.assertEqual((es["channel"], es["channelSource"]), ("HHZ", "default"))
+        routes = access.build_access(rec(id="EARTHSCOPE-OO-AXCC1"), EXT, PI, {"OO.AXCC1": "BHZ"})
+        es = [x for x in routes if x["kind"] == "earthscope"][0]
+        self.assertEqual((es["channel"], es["channelSource"]), ("BHZ", "station metadata"))
+
+    def test_earthscope_channel_from_inventory(self):
+        ext = {**EXT, "earthscope": {"AXAS1": {"lat": 45.93, "lon": -130.01, "channels": ["EHE", "EHZ", "LHZ"]}}}
+        es = [x for x in access.build_access(rec(id="EARTHSCOPE-OO-AXAS1"), ext, PI, {}) if x["kind"] == "earthscope"][0]
+        self.assertEqual((es["channel"], es["channelSource"]), ("EHZ", "EarthScope inventory"))
+        es = [x for x in access.build_access(rec(id="EARTHSCOPE-OO-AXAS1"), ext, PI, {"OO.AXAS1": "SHZ"}) if x["kind"] == "earthscope"][0]
+        self.assertEqual(es["channel"], "SHZ")   # the corpus's station metadata still wins
+
+    def test_low_frequency_hydrophone_gets_its_station_hdh(self):
+        ext = {**EXT, "earthscope": {"AXCC1": {"lat": 45.954683, "lon": -130.008772, "channels": ["HHZ", "HDH"]},
+                                     "AXAS1": {"lat": 45.9336, "lon": -130.0137, "channels": ["EHZ"]}}}
+        near = rec(refdes="RS03CCAL-MJ03F-06-HYDLFA305", lat=45.9547, lon=-130.0090)
+        es = [x for x in access.build_access(near, ext, PI, {}) if x["kind"] == "earthscope"]
+        self.assertEqual([(x["station"], x["channel"]) for x in es], [("AXCC1", "HDH")])
+        far = rec(refdes="RS03CCAL-MJ03F-06-HYDLFA305", lat=45.70, lon=-130.0090)
+        self.assertEqual([x for x in access.build_access(far, ext, PI, {}) if x["kind"] == "earthscope"], [])
+        planned = rec(refdes="COSZO-OO-CZMID-HYDLF", lat=45.9547, lon=-130.0090)
+        self.assertEqual([x for x in access.build_access(planned, ext, PI, {}) if x["kind"] == "earthscope"], [])
+        broadband = rec(refdes="RS03CCAL-MJ03F-06-HYDBBA305", lat=45.9547, lon=-130.0090)
+        self.assertEqual([x for x in access.build_access(broadband, ext, PI, {}) if x["kind"] == "earthscope"], [])
+
+    def test_pi_portal_endpoints(self):
+        routes = access.build_access(rec(instrumentId="INSTRUMENT-pi"), EXT, PI, {})
+        pi = [x for x in routes if x["kind"] == "pi_portal"]
+        self.assertEqual(pi[0]["instrumentKey"], "PI-COVIS")
+        self.assertEqual(pi[0]["endpointId"], "PI-PORTAL-ENDPOINT-d95fe5064a76d7af06")
+        self.assertEqual(pi[0]["url"], "http://piweb.ooirsn.uw.edu/covis/data/COVIS/raw/")
+
+    def test_documentation_only_sensor(self):
+        routes = access.build_access(rec(sources=["https://coszo.org/x"]), EXT, PI, {})
+        self.assertEqual([r["kind"] for r in routes], ["documentation"])
+        self.assertIn("No public data feed is known yet", routes[0]["how"])
+
+    def test_documentation_on_pi_directory_uses_neutral_wording(self):
+        routes = access.build_access(rec(sources=["http://piweb.ooirsn.uw.edu/das/"]), EXT, PI, {})
+        self.assertEqual([r["kind"] for r in routes], ["documentation"])
+        self.assertEqual(routes[0]["how"], "Public PI data directory; browse by date.")
+
+    def test_filtered_out_data_routes_still_get_documentation(self):
+        routes = access.build_access(rec(instrumentId="INSTRUMENT-offsite",
+                                         sources=["https://evil.example.com/x", "https://coszo.org/x"]), EXT, PI, {})
+        self.assertEqual([(r["kind"], r["url"]) for r in routes], [("documentation", "https://coszo.org/x")])
+
+    def test_disallowed_hosts_are_dropped(self):
+        routes = access.build_access(rec(sources=["https://evil.example.com/x", "http://10.0.0.5/x"]), EXT, PI, {})
+        self.assertEqual(routes, [])
+
+    def test_missing_caches_warn_but_do_not_fail(self):
+        with tempfile.TemporaryDirectory() as d:
+            ext = access.load_external(Path(d))
+        self.assertEqual(ext["erddap"], set())
+        self.assertEqual(ext["qaqc"], set())
+        self.assertEqual(len(ext["warnings"]), 3)   # ERDDAP, QA/QC, EarthScope
+
+    def test_refresh_qaqc_parses_refdes_from_plot_paths(self):
+        paths = ["RS03AXPS/RS03AXPS-PC03A-4A-CTDPFA303_temperature_week_none_full.png",
+                 "CE04OSPS/CE04OSPS-SF01B-2A-CTDPFA107_salinity_day_none_full.png"]
+        with tempfile.TemporaryDirectory() as d:
+            n = access.refresh_qaqc(Path(d), paths)
+            saved = json.loads((Path(d) / "qaqc_refdes.json").read_text())
+        self.assertEqual(n, 1)
+        self.assertEqual(saved["refdes"], ["RS03AXPS-PC03A-4A-CTDPFA303"])
+
+
+if __name__ == "__main__":
+    unittest.main()

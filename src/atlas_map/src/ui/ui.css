@@ -1,0 +1,98 @@
+/* Map HUD: a fixed top row between the side panels. Its stacks are in normal flow; the row itself ignores the pointer. */
+.hud-top { position: fixed; top: 16px; left: var(--left-inset); right: var(--right-inset); z-index: 5; display: flex; flex-wrap: wrap;
+  justify-content: space-between; align-items: flex-start; gap: 8px; pointer-events: none; container: hud / inline-size;
+  transition: left 220ms ease, right 220ms ease; }
+.hud-top .panel { position: relative; pointer-events: auto; }
+.hud-top .header { z-index: 6; }   /* the search results drop over the regions below */
+.left-stack, .right-stack { display: flex; flex-direction: column; gap: 8px; }
+.left-stack { align-items: flex-start; }
+.right-stack { align-items: flex-end; margin-left: auto; }
+/* Too narrow for header and controls side by side: the controls wrap below, so drop their key hints to save height. */
+@container hud (max-width: 579px) { .controls .hint { display: none; } }
+.controls { padding: 10px 12px; width: 252px; display: flex; flex-direction: column; gap: 10px; }
+.ctl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--hairline-strong); border-radius: 4px; overflow: hidden; }
+.seg button { background: transparent; color: var(--text-secondary); border: 0; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--hairline-strong); }
+.seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-0); }
+.hint { color: var(--text-muted); font-size: 11px; line-height: 1.6; border-top: 1px solid var(--hairline); padding-top: 8px; }
+kbd { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); border: 1px solid var(--hairline-strong); border-radius: 3px; padding: 0 4px; margin: 0 1px; }
+input[type=range] { width: 110px; accent-color: var(--text-primary); }
+input[type=range]:disabled { opacity: 0.35; }
+.regions { padding: 6px; min-width: 220px; display: flex; flex-direction: column; }
+.regions button { display: flex; justify-content: space-between; gap: 16px; background: transparent; border: 0; padding: 7px 10px; border-radius: 4px; cursor: pointer; text-align: left; }
+.regions button:hover { background: var(--surface-2); }
+.regions button[aria-pressed="true"] { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--text-primary); }
+.regions .n { color: var(--text-muted); font-size: 12px; }
+.regions .unplaced { margin-top: 4px; border-top: 1px solid var(--hairline); border-radius: 0 0 4px 4px; color: var(--text-secondary); font-size: 12px; }
+.header { width: 320px; padding: 14px 16px 12px; }
+.header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+.header p { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
+.header .stats { display: flex; gap: 22px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+.header .stats div { display: flex; flex-direction: column; gap: 2px; }
+.header .stats b { font-size: 16px; font-weight: 500; }
+.header .stats span { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.search { position: relative; margin-top: 10px; }
+.search input { width: 100%; background: var(--surface-2); border: 1px solid var(--hairline-strong); border-radius: 4px; color: var(--text-primary); padding: 6px 8px; font: inherit; }
+.search ul { position: absolute; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--surface-1); border: 1px solid var(--hairline-strong); border-radius: 4px; z-index: 8; }
+.search li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 3px; cursor: pointer; }
+.search li[aria-selected="true"], .search li:hover { background: var(--surface-2); }
+.search .sub { color: var(--text-muted); font-size: 12px; }
+/* Centered between the side panels, never wider than the space between them (less the minimized chat or side-panel tab, both sides so it stays centered). */
+.families { left: calc((var(--left-inset) + 100vw - var(--right-inset)) / 2); transform: translateX(-50%); bottom: 16px; padding: 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px;
+  width: max-content; max-width: calc(100vw - var(--left-inset) - var(--right-inset) - 2 * max(var(--strip-reserve), var(--side-reserve))); transition: left 220ms ease, max-width 220ms ease; }
+.families button { white-space: nowrap; }
+.families button { display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 7px 11px; border-radius: 4px; cursor: pointer; transition: opacity 160ms ease; }
+.families button:hover { background: var(--surface-2); }
+.families button.muted { opacity: 0.35; }
+.families .n { color: var(--text-muted); font-size: 12px; }
+/* The legend's max-height is set to the room left below its top (Legend.jsx); past that it scrolls. */
+.legend { width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--hairline-strong) transparent; }
+.legend > * { flex: none; }
+/* A panel's head: its name (or title) and the minimize control. */
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.legend .panel-head, .controls .panel-head { margin-bottom: -4px; }
+/* Two classes deep, so a panel's own button rules (.regions button, .families button) do not restyle it. */
+.panel .min-btn { flex: none; display: grid; place-items: center; justify-content: center; background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 24px; height: 22px; padding: 0;
+  cursor: pointer; color: var(--text-secondary); line-height: 1; }
+.panel .min-btn:hover { background: transparent; color: var(--text-primary); border-color: var(--text-muted); }
+.header .panel-head { align-items: flex-start; }
+.families .min-btn { align-self: center; margin-left: 4px; }
+.families.minimized { padding: 0; }
+.families .families-tab { color: var(--text-secondary); font-size: 12px; padding: 7px 12px; }
+.families .families-tab:hover { color: var(--text-primary); background: transparent; }
+.hud-toggle { padding: 7px 12px; cursor: pointer; color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
+.hud-toggle:hover { color: var(--text-primary); }
+/* Wrapped top row: the collapsed controls and legend sit side by side under the header, one line tall. */
+.right-stack.compact { flex-direction: row; align-items: flex-start; }
+/* Always-visible map credits, in the 16 px bottom margin under the family strip, at the map's right edge. Nothing
+   else uses that margin, so a line longer than the map is wide runs on under the chat panel's edge rather than being cut. */
+.credit { position: fixed; right: var(--right-inset); bottom: 2px; z-index: 4; color: var(--text-muted); font-size: 10px; line-height: 12px;
+  white-space: nowrap; text-shadow: 0 0 3px #0b0b0a, 0 0 6px #0b0b0a; pointer-events: none; transition: right 220ms ease; }
+.legend .row { display: flex; align-items: center; gap: 9px; color: var(--text-secondary); font-size: 12px; line-height: 20px; }
+.legend .glyph { width: 18px; height: 12px; flex: none; }
+.ramp { height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(219,219,204) 0%, rgb(158,181,176) 14.6%, rgb(97,130,135) 41.7%, rgb(54,79,89) 62.5%, rgb(31,41,48) 100%); }
+.ramp-labels { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 11px; margin-top: 4px; }
+.attribution { color: var(--text-muted); font-size: 10.5px; line-height: 1.4; border-top: 1px solid var(--hairline); padding-top: 8px; }
+.tip { position: fixed; pointer-events: none; background: rgba(18, 18, 17, 0.95); border: 1px solid var(--hairline-strong); border-radius: 5px; padding: 10px 12px; width: 380px; z-index: 10; }
+.t-name { font-weight: 500; font-size: 13px; line-height: 1.3; }
+.t-sub { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+.t-col { color: var(--text-secondary); font-size: 12px; margin-top: 6px; }
+.t-col b { color: var(--text-primary); font-weight: 500; }
+.t-list { margin-top: 8px; border-top: 1px solid var(--hairline); padding-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.t-head { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin: 6px 0 1px; }
+.t-item { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.t-item > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-item .d { color: var(--text-muted); font-size: 11px; }
+.t-more { color: var(--text-muted); font-size: 11.5px; margin-top: 4px; }
+.t-site { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.t-site > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-site .d, .t-none { color: var(--text-muted); font-size: 11px; }
+/* Earthquake timeline beneath Axial (shown with the subsurface). */
+.timeline { display: flex; flex-direction: column; gap: 6px; }
+.timeline .readout { color: var(--text-secondary); font-size: 11px; }
+.timeline input[type=range] { flex: 1; width: auto; min-width: 0; }
+.play { flex: none; display: grid; place-items: center; width: 26px; height: 22px; background: transparent; border: 1px solid var(--hairline-strong);
+  border-radius: 4px; color: var(--text-secondary); cursor: pointer; }
+.play:hover { color: var(--text-primary); }

@@ -1,0 +1,29 @@
+.rlabel { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; cursor: pointer; white-space: nowrap;
+  display: flex; flex-direction: column; align-items: center; transition: opacity 220ms ease; }
+.rlabel .card { background: rgba(18, 18, 17, 0.86); border: 1px solid var(--hairline-strong); border-radius: 4px; padding: 5px 9px; display: flex; gap: 10px; align-items: baseline; }
+.rlabel .card b { font-weight: 500; font-size: 12.5px; }
+.rlabel .card span { color: var(--text-secondary); font-size: 11.5px; }
+.rlabel .stem { width: 1px; height: 26px; background: rgba(236, 235, 230, 0.45); }
+.rlabel .foot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-primary); margin-top: -1px; }
+.rlabel:hover .card { border-color: var(--text-primary); }
+.site { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; transition: opacity 220ms ease; }
+.site svg { display: block; overflow: visible; }
+.site.selected svg { outline: 1px solid var(--text-primary); outline-offset: 3px; border-radius: 50%; }
+.site .halo { transform-origin: center; animation: breathe 3.2s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { opacity: 0; transform: scale(0.85); } 50% { opacity: 0.5; transform: scale(1.12); } }
+/* Reduced motion stops the breathing (tokens.css); the halo then rests faint instead of at full opacity. */
+@media (prefers-reduced-motion: reduce) { .site .halo { opacity: 0.25; transform: none; } }
+.site .name { position: absolute; left: calc(100% + 6px); top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 11.5px;
+  text-shadow: 0 0 2px #0b0b0a, 0 0 5px #0b0b0a, 0 0 8px #0b0b0a; transition: opacity 160ms ease; pointer-events: none; }
+.site .name span { color: var(--text-secondary); margin-left: 6px; }
+.clabel { position: absolute; transform: translate(10px, -7px); display: flex; flex-direction: column; gap: 2px; white-space: nowrap; font-size: 11px;
+  text-shadow: 0 0 2px #0b0b0a, 0 0 5px #0b0b0a, 0 0 8px #0b0b0a; transition: opacity 160ms ease; pointer-events: none; }
+.clabel span { color: var(--text-secondary); }
+.clabel .surface, .clabel .floor { color: var(--text-muted); }
+.clabel .surface { position: relative; }
+.clabel .surface::before { content: ""; position: absolute; left: -17px; top: 50%; width: 14px; border-top: 1px solid rgba(236,235,230,0.6); }
+.pnode { position: absolute; transform: translate(-6px, -6px); display: flex; align-items: center; gap: 5px; white-space: nowrap; pointer-events: auto; cursor: pointer; padding: 3px; }
+.pnode i { width: 7px; height: 7px; background: #121211; border: 1.5px solid #ecebe6; display: block; }
+.pnode:hover i { background: #ecebe6; }
+.pnode span { color: var(--text-secondary); font-size: 10px; text-shadow: 0 0 3px #0b0b0a, 0 0 6px #0b0b0a; }
+.place { position: absolute; transform: translate(-50%, -50%); color: #2a2a28; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
