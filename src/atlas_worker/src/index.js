@@ -144,6 +144,17 @@ function namedDatasetDownloadAnswer(product) {
   return `You can download the requested ${details.label} data through the direct link below.\n- Format: ${details.format}.\n- Coverage: ${details.coverage}.\n- Layout: ${details.layout}.`;
 }
 
+function answerLinks(question, hits) {
+  if (!isDownloadQuestion(question)) return [];
+  const direct = directDownloadSource(question, hits);
+  if (direct) return [direct];
+  if (/\bmulti[\s-]?span\b/.test(String(question || "").toLowerCase())) {
+    const multiDas = citations(hits).find((source) => /\/das25\/data\/multidas\/?$/i.test(source.url));
+    if (multiDas) return [multiDas];
+  }
+  return citations(hits).filter((source) => source.url).slice(0, 2);
+}
+
 function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question);
@@ -299,7 +310,7 @@ export default {
           query,
           answer: namedDatasetDownloadAnswer(product),
           answer_model: "RCA Atlas graph route",
-          answer_citations: [downloadSource],
+          answer_citations: [downloadSource], answer_links: [downloadSource],
           hits: evidenceHits.map(publicHit), neighbors: context.neighbors || [], tool_hints: context.tool_hints || [],
         }, 200, cors);
       }
@@ -307,6 +318,7 @@ export default {
       return response({
         query, answer: generated.answer, answer_model: generated.model,
         answer_citations: citations(evidenceHits),
+        answer_links: answerLinks(query, evidenceHits),
         hits: (context.hits || []).map(publicHit),
         neighbors: context.neighbors || [],
         tool_hints: context.tool_hints || [],
