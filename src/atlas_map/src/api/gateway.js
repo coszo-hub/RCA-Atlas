@@ -1,10 +1,13 @@
 const KIND = { 404: "notfound", 422: "bad", 502: "upstream", 503: "busy", 504: "timeout" };
 const ATLAS_WORKER = "https://rca-atlas.quakehunt.workers.dev";
+// Development keeps Vite's local gateway proxy; the static production site
+// uses the same-origin-safe Worker proxy into that bounded gateway.
+const LIVE_DATA_API = import.meta.env.PROD ? `${ATLAS_WORKER}/v1/live` : "/api";
 
 export async function api(path, { signal, method = "GET", body, fetchImpl = fetch } = {}) {
   let res;
   try {
-    res = await fetchImpl(`/api${path}`, { signal, method, headers: body ? { "Content-Type": "application/json" } : undefined,
+    res = await fetchImpl(`${LIVE_DATA_API}${path}`, { signal, method, headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined });
   } catch (err) {
     if (err?.name === "AbortError") throw err;

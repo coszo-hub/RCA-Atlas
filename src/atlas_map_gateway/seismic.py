@@ -4,10 +4,14 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from pymseed import MS3TraceList
-
-
 def decode(path: Path) -> dict:
+    # MiniSEED decoding is an optional live-panel capability. Import it at use
+    # time so a missing platform wheel cannot keep status, ERDDAP, QA/QC, and
+    # PI-portal routes from starting.
+    try:
+        from pymseed import MS3TraceList
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("MiniSEED waveform decoding is unavailable on this gateway") from exc
     traces = MS3TraceList.from_file(str(path), unpack_data=True)
     segments = [seg for tid in traces for seg in tid]
     if not segments:

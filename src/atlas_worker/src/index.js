@@ -13,7 +13,7 @@ function corsHeaders(env, origin) {
   const allow = origin === allowed ? origin : allowed;
   return {
     "access-control-allow-origin": allow,
-    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-headers": "content-type",
     "access-control-max-age": "86400",
     vary: "origin",
@@ -33,6 +33,31 @@ async function readJson(request) {
 
 function validOrigin(origin, env) {
   return origin === (env.ALLOWED_ORIGIN || "https://coszo.org");
+}
+
+const LIVE_GATEWAY_PATH = /^\/(?:status\/[A-Z0-9-]+|series\/[A-Z0-9-]+(?:\/variables)?|plots\/[A-Z0-9-]+|waveform\/[A-Z0-9.]+|files\/[A-Za-z0-9_-]+)$/;
+
+async function proxyLiveData(env, url, cors) {
+  if (!env.ATLAS_MAP_GATEWAY_ORIGIN) return response({ error: "live data service is not configured" }, 503, cors);
+  const upstreamPath = url.pathname.replace(/^\/v1\/live/, "");
+  // The gateway itself validates identifiers, but retain a narrow Worker
+  // allowlist so it can never become a general proxy into the private VM.
+  if (!LIVE_GATEWAY_PATH.test(upstreamPath)) return response({ error: "not found" }, 404, cors);
+  try {
+    const upstream = await fetch(`${env.ATLAS_MAP_GATEWAY_ORIGIN.replace(/\/$/, "")}${upstreamPath}${url.search}`, {
+      headers: { accept: "application/json" }, signal: AbortSignal.timeout(30_000),
+    });
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: {
+        ...cors,
+        "content-type": upstream.headers.get("content-type") || "application/json",
+        "cache-control": upstream.headers.get("cache-control") || "no-store",
+      },
+    });
+  } catch {
+    return response({ error: { source: "Atlas live data", message: "live data service is temporarily unavailable" } }, 503, cors);
+  }
 }
 
 function publicHit(hit) {
@@ -399,6 +424,7 @@ export default {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method === "GET" && url.pathname === "/health") return response({ status: "ok" }, 200, cors);
+    if (request.method === "GET" && url.pathname.startsWith("/v1/live/")) return proxyLiveData(env, url, cors);
     if (request.method !== "POST" || url.pathname !== "/v1/answer") return response({ error: "not found" }, 404, cors);
     if (!validOrigin(origin, env)) return response({ error: "origin not allowed" }, 403, cors);
     const body = await readJson(request);
