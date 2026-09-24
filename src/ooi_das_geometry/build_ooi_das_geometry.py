@@ -144,7 +144,12 @@ def build(source_dir: Path, output_dir: Path) -> dict[str, Any]:
         "source_kind": "published_experiment_documentation",
         "source_is_untrusted_data": True,
     })
-    entities, chunks, relationships, figures = [], [], [], []
+    entities, chunks, relationships, figures = [
+        {"entity_id": DATASET_ID, "name": "2021 RCA OptaSense and Silixa DAS/DTS experiment",
+         "entity_type": "instrument_reference", "source_is_untrusted_data": True},
+        {"entity_id": DAS25_DATASET_ID, "name": "2025-2026 RCA Nokia MultiDAS and OptoDAS experiment",
+         "entity_type": "instrument_reference", "source_is_untrusted_data": True},
+    ], [], [], []
     for cable, rows in by_cable.items():
         entity_id = _id("ENTITY-OOI-DAS-CABLE", cable)
         source_id = source_rows[0 if cable == "north" else 1]["source_id"]
