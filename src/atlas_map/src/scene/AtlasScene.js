@@ -186,8 +186,8 @@ export class AtlasScene {
     const p = viewPose(view, this.elevAt);
     this._fly(new THREE.Vector3(...p.pos), new THREE.Vector3(...p.target), view.exag, 1800);
   }
-  flyToPoint(lon, lat, dist = 6) {
-    const target = new THREE.Vector3(toX(lon), this.yFor(lon, lat), toZ(lat));
+  flyToPoint(lon, lat, dist = 6, meters) {   // meters: a point below the seafloor (a hypocentre) instead of on it
+    const target = new THREE.Vector3(toX(lon), this.yFor(lon, lat, meters), toZ(lat));
     const dir = this.camera.position.clone().sub(this.controls.target).normalize();
     this._fly(target.clone().add(dir.multiplyScalar(dist)), target, this.U.exag.value, 1300);
   }
@@ -204,7 +204,7 @@ export class AtlasScene {
     if (snap || this.reducedMotion) this._shift[0] = this._shiftTo[0];
     this._applyShift();
   }
-  setInsetsY(top, bottom) { this._shift[1] = this._shiftTo[1] = centerShift(top, bottom); this._applyShift(); }
+  setInsetsY(top, bottom) { this.insetsY = [top, bottom]; this._shift[1] = this._shiftTo[1] = centerShift(top, bottom); this._applyShift(); }
   fit(view) { return { ...view, dist: fitDist(view.dist, innerWidth, ...this.insets) }; }
   _applyShift() { this.camera.setViewOffset(innerWidth, innerHeight, -this._shift[0], -this._shift[1], innerWidth, innerHeight); }
 

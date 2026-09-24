@@ -66,6 +66,9 @@ export class OverlayLayer {
     }
   }
 
+  // The sites an answer's evidence cites (null: no evidence shown). The others fade like an unfocused family.
+  setEvidence(siteIds) { this.evidence = siteIds; }
+
   setSelected(id) { this.selected = id; for (const s of this.sites) s.d.classList.toggle("selected", s.site.id === id); }
 
   update() {
@@ -88,10 +91,11 @@ export class OverlayLayer {
       s.hidden = onScreen && occluded(cam, [px, py + 0.01, pz], ground);
       const vis = onScreen && !s.hidden;
       if (!vis && this._hovered === s.site.id) { this._hovered = null; this.h.onSiteHover?.(s.site, null); }
-      Object.assign(s.d.style, { left: `${x}px`, top: `${y}px`, opacity: onScreen ? (s.hidden ? 0.12 : s.inFocus ? 1 : 0.25) : 0, pointerEvents: vis ? "auto" : "none" });
+      const cited = !this.evidence || this.evidence.has(s.site.id);
+      Object.assign(s.d.style, { left: `${x}px`, top: `${y}px`, opacity: onScreen ? (s.hidden ? 0.12 : !cited ? 0.2 : s.inFocus ? 1 : 0.25) : 0, pointerEvents: vis ? "auto" : "none" });
       const tab = vis ? 0 : -1;   // a marker that cannot be seen or clicked is not a tab stop either
       if (s.d.tabIndex !== tab) s.d.tabIndex = tab;
-      if (vis && s.inFocus) labelItems.push({ id: s.site.id, x: x - s.size / 2, y, w: s.size + 12 + s.site.label.length * 6.4, h: 18, priority: s.site.sensorIds.length });
+      if (vis && s.inFocus && cited) labelItems.push({ id: s.site.id, x: x - s.size / 2, y, w: s.size + 12 + s.site.label.length * 6.4, h: 18, priority: s.site.sensorIds.length });
       s._x = x; s._y = y;
     }
     const shown = place(labelItems);
