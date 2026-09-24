@@ -2,7 +2,7 @@ import { fromX, fromZ, toX, toZ } from "../scene/geo.js";
 import { occluded } from "../scene/occlusion.js";
 import { fmtDepth, fmtRange } from "../data/format.js";
 import { frontRuns, nearest } from "./cableHover.js";
-import { place } from "./labels.js";
+import { place, stems } from "./labels.js";
 import { ringSize, ringSvg } from "./ring.js";
 import "./overlay.css";
 
@@ -18,7 +18,7 @@ export class OverlayLayer {
       const lon = ss.reduce((a, s) => a + s.lon, 0) / ss.length, lat = ss.reduce((a, s) => a + s.lat, 0) / ss.length;
       const d = el("rlabel", `<div class="card"><b>${r.label}</b><span class="mono">${ss.length}</span></div><div class="stem"></div><div class="foot"></div>`);
       d.onclick = () => handlers.onRegionClick?.(r.key);
-      return { d, lon, lat };
+      return { d, lon, lat, n: ss.length, card: d.querySelector(".card"), stem: d.querySelector(".stem") };
     });
     this.sites = bundle.sites.map(site => {
       const size = ringSize(site.sensorIds.length);
@@ -71,10 +71,15 @@ export class OverlayLayer {
   update() {
     const sc = this.scene, { dist, regionMode, e, flat } = sc.frame, cam = sc.camera.position.toArray();
     const ground = (x, z) => Math.min(0, sc.elevAt(fromX(x), fromZ(z))) * e;
+    const cards = [];
     for (const r of this.regions) {
       const [x, y, z] = sc.project(toX(r.lon), sc.yFor(r.lon, r.lat) + 0.3, toZ(r.lat));
       Object.assign(r.d.style, { left: `${x}px`, top: `${y + 3}px`, opacity: regionMode && z < 1 ? 1 : 0, pointerEvents: regionMode ? "auto" : "none" });
+      if (!r.w && r.card.offsetWidth) { r.w = r.card.offsetWidth; r.h = r.card.offsetHeight; }
+      if (regionMode && z < 1) cards.push({ id: r, x, y: y + 3, w: r.w ?? 0, h: r.h ?? 0, priority: r.n });
     }
+    const stem = stems(cards, 26, 6);   // cards that would overlap stack upward
+    for (const r of this.regions) { const px = `${stem.get(r) ?? 26}px`; if (r.stem.style.height !== px) r.stem.style.height = px; }
     const labelItems = [];
     for (const s of this.sites) {
       const px = toX(s.site.lon), py = -s.site.seafloor * e, pz = toZ(s.site.lat);

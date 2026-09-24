@@ -38,3 +38,9 @@ export const approach = (value, target, dt, speed, reduced) =>
 // macOS sends no keyup for other keys while Cmd is held, so modified arrows never start a move.
 export const isMoveKey = e =>
   !!e.key?.startsWith("Arrow") && !(e.metaKey || e.ctrlKey || e.altKey) && !isTypingTarget(e.target);
+
+// Side panels cover the map's edges. The view's center moves to the middle of the free area between
+// them (pixels to shift right), and a view framed for the full width pulls back to fit the free width.
+export const centerShift = (left, right) => (left - right) / 2;
+export const fitDist = (dist, width, left, right) =>
+  dist * Math.max(1, (width - 32) / Math.max(320, width - left - right));

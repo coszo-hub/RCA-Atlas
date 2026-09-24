@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { approach, ease, isMoveKey, isTypingTarget, motionDuration, moveStep, viewPose } from "./cameraMath.js";
+import { approach, centerShift, ease, fitDist, isMoveKey, isTypingTarget, motionDuration, moveStep, viewPose } from "./cameraMath.js";
 
 describe("cameraMath", () => {
   it("viewPose puts the target on the exaggerated seafloor", () => {
@@ -47,5 +47,19 @@ describe("cameraMath", () => {
   it("a keydown without a key (Chrome autofill) is not a move key", () => {
     expect(isMoveKey({ key: undefined, target: document.createElement("div") })).toBe(false);
     expect(isMoveKey({ target: document.createElement("div") })).toBe(false);
+  });
+});
+
+describe("framing between the side panels", () => {
+  it("shifts the view center to the middle of the free area", () => {
+    expect(centerShift(412, 16)).toBe(198);
+    expect(centerShift(16, 472)).toBe(-228);
+    expect(centerShift(16, 16)).toBe(0);
+  });
+  it("pulls a view back so what fit the full width fits the free width", () => {
+    expect(fitDist(100, 1600, 16, 16)).toBe(100);
+    expect(fitDist(100, 1600, 412, 16)).toBeCloseTo(100 * 1568 / 1172, 6);
+    expect(fitDist(100, 1600, 0, 0)).toBe(100);   // never closer than the designed view
+    expect(fitDist(100, 500, 412, 472)).toBeCloseTo(100 * 468 / 320, 6);   // free width floors at 320 px
   });
 });

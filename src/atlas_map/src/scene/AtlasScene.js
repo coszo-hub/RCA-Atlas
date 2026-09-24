@@ -6,7 +6,7 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { KX, KZ, toX, toZ } from "./geo.js";
 import { buildArrays, stack } from "./grid.js";
 import { terrainMaterial } from "./terrainMaterial.js";
-import { approach, ease, isMoveKey, motionDuration, moveStep, viewPose } from "./cameraMath.js";
+import { approach, centerShift, ease, fitDist, isMoveKey, motionDuration, moveStep, viewPose } from "./cameraMath.js";
 
 export { loadGrids } from "./grid.js";
 
@@ -14,6 +14,7 @@ export class AtlasScene {
   constructor(canvas, bundle, grids, { onFrame } = {}) {
     this.bundle = bundle; this.onFrame = onFrame; this.flight = null; this.held = new Set();
     this.targets = { flat: 0, lines: 0, mode: 0, mute: 0 }; this._view = "3d";
+    this.insets = [16, 16]; this.framed = false; this._shift = [0, 0]; this._shiftTo = [0, 0];
     this._motion = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
     this.elevAt = stack([grids.axial, grids.hydrate, grids.overview]);
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true }));
@@ -42,7 +43,7 @@ export class AtlasScene {
     };
     this._onKeyUp = e => (e.key === "Meta" ? this.held.clear() : this.held.delete(e.key));
     this._onBlur = () => this.held.clear();
-    this._onResize = () => { r.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this._resolution(); this.onResize?.(); };
+    this._onResize = () => { r.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this._applyShift(); this._resolution(); this.onResize?.(); };
     addEventListener("keydown", this._onKeyDown); addEventListener("keyup", this._onKeyUp);
     addEventListener("blur", this._onBlur); addEventListener("resize", this._onResize);
 
@@ -142,6 +143,18 @@ export class AtlasScene {
       fromExag: this.U.exag.value, toExag: exag, pos, target };
   }
 
+  // Panels and the HUD cover the map's edges (pixels from each side); the view centers on the free area
+  // between them (see centerShift). Side panels open and close on input, so that glides (unless motion is
+  // reduced or `snap`); the top and bottom follow layout settling (fonts, wrapping), so they snap.
+  setInsets(left, right, snap = false) {
+    this.framed = true; this.insets = [left, right]; this._shiftTo[0] = centerShift(left, right);
+    if (snap || this.reducedMotion) this._shift[0] = this._shiftTo[0];
+    this._applyShift();
+  }
+  setInsetsY(top, bottom) { this._shift[1] = this._shiftTo[1] = centerShift(top, bottom); this._applyShift(); }
+  fit(view) { return { ...view, dist: fitDist(view.dist, innerWidth, ...this.insets) }; }
+  _applyShift() { this.camera.setViewOffset(innerWidth, innerHeight, -this._shift[0], -this._shift[1], innerWidth, innerHeight); }
+
   setExag(v) { this.U.exag.value = v; this.onExag?.(v); }
   setStyle(s) { this.targets.lines = s === "contours" ? 1 : 0; }
   setColor(c) { this.targets.mode = c === "mono" ? 1 : 0; }
@@ -176,6 +189,10 @@ export class AtlasScene {
     this.controls.update();
     for (const [key, speed] of [["flat", 5], ["lines", 6], ["mode", 8], ["mute", 8]]) {
       this.U[key].value = approach(this.U[key].value, this.targets[key], dt, speed, reduced);
+    }
+    if (this._shift[0] !== this._shiftTo[0] || this._shift[1] !== this._shiftTo[1]) {
+      this._shift = this._shift.map((v, i) => { const to = this._shiftTo[i]; return Math.abs(to - v) < 0.5 ? to : approach(v, to, dt, 10, reduced); });
+      this._applyShift();
     }
     const [le, lf] = this._lastLayout ?? [];
     if (le !== this.U.exag.value || Math.abs((lf ?? 0) - this.U.flat.value) > 1e-4) this.updateLines();

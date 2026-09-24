@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { chat } from "../api/gateway.js";
 import { suggest } from "./suggestions.js";
 import "./chat.css";
 
 const KEY = "atlas.chat.open";
+export const chatStartsOpen = () => localStorage.getItem(KEY) !== "false";
 
 export default function ChatPanel({ selection, onOpenChange }) {
-  const [open, setOpen] = useState(() => localStorage.getItem(KEY) !== "false");
+  const [open, setOpen] = useState(chatStartsOpen);
   const [messages, setMessages] = useState([]), [draft, setDraft] = useState(""), [busy, setBusy] = useState(false);
   const end = useRef(null);
-  useEffect(() => {
+  // Before paint, so the top row starts beside the panel instead of sliding over from the edge on load.
+  useLayoutEffect(() => {
     localStorage.setItem(KEY, String(open));
     const root = document.documentElement.style;
     root.setProperty("--left-inset", open ? "412px" : "16px");
