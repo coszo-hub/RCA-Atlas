@@ -1,0 +1,9 @@
+:root {
+  --surface-0: #121211; --surface-1: #1a1a19; --surface-2: #232321;
+  --hairline: rgba(255, 255, 255, 0.08); --hairline-strong: rgba(255, 255, 255, 0.16);
+  --text-primary: #ecebe6; --text-secondary: #a8a69d; --text-muted: #6f6d66;
+  --good: #0ca30c; --critical: #d03b3b;
+  --left-inset: 16px; --right-inset: 16px;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-reduced-motion: reduce) { :root { --motion: 0; } * { transition: none !important; animation: none !important; } }
