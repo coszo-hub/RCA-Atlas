@@ -853,7 +853,7 @@ git commit -m "Add GMRT terrain fetch, parsing, sampling, and Int16 output"
   - `access.load_external(runtime: Path) -> dict`. It returns `{"erddap": set[str], "qaqc": set[str], "warnings": list[str]}`.
   - `access.refresh_erddap(runtime: Path, urlopen=...) -> int`, which writes `erddap_datasets.json` and returns the count
   - `access.refresh_qaqc(runtime: Path, index_paths: list[str]) -> int`, which writes `qaqc_refdes.json`
-  - `access.build_access(record, external, pi_endpoints: dict[str, list[dict]], vertical_channels: dict[str, str]) -> list[dict]`. Each entry is `{kind, label, url, how}`, and an entry may also carry `datasetId`, `network`, `station`, `channel`, `instrumentKey` or `refdes`.
+  - `access.build_access(record, external, pi_endpoints: dict[str, list[dict]], vertical_channels: dict[str, str]) -> list[dict]`. Each entry is `{kind, label, url, how}`, and an entry may also carry `datasetId`, `network`, `station`, `channel`, `channelSource`, `instrumentKey` or `refdes`. Earthscope routes always carry `channel`: the station-metadata vertical channel, else `"HHZ"`. `channelSource` is `"station metadata"` or `"default"` (ruling made during execution).
 - `kind` values: `erddap`, `qaqc`, `pi_portal`, `earthscope`, `ooi_explorer`, `documentation`.
 
 - [ ] **Step 1: Write the failing test**
