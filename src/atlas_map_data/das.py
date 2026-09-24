@@ -30,13 +30,18 @@ def _backbone(cable: dict, name: str) -> list[list[float]]:
     return pts
 
 
-def _slice_by_distance(coords: list[list[float]], start_m: float, end_m: float, coordinate_max_m: float) -> list[list[float]]:
-    """Map a documented DAS distance interval onto a cable centerline schematic."""
+def _slice_by_distance(coords: list[list[float]], start_m: float, end_m: float) -> list[list[float]]:
+    """Map a documented DAS distance interval onto a cable centerline schematic.
+
+    MultiDAS distances are cable-distance coordinates from the shore-side end;
+    never stretch the last saved coordinate to an entire backbone. In
+    particular, north 300 km does not reach Axial on the ~500 km mapped route.
+    """
     lengths = [0.0]
     for a, b in zip(coords, coords[1:]):
         lengths.append(lengths[-1] + _km(a, b) * 1000)
     total = lengths[-1]
-    target_a, target_b = total * start_m / coordinate_max_m, total * end_m / coordinate_max_m
+    target_a, target_b = min(start_m, total), min(end_m, total)
     out = []
     for i, (a, b) in enumerate(zip(coords, coords[1:])):
         lo, hi = lengths[i], lengths[i + 1]
@@ -74,10 +79,10 @@ def build(data, cable: dict) -> dict:
         centerline = _backbone(cable, item["cable"])
         for i, interval in enumerate(item["saved_unmasked_intervals_m"], 1):
             multi.append({"id": f"multidas-{item['cable']}-{i}", "experiment": "2025–2026 Nokia MultiDAS", "kind": "multidas",
-                          "cable": item["cable"], "coords": _slice_by_distance(centerline, interval["start_m"], interval["end_m"], item["maximum_saved_distance_m"]),
+                          "cable": item["cable"], "coords": _slice_by_distance(centerline, interval["start_m"], interval["end_m"]),
                           "color": COLORS["multidas"], "distance": interval,
                           "detail": f"Saved unmasked interval {interval['start_m']/1000:g}–{interval['end_m']/1000:g} km ({interval['length_m']/1000:g} km).",
-                          "caveat": "Schematic on the mapped backbone: MultiDAS mask distances are documented, but exact channel coordinates were not published."})
+                          "caveat": "Schematic on the mapped backbone at the documented shore-distance coordinate; exact MultiDAS channel coordinates were not published."})
     south = _backbone(cable, "south")
     # The official project page documents OptoDAS on the first south-cable span; no channel-coordinate file exists.
     opto = [{"id": "optodas-south-first-span", "experiment": "2025–2026 OptoDAS", "kind": "optodas", "cable": "south",
