@@ -3311,7 +3311,7 @@ test("fly to Axial, open a site, open a sensor, see a chart", async ({ page }) =
   await regionButton(page, "Axial Seamount").click();
   await page.waitForTimeout(2200);
   await page.screenshot({ path: "e2e/screens/02-axial.png" });
-  await page.getByRole("button", { name: /Axial Seamount Base, \d+ sensors/ }).click();
+  await page.getByRole("button", { name: /^Axial Base · LJ03A, \d+ sensors$/ }).click();
   await expect(page.getByRole("heading", { name: "Axial Seamount Base" })).toBeVisible();
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "e2e/screens/03-site-panel.png" });
