@@ -1,5 +1,10 @@
 export const BUILD_COMMAND = "PYTHONPATH=src .venv/bin/python -m atlas_map_data.build_atlas_bundle";
 
+// The atlas can be hosted below a site subpath (for example /rca-atlas/map2/).
+// Vite supplies that subpath at build time, so keep every static-data request
+// relative to it rather than assuming that /atlas is at the domain root.
+export const atlasUrl = path => `${import.meta.env.BASE_URL}atlas/${path.replace(/^\/+/, "")}`;
+
 export class BundleMissingError extends Error {
   constructor() {
     super(`The atlas data bundle is missing. Build it with: ${BUILD_COMMAND}`);
@@ -27,9 +32,9 @@ async function getJson(fetchImpl, url) {
 }
 
 export async function loadBundle(fetchImpl = fetch) {
-  const manifest = await getJson(fetchImpl, "/atlas/manifest.json");
+  const manifest = await getJson(fetchImpl, atlasUrl("manifest.json"));
   const [fam, sen, sit, reg, cable, terrainMeta] = await Promise.all(
-    ["families", "sensors", "sites", "regions", "cable", "terrain/terrain"].map(n => getJson(fetchImpl, `/atlas/${n}.json`)));
+    ["families", "sensors", "sites", "regions", "cable", "terrain/terrain"].map(n => getJson(fetchImpl, atlasUrl(`${n}.json`))));
   return {
     manifest, families: fam.families, familyByKey: Object.fromEntries(fam.families.map(f => [f.key, f])),
     sensors: sen.sensors, sensorById: Object.fromEntries(sen.sensors.map(s => [s.id, s])), unplaced: sen.unplaced,

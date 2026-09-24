@@ -7,16 +7,16 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("ChatPanel", () => {
   it("asks, shows the answer with citations", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ answer: "Axial has 66 sensors.", model: "m", citations: [{ id: "1", title: "OOI", url: "https://oceanobservatories.org" }] }) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ answer: "Axial has 66 sensors.", answer_model: "m", answer_citations: [{ id: "1", title: "OOI", url: "https://oceanobservatories.org" }] }) })));
     render(<ChatPanel selection={{}} />);
     fireEvent.change(screen.getByRole("textbox", { name: /Ask/ }), { target: { value: "What is at Axial?" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
     await waitFor(() => expect(screen.getByText("Axial has 66 sensors.")).toBeInTheDocument());
     expect(screen.getByRole("link", { name: "OOI" })).toHaveAttribute("href", "https://oceanobservatories.org");
-    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ question: "What is at Axial?" });
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({ query: "What is at Axial?", answer_mode: "evidence" });
   });
   it("minimizes to a tab, keeps messages, and remembers", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ answer: "A.", citations: [] }) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ answer: "A.", answer_citations: [] }) })));
     const { unmount } = render(<ChatPanel selection={{}} />);
     fireEvent.change(screen.getByRole("textbox", { name: /Ask/ }), { target: { value: "hello there" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
@@ -31,14 +31,14 @@ describe("ChatPanel", () => {
     expect(screen.getByRole("button", { name: "Open chat" })).toBeInTheDocument();
   });
   it("chat service down is stated plainly", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 502, json: async () => ({ error: { source: "Atlas chat", message: "chat service unreachable" } }) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 502, json: async () => ({ error: "chat service unreachable" }) })));
     render(<ChatPanel selection={{}} />);
     fireEvent.change(screen.getByRole("textbox", { name: /Ask/ }), { target: { value: "hello there" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
     await waitFor(() => expect(screen.getByText(/The chat is unavailable/)).toBeInTheDocument());
   });
   it("an error message that ends in a period still reads cleanly", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 504, json: async () => ({ error: { source: "Atlas chat", message: "The chat service did not answer in time." } }) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 504, json: async () => ({ error: "The chat service did not answer in time." }) })));
     render(<ChatPanel selection={{}} />);
     fireEvent.change(screen.getByRole("textbox", { name: /Ask/ }), { target: { value: "hello there" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
@@ -46,7 +46,7 @@ describe("ChatPanel", () => {
   });
   it("citations without an id still render, each once", async () => {
     const warn = vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ answer: "Two sources.", citations: [{ id: null, title: "First", url: null }, { id: null, title: "Second", url: null }] }) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ answer: "Two sources.", answer_citations: [{ id: null, title: "First", url: null }, { id: null, title: "Second", url: null }] }) })));
     render(<ChatPanel selection={{}} />);
     fireEvent.change(screen.getByRole("textbox", { name: /Ask/ }), { target: { value: "hello there" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
