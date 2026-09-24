@@ -4,11 +4,18 @@ import { coverage, decode, tileArrays, wanted } from "./auvTiles.js";
 
 const INTERVAL = [50, 20, 10];
 
+const RETRY_MS = 30_000;   // a failed tile is not fetched again for this long
+
+// Vite's SPA fallback answers a missing file with 200 text/html, so check the type and the size too (as grid.js does).
 async function fetchTile(url, S, zScale, zOffset) {
-  const buf = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  if (res.headers?.get("content-type")?.includes("html")) throw new Error(`${url} is missing`);
+  const buf = new Uint8Array(await res.arrayBuffer());
   const raw = buf[0] === 0x1f && buf[1] === 0x8b
     ? new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer()) : buf;
-  return decode(new Int16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2), S, zScale, zOffset);
+  if (raw.byteLength !== S * S * 2) throw new Error(`${url} has ${raw.byteLength} bytes; expected ${S * S * 2}`);
+  return decode(new Int16Array(raw.buffer, raw.byteOffset, S * S), S, zScale, zOffset);
 }
 
 export class AuvLod {
@@ -16,12 +23,18 @@ export class AuvLod {
     let index;
     try { const r = await fetch(base + "index.json"); if (!r.ok) return null; index = await r.json(); } catch { return null; }
     const lod = new AuvLod(scene3d, U, makeMaterial, base, index);
-    await lod._loadBase();
+    try { await lod._loadBase(); } catch (err) {
+      // An optional layer: without its 16 m base the summit falls back to the GMRT grid.
+      for (const key of [...lod.shown[0].keys()]) lod._hide(0, key);
+      console.warn(`Axial summit detail is unavailable: ${err.message}`);
+      return null;
+    }
     return lod;
   }
 
   constructor(scene3d, U, makeMaterial, base, index) {
-    Object.assign(this, { scene3d, base, index, S: index.tileCells + 1, credit: index.credit, last: 0, pending: new Set(), cache: new Map() });
+    Object.assign(this, { scene3d, base, index, S: index.tileCells + 1, credit: index.credit, last: 0, pending: new Set(),
+      cache: new Map(), cacheMax: 160, failed: new Map() });   // cache: finer levels only, LRU; failed: key -> retry time
     const { west, north } = index;
     this.levels = index.levels.map(l => ({ ...l, tileDeg: l.cellDeg * index.tileCells, have: new Set(l.tiles.map(([y, x]) => `${y}_${x}`)) }));
     this.masks = this.levels.map(L => {
@@ -32,14 +45,13 @@ export class AuvLod {
     });
     // Tiles draw only inside the survey: edge tiles run past it, padded with repeated edge values. The GMRT patch
     // leaves them the survey minus a 40 m rim where both draw (the GMRT wins ties), so no crack opens between them.
-    const east = west + index.nx * index.cellDeg, south = north - index.ny * index.cellDeg, rim = 0.04;
+    const east = (this.east = west + index.nx * index.cellDeg), south = (this.south = north - index.ny * index.cellDeg), rim = 0.04;
     this.clip = new THREE.Vector4(toX(west), toX(east), toZ(north), toZ(south));
     this.box = new THREE.Vector4(this.clip.x + rim, this.clip.y - rim, this.clip.z + rim, this.clip.w - rim);
     this.mats = this.levels.map((L, k) => makeMaterial(U, INTERVAL[k], false,
       { clip: this.clip, ...(this.masks[k + 1] ? { mask: this.masks[k + 1].t, maskRect: this.masks[k + 1].rect } : {}) }));
     this.shown = this.levels.map(() => new Map());
     this.heights = new Map();
-
   }
 
   origin(L, ty, tx) { return { lon0: this.index.west + tx * L.tileDeg, lat0: this.index.north - ty * L.tileDeg }; }
@@ -49,7 +61,7 @@ export class AuvLod {
   async _geometry(k, key) {
     const ck = `${k}:${key}`;
     if (this.cache.has(ck)) { const g = this.cache.get(ck); this.cache.delete(ck); this.cache.set(ck, g); return g; }
-    if (this.pending.has(ck)) return null;
+    if (this.pending.has(ck) || this.failed.get(ck) > performance.now()) return null;
     this.pending.add(ck);
     try {
       const L = this.levels[k], [ty, tx] = key.split("_").map(Number), o = this.origin(L, ty, tx);
@@ -62,15 +74,22 @@ export class AuvLod {
       g.setAttribute("grad", new THREE.BufferAttribute(a.grad, 2));
       g.setAttribute("drop", new THREE.BufferAttribute(a.drop, 1));
       g.setIndex(new THREE.BufferAttribute(a.index, 1));
-      this.cache.set(ck, g);
-      while (this.cache.size > 160) {
-        const [oldKey, oldGeo] = this.cache.entries().next().value;
-        const [ok, okey] = oldKey.split(":");
-        if (this.shown[+ok].has(okey)) break;
-        this.cache.delete(oldKey); oldGeo.dispose();
-      }
+      if (k > 0) { this.cache.set(ck, g); this._evict(); }   // the 16 m base is always shown, so it stays out of the LRU
       return g;
+    } catch (err) {
+      this.failed.set(ck, performance.now() + RETRY_MS);
+      throw err;
     } finally { this.pending.delete(ck); }
+  }
+
+  // Oldest first, skipping tiles on screen, until the cache is back under its cap.
+  _evict() {
+    for (const [ck, g] of this.cache) {
+      if (this.cache.size <= this.cacheMax) return;
+      const [k, key] = ck.split(":");
+      if (this.shown[+k].has(key)) continue;
+      this.cache.delete(ck); g.dispose();
+    }
   }
 
   _setMask(k, key, on) {
@@ -92,7 +111,7 @@ export class AuvLod {
   sample(lon, lat) {
     const L0 = this.levels[0], N = this.index.tileCells, S = this.S;
     const fx = (lon - this.index.west) / L0.cellDeg - 0.5, fy = (this.index.north - lat) / L0.cellDeg - 0.5;
-    if (fx < 0 || fy < 0) return null;
+    if (fx < 0 || fy < 0 || lon > this.east || lat < this.south) return null;   // edge tiles are padded past the survey
     const tx = Math.floor(fx / N), ty = Math.floor(fy / N), h = this.heights.get(`${ty}_${tx}`);
     if (!h) return null;
     const c = fx - tx * N, r = fy - ty * N, c0 = Math.floor(c), r0 = Math.floor(r), tc = c - c0, tr = r - r0;
@@ -110,10 +129,17 @@ export class AuvLod {
         .map(key => { const [cx, cz] = this.center(k, key); return [Math.hypot(cx - target.x, cz - target.z), key]; })
         .sort((a, b) => a[0] - b[0]).slice(0, Math.max(0, 6 - this.pending.size));
       for (const [, key] of missing) this._geometry(k, key).then(g => {
-        if (g && wanted(this.levels, this._lastTarget ?? target, this._lastDist ?? camDist, this.center)[k].has(key)) this._show(k, key, g);
-      });
+        // A 1 m tile waits for its 4 m parent (the next update finds it cached), so the 16 m level never shows through.
+        if (g && this._parentShown(k, key) && wanted(this.levels, this._lastTarget ?? target, this._lastDist ?? camDist, this.center)[k].has(key)) this._show(k, key, g);
+      }, err => console.warn(`Axial summit tile L${k}/${key} failed: ${err.message}`));
     }
     this._lastTarget = { x: target.x, z: target.z }; this._lastDist = camDist;
+  }
+
+  _parentShown(k, key) {
+    if (k < 2) return true;
+    const [ty, tx] = key.split("_").map(Number);
+    return this.shown[1].has(`${Math.floor(ty / 4)}_${Math.floor(tx / 4)}`);
   }
 
   finest() { return this.shown[2].size ? "1 m" : this.shown[1].size ? "4 m" : "16 m"; }

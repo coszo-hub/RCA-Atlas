@@ -32,7 +32,9 @@ export function tileArrays(h, S, lon0, lat0, cellDeg) {
   for (let r = 0, i = 0; r < S; r++) for (let c = 0; c < S; c++, i++) {
     positions[i * 3] = toX(lon0 + (c + 0.5) * cellDeg); positions[i * 3 + 2] = toZ(lat0 - (r + 0.5) * cellDeg);
     elev[i] = h[i];
-    grad[i * 2] = (H(r, c + 1) - H(r, c - 1)) / (2 * dx); grad[i * 2 + 1] = (H(r + 1, c) - H(r - 1, c)) / (2 * dz);
+    // One-sided at the tile's edges: divide by the span actually sampled, or edge rows shade as half as steep.
+    const sc = Math.min(c + 1, S - 1) - Math.max(c - 1, 0), sr = Math.min(r + 1, S - 1) - Math.max(r - 1, 0);
+    grad[i * 2] = (H(r, c + 1) - H(r, c - 1)) / (sc * dx); grad[i * 2 + 1] = (H(r + 1, c) - H(r - 1, c)) / (sr * dz);
   }
   const index = [];
   for (let r = 0; r < S - 1; r++) for (let c = 0; c < S - 1; c++) {

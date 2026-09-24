@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toX, toZ } from "./geo.js";
+import { KX, KZ, toX, toZ } from "./geo.js";
 import { coverage, decode, tileArrays, wanted } from "./auvTiles.js";
 
 describe("decode", () => {
@@ -58,5 +58,17 @@ describe("coverage", () => {
     expect(toZ(lat0)).toBeCloseTo(first.positions[2], 3);
     expect(toX(lon1)).toBeCloseTo(last.positions[(S * S - 1) * 3], 3);
     expect(toZ(lat1)).toBeCloseTo(last.positions[(S * S - 1) * 3 + 2], 3);
+  });
+});
+
+describe("tileArrays gradients", () => {
+  it("a plane has the same slope at the tile's edges as inside (one-sided differences use their real span)", () => {
+    const S = 4, cellDeg = 0.001, h = new Float32Array(S * S);
+    for (let r = 0; r < S; r++) for (let c = 0; c < S; c++) h[r * S + c] = 10 * c + 3 * r;
+    const a = tileArrays(h, S, -130, 46, cellDeg), dx = cellDeg * KX, dz = cellDeg * KZ;
+    for (let i = 0; i < S * S; i++) {
+      expect(a.grad[i * 2]).toBeCloseTo(10 / dx, 3);
+      expect(a.grad[i * 2 + 1]).toBeCloseTo(3 / dz, 3);
+    }
   });
 });
