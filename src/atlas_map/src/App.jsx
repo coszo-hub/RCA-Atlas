@@ -7,6 +7,7 @@ import FamilyFilter from "./ui/FamilyFilter.jsx";
 import Header from "./ui/Header.jsx";
 import Legend from "./ui/Legend.jsx";
 import RegionNav from "./ui/RegionNav.jsx";
+import SitePanel from "./panels/SitePanel.jsx";
 import Tooltip from "./ui/Tooltip.jsx";
 
 export default function App() {
@@ -39,6 +40,7 @@ function Atlas({ bundle, onError }) {
   const openSite = useCallback((site, sc) => {
     setSiteId(site.id); setSensorId(null); setHover(null); sc.flyToPoint(site.lon, site.lat, 6); layerRef.current?.setSelected(site.id);
   }, []);
+  const closeSite = useCallback(() => { setSiteId(null); setSensorId(null); layerRef.current?.setSelected(null); }, []);
   const selectRegion = useCallback((key, sc) => {
     setRegionKey(key); sc.flyTo(key === "overview" ? bundle.overview : bundle.regions.find(r => r.key === key).view);
   }, [bundle]);
@@ -73,6 +75,10 @@ function Atlas({ bundle, onError }) {
     scene.setMute(focus.size ? 0.55 : 0);
   }, [focus, scene]);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty("--right-inset", siteId ? "472px" : "16px");
+  }, [siteId]);
+
   return (
     <>
       <canvas ref={canvasRef} className="atlas-scene" aria-label="3D map of the seafloor off Oregon" />
@@ -89,6 +95,10 @@ function Atlas({ bundle, onError }) {
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
           <Legend credit={bundle.terrainMeta.credit} />
           <Tooltip hover={hover} bundle={bundle} />
+          {siteId && (
+            <SitePanel key={siteId} site={bundle.siteById[siteId]} bundle={bundle} elevAt={scene.elevAt}
+              onClose={closeSite} onSensor={setSensorId} />
+          )}
         </>
       )}
     </>

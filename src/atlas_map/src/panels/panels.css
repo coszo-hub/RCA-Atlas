@@ -1,0 +1,24 @@
+.side-panel { top: 16px; right: 16px; bottom: 16px; width: 440px; overflow-y: auto; padding: 16px; animation: slide-in 260ms ease; }
+@keyframes slide-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sp-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.sp-head h2 { margin: 2px 0 0; font-size: 17px; font-weight: 600; }
+.sp-head .sub { color: var(--text-secondary); font-size: 12px; margin-top: 4px; }
+.close { background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 28px; height: 28px; cursor: pointer; color: var(--text-secondary); }
+.depth-section { margin: 14px 0 6px; position: relative; }
+.surface-line { stroke: var(--text-muted); stroke-dasharray: 3 3; }
+.tick { stroke: var(--text-muted); }
+.tick-label { fill: var(--text-muted); font-size: 9px; text-anchor: end; }
+.axis-break { stroke: var(--text-secondary); fill: none; }
+.seafloor { fill: rgba(236, 235, 230, 0.06); stroke: var(--text-secondary); stroke-width: 1.2; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 500ms ease forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.sensor { cursor: pointer; opacity: 0; animation: settle 300ms ease forwards; animation-delay: var(--delay); }
+@keyframes settle { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; } }
+.sensor:hover .mark g { stroke: var(--text-primary); stroke-width: 2.6; }
+.ds-tip { position: absolute; left: 0; right: 0; bottom: -4px; font-size: 12px; color: var(--text-secondary); background: var(--surface-1); padding: 4px 6px; border-radius: 3px; }
+.sp-family h3 { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 16px 0 4px; }
+.sp-row { display: flex; justify-content: space-between; gap: 10px; width: 100%; background: transparent; border: 0; padding: 6px 4px; border-radius: 3px; text-align: left; cursor: pointer; }
+.sp-row:hover { background: var(--surface-2); }
+.sp-row.static { cursor: default; }
+.sp-row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-row .d { color: var(--text-muted); font-size: 11.5px; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .seafloor, .sensor { animation: none; opacity: 1; stroke-dashoffset: 0; } }

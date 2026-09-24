@@ -1,4 +1,4 @@
-const SHAPES = {
+export const SHAPES = {
   circle: c => <circle cx="6" cy="6" r="4.6" fill={c} />,
   triangle: c => <polygon points="6,1.2 10.8,10 1.2,10" fill={c} />,
   square: c => <rect x="1.8" y="1.8" width="8.4" height="8.4" fill={c} />,
