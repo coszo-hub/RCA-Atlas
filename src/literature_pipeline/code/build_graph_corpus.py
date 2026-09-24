@@ -416,10 +416,10 @@ def build(input_path: Path, glossary_path: Path, output: Path) -> None:
             errors.append("work has no chunk " + work["id"])
     if len(documents) != len(works):
         errors.append("document count does not match canonical works")
-    if len(citations) != 398:
-        errors.append(f"expected 398 citations, found {len(citations)}")
     expected_occurrences = {x for w in works for x in (w.get("source_occurrence_ids") or [])}
     actual_occurrences = {c["occurrence_id"] for c in citations}
+    if len(citations) != len(expected_occurrences):
+        errors.append(f"expected {len(expected_occurrences)} citation occurrences, found {len(citations)}")
     if expected_occurrences != actual_occurrences:
         errors.append("citation occurrence IDs do not exactly match canonical records")
     if hashlib.sha256(input_path.read_bytes()).hexdigest() != input_sha256:
@@ -451,7 +451,7 @@ def build(input_path: Path, glossary_path: Path, output: Path) -> None:
         "errors": errors,
         "checks": [
             "valid JSONL", "canonical literature SHA unchanged", "unique node ids",
-            "relationship endpoint integrity", "398 citation occurrences preserved",
+            "relationship endpoint integrity", "canonical citation occurrences preserved",
             "every work has a chunk", "nonempty bounded chunks", "text file hashes",
             "unique normalized DOIs", "website-compatible entity IDs", "eight glossary terms extracted",
         ],
