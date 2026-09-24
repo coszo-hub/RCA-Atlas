@@ -39,18 +39,18 @@ Not in the first version:
 
 These numbers come from the 2026-09-19 corpus snapshot in this repo.
 
-**Sensors.** `data/Instruments/instruments.jsonl` lists 168 sensors. 155 have coordinates. They form 34 sites in four regions:
+**Sensors.** `data/Instruments/instruments.jsonl` lists 168 sensors. 152 have trusted coordinates. They form 28 sites in four regions:
 
 | Region | Sensors | Notes |
 |---|---:|---|
 | Axial Seamount | 66 | caldera sites, vent fields, the base, 4 seismic stations |
-| Oregon Slope Base | 40 | shallow and deep profilers, seafloor package |
+| Oregon Slope Base | 37 | shallow and deep profilers, seafloor package |
 | Hydrate Ridge | 34 | summit platforms, seismic stations, many new COSZO sensors |
 | Oregon Shelf | 15 | COSZO sensors, many planned |
 
-The 13 sensors without coordinates are listed in the site panel of their named site where one exists. They do not appear on the map.
+The other 16 sensors have no usable position: 13 have no coordinates, and three fiber-optic experiments (PI-DAS24, PI-DAS25, PI-DAS-OPTASENSE) carry a placeholder coordinate, 45.0, −128.0, that `corrections.json` clears. They are listed in the site panel of their named site where one exists (11 do); the other 5 are listed as unplaced. None appear on the map.
 
-**Families.** About 40 instrument types map to six families. The mapping lives in one table in the build step.
+**Families.** About 40 instrument types map to six families. The mapping lives in one table in the build step. Counts are of located sensors.
 
 | Family | Sensors | Types |
 |---|---:|---|
@@ -59,7 +59,7 @@ The 13 sensors without coordinates are listed in the site panel of their named s
 | Currents & light | 24 | ADCP, velocimeters, 3D current meters, PAR, irradiance |
 | Sound & imaging | 22 | hydrophones, cameras, sonar |
 | Seismic | 21 | seismometers, OBS packages, geodetic modules, tiltmeters, pressure-tilt |
-| Fiber-optic | 3 | DAS and DTS experiments along the cable |
+| Fiber-optic | 0 | DAS and DTS experiments along the cable. All four inventory entries lack a known position, so none are drawn; they are listed as unplaced |
 
 **Status.** Nereus reports operational status for 126 reference designators. 97 of them match the inventory exactly. Sensors without a Nereus match are "planned" when the inventory marks them as new COSZO sensors, and "status unknown" otherwise. Nothing is inferred beyond that.
 
@@ -130,7 +130,7 @@ Outputs, under `src/atlas_map/public/atlas/`:
   - `arcadaId` (kept for part 2)
   - `sources` (provenance URLs)
   - `corrections` (a record of any fix the build applied)
-- `sites.json`: site id, display name, region, position, seafloor depth, sensor ids
+- `sites.json`: site id, name, display label (unique), region, position, seafloor depth, sensor ids
 - `regions.json`: four regions with camera views
 - `cable.json`: cable polylines and node points, with source and accuracy
 - `terrain/*.bin` and `terrain/terrain.json`: elevation grids as little-endian Int16 meters, plus bounds and cell size
@@ -139,13 +139,14 @@ Outputs, under `src/atlas_map/public/atlas/`:
 Rules:
 
 - **Families** come from one explicit type-to-family table. An unknown type fails the build.
-- **Sites.** A site is one physical location: every sensor within 150 m of another, whatever its OOI site code. For example, the Axial Base seafloor package, shallow profiler and deep profiler form one site of 33 sensors. The site is named after its seafloor platform, and the platforms it contains are kept as `parts` for the hover card and panel. Seismic stations with their own coordinates form their own sites.
+- **Sites.** A site is one physical location: every sensor within 150 m of another, whatever its OOI site code. For example, the Axial Base seafloor package, shallow profiler and deep profiler form one site of 33 sensors. The site is named after its seafloor platform, and the platforms it contains are kept as `parts` for the hover card and panel. Seismic stations with their own coordinates form their own sites. Site labels are unique: when a label repeats, it gets " · " plus the EarthScope station code for a single-station site, else the site's first node or site code, else an ordinal (for example "Southern Hydrate Ridge Summit · HYS13"). Names and ids are unchanged.
 - **Status.** Use the Nereus status when the reference designator matches. Otherwise "planned" for sensors the inventory marks as a new COSZO sensor suite, otherwise "unknown".
-- **Corrections** live in a small reviewed table (`corrections.json`) keyed by sensor or site, each with a reason. The build applies them and records them on the sensor.
+- **Corrections** live in a small reviewed table (`corrections.json`) keyed by sensor or site, each with a reason. The build applies them and records them on the sensor. A correction may set `lat` and `lon` to null to clear an untrusted placeholder position; the sensor is then unlocated.
 
 Validation. The build fails if any of these fails:
 
 - Every located sensor has a family, a site and a region.
+- Every status is a known value. An unrecognised Nereus status fails the build with the sensor and status named.
 - Sensor counts reconcile with the inventory: located, unlocated and total.
 - Every seafloor sensor's depth is within 250 m of the GMRT seafloor at its position. Mismatches must either appear in the corrections table or fail the build.
 - Every `access` URL uses an allowed host.
@@ -329,7 +330,7 @@ Opening a sensor replaces the cross-section with the detail view. A back control
 
 - **Build step.**
   - Unit tests for the family table, site clustering, status rules and corrections.
-  - A full-build test on the repo's corpus asserting the reconciled counts (168 total, 155 located) and zero unexplained depth mismatches.
+  - A full-build test on the repo's corpus asserting the reconciled counts (168 total, 152 located, 28 sites) and zero unexplained depth mismatches.
 - **Gateway.**
   - Tests against recorded upstream responses for each endpoint, following the simulated-service pattern in the existing toolkit tests.
   - Tests for thinning, the range caps and the timeout path.
@@ -342,7 +343,7 @@ Opening a sensor replaces the cross-section with the detail view. A back control
 ## Running locally
 
 ```sh
-python3 src/atlas_map_data/build_atlas_bundle.py            # writes src/atlas_map/public/atlas/
+PYTHONPATH=src .venv/bin/python -m atlas_map_data.build_atlas_bundle   # writes src/atlas_map/public/atlas/
 uvicorn atlas_map_gateway.app:app --app-dir src --port 8787  # live lookups and chat proxy
 cd src/atlas_map && npm install && npm run dev               # http://127.0.0.1:5175
 ```
