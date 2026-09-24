@@ -50,7 +50,7 @@ def create_app(settings: Settings, deps: Deps) -> FastAPI:
             return not_found("atlas", "unknown sensor")
 
         def fetch():
-            with limiter.slot("nereus"):
+            with limiter.slot("Nereus"):
                 res = call_toolkit("Nereus", lambda: deps.nereus.instrument_status(refdes))
             if not isinstance(res.get("instruments"), list):
                 raise errors.UpstreamError("Nereus", "unexpected response shape")

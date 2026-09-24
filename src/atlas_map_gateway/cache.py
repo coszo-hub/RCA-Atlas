@@ -22,7 +22,11 @@ class TTLCache:
                 return hit[1]
         value = fn()   # exceptions propagate; nothing is stored
         with self._lock:
-            self._data[key] = (self._clock() + ttl, value)
+            now = self._clock()
+            # Keys carry time ranges, so drop expired entries on write or the dict grows for the process lifetime.
+            for stale in [k for k, (expires, _) in self._data.items() if expires <= now]:
+                del self._data[stale]
+            self._data[key] = (now + ttl, value)
         return value
 
 

@@ -1,3 +1,4 @@
+import dataclasses
 import socket
 import unittest
 
@@ -52,6 +53,13 @@ class StatusTest(unittest.TestCase):
     def test_timeout_is_504(self):
         r = self.client(FakeNereus(exc=socket.timeout("timed out"))).get(f"/status/{REF}")
         self.assertEqual(r.status_code, 504)
+
+    def test_busy_limiter_is_503_with_display_source(self):
+        app = create_app(dataclasses.replace(SETTINGS, per_host_limit=1, upstream_timeout=0.01), deps(nereus=FakeNereus(OK)))
+        with app.state.limiter.slot("Nereus"):
+            r = TestClient(app).get(f"/status/{REF}")
+        self.assertEqual(r.status_code, 503)
+        self.assertEqual(r.json(), {"error": {"source": "Nereus", "message": "Nereus is busy; try again shortly"}})
 
     def test_status_is_cached(self):
         n = FakeNereus(OK)

@@ -59,6 +59,16 @@ class CacheTest(unittest.TestCase):
             c.get_or_set("k", 10, boom)
         self.assertEqual(c.get_or_set("k", 10, lambda: "ok"), "ok")
 
+    def test_expired_entries_are_pruned_on_write(self):
+        now = [0.0]
+        c = cache.TTLCache(clock=lambda: now[0])
+        c.get_or_set("series:old", 10, lambda: "old")
+        c.get_or_set("series:fresh", 100, lambda: "fresh")
+        now[0] = 11
+        c.get_or_set("series:new", 10, lambda: "new")
+        self.assertNotIn("series:old", c._data)
+        self.assertEqual(set(c._data), {"series:fresh", "series:new"})
+
 
 class LimiterTest(unittest.TestCase):
     def test_limit_and_busy(self):
