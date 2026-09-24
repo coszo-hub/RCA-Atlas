@@ -61,6 +61,14 @@ def stable_id(prefix: str, value: str) -> str:
 
 def clean_html(html: str) -> str:
     html = re.sub(r"(?is)<(script|style).*?>.*?</\1>", " ", html)
+    def preserve_image_caption(match: re.Match) -> str:
+        tag = match.group(0)
+        alt = re.search(r'''(?is)\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))''', tag)
+        if not alt:
+            return " "
+        caption = next(value for value in alt.groups() if value is not None).strip()
+        return f" Figure caption: {unescape(caption)}. " if caption else " "
+    html = re.sub(r"(?is)<img\b[^>]*>", preserve_image_caption, html)
     text = re.sub(r"(?s)<[^>]+>", " ", html)
     return re.sub(r"\s+", " ", unescape(text)).strip()
 

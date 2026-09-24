@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import unittest
 
 from axial_monitoring_tools import AxialMonitoringToolkit, TOOL_SCHEMAS, dispatch
+from build_axial_monitoring_graph import clean_html
 
 
 PNG = b"\x89PNG\r\n\x1a\nminimal-test-payload"
@@ -42,6 +43,11 @@ class AxialMonitoringToolsTest(unittest.TestCase):
     def test_schemas_and_dispatch(self):
         self.assertEqual(len(TOOL_SCHEMAS), 3)
         self.assertTrue(dispatch(self.toolkit, "axial_monitoring_list_streams", {})["ok"])
+
+    def test_html_image_alt_caption_is_retained(self):
+        text = clean_html('<p>Plot 1.</p><img src="live.png" alt="De-tided BPR pressure and temperature">')
+        self.assertIn("Plot 1.", text)
+        self.assertIn("Figure caption: De-tided BPR pressure and temperature.", text)
 
 
 if __name__ == "__main__":
