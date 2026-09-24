@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { BUILD_COMMAND, BundleMissingError, loadBundle } from "./data/bundle.js";
 import { AtlasScene, loadGrids } from "./scene/AtlasScene.js";
+import Controls from "./ui/Controls.jsx";
+import RegionNav from "./ui/RegionNav.jsx";
 
 export default function App() {
   const [bundle, setBundle] = useState(null);
   const [error, setError] = useState(null);
+  const [scene, setScene] = useState(null);
+  const [regionKey, setRegionKey] = useState("overview");
   useEffect(() => { loadBundle().then(setBundle, setError); }, []);
 
   if (error) {
@@ -17,7 +21,18 @@ export default function App() {
     );
   }
   if (!bundle) return <div className="app-message">Loading the atlas…</div>;
-  return <SceneHost bundle={bundle} />;
+  return (
+    <>
+      <SceneHost bundle={bundle} onReady={setScene} />
+      {scene && (
+        <>
+          <Controls scene={scene} />
+          <RegionNav regions={bundle.regions} sensors={bundle.sensors} active={regionKey}
+            onSelect={k => { setRegionKey(k); scene.flyTo(k === "overview" ? bundle.overview : bundle.regions.find(r => r.key === k).view); }} />
+        </>
+      )}
+    </>
+  );
 }
 
 function SceneHost({ bundle, onReady }) {
