@@ -229,11 +229,14 @@ Layout:
   - Holding the arrow keys moves the camera smoothly: up and down move forward and back along the current heading, left and right move sideways. The speed scales with zoom, so a one-second hold covers about a third of the screen at any zoom level. Arrow keys are ignored while a text field or slider has focus.
   - On touch screens, one finger moves the view and two fingers zoom and rotate.
   - A one-line hint under the terrain controls lists these.
-- **Cursor parallax.** When the view has been idle for about one second, the camera tilts slightly toward the cursor: up to ±2.6° across and ±1.4° up and down. It stops while dragging or flying.
+- **No motion without input.** The camera moves only on drag, scroll, arrow keys, or a requested flight. There is no cursor-follow movement.
 - **Opening view.** The whole area from the coast to Axial, at 6× vertical exaggeration. Four region labels show sensor counts.
 - **Region flights.** Clicking a region flies the camera there over 1.8 s, easing the exaggeration to 2.5–4×. Once the camera is close enough, site markers replace the region labels.
-- **Shape toggle.** Switching between Relief and Contours animates the terrain flattening, or rising, over about 0.8 s. Markers, stems and the cable move with it.
-- **Color toggle.** Depth uses a single-hue scale from pale stone at the shelf to deep slate at 4,800 m, with land in neutral gray. Mono uses grays only.
+- **Three independent terrain switches:**
+  - **View: 3D or 2D.** 3D raises the terrain by the vertical exaggeration. 2D flattens it over about 0.8 s and eases the camera straight overhead. Tilting is locked in 2D, water-column lines and labels hide, and the exaggeration slider is disabled. Switching back to 3D restores the previous tilt.
+  - **Style: Relief or Contours.** Relief is a shaded surface with faint contour lines. Contours is a dark fill with bright lines at 50 m (patches) or 100 m (overview), and heavier lines every fifth interval. In 3D the contour fill keeps a faint shading so the landform still reads. All four combinations work: 3D relief, 3D contours, 2D shaded relief and 2D contour chart.
+  - **Color: Depth or Mono**, as described below.
+- **Color.** Depth uses a single-hue scale from pale stone at the shelf to deep slate at 4,800 m, with land in neutral gray. Mono uses grays only.
 - **Vertical exaggeration.** A slider from 1× to 12×.
 
 ### Site markers
@@ -246,10 +249,19 @@ Layout:
   - unknown: thin dashed stroke
 - **Operating halo.** Sites with at least one operating sensor get a faint halo that breathes on a 3.2 s cycle.
 - **Vertical placement.** Every site marker sits on the seafloor at its true position, because that is where the platform or mooring is anchored. Nothing on the map floats. The height of the 3D scene is seafloor depth, and nothing else.
-- **Water column.** A site with a mooring gets a thin dashed line from the seafloor up to the sea surface. The depths where sensors actually sample are drawn solid on top of it: the shallow profiler at 5–200 m, the 200 m platform, and the deep profiler at 250 m to about 150 m above the seafloor. One stacked label at the surface end reads, for example: "Sea surface 0 m / Shallow profiler 5–200 m / 200 m platform 200 m / Deep profiler 250–2,457 m / Seafloor 2,614 m". The legend explains the line.
-- **Anchoring.** Markers and labels are projected every frame with the exact camera used for that frame's render, including the cursor-parallax offset, so they never drift. A marker hidden behind terrain from the current viewpoint fades to 12% opacity and loses its label and hover. This is tested by walking the sight line across the elevation grid.
+- **Water column (3D only).** A site with a mooring gets a thin dashed line from the seafloor up to the sea surface. The depths where sensors actually sample are drawn solid on top of it: the shallow profiler at 5–200 m, the 200 m platform, and the deep profiler at 250 m to about 150 m above the seafloor. One stacked label at the surface end reads, for example: "Sea surface 0 m / Shallow profiler 5–200 m / 200 m platform 200 m / Deep profiler 250–2,457 m / Seafloor 2,614 m". The legend explains the line.
+- **Anchoring.** Markers and labels are projected every frame with the exact camera used for that frame's render, so they never drift. A marker hidden behind terrain from the current viewpoint fades to 12% opacity and loses its label and hover. This is tested by walking the sight line across the elevation grid.
 - **Labels** show the site name and sensor count. Where labels would collide, the site with more sensors keeps its label.
 - **Hover** shows the site name, seafloor depth, a family breakdown, the water-column reach, and up to 14 sensors grouped by platform, with status and depth or depth range.
+
+### Cable and primary nodes
+
+- **Cable hover** shows the segment (for example, "North backbone · Pacific City landfall → PN5A area · 268 km"), whether the route is charted or approximate and why, and a one-line explanation of the two backbone lines.
+- **Primary nodes** are small square markers labeled with their code (PN1A–PN1D, PN3A, PN3B, PN5A).
+  - **Hover** explains what a primary node is, lists catalogued sites within 30 km with their sensor counts, and gives the position accuracy and source.
+  - **Click** flies the camera to the node.
+  - **PN5A (Mid-Plate)** also carries OOI's own description: a placeholder node with minimal electronics for future expansion, and no sensors.
+  - **Up close,** node codes hide so site labels take priority; the square stays.
 
 ### Family filter
 
