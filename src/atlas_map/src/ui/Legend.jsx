@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import "./ui.css";
 
-// Collapsed to a small toggle while a side panel (site or chat) is open, expanded otherwise;
-// the user can flip it either way until the panels change.
+// Collapsed to a small toggle while the right-hand panel is open or the top row wraps, expanded otherwise
+// (the chat alone does not collapse it); the user can flip it either way until that changes. The map
+// credits stay visible either way (Credit.jsx).
 export default function Legend({ credit, compact = false, auv = false }) {
   const [override, setOverride] = useState(null);
   useEffect(() => setOverride(null), [compact]);
   const expanded = override ?? !compact;
   if (!expanded) {
-    return <button className="panel legend-toggle" aria-expanded="false" onClick={() => setOverride(true)}>Legend</button>;
+    return <button className="panel hud-toggle legend-toggle" aria-expanded="false" onClick={() => setOverride(true)}>Legend</button>;
   }
   return (
     <div className="panel legend">

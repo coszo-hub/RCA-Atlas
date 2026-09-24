@@ -44,4 +44,20 @@ describe("Controls", () => {
     render(<Controls scene={fakeScene()} />);
     expect(screen.queryByText("Axial detail")).toBeNull();
   });
+  it("collapses to a toggle while the top row wraps, keeps its switches, and the user can expand and collapse it", () => {
+    const s = fakeScene();
+    const { rerender } = render(<Controls scene={s} />);
+    fireEvent.click(screen.getByRole("button", { name: "Contours" }));
+    rerender(<Controls scene={s} compact />);
+    expect(screen.queryByRole("button", { name: "Contours" })).toBeNull();
+    const toggle = screen.getByRole("button", { name: "Terrain controls" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Contours" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Collapse terrain controls" }));
+    expect(screen.getByRole("button", { name: "Terrain controls" })).toBeInTheDocument();
+    rerender(<Controls scene={s} compact={false} />);
+    expect(screen.getByRole("button", { name: "Contours" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse terrain controls" })).toBeNull();
+  });
 });

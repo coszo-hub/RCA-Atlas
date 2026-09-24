@@ -24,6 +24,7 @@ input[type=range]:disabled { opacity: 0.35; }
 .regions button:hover { background: var(--surface-2); }
 .regions button[aria-pressed="true"] { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--text-primary); }
 .regions .n { color: var(--text-muted); font-size: 12px; }
+.regions .unplaced { margin-top: 4px; border-top: 1px solid var(--hairline); border-radius: 0 0 4px 4px; color: var(--text-secondary); font-size: 12px; }
 .header { width: 320px; padding: 14px 16px 12px; }
 .header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
 .header p { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
@@ -48,8 +49,14 @@ input[type=range]:disabled { opacity: 0.35; }
 .legend { width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
 .legend-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: -4px; }
 .legend-head button { background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 24px; height: 22px; cursor: pointer; color: var(--text-secondary); }
-.legend-toggle { padding: 7px 12px; cursor: pointer; color: var(--text-secondary); font-size: 12px; }
-.legend-toggle:hover { color: var(--text-primary); }
+.hud-toggle { padding: 7px 12px; cursor: pointer; color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
+.hud-toggle:hover { color: var(--text-primary); }
+/* Wrapped top row: the collapsed controls and legend sit side by side under the header, one line tall. */
+.right-stack.compact { flex-direction: row; align-items: flex-start; }
+/* Always-visible map credits, in the 16 px bottom margin under the family strip, at the map's right edge. Nothing
+   else uses that margin, so a line longer than the map is wide runs on under the chat panel's edge rather than being cut. */
+.credit { position: fixed; right: var(--right-inset); bottom: 2px; z-index: 4; color: var(--text-muted); font-size: 10px; line-height: 12px;
+  white-space: nowrap; text-shadow: 0 0 3px #0b0b0a, 0 0 6px #0b0b0a; pointer-events: none; transition: right 220ms ease; }
 .legend .row { display: flex; align-items: center; gap: 9px; color: var(--text-secondary); font-size: 12px; line-height: 20px; }
 .legend .glyph { width: 18px; height: 12px; flex: none; }
 .ramp { height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(219,219,204) 0%, rgb(158,181,176) 14.6%, rgb(97,130,135) 41.7%, rgb(54,79,89) 62.5%, rgb(31,41,48) 100%); }

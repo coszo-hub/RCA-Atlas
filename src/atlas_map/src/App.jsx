@@ -7,13 +7,14 @@ import FamilyFilter from "./ui/FamilyFilter.jsx";
 import Header from "./ui/Header.jsx";
 import Legend from "./ui/Legend.jsx";
 import RegionNav from "./ui/RegionNav.jsx";
+import Credit from "./ui/Credit.jsx";
 import SensorDetail from "./panels/SensorDetail.jsx";
 import SitePanel from "./panels/SitePanel.jsx";
+import UnplacedPanel from "./panels/UnplacedPanel.jsx";
+import { INSET as inset, hudBottom, hudWraps } from "./ui/layout.js";
 import Tooltip from "./ui/Tooltip.jsx";
 import ChatPanel, { chatStartsOpen } from "./chat/ChatPanel.jsx";
 
-// Widths the side panels take from the map, including their 16 px margins (see --left-inset / --right-inset).
-const inset = { chat: 412, site: 472, none: 16 };
 
 export default function App() {
   const [bundle, setBundle] = useState(null);
@@ -34,19 +35,37 @@ export default function App() {
 }
 
 function Atlas({ bundle, onError }) {
-  const canvasRef = useRef(null), overlayRef = useRef(null), layerRef = useRef(null), hudRef = useRef(null);
+  const canvasRef = useRef(null), overlayRef = useRef(null), layerRef = useRef(null), hudRef = useRef(null), rightRef = useRef(null);
   const [scene, setScene] = useState(null);
   const [regionKey, setRegionKey] = useState("overview");
   const [focus, setFocus] = useState(new Set());
   const [hover, setHover] = useState(null);   // {kind, item, x, y}
   const [siteId, setSiteId] = useState(null);   // the site panel (Task 7) opens for it
   const [sensorId, setSensorId] = useState(null);   // the sensor detail (Task 8) opens for it
-  const [chatOpen, setChatOpen] = useState(chatStartsOpen);   // ChatPanel owns and persists it; the legend follows it
+  const [unplacedOpen, setUnplacedOpen] = useState(false);   // the list of sensors with no position and no site
+  const [chatOpen, setChatOpen] = useState(chatStartsOpen);   // ChatPanel owns and persists it; the top row follows it
+  const [width, setWidth] = useState(innerWidth);
+  useEffect(() => { const on = () => setWidth(innerWidth); addEventListener("resize", on); return () => removeEventListener("resize", on); }, []);
 
-  const openSite = useCallback((site, sc) => {
-    setSiteId(site.id); setSensorId(null); setHover(null); sc.flyToPoint(site.lon, site.lat, 6); layerRef.current?.setSelected(site.id);
+  // One right-hand panel at a time: a site (with its sensors) or the unplaced list (with theirs).
+  const showSite = useCallback(site => {
+    setSiteId(site.id); setUnplacedOpen(false); setSensorId(null); setHover(null); layerRef.current?.setSelected(site.id);
   }, []);
+  const openSite = useCallback((site, sc) => { showSite(site); sc.flyToPoint(site.lon, site.lat, 6); }, [showSite]);
   const closeSite = useCallback(() => { setSiteId(null); setSensorId(null); layerRef.current?.setSelected(null); }, []);
+  const openUnplaced = useCallback(() => { closeSite(); setUnplacedOpen(true); }, [closeSite]);
+  const closeUnplaced = useCallback(() => { setUnplacedOpen(false); setSensorId(null); }, []);
+  // A located sensor flies to its site. One with no recorded position opens its detail without a flight:
+  // inside its named site's panel when it has one, else inside the unplaced list.
+  const openSensor = useCallback((id, sc) => {
+    const sensor = bundle.sensorById[id], site = sensor && bundle.siteById[sensor.site];
+    if (!sensor) return false;
+    if (site && sensor.lat != null) openSite(site, sc);
+    else if (site) showSite(site);
+    else openUnplaced();
+    setSensorId(id);
+    return true;
+  }, [bundle, openSite, showSite, openUnplaced]);
   const selectRegion = useCallback((key, sc) => {
     setRegionKey(key); sc.flyTo(sc.fit(key === "overview" ? bundle.overview : bundle.regions.find(r => r.key === key).view));
   }, [bundle]);
@@ -75,17 +94,16 @@ function Atlas({ bundle, onError }) {
       window.__atlas = {
         scene: sc, layer, flyTo: view => sc.flyTo(view), lod: () => sc.auv?.stats(),
         open: id => {
-          const sensor = bundle.sensorById[id], target = bundle.siteById[sensor ? sensor.site : id];
-          if (!target) return false;
-          openSite(target, sc);
-          if (sensor) setSensorId(id);
+          if (bundle.sensorById[id]) return openSensor(id, sc);
+          if (!bundle.siteById[id]) return false;
+          openSite(bundle.siteById[id], sc);
           return true;
         },
       };
       setScene(sc);
     }).catch(err => { if (!cancelled) onError?.(err); });
     return () => { cancelled = true; layer?.dispose(); sc?.dispose(); };
-  }, [bundle, openSite, selectRegion, onError]);
+  }, [bundle, openSite, openSensor, selectRegion, onError]);
 
   useEffect(() => {
     if (!scene) return;
@@ -93,33 +111,38 @@ function Atlas({ bundle, onError }) {
     scene.setMute(focus.size ? 0.55 : 0);
   }, [focus, scene]);
 
-  useEffect(() => {
-    document.documentElement.style.setProperty("--right-inset", `${siteId ? inset.site : inset.none}px`);
-  }, [siteId]);
-
-  // The map centers on the area the panels leave free: between the chat and site panels, below the header
-  // and regions (they sit over the array's west end), and above the family strip. Layout effects, so the
-  // first framing (the overview, fitted to that area) is in place before the first paint with the HUD.
+  const panelOpen = !!siteId || unplacedOpen;
+  // The top row wraps when the map between the panels is too narrow for header and controls side by side;
+  // then the controls and legend collapse to toggles so they do not sit over the middle of the map.
+  const wraps = hudWraps(width, chatOpen, panelOpen);
   useLayoutEffect(() => {
-    const head = hudRef.current;
+    document.documentElement.style.setProperty("--right-inset", `${panelOpen ? inset.side : inset.none}px`);
+  }, [panelOpen]);
+
+  // The map centers on the area the panels leave free: between the chat and side panels, below the top-row
+  // HUD (header and regions, plus the controls when they wrap under them), and above the family strip.
+  // Layout effects, so the first framing (the overview, fitted to that area) is in place before the first paint.
+  useLayoutEffect(() => {
+    const head = hudRef.current, right = rightRef.current;
     if (!scene || !head) return;
-    const strip = document.querySelector(".families");
-    const settle = () => scene.setInsetsY(head.getBoundingClientRect().bottom, strip ? innerHeight - strip.getBoundingClientRect().top : inset.none);
+    const strip = document.querySelector(".families"), row = head.parentElement;
+    const settle = () => scene.setInsetsY(hudBottom(head, right), strip ? innerHeight - strip.getBoundingClientRect().top : inset.none);
     settle();
     const ro = new ResizeObserver(settle);
-    ro.observe(head); if (strip) ro.observe(strip);
+    for (const el of [head, right, row, strip]) if (el) ro.observe(el);
     addEventListener("resize", settle);
     return () => { ro.disconnect(); removeEventListener("resize", settle); };
   }, [scene]);
   useLayoutEffect(() => {
     if (!scene) return;
     const first = !scene.framed;
-    scene.setInsets(chatOpen ? inset.chat : inset.none, siteId ? inset.site : inset.none, first);
+    scene.setInsets(chatOpen ? inset.chat : inset.none, panelOpen ? inset.side : inset.none, first);
     if (first) scene.jumpTo(scene.fit(bundle.overview));
-  }, [scene, chatOpen, siteId, bundle]);
+  }, [scene, chatOpen, panelOpen, bundle]);
 
   const site = siteId ? bundle.siteById[siteId] : null;
   const sensor = sensorId ? bundle.sensorById[sensorId] : null;
+  const detail = backLabel => sensor && <SensorDetail key={sensorId} sensor={sensor} bundle={bundle} backLabel={backLabel} onBack={() => setSensorId(null)} />;
   return (
     <>
       <canvas ref={canvasRef} className="atlas-scene" aria-label="3D map of the seafloor off Oregon" />
@@ -130,26 +153,29 @@ function Atlas({ bundle, onError }) {
               header and regions on the left, view controls and legend on the right. */}
           <div className="hud-top">
             <div className="left-stack" ref={hudRef}>
-              <Header bundle={bundle} onPick={r => {
-                const target = r.kind === "site" ? bundle.siteById[r.id] : bundle.siteById[bundle.sensorById[r.id].site];
-                openSite(target, scene);
-                if (r.kind === "sensor") setSensorId(r.id);
-              }} />
-              <RegionNav regions={bundle.regions} sensors={bundle.sensors} active={regionKey} onSelect={key => selectRegion(key, scene)} />
+              <Header bundle={bundle} onPick={r => (r.kind === "site" ? openSite(bundle.siteById[r.id], scene) : openSensor(r.id, scene))} />
+              <RegionNav regions={bundle.regions} sensors={bundle.sensors} active={regionKey} onSelect={key => selectRegion(key, scene)}
+                unplaced={bundle.unplaced?.length ?? 0} unplacedOpen={unplacedOpen} onUnplaced={() => (unplacedOpen ? closeUnplaced() : openUnplaced())} />
             </div>
-            <div className="right-stack">
-              <Controls scene={scene} />
-              <Legend credit={bundle.terrainMeta.credit} compact={!!siteId || chatOpen} auv={!!scene.auv} />
+            <div className={`right-stack${wraps ? " compact" : ""}`} ref={rightRef}>
+              <Controls scene={scene} compact={wraps} />
+              <Legend credit={bundle.terrainMeta.credit} compact={panelOpen || wraps} auv={!!scene.auv} />
             </div>
           </div>
+          <Credit credit={bundle.terrainMeta.credit} auv={!!scene.auv} />
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
           <Tooltip hover={hover} bundle={bundle} />
           <ChatPanel selection={{ site, sensor }} onOpenChange={setChatOpen} />
           {site && (
             <SitePanel key={siteId} site={site} bundle={bundle} elevAt={scene.elevAt}
               onClose={closeSite} onBack={() => setSensorId(null)} onSensor={setSensorId}>
-              {sensor && <SensorDetail key={sensorId} sensor={sensor} bundle={bundle} onBack={() => setSensorId(null)} />}
+              {detail(site.label)}
             </SitePanel>
+          )}
+          {!site && unplacedOpen && (
+            <UnplacedPanel bundle={bundle} onClose={closeUnplaced} onBack={() => setSensorId(null)} onSensor={setSensorId}>
+              {detail("Unplaced sensors")}
+            </UnplacedPanel>
           )}
         </>
       )}
