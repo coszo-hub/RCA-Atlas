@@ -16,6 +16,12 @@ class CableTest(unittest.TestCase):
         self.assertFalse(any("path B" in n for n in names))
         self.assertEqual(self.c["hidden"], 5)
 
+    def test_line_kinds_are_the_four_legend_groups(self):
+        kinds = {l["kind"] for l in self.c["lines"]}
+        self.assertEqual(kinds, {"North backbone", "South backbone", "Extension", "Spur"})
+        pn5a = [l for l in self.c["lines"] if "path A" in l["route"]]
+        self.assertEqual([(l["kind"], l["route"]) for l in pn5a], [("North backbone", "near PN5A (path A)")])
+
     def test_lines_split_kind_and_route(self):
         north = [l for l in self.c["lines"] if l["route"].startswith("Pacific City landfall") and l["kind"] == "North backbone"]
         self.assertEqual(len(north), 1)

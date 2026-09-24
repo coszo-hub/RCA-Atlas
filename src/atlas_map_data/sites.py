@@ -51,11 +51,16 @@ def build_sites(located: list[dict], unlocated: list[dict],
                 elev: Callable[[float, float], float]) -> tuple[list[dict], list[dict]]:
     clusters: list[list[dict]] = []
     for sensor in sorted(located, key=lambda x: (x["lat"], x["lon"], x["id"])):
-        home = next((c for c in clusters if any(_km(sensor, m) < SITE_RADIUS_KM for m in c)), None)
-        if home is None:
+        # Transitive: a sensor near several groups merges them into the earliest one.
+        near = [c for c in clusters if any(_km(sensor, m) < SITE_RADIUS_KM for m in c)]
+        if not near:
             clusters.append([sensor])
-        else:
-            home.append(sensor)
+            continue
+        home = near[0]
+        for other in near[1:]:
+            home.extend(other)
+            clusters.remove(other)
+        home.append(sensor)
 
     result, used_ids = [], set()
     for members in clusters:
@@ -94,10 +99,13 @@ def build_sites(located: list[dict], unlocated: list[dict],
 
     unplaced = []
     for u in unlocated:
-        home = next((t for t in result if any(
-            (u.get("siteCode") and m.get("siteCode") == u["siteCode"]) or
-            (u.get("location") and m.get("location") == u["location"])
-            for m in located if m["site"] == t["id"])), None)
+        home = None
+        for key in ("siteCode", "location"):   # site code across all sites first, then location
+            if u.get(key):
+                home = next((t for t in result if any(
+                    m.get(key) == u[key] for m in located if m["site"] == t["id"])), None)
+            if home:
+                break
         if home:
             home["unlocatedIds"].append(u["id"])
             u["site"], u["region"] = home["id"], home["region"]

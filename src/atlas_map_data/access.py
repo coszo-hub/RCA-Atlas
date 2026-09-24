@@ -13,6 +13,8 @@ from pathlib import Path
 ERDDAP = "https://erddap.dataexplorer.oceanobservatories.org/erddap"
 QAQC = "https://ec2.qaqc.ooi-rca.net"
 OOI_EXPLORER = "https://dataexplorer.oceanobservatories.org"
+# Corpus channels.jsonl lists no vertical channel for the OO stations; HHZ (200 Hz) verified live for OO.AXCC1.
+DEFAULT_VERTICAL_CHANNEL = "HHZ"
 ALLOWED_HOSTS = {
     "erddap.dataexplorer.oceanobservatories.org", "dataexplorer.oceanobservatories.org",
     "oceanobservatories.org", "ooinet.oceanobservatories.org", "ec2.qaqc.ooi-rca.net",
@@ -85,8 +87,10 @@ def build_access(record: dict, external: dict, pi_endpoints: dict[str, list[dict
     station = earthscope_station(record)
     if station:
         net, sta = station
+        channel = vertical_channels.get(f"{net}.{sta}")
         routes.append({"kind": "earthscope", "label": "EarthScope FDSN", "network": net, "station": sta,
-                       "channel": vertical_channels.get(f"{net}.{sta}"),
+                       "channel": channel or DEFAULT_VERTICAL_CHANNEL,
+                       "channelSource": "station metadata" if channel else "default",
                        "url": f"https://service.earthscope.org/fdsnws/station/1/query?net={net}&sta={sta}&level=channel&format=text",
                        "how": "Public seismic waveforms (MiniSEED) and station metadata; no login."})
     for ep in pi_endpoints.get(record["instrumentId"], []):

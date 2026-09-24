@@ -39,6 +39,14 @@ class AccessTest(unittest.TestCase):
         es = [x for x in routes if x["kind"] == "earthscope"][0]
         self.assertEqual((es["network"], es["station"], es["channel"]), ("OO", "AXCC1", "HHZ"))
 
+    def test_earthscope_channel_falls_back_to_hhz(self):
+        routes = access.build_access(rec(id="EARTHSCOPE-OO-AXCC1"), EXT, PI, {})
+        es = [x for x in routes if x["kind"] == "earthscope"][0]
+        self.assertEqual((es["channel"], es["channelSource"]), ("HHZ", "default"))
+        routes = access.build_access(rec(id="EARTHSCOPE-OO-AXCC1"), EXT, PI, {"OO.AXCC1": "BHZ"})
+        es = [x for x in routes if x["kind"] == "earthscope"][0]
+        self.assertEqual((es["channel"], es["channelSource"]), ("BHZ", "station metadata"))
+
     def test_pi_portal_endpoints(self):
         routes = access.build_access(rec(instrumentId="INSTRUMENT-pi"), EXT, PI, {})
         pi = [x for x in routes if x["kind"] == "pi_portal"]

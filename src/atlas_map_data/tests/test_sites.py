@@ -36,6 +36,16 @@ class SitesTest(unittest.TestCase):
         result, _ = sites.build_sites([a, b], [], FLAT)
         self.assertEqual(len(result), 2)
 
+    def test_grouping_is_transitive_through_a_bridging_sensor(self):
+        # A and C are 250 m apart; B is 125 m east of A and 50 m north (~135 m from each).
+        # B sorts last (highest lat), so a single greedy pass would leave A and C split.
+        dlon = 0.125 / sites.KX
+        a, c = s("a", 45.9, -130.0), s("c", 45.9, -130.0 + 2 * dlon)
+        b = s("b", 45.9 + 0.05 / sites.KZ, -130.0 + dlon)
+        result, _ = sites.build_sites([a, b, c], [], FLAT)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(sorted(result[0]["sensorIds"]), ["a", "b", "c"])
+
     def test_regions_by_longitude(self):
         self.assertEqual(sites.region_for(-130.0), "axial")
         self.assertEqual(sites.region_for(-125.39), "slope")
@@ -55,6 +65,16 @@ class SitesTest(unittest.TestCase):
         result, unplaced = sites.build_sites(located, [by_code, by_loc, orphan], FLAT)
         self.assertEqual(result[0]["unlocatedIds"], ["u1", "u2"])
         self.assertEqual([u["id"] for u in unplaced], ["u3"])
+
+    def test_unlocated_site_code_match_beats_earlier_location_match(self):
+        site_a = s("a", 45.80, -130.0, loc="Alpha", code="RS01AAAA")
+        site_b = s("b", 45.95, -130.0, loc="Beta", code="RS02BBBB")
+        u = s("u", None, None, loc="Alpha", code="RS02BBBB")
+        result, unplaced = sites.build_sites([site_a, site_b], [u], FLAT)
+        by_name = {t["name"]: t for t in result}
+        self.assertEqual(by_name["Alpha"]["unlocatedIds"], [])
+        self.assertEqual(by_name["Beta"]["unlocatedIds"], ["u"])
+        self.assertEqual(u["site"], by_name["Beta"]["id"])
 
 
 if __name__ == "__main__":

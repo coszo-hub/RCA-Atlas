@@ -33,10 +33,14 @@ def load_cable(path: Path) -> dict:
             hidden += 1
             continue
         kind, route = p["name"].split(":", 1) if ":" in p["name"] else ("RCA cable", p["name"])
+        kind, route = re.sub(r"\s*\(approximate\)", "", kind).strip(), route.strip().replace("->", "→")
+        # "North backbone near PN5A: path A" -> kind "North backbone", route "near PN5A (path A)".
+        near = re.fullmatch(r"((?:North|South) backbone) (near .+)", kind)
+        if near:
+            kind, route = near.group(1), f"{near.group(2)} ({route})"
         parts = [g["coordinates"]] if g["type"] == "LineString" else g["coordinates"]
         for coords in parts:
-            lines.append({"name": p["name"], "kind": re.sub(r"\s*\(approximate\)", "", kind).strip(),
-                          "route": route.strip().replace("->", "→"), "accuracy": p["accuracy"],
+            lines.append({"name": p["name"], "kind": kind, "route": route, "accuracy": p["accuracy"],
                           "lengthKm": p.get("length_km"), "source": p.get("source"),
                           "coords": [[round(x, 6), round(y, 6)] for x, y in coords]})
     return {"lines": lines, "nodes": nodes, "hidden": hidden}
