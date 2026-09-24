@@ -1,4 +1,5 @@
 const KIND = { 404: "notfound", 422: "bad", 502: "upstream", 503: "busy", 504: "timeout" };
+const ATLAS_WORKER = "https://rca-atlas.quakehunt.workers.dev";
 
 export async function api(path, { signal, method = "GET", body, fetchImpl = fetch } = {}) {
   let res;
@@ -23,4 +24,18 @@ export const series = (refdes, p, o) => api(`/series/${encodeURIComponent(refdes
 export const plots = (refdes, o) => api(`/plots/${encodeURIComponent(refdes)}`, o);
 export const waveform = (station, minutes, channel, o) => api(`/waveform/${station}?${q({ minutes, channel })}`, o);
 export const files = (key, endpoint, path, o) => api(`/files/${encodeURIComponent(key)}?${q({ endpoint, path })}`, o);
-export const chat = (question, o) => api("/chat", { ...o, method: "POST", body: { question } });
+export async function chat(question, { signal, fetchImpl = fetch } = {}) {
+  let response;
+  try {
+    response = await fetchImpl(`${ATLAS_WORKER}/v1/answer`, {
+      method: "POST", signal, headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: question, answer_mode: "evidence" }),
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") throw error;
+    return { ok: false, kind: "unreachable", source: "RCA Atlas", message: "The Graph-RAG service is unavailable." };
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.answer) return { ok: false, kind: KIND[response.status] ?? "upstream", source: "RCA Atlas", message: data.error || "The Graph-RAG service is unavailable." };
+  return { ok: true, data: { answer: data.answer, citations: data.answer_citations || [] } };
+}
