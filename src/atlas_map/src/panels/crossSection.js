@@ -35,11 +35,14 @@ export function profileDepthAt(prof, fx) {
 // seafloor, even when its recorded depth differs from the 45 m terrain grid by tens of meters.
 const inWater = (sensor, seafloor) => Boolean(sensor.depthRange) || (sensor.depth != null && sensor.depth < seafloor - 60);
 
+// Sensors fan across this share of the width, in family order: wide, so each keeps a target large enough to click.
+export const FAN = [0.08, 0.92];
+
 // `prof` (optional, from profile()) lets seafloor sensors follow the drawn floor line at their fanned x.
 export function layout(site, sensors, familyOrder, width, height, prof = null) {
   const s = depthScale(site, height);
   const sorted = [...sensors].sort((a, b) => familyOrder[a.family] - familyOrder[b.family] || a.id.localeCompare(b.id));
-  const x0 = width * 0.2, x1 = width * 0.8, n = sorted.length;
+  const x0 = width * FAN[0], x1 = width * FAN[1], n = sorted.length;
   return sorted.map((sensor, i) => {
     const x = n === 1 ? width / 2 : x0 + ((x1 - x0) * i) / (n - 1);
     if (sensor.depthRange && sensor.depthRange[0] !== sensor.depthRange[1]) {

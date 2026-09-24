@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { MinButton, MinTab } from "./Minimize.jsx";
 import "./ui.css";
 
 // Collapsed to a small toggle while the right-hand panel is open or the top row wraps, expanded otherwise
@@ -9,13 +10,29 @@ export default function Legend({ credit, compact = false, auv = false, subsurfac
   const [override, setOverride] = useState(null);
   useEffect(() => setOverride(null), [compact]);
   const expanded = override ?? !compact;
-  if (!expanded) {
-    return <button className="panel hud-toggle legend-toggle" aria-expanded="false" onClick={() => setOverride(true)}>Legend</button>;
-  }
+  const ref = useRef(null);
+  // The legend is taller than a short window: it ends 16 px above the bottom edge, or 8 px above the family strip when
+  // the strip reaches under it, and scrolls. Its top moves when the terrain controls open or close or the top row
+  // wraps, and the strip changes width with the panels, so refit whenever any of them changes size.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      const box = el.getBoundingClientRect(), strip = document.querySelector(".families")?.getBoundingClientRect();
+      const under = strip && strip.width && strip.right > box.left && strip.left < box.right;
+      el.style.maxHeight = `${Math.max(120, (under ? strip.top - 8 : innerHeight - 16) - box.top)}px`;
+    };
+    fit();
+    addEventListener("resize", fit);
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null;
+    const row = el.closest(".hud-top") ?? el.parentElement, strip = document.querySelector(".families");
+    if (ro) for (const c of [row, ...(row?.children ?? []), strip].filter(Boolean)) ro.observe(c);
+    return () => { removeEventListener("resize", fit); ro?.disconnect(); };
+  }, [expanded]);
+  if (!expanded) return <MinTab className="legend-toggle" onClick={() => setOverride(true)}>Legend</MinTab>;
   return (
-    <div className="panel legend">
-      <div className="legend-head"><span className="eyebrow">Legend</span>
-        <button aria-label="Collapse legend" aria-expanded="true" onClick={() => setOverride(false)}>–</button></div>
+    <div className="panel legend" ref={ref}>
+      <div className="panel-head"><span className="eyebrow">Legend</span><MinButton label="legend" onClick={() => setOverride(false)} /></div>
       <div><div className="eyebrow">Site marker</div>
         <div className="row">One segment per sensor, colored by family</div>
         <div className="row"><svg className="glyph"><path d="M1 6h10" style={{ stroke: "var(--text-secondary)" }} strokeWidth="3" /></svg>Operating</div>

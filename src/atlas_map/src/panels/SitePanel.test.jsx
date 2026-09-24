@@ -58,4 +58,29 @@ describe("DepthSection marks", () => {
     expect(mark.getAttribute("fill")).toBe("none");
     expect(mark.closest("g[stroke]").getAttribute("stroke")).toBe(b.familyByKey.seismic.color);
   });
+  it("minimizes to a tab with the site's name that restores it or closes it; Escape does nothing while minimized", () => {
+    const onClose = vi.fn(), onMinimize = vi.fn(), site = b.siteById["oregon-shelf"];
+    const { rerender } = render(<SitePanel site={site} bundle={b} elevAt={() => -80} onClose={onClose} onSensor={() => {}} onMinimize={onMinimize} />);
+    fireEvent.click(screen.getByRole("button", { name: `Minimize ${site.label} site` }));
+    expect(onMinimize).toHaveBeenLastCalledWith(true);
+    rerender(<SitePanel site={site} bundle={b} elevAt={() => -80} onClose={onClose} onSensor={() => {}} minimized onMinimize={onMinimize} />);
+    expect(screen.queryByRole("heading", { name: site.name })).toBeNull();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: site.name }));
+    expect(onMinimize).toHaveBeenLastCalledWith(false);
+    fireEvent.click(screen.getByRole("button", { name: "Close site panel" }));
+    expect(onClose).toHaveBeenCalled();
+  });
+  it("gives every sensor in the depth section a click target at least 14 wide and 32 tall, without overlaps", () => {
+    const onSensor = vi.fn();
+    const { container } = render(<SitePanel site={b.siteById["axial-seamount-base"]} bundle={b} elevAt={() => -2614} onClose={() => {}} onSensor={onSensor} />);
+    const hits = [...container.querySelectorAll(".depth-section .sensor .hit")];
+    expect(hits.length).toBe(b.siteById["axial-seamount-base"].sensorIds.length);
+    const boxes = hits.map(h => ({ x: +h.getAttribute("x"), w: +h.getAttribute("width"), h: +h.getAttribute("height") })).sort((a, c) => a.x - c.x);
+    for (const box of boxes) { expect(box.w).toBeGreaterThanOrEqual(14); expect(box.h).toBeGreaterThanOrEqual(32); }
+    for (let i = 1; i < boxes.length; i++) expect(boxes[i].x).toBeGreaterThanOrEqual(boxes[i - 1].x + boxes[i - 1].w - 1e-6);
+    fireEvent.click(hits[0]);
+    expect(onSensor).toHaveBeenCalled();
+  });
 });

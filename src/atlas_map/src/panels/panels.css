@@ -3,6 +3,14 @@
 .sp-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .sp-head h2 { margin: 2px 0 0; font-size: 17px; font-weight: 600; }
 .sp-head .sub { color: var(--text-secondary); font-size: 12px; margin-top: 4px; }
+.sp-actions { display: flex; gap: 6px; flex: none; }
+.sp-actions .min-btn { width: 28px; height: 28px; }
+/* The minimized site or unplaced panel: its title as a tab in the bottom-right corner, with a close control. */
+.side-tab { right: 16px; bottom: 16px; display: flex; align-items: center; gap: 4px; padding: 3px 3px 3px 0; max-width: 260px; z-index: 6; }
+.side-tab .restore { flex: 1; min-width: 0; background: transparent; border: 0; padding: 5px 8px 5px 12px; cursor: pointer; color: var(--text-secondary);
+  font-size: 12px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-tab .restore:hover { color: var(--text-primary); }
+.side-tab .close { width: 24px; height: 24px; flex: none; }
 .close { background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 28px; height: 28px; cursor: pointer; color: var(--text-secondary); }
 .depth-section { margin: 14px 0 6px; position: relative; }
 .surface-line { stroke: var(--text-muted); stroke-dasharray: 3 3; }
@@ -14,6 +22,8 @@
 .sensor { cursor: pointer; opacity: 0; animation: settle 300ms ease forwards; animation-delay: var(--delay); }
 @keyframes settle { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; } }
 .sensor:hover .mark g { stroke: var(--text-primary); stroke-width: 2.6; }
+.sensor .hit { fill: transparent; pointer-events: all; }
+.sensor:hover .hit { fill: rgba(236, 235, 230, 0.06); }
 .ds-tip { position: absolute; left: 0; right: 0; bottom: -4px; font-size: 12px; color: var(--text-secondary); background: var(--surface-1); padding: 4px 6px; border-radius: 3px; }
 .sp-family h3 { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 16px 0 4px; }
 .sp-row { display: flex; justify-content: space-between; gap: 10px; width: 100%; background: transparent; border: 0; padding: 6px 4px; border-radius: 3px; text-align: left; cursor: pointer; }

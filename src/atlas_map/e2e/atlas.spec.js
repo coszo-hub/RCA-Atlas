@@ -152,7 +152,7 @@ for (const [width, height] of [[1600, 1000], [1366, 768], [1280, 800]]) {
     await page.waitForTimeout(2500);   // the flight (1.3 s) and the glide to the new center
     const wraps = width - 412 - 472 < 580;
     // Wrapped, the terrain controls and the legend collapse to toggles.
-    await expect(page.getByRole("button", { name: "Terrain controls" })).toHaveCount(wraps ? 1 : 0);
+    await expect(page.getByRole("button", { name: "Terrain controls", exact: true })).toHaveCount(wraps ? 1 : 0);
     await expect(page.getByRole("button", { name: "Legend", exact: true })).toBeVisible();
     const hit = await page.evaluate(() => {
       const m = document.querySelector(".site.selected"), b = m.getBoundingClientRect();

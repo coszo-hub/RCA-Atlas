@@ -38,17 +38,30 @@ input[type=range]:disabled { opacity: 0.35; }
 .search li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 3px; cursor: pointer; }
 .search li[aria-selected="true"], .search li:hover { background: var(--surface-2); }
 .search .sub { color: var(--text-muted); font-size: 12px; }
-/* Centered between the side panels, never wider than the space between them (less the minimized chat tab, both sides so it stays centered). */
+/* Centered between the side panels, never wider than the space between them (less the minimized chat or side-panel tab, both sides so it stays centered). */
 .families { left: calc((var(--left-inset) + 100vw - var(--right-inset)) / 2); transform: translateX(-50%); bottom: 16px; padding: 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px;
-  width: max-content; max-width: calc(100vw - var(--left-inset) - var(--right-inset) - 2 * var(--strip-reserve)); transition: left 220ms ease, max-width 220ms ease; }
+  width: max-content; max-width: calc(100vw - var(--left-inset) - var(--right-inset) - 2 * max(var(--strip-reserve), var(--side-reserve))); transition: left 220ms ease, max-width 220ms ease; }
 .families button { white-space: nowrap; }
 .families button { display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 7px 11px; border-radius: 4px; cursor: pointer; transition: opacity 160ms ease; }
 .families button:hover { background: var(--surface-2); }
 .families button.muted { opacity: 0.35; }
 .families .n { color: var(--text-muted); font-size: 12px; }
-.legend { width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
-.legend-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: -4px; }
-.legend-head button { background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 24px; height: 22px; cursor: pointer; color: var(--text-secondary); }
+/* The legend's max-height is set to the room left below its top (Legend.jsx); past that it scrolls. */
+.legend { width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--hairline-strong) transparent; }
+.legend > * { flex: none; }
+/* A panel's head: its name (or title) and the minimize control. */
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.legend .panel-head, .controls .panel-head { margin-bottom: -4px; }
+/* Two classes deep, so a panel's own button rules (.regions button, .families button) do not restyle it. */
+.panel .min-btn { flex: none; display: grid; place-items: center; justify-content: center; background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 24px; height: 22px; padding: 0;
+  cursor: pointer; color: var(--text-secondary); line-height: 1; }
+.panel .min-btn:hover { background: transparent; color: var(--text-primary); border-color: var(--text-muted); }
+.header .panel-head { align-items: flex-start; }
+.families .min-btn { align-self: center; margin-left: 4px; }
+.families.minimized { padding: 0; }
+.families .families-tab { color: var(--text-secondary); font-size: 12px; padding: 7px 12px; }
+.families .families-tab:hover { color: var(--text-primary); background: transparent; }
 .hud-toggle { padding: 7px 12px; cursor: pointer; color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
 .hud-toggle:hover { color: var(--text-primary); }
 /* Wrapped top row: the collapsed controls and legend sit side by side under the header, one line tall. */

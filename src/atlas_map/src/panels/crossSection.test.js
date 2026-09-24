@@ -33,8 +33,8 @@ describe("layout", () => {
     const s = depthScale(site, 300);
     expect(sp.y).toBeCloseTo(s.y(5)); expect(sp.y2).toBeCloseTo(s.y(200));
     expect(base.y).toBeCloseTo(s.y(2607)); expect(base.y2).toBeUndefined();
-    expect(Math.min(...pts.map(p => p.x))).toBeGreaterThanOrEqual(80);
-    expect(Math.max(...pts.map(p => p.x))).toBeLessThanOrEqual(320);
+    expect(Math.min(...pts.map(p => p.x))).toBeGreaterThanOrEqual(32);
+    expect(Math.max(...pts.map(p => p.x))).toBeLessThanOrEqual(368);
   });
   it("sensor without depth sits on the seafloor", () => {
     const site = b.siteById["oregon-shelf"];

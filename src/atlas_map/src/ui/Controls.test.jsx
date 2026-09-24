@@ -54,11 +54,18 @@ describe("Controls", () => {
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(toggle);
     expect(screen.getByRole("button", { name: "Contours" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Collapse terrain controls" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minimize terrain controls" }));
     expect(screen.getByRole("button", { name: "Terrain controls" })).toBeInTheDocument();
     rerender(<Controls scene={s} compact={false} />);
     expect(screen.getByRole("button", { name: "Contours" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Collapse terrain controls" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Minimize terrain controls" })).toBeInTheDocument();
+  });
+  it("can be minimized when the top row has room, and restored from its tab", () => {
+    render(<Controls scene={fakeScene()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Minimize terrain controls" }));
+    expect(screen.queryByRole("button", { name: "Contours" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Terrain controls" }));
+    expect(screen.getByRole("button", { name: "Contours" })).toBeInTheDocument();
   });
   it("has no Subsurface switch when the subsurface layer is not built", () => {
     render(<Controls scene={fakeScene()} />);

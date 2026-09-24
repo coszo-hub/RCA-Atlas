@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MinButton, MinTab } from "./Minimize.jsx";
 import "./ui.css";
 
 function Seg({ label, options, value, onChange }) {
@@ -14,8 +15,6 @@ function Seg({ label, options, value, onChange }) {
   );
 }
 
-// Collapsed to a small toggle while the top row wraps (it would otherwise sit over the middle of the map);
-// the user can flip it either way until the layout changes. The switches keep their state while collapsed.
 // The earthquake timeline beneath Axial: a month slider (cumulative through that month) with play/pause.
 function QuakeTimeline({ scene, sub }) {
   const last = sub.months.length - 1;
@@ -47,6 +46,8 @@ function QuakeTimeline({ scene, sub }) {
   );
 }
 
+// Collapsed to a small tab while the top row wraps (it would otherwise sit over the middle of the map), and minimizable
+// at any width; the user can flip it either way until the layout changes. The switches keep their state while collapsed.
 // deep: whether Axial's subsurface is shown (App owns it; the legend and credits follow it).
 export default function Controls({ scene, compact = false, deep = false, onDeep }) {
   const sub = scene?.subsurface;
@@ -58,13 +59,10 @@ export default function Controls({ scene, compact = false, deep = false, onDeep 
   useEffect(() => { if (scene) scene.onExag = v => setExag(v); return () => { if (scene) scene.onExag = null; }; }, [scene]);
   const [detail, setDetail] = useState("16 m");   // the finest Axial summit level on screen
   useEffect(() => { const id = setInterval(() => scene?.auv && setDetail(scene.auv.finest()), 250); return () => clearInterval(id); }, [scene]);
-  if (!expanded) {
-    return <button className="panel hud-toggle controls-toggle" aria-expanded="false" onClick={() => setOverride(true)}>Terrain controls</button>;
-  }
+  if (!expanded) return <MinTab className="controls-toggle" onClick={() => setOverride(true)}>Terrain controls</MinTab>;
   return (
     <div className="panel controls">
-      {compact && <div className="legend-head"><span className="eyebrow">Terrain</span>
-        <button aria-label="Collapse terrain controls" aria-expanded="true" onClick={() => setOverride(false)}>–</button></div>}
+      <div className="panel-head"><span className="eyebrow">Terrain</span><MinButton label="terrain controls" onClick={() => setOverride(false)} /></div>
       <Seg label="View" options={[["3d", "3D"], ["2d", "2D"]]} value={view} onChange={v => { setView(v); scene.setView(v); }} />
       <Seg label="Style" options={[["relief", "Relief"], ["contours", "Contours"]]} value={style} onChange={v => { setStyle(v); scene.setStyle(v); }} />
       <Seg label="Color" options={[["depth", "Depth"], ["mono", "Mono"]]} value={color} onChange={v => { setColor(v); scene.setColor(v); }} />

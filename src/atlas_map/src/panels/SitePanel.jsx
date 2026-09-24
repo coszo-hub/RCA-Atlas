@@ -3,7 +3,7 @@ import SidePanel from "./SidePanel.jsx";
 import Glyph from "../ui/Glyph.jsx";
 import { fmtDepth, fmtRange, statusLabel } from "../data/format.js";
 
-export default function SitePanel({ site, bundle, elevAt, onClose, onBack, onSensor, children }) {
+export default function SitePanel({ site, bundle, elevAt, onClose, onBack, onSensor, minimized, onMinimize, children }) {
   const inDetail = children != null && children !== false;
   const sensors = site.sensorIds.map(id => bundle.sensorById[id]);
   const region = bundle.regions.find(r => r.key === site.region)?.label;
@@ -11,7 +11,8 @@ export default function SitePanel({ site, bundle, elevAt, onClose, onBack, onSen
   const eyebrow = [region, site.label !== site.name ? site.label : null].filter(Boolean).join(" · ");
   return (
     <SidePanel label={`${site.label} site`} eyebrow={eyebrow} title={site.name} closeLabel="Close site panel"
-      sub={`${sensors.length} sensors · seafloor ${fmtDepth(site.seafloor)}`} onClose={onClose} onBack={onBack} inDetail={inDetail}>
+      sub={`${sensors.length} sensors · seafloor ${fmtDepth(site.seafloor)}`} onClose={onClose} onBack={onBack} inDetail={inDetail}
+      minimized={minimized} onMinimize={onMinimize}>
       {inDetail ? children : (<>
         <DepthSection site={site} bundle={bundle} elevAt={elevAt} onSensor={onSensor} />
         {bundle.families.map(f => {

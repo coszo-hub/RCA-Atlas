@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import RegionNav from "./RegionNav.jsx";
 import { bundleFixture } from "../test/fixtures.js";
+
+beforeEach(() => localStorage.clear());
 
 describe("RegionNav", () => {
   it("lists regions with located sensor counts and selects", () => {
@@ -22,5 +24,13 @@ describe("RegionNav", () => {
     expect(onUnplaced).toHaveBeenCalled();
     rerender(<RegionNav regions={b.regions} sensors={b.sensors} active="overview" onSelect={() => {}} unplaced={0} onUnplaced={onUnplaced} />);
     expect(screen.queryByRole("button", { name: /Unplaced/ })).toBeNull();
+  });
+  it("minimizes to a tab naming the current region, and restores", () => {
+    const b = bundleFixture();
+    render(<RegionNav regions={b.regions} sensors={b.sensors} active="axial" onSelect={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Minimize regions" }));
+    expect(screen.queryByRole("navigation", { name: "Regions" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Regions · Axial Seamount" }));
+    expect(screen.getByRole("navigation", { name: "Regions" })).toBeInTheDocument();
   });
 });

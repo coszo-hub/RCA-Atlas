@@ -36,7 +36,7 @@ describe("Legend collapse (layout ruling)", () => {
   it("is expanded when no side panel is open, and the user can collapse it", () => {
     render(<Legend credit="GMRT" compact={false} />);
     expect(screen.getByText("Seafloor depth")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Collapse legend" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minimize legend" }));
     expect(screen.queryByText("Seafloor depth")).toBeNull();
     expect(screen.getByRole("button", { name: "Legend" })).toHaveAttribute("aria-expanded", "false");
   });
@@ -48,7 +48,7 @@ describe("Legend collapse (layout ruling)", () => {
   });
   it("follows the panels again when they open or close", () => {
     const { rerender } = render(<Legend credit="GMRT" compact={false} />);
-    fireEvent.click(screen.getByRole("button", { name: "Collapse legend" }));
+    fireEvent.click(screen.getByRole("button", { name: "Minimize legend" }));
     rerender(<Legend credit="GMRT" compact />);
     rerender(<Legend credit="GMRT" compact={false} />);
     expect(screen.getByText("Seafloor depth")).toBeInTheDocument();

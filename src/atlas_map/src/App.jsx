@@ -43,6 +43,7 @@ function Atlas({ bundle, onError }) {
   const [siteId, setSiteId] = useState(null);   // the site panel (Task 7) opens for it
   const [sensorId, setSensorId] = useState(null);   // the sensor detail (Task 8) opens for it
   const [unplacedOpen, setUnplacedOpen] = useState(false);   // the list of sensors with no position and no site
+  const [sideMin, setSideMin] = useState(false);   // the site or unplaced panel is minimized to a tab; opening one restores it
   const [chatOpen, setChatOpen] = useState(chatStartsOpen);   // ChatPanel owns and persists it; the top row follows it
   const [width, setWidth] = useState(innerWidth);
   const [deep, setDeep] = useState(false);   // Axial's subsurface (earthquakes, magma chamber, faults) is shown
@@ -50,11 +51,11 @@ function Atlas({ bundle, onError }) {
 
   // One right-hand panel at a time: a site (with its sensors) or the unplaced list (with theirs).
   const showSite = useCallback(site => {
-    setSiteId(site.id); setUnplacedOpen(false); setSensorId(null); setHover(null); layerRef.current?.setSelected(site.id);
+    setSiteId(site.id); setUnplacedOpen(false); setSensorId(null); setSideMin(false); setHover(null); layerRef.current?.setSelected(site.id);
   }, []);
   const openSite = useCallback((site, sc) => { showSite(site); sc.flyToPoint(site.lon, site.lat, 6); }, [showSite]);
   const closeSite = useCallback(() => { setSiteId(null); setSensorId(null); layerRef.current?.setSelected(null); }, []);
-  const openUnplaced = useCallback(() => { closeSite(); setUnplacedOpen(true); }, [closeSite]);
+  const openUnplaced = useCallback(() => { closeSite(); setUnplacedOpen(true); setSideMin(false); }, [closeSite]);
   const closeUnplaced = useCallback(() => { setUnplacedOpen(false); setSensorId(null); }, []);
   // A located sensor flies to its site. One with no recorded position opens its detail without a flight:
   // inside its named site's panel when it has one, else inside the unplaced list.
@@ -112,13 +113,16 @@ function Atlas({ bundle, onError }) {
     scene.setMute(focus.size ? 0.55 : 0);
   }, [focus, scene]);
 
-  const panelOpen = !!siteId || unplacedOpen;
+  // A minimized side panel is a tab at the bottom right, so the map and top row take its width back.
+  const panelOpen = (!!siteId || unplacedOpen) && !sideMin;
   // The top row wraps when the map between the panels is too narrow for header and controls side by side;
   // then the controls and legend collapse to toggles so they do not sit over the middle of the map.
   const wraps = hudWraps(width, chatOpen, panelOpen);
   useLayoutEffect(() => {
-    document.documentElement.style.setProperty("--right-inset", `${panelOpen ? inset.side : inset.none}px`);
-  }, [panelOpen]);
+    const root = document.documentElement.style;
+    root.setProperty("--right-inset", `${panelOpen ? inset.side : inset.none}px`);
+    root.setProperty("--side-reserve", sideMin ? "284px" : "0px");   // the family strip keeps clear of the minimized side tab (≤260 px wide)
+  }, [panelOpen, sideMin]);
 
   // The map centers on the area the panels leave free: between the chat and side panels, below the top-row
   // HUD (header and regions, plus the controls when they wrap under them), and above the family strip.
@@ -170,12 +174,13 @@ function Atlas({ bundle, onError }) {
           <ChatPanel selection={{ site, sensor }} onOpenChange={setChatOpen} />
           {site && (
             <SitePanel key={siteId} site={site} bundle={bundle} elevAt={scene.elevAt}
-              onClose={closeSite} onBack={() => setSensorId(null)} onSensor={setSensorId}>
+              onClose={closeSite} onBack={() => setSensorId(null)} onSensor={setSensorId} minimized={sideMin} onMinimize={setSideMin}>
               {detail(site.label)}
             </SitePanel>
           )}
           {!site && unplacedOpen && (
-            <UnplacedPanel bundle={bundle} onClose={closeUnplaced} onBack={() => setSensorId(null)} onSensor={setSensorId}>
+            <UnplacedPanel bundle={bundle} onClose={closeUnplaced} onBack={() => setSensorId(null)} onSensor={setSensorId}
+              minimized={sideMin} onMinimize={setSideMin}>
               {detail("Unplaced sensors")}
             </UnplacedPanel>
           )}

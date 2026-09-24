@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import FamilyFilter from "./FamilyFilter.jsx";
 import { bundleFixture } from "../test/fixtures.js";
+
+beforeEach(() => localStorage.clear());
 
 describe("FamilyFilter", () => {
   const b = bundleFixture();
@@ -25,6 +27,16 @@ describe("FamilyFilter", () => {
     const sensors = [...b.sensors, { ...b.sensors[0], id: "das", family: "fiber", lat: null, lon: null }];
     render(<FamilyFilter families={families} sensors={sensors} focus={new Set()} onChange={() => {}} />);
     expect(screen.queryByRole("button", { name: /Fiber-optic/ })).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+    expect(screen.getAllByRole("button").filter(el => el.hasAttribute("aria-pressed"))).toHaveLength(2);
+  });
+  it("minimizes to a tab that keeps saying a filter is on, and restores", () => {
+    const { unmount } = render(<FamilyFilter families={b.families} sensors={b.sensors} focus={new Set(["seismic"])} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Minimize sensor families" }));
+    expect(screen.queryByRole("button", { name: /Seismic/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Sensor families\s*1 selected/ })).toHaveAttribute("aria-expanded", "false");
+    unmount();   // remembered across visits
+    render(<FamilyFilter families={b.families} sensors={b.sensors} focus={new Set()} onChange={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Sensor families" }));
+    expect(screen.getByRole("button", { name: /Seismic/ })).toBeInTheDocument();
   });
 });
