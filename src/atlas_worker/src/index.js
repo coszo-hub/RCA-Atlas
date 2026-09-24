@@ -51,7 +51,15 @@ function citations(hits) {
   const known = new Set();
   return hits.flatMap((hit) => (hit.citations || []).map((citation) => ({
     id: citation.source_id || hit.chunk_id,
-    title: citation.title || hit.title,
+    // The PI portal importer preserves a shared corpus title for provenance,
+    // but visitors need the dataset-specific route name beside the actual URL.
+    title: /\/das25\/data\/multidas\/?$/i.test(citation.url || "")
+      ? "DAS25 MultiDAS"
+      : (/\/das25\/data\/optodas\/?$/i.test(citation.url || "")
+        ? "DAS25 OptoDAS"
+        : (/shared rca and coszo instruments corpus/i.test(citation.title || "")
+          ? hit.title
+          : (citation.title || hit.title))),
     url: citation.url || "",
   }))).filter((citation) => {
     const key = `${citation.id}|${citation.url}`;
@@ -94,6 +102,41 @@ function answerMode(question) {
   return "research";
 }
 
+function namedDataProduct(question) {
+  const q = String(question || "").toLowerCase();
+  for (const product of ["multidas", "optodas", "das25", "das24", "rapid"]) {
+    if (q.includes(product)) return product;
+  }
+  return null;
+}
+
+function isDownloadQuestion(question) {
+  return /\b(download|get|access)\b/.test(String(question || "").toLowerCase());
+}
+
+function directDownloadSource(question, hits) {
+  const product = namedDataProduct(question);
+  const route = {
+    multidas: "/das25/data/multidas/",
+    optodas: "/das25/data/optodas/",
+    das24: "/das24/data/",
+  }[product];
+  if (!route) return null;
+  return citations(hits).find((source) => source.url.toLowerCase().includes(route)) || null;
+}
+
+function selectedEvidenceHits(context, question) {
+  const product = namedDataProduct(question);
+  let hits = prioritizedHits(context, question);
+  if (product) {
+    const productHits = hits.filter((hit) =>
+      `${hit.title || ""}\n${hit.text || ""}`.toLowerCase().includes(product),
+    );
+    if (productHits.length) hits = productHits;
+  }
+  return hits;
+}
+
 function evidencePackage(hits, sourceNumbers) {
   const sections = [];
   let remaining = MAX_EVIDENCE_CHARS;
@@ -123,15 +166,25 @@ async function postJson(url, body, headers = {}) {
 }
 
 async function generateAnswer(question, context, env) {
-  const evidenceHits = prioritizedHits(context, question);
+  const product = namedDataProduct(question);
+  const evidenceHits = selectedEvidenceHits(context, question);
   const sourceList = citations(evidenceHits);
   const sourceNumbers = new Map(sourceList.map((source, index) => [source.id, index + 1]));
   const evidence = evidencePackage(evidenceHits, sourceNumbers);
   if (!evidence) throw new Error("no retrieved evidence");
+  if (product && isDownloadQuestion(question) && sourceList[0]?.url) {
+    return {
+      answer: `You can download the requested ${product} data through the direct source link below.`,
+      model: "RCA Atlas evidence routing",
+    };
+  }
   const sourceListText = sourceList.map((c) => c.title).join("; ");
   const mode = answerMode(question);
+  const namedProductInstruction = product
+    ? `The user specifically named ${product}; answer only about that named product. Do not include related products, file formats, instruments, or data types unless the evidence explicitly assigns them to ${product}.`
+    : "";
   const compactInstruction = mode === "compact"
-    ? "This is a data-availability, download, or list question. Return a direct answer followed by at most four single-sentence bullets; each bullet names one available dataset or route, with its year or coverage and file type only when established. Use no sub-bullets, section headings, capability descriptions, deployment background, calibration details, or related literature. Keep the whole answer under 120 words. The interface renders links separately."
+    ? `This is a data-availability, download, or list question. ${namedProductInstruction} Return a direct answer followed by at most four single-sentence bullets; each bullet names one available dataset or route, with its year or coverage and file type only when established. Use no sub-bullets, section headings, capability descriptions, deployment background, calibration details, or related literature. Keep the whole answer under 120 words. The interface renders links separately.`
     : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that.";
   const formatInstruction = mode === "compact"
     ? "Use plain text, with no Markdown hashes or asterisks. Obey the 120-word, single-sentence-bullet limit exactly."
@@ -219,7 +272,18 @@ export default {
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
         query, limit: MAX_HITS, graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
-      const evidenceHits = prioritizedHits(context, query);
+      const evidenceHits = selectedEvidenceHits(context, query);
+      const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
+      if (downloadSource) {
+        const product = namedDataProduct(query);
+        return response({
+          query,
+          answer: `You can download the requested ${product} data through the direct link below.`,
+          answer_model: "RCA Atlas graph route",
+          answer_citations: [downloadSource],
+          hits: evidenceHits.map(publicHit), neighbors: context.neighbors || [], tool_hints: context.tool_hints || [],
+        }, 200, cors);
+      }
       const generated = await generateAnswer(query, context, env);
       return response({
         query, answer: generated.answer, answer_model: generated.model,
