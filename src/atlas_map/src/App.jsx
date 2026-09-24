@@ -23,7 +23,7 @@ export default function App() {
   if (!bundle) return <div className="app-message">Loading the atlas…</div>;
   return (
     <>
-      <SceneHost bundle={bundle} onReady={setScene} />
+      <SceneHost bundle={bundle} onReady={setScene} onError={setError} />
       {scene && (
         <>
           <Controls scene={scene} />
@@ -35,7 +35,7 @@ export default function App() {
   );
 }
 
-function SceneHost({ bundle, onReady }) {
+function SceneHost({ bundle, onReady, onError }) {
   const canvasRef = useRef(null);
   useEffect(() => {
     let scene, cancelled = false;
@@ -44,7 +44,7 @@ function SceneHost({ bundle, onReady }) {
       scene = new AtlasScene(canvasRef.current, bundle, grids);
       window.__atlas = { scene };   // test hook, see Task 12
       onReady?.(scene);
-    });
+    }).catch(err => { if (!cancelled) onError?.(err); });
     return () => { cancelled = true; scene?.dispose(); };
   }, [bundle]);
   return <canvas ref={canvasRef} className="atlas-scene" aria-label="3D map of the seafloor off Oregon" />;

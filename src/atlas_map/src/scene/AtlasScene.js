@@ -3,12 +3,15 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { toX, toZ } from "./geo.js";
 import { buildArrays, stack } from "./grid.js";
 import { terrainMaterial } from "./terrainMaterial.js";
-import { ease, isTypingTarget, moveStep, viewPose } from "./cameraMath.js";
+import { approach, ease, isMoveKey, motionDuration, moveStep, viewPose } from "./cameraMath.js";
+
+export { loadGrids } from "./grid.js";
 
 export class AtlasScene {
   constructor(canvas, bundle, grids, { onFrame } = {}) {
     this.bundle = bundle; this.onFrame = onFrame; this.flight = null; this.held = new Set();
-    this.targets = { flat: 0, lines: 0, mode: 0, mute: 0 };
+    this.targets = { flat: 0, lines: 0, mode: 0, mute: 0 }; this._view = "3d";
+    this._motion = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
     this.elevAt = stack([grids.axial, grids.hydrate, grids.overview]);
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true }));
     r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(innerWidth, innerHeight);
@@ -31,10 +34,10 @@ export class AtlasScene {
     this._onContext = e => e.preventDefault();
     canvas.addEventListener("contextmenu", this._onContext);
     this._onKeyDown = e => {
-      if (!e.key.startsWith("Arrow") || isTypingTarget(e.target)) return;
+      if (!isMoveKey(e)) return;
       e.preventDefault(); this.held.add(e.key); this.flight = null;
     };
-    this._onKeyUp = e => this.held.delete(e.key);
+    this._onKeyUp = e => (e.key === "Meta" ? this.held.clear() : this.held.delete(e.key));
     this._onBlur = () => this.held.clear();
     this._onResize = () => { r.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.onResize?.(); };
     addEventListener("keydown", this._onKeyDown); addEventListener("keyup", this._onKeyUp);
@@ -58,6 +61,7 @@ export class AtlasScene {
     this.scene.add(new THREE.Mesh(g, m));
   }
 
+  get reducedMotion() { return !!this._motion?.matches; }
   get e() { return this.U.exag.value * 0.001 * (1 - this.U.flat.value); }
   yFor(lon, lat, meters) { return (meters ?? this.elevAt(lon, lat)) * this.e; }
   project(x, y, z) { const v = this._v.set(x, y, z).project(this.camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight, v.z]; }
@@ -77,7 +81,7 @@ export class AtlasScene {
     this._fly(target.clone().add(dir.multiplyScalar(dist)), target, this.U.exag.value, 1300);
   }
   _fly(pos, target, exag, dur) {
-    this.flight = { t0: performance.now(), dur, fromPos: this.camera.position.clone(), fromTarget: this.controls.target.clone(),
+    this.flight = { t0: performance.now(), dur: motionDuration(dur, this.reducedMotion), fromPos: this.camera.position.clone(), fromTarget: this.controls.target.clone(),
       fromExag: this.U.exag.value, toExag: exag, pos, target };
   }
 
@@ -86,6 +90,8 @@ export class AtlasScene {
   setColor(c) { this.targets.mode = c === "mono" ? 1 : 0; }
   setMute(m) { this.targets.mute = m; }
   setView(v) {
+    if (v === this._view) return;   // re-clicking the active view must not overwrite the saved tilt
+    this._view = v;
     const to2d = v === "2d"; this.targets.flat = to2d ? 1 : 0;
     const sph = new THREE.Spherical().setFromVector3(this.camera.position.clone().sub(this.controls.target));
     if (to2d) this._savedPolar = sph.phi;
@@ -97,7 +103,7 @@ export class AtlasScene {
   _tick = () => {
     const now = performance.now(), dt = Math.min(this.clock.getDelta(), 0.05), f = this.flight;
     if (f) {
-      const t = Math.min(1, (now - f.t0) / f.dur), k = ease(t);
+      const t = f.dur > 0 ? Math.min(1, (now - f.t0) / f.dur) : 1, k = ease(t);
       this.camera.position.lerpVectors(f.fromPos, f.pos, k); this.controls.target.lerpVectors(f.fromTarget, f.target, k);
       if (!f.target.equals(f.fromTarget)) this.camera.position.y += Math.sin(Math.PI * k) * f.fromPos.distanceTo(f.pos) * 0.15;
       if (f.toExag !== f.fromExag) this.setExag(f.fromExag + (f.toExag - f.fromExag) * k);
@@ -109,8 +115,9 @@ export class AtlasScene {
       this.controls.target.x += d[0]; this.controls.target.z += d[2];
     }
     this.controls.update();
+    const reduced = this.reducedMotion;
     for (const [key, speed] of [["flat", 5], ["lines", 6], ["mode", 8], ["mute", 8]]) {
-      this.U[key].value += (this.targets[key] - this.U[key].value) * Math.min(1, dt * speed);
+      this.U[key].value = approach(this.U[key].value, this.targets[key], dt, speed, reduced);
     }
     this.camera.updateMatrixWorld();   // overlays project with exactly this frame's camera
     const dist = this.camera.position.distanceTo(this.controls.target);
@@ -127,13 +134,4 @@ export class AtlasScene {
     this.renderer.domElement.removeEventListener("contextmenu", this._onContext);
     this.controls.dispose(); this.renderer.dispose();
   }
-}
-
-export async function loadGrids(meta, fetchImpl = fetch) {
-  const { makeGrid } = await import("./grid.js");
-  const out = {};
-  await Promise.all(Object.entries(meta.grids).map(async ([name, m]) => {
-    out[name] = makeGrid(m, await (await fetchImpl(`/atlas/terrain/${name}.bin`)).arrayBuffer());
-  }));
-  return out;
 }

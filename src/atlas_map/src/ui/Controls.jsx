@@ -7,7 +7,7 @@ function Seg({ label, options, value, onChange }) {
       <span className="eyebrow">{label}</span>
       <div className="seg" role="group" aria-label={label}>
         {options.map(([v, text]) => (
-          <button key={v} aria-pressed={value === v} onClick={() => onChange(v)}>{text}</button>
+          <button key={v} aria-pressed={value === v} onClick={() => { if (v !== value) onChange(v); }}>{text}</button>
         ))}
       </div>
     </div>

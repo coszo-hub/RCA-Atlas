@@ -6,7 +6,7 @@
 .seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-0); }
 .hint { color: var(--text-muted); font-size: 11px; line-height: 1.6; border-top: 1px solid var(--hairline); padding-top: 8px; }
 kbd { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); border: 1px solid var(--hairline-strong); border-radius: 3px; padding: 0 4px; margin: 0 1px; }
-input[type=range] { width: 110px; accent-color: #d9d6cc; }
+input[type=range] { width: 110px; accent-color: var(--text-primary); }
 input[type=range]:disabled { opacity: 0.35; }
 .regions { left: var(--left-inset); bottom: 16px; padding: 6px; min-width: 220px; display: flex; flex-direction: column; transition: left 220ms ease; }
 .regions button { display: flex; justify-content: space-between; gap: 16px; background: transparent; border: 0; padding: 7px 10px; border-radius: 4px; cursor: pointer; text-align: left; }

@@ -1,3 +1,4 @@
+import { BUILD_COMMAND } from "../data/bundle.js";
 import { KX, KZ, toX, toZ } from "./geo.js";
 
 export function makeGrid(meta, arrayBuffer) {
@@ -38,4 +39,23 @@ export function buildArrays(grid, smooth = 1) {
     index.set([a, d, b, b, d, e], q); q += 6;
   }
   return { positions, elev, grad, index };
+}
+
+// Vite's SPA fallback answers a missing .bin with 200 text/html, so check the type and the size too.
+export async function loadGrids(meta, fetchImpl = fetch) {
+  const out = {};
+  await Promise.all(Object.entries(meta.grids).map(async ([name, m]) => {
+    const url = `/atlas/terrain/${name}.bin`;
+    const broken = why => new Error(`The atlas terrain is incomplete: ${url} ${why}. Rebuild it with: ${BUILD_COMMAND}`);
+    const res = await fetchImpl(url);
+    if (!res.ok) {
+      if (res.status === 404) throw broken("is missing");
+      throw new Error(`Could not load ${url} (HTTP ${res.status})`);
+    }
+    if (res.headers?.get("content-type")?.includes("html")) throw broken("is missing");
+    const buf = await res.arrayBuffer(), want = m.ncols * m.nrows * 2;
+    if (buf.byteLength !== want) throw broken(`has ${buf.byteLength} bytes; expected ${want}`);
+    out[name] = makeGrid(m, buf);
+  }));
+  return out;
 }

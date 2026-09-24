@@ -29,3 +29,12 @@ export function moveStep(held, cam, target, dt) {
 
 export const isTypingTarget = el =>
   !!el && (el.isContentEditable || el.contentEditable === "true" || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+
+// prefers-reduced-motion: flights jump to their end and uniform transitions snap.
+export const motionDuration = (ms, reduced) => (reduced ? 0 : ms);
+export const approach = (value, target, dt, speed, reduced) =>
+  reduced ? target : value + (target - value) * Math.min(1, dt * speed);
+
+// macOS sends no keyup for other keys while Cmd is held, so modified arrows never start a move.
+export const isMoveKey = e =>
+  e.key.startsWith("Arrow") && !(e.metaKey || e.ctrlKey || e.altKey) && !isTypingTarget(e.target);
