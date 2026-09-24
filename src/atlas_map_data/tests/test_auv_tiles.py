@@ -43,7 +43,10 @@ class AuvTilesTest(unittest.TestCase):
         self.assertEqual(len(L0["tiles"]), 2)
         self.assertEqual(L1["tiles"], [])                              # finest level only near sites
         self.assertAlmostEqual(ix["north"], 45.93)
-        self.assertEqual(json.loads((Path(self.d.name) / "out" / "index.json").read_text())["levels"][0]["stride"], 4)
+        saved = json.loads((Path(self.d.name) / "out" / "index.json").read_text())
+        self.assertEqual(saved["levels"][0]["stride"], 4)
+        self.assertEqual(saved["credit"], auv_tiles.CREDIT)
+        self.assertIn("ship-based multibeam", saved["credit"])      # the tiles include the ship-survey background
 
     def test_finest_level_only_near_sites(self):
         ix = self.build([(45.905, -129.995)])                          # south-west corner area

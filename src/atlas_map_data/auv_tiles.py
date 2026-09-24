@@ -13,7 +13,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-CREDIT = "MBARI, Axial Seamount AUV bathymetry, cruise V2506 (1 m)"
+CREDIT = "MBARI Axial Seamount bathymetry, cruise V2506: 1 m AUV survey merged over ship-based multibeam"
 Z_OFFSET, Z_SCALE = -1000.0, 10.0
 KX = 111.32 * math.cos(math.radians(45.94))
 KZ = 111.13
