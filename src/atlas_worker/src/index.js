@@ -114,6 +114,10 @@ function isDownloadQuestion(question) {
   return /\b(download|get|access)\b/.test(String(question || "").toLowerCase());
 }
 
+function isMultiSpanQuestion(question) {
+  return /\bmulti[\s-]?span\b/.test(String(question || "").toLowerCase());
+}
+
 function directDownloadSource(question, hits) {
   const product = namedDataProduct(question);
   const route = {
@@ -142,6 +146,10 @@ function namedDatasetDownloadAnswer(product) {
   }[product];
   if (!details) return `You can download the requested ${product} data through the direct link below.`;
   return `You can download the requested ${details.label} data through the direct link below.\n- Format: ${details.format}.\n- Coverage: ${details.coverage}.\n- Layout: ${details.layout}.`;
+}
+
+function multiSpanDownloadAnswer() {
+  return "Multi-span DAS data for the 2025–2026 experiment can be downloaded from DAS25 MultiDAS.\n- Nokia multi-span DAS data are available as binary files.\n- OptoDAS data for the south cable are available as HDF5 files.\n- Data are organized by year, month, day, and cable.\n- Further reading and availability details are available through the linked documentation.";
 }
 
 function answerLinks(question, hits) {
@@ -304,6 +312,16 @@ export default {
       }, { "x-api-key": env.ATLAS_API_KEY });
       const evidenceHits = selectedEvidenceHits(context, query);
       const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
+      const multiSpanSource = isDownloadQuestion(query) && isMultiSpanQuestion(query)
+        ? citations(evidenceHits).find((source) => /\/das25\/data\/multidas\/?$/i.test(source.url))
+        : null;
+      if (multiSpanSource) {
+        return response({
+          query, answer: multiSpanDownloadAnswer(), answer_model: "RCA Atlas graph route",
+          answer_citations: [multiSpanSource], answer_links: [multiSpanSource],
+          hits: evidenceHits.map(publicHit), neighbors: context.neighbors || [], tool_hints: context.tool_hints || [],
+        }, 200, cors);
+      }
       if (downloadSource) {
         const product = namedDataProduct(query);
         return response({
