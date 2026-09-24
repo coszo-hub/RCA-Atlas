@@ -5,6 +5,5 @@
   --good: #0ca30c; --critical: #d03b3b;
   --left-inset: 16px; --right-inset: 16px; --strip-reserve: 0px; --side-reserve: 0px;
   --font-sans: "IBM Plex Sans", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --font-serif: "Newsreader", Georgia, serif;
 }
 @media (prefers-reduced-motion: reduce) { :root { --motion: 0; } * { transition: none !important; animation: none !important; } }

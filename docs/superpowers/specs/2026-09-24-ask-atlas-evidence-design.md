@@ -32,19 +32,19 @@ source `/Users/yaoderek/conductor/workspaces/rca-atlas/surabaya/.superpowers/bra
 
 - Sidebar in the existing chat slot (left, `INSET.chat` = 412 px incl. margins), solid `#151514`,
   hairline border, 8 px radius. Header: small-caps "ASK ATLAS" left, "RCA · COSZO" right.
-- The question renders as a serif italic headline (Newsreader, ~17 px) with a hairline beneath, and a
+- Typography is the map's own: IBM Plex Sans for text, IBM Plex Mono for data; no serif, no italics.
+- The question renders as a headline (Plex Sans 500, ~15 px) with a hairline beneath, and a
   monospace stats line under it: `4 on the map · 1 paper · 1.9 s · gemini-2.5-flash`.
-- The answer is serif (Newsreader, ~13.5 px, line-height 1.55). Citations are superscript monospace numbers
+- The answer is Plex Sans (~13 px, line-height 1.6). Citations are superscript monospace numbers
   in the evidence's family colour; the active one is inverted (dark text on `#ffcc66`).
 - "EVIDENCE ON THE MAP" label with `← n / N →` stepper, then a table: `# | INSTRUMENT | SITE | DEPTH`,
   monospace cells, hairline rows, number in family colour. The active row is highlighted and expands a
-  second line with the excerpt in serif italic.
-- "FURTHER READING": non-located sources as serif links with ↗.
+  second line with the excerpt (Plex Sans, secondary colour, thin accent rule on its left).
+- "FURTHER READING": non-located sources as links with ↗.
 - Composer at the bottom: hairline top rule, "Ask a follow-up…", a small model picker ("Auto ▾") and ↵.
   Models: the list the Worker accepts (`auto`, `gemini-2.5-flash`, `gemini-3.5-flash-lite`,
   `groq-gpt-oss-120b`, `groq-gpt-oss-20b`, `groq-qwen3-8-27b`, `gpt-5.4-mini`).
 - Empty state: the four demo questions as one-click suggestions.
-- Load Newsreader (Google Fonts or self-hosted woff2 under `public/`), Georgia fallback.
 - The sidebar minimizes to a tab like today's chat panel (keep `localStorage["atlas.chat.open"]` and the
   `--left-inset` / camera inset plumbing).
 
@@ -60,8 +60,8 @@ Reveal sequence:
 3. Hovering a superscript, a table row, or a spike sets the active item: its spike grows (~1.8× height),
    brightens, and gets a pulsing halo ring at its base; the others dim slightly.
 4. Clicking any of those flies to the item (`flyToPoint`) and opens an in-scene card anchored above the
-   spike: serif title ("2 · Bottom pressure tilt, International District"), monospace refdes · depth, serif
-   italic excerpt, and buttons "Live data →" (opens the existing sensor panel via `openSensor`) and
+   spike: title ("2 · Bottom pressure tilt, International District"), monospace refdes · depth, the
+   excerpt, and buttons "Live data →" (opens the existing sensor panel via `openSensor`) and
    "Site" (opens the site panel). ← / → (and the stepper) step through evidence in order with the same
    fly-to. That is the "tour".
 5. Located evidence outside the viewport gets an edge chip (number + short label + arrow) clamped to the
