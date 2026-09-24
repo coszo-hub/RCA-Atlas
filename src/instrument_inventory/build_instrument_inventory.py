@@ -545,6 +545,33 @@ def build(data_root: Path, output: Path) -> None:
             relationships.append({"source_id": row["instrument_id"], "predicate": "SUPPORTED_BY", "target_id": evidence["source_id"],
                                   **{k: v for k, v in evidence.items() if k != "source_id"}})
 
+    # Topology and taxonomy bridges used by site-level sensor-inventory
+    # traversal.  The records already preserve their precise deployment labels;
+    # these edges make the Summit a child of Southern Hydrate Ridge and declare
+    # relevant instrument types as sensors without conflating them.
+    ridge_eid = entity_id("Southern Hydrate Ridge")
+    summit_eid = entity_id("Southern Hydrate Ridge Summit")
+    entities.setdefault(ridge_eid, {"entity_id": ridge_eid, "name": "Southern Hydrate Ridge", "type": "location", "method": "source_metadata"})
+    entities.setdefault(summit_eid, {"entity_id": summit_eid, "name": "Southern Hydrate Ridge Summit", "type": "location", "method": "source_metadata"})
+    relationships.append({"source_id": summit_eid, "predicate": "PART_OF", "target_id": ridge_eid,
+                          "method": "curated_site_hierarchy", "evidence_source_id": "SOURCE-WEB-COSZO-EXISTING"})
+    sensor_eid = entity_id("sensor")
+    entities[sensor_eid] = {"entity_id": sensor_eid, "name": "sensor", "type": "instrument_supertype", "method": "curated_instrument_taxonomy"}
+    for type_name in {"absolute_pressure_gauge", "velocimeter", "seismometer", "broadband_seismometer", "short_period_seismometer"}:
+        type_eid = entity_id(type_name)
+        if type_eid in entities:
+            relationships.append({"source_id": type_eid, "predicate": "IS_A", "target_id": sensor_eid,
+                                  "method": "curated_instrument_taxonomy"})
+    current_meter_eid = entity_id("current meter")
+    entities[current_meter_eid] = {"entity_id": current_meter_eid, "name": "current meter", "type": "instrument_supertype", "method": "curated_instrument_taxonomy"}
+    relationships.append({"source_id": current_meter_eid, "predicate": "IS_A", "target_id": sensor_eid,
+                          "method": "curated_instrument_taxonomy"})
+    for type_name in {"velocimeter", "three_dimensional_current_meter"}:
+        type_eid = entity_id(type_name)
+        if type_eid in entities:
+            relationships.append({"source_id": type_eid, "predicate": "IS_A", "target_id": current_meter_eid,
+                                  "method": "curated_instrument_taxonomy"})
+
     # One retrieval chunk per inventory record.
     chunks = []
     for row in records:

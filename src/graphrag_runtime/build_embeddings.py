@@ -157,6 +157,38 @@ def write_mapping(path: Path, records: list[InputRecord]) -> str:
     return sha256_file(path)
 
 
+def reusable_vectors(reuse_dir: Path) -> dict[tuple[str, str, str], np.ndarray]:
+    """Load compatible prior vectors keyed by collection, ID, and text hash.
+
+    Corpus catalog order may change when a collection is added, so row index is
+    deliberately not part of the key.  A vector is reused only for byte-for-byte
+    identical chunk text produced by the exact pinned embedding model.
+    """
+    manifest_path = reuse_dir / "embedding_manifest.json"
+    mapping_path = reuse_dir / "embedding_rows.jsonl"
+    if not manifest_path.is_file() or not mapping_path.is_file():
+        raise BuildError(f"Reusable embedding artifact is incomplete: {reuse_dir}")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    required = {"model_revision": MODEL_REVISION, "model_sha256": MODEL_SHA256, "dimension": MODEL_DIMENSION, "normalized": True, "status": "complete"}
+    for key, expected in required.items():
+        if manifest.get(key) != expected:
+            raise BuildError(f"Reusable embedding artifact has incompatible {key}")
+    matrix_path = reuse_dir / str(manifest.get("matrix_file", "embeddings.npy"))
+    if not matrix_path.is_file():
+        raise BuildError(f"Reusable embedding matrix is missing: {matrix_path}")
+    rows = [json.loads(line) for line in mapping_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if len(rows) != int(manifest.get("record_count", -1)):
+        raise BuildError("Reusable embedding mapping count does not match manifest")
+    matrix = np.load(matrix_path, mmap_mode="r")
+    if matrix.shape != (len(rows), MODEL_DIMENSION):
+        raise BuildError(f"Reusable matrix shape {matrix.shape} does not match mapping")
+    result: dict[tuple[str, str, str], np.ndarray] = {}
+    for row in rows:
+        key = (str(row["collection_id"]), str(row["record_id"]), str(row["text_sha256"]))
+        result[key] = matrix[int(row["row_index"])]
+    return result
+
+
 def default_embedder(cache_dir: Path, threads: int) -> Embedder:
     os.environ["HF_HUB_OFFLINE"] = "1"
     try:
@@ -202,6 +234,7 @@ def build_embeddings(
     project_root: Path | None = None,
     batch_size: int = 128,
     threads: int = 4,
+    reuse_dir: Path | None = None,
     embedder_factory: Callable[[Path, int], Embedder] = default_embedder,
 ) -> dict[str, Any]:
     if batch_size < 1:
@@ -216,6 +249,7 @@ def build_embeddings(
     metadata_path = output_dir / "embedding_manifest.json"
     catalog_fingerprint = catalog.get("build_fingerprint_sha256") or sha256_file(catalog_path)
 
+    reuse_vectors: dict[tuple[str, str, str], np.ndarray] = {}
     if progress_path.exists():
         progress = json.loads(progress_path.read_text(encoding="utf-8"))
         required = {
@@ -232,11 +266,23 @@ def build_embeddings(
             raise BuildError("Cannot resume: matrix or row mapping is missing")
         if progress.get("mapping_sha256") != sha256_file(mapping_path):
             raise BuildError("Cannot resume: row mapping changed")
+        if progress.get("incremental_reuse"):
+            if reuse_dir is None:
+                raise BuildError("Cannot resume an incremental build without --reuse-dir")
+            reuse_vectors = reusable_vectors(reuse_dir)
         next_row = int(progress.get("next_row", 0))
         matrix = np.lib.format.open_memmap(matrix_path, mode="r+", dtype=np.float32, shape=(len(records), MODEL_DIMENSION))
     else:
         mapping_hash = write_mapping(mapping_path, records)
         matrix = np.lib.format.open_memmap(matrix_path, mode="w+", dtype=np.float32, shape=(len(records), MODEL_DIMENSION))
+        reuse_vectors = reusable_vectors(reuse_dir) if reuse_dir else {}
+        reused_rows = []
+        for record in records:
+            vector = reuse_vectors.get((record.collection_id, record.record_id, hashlib.sha256(record.text.encode("utf-8")).hexdigest()))
+            if vector is not None:
+                matrix[record.row_index] = vector
+                reused_rows.append(record.row_index)
+        matrix.flush()
         next_row = 0
         progress = {
             "schema_version": OUTPUT_SCHEMA_VERSION,
@@ -251,25 +297,38 @@ def build_embeddings(
             "record_count": len(records),
             "mapping_sha256": mapping_hash,
             "next_row": 0,
+            "reused_record_count": len(reused_rows),
+            "incremental_reuse": bool(reuse_dir),
+            "embedded_row_indices": [],
         }
         atomic_json(progress_path, progress)
 
     if next_row < 0 or next_row > len(records):
         raise BuildError(f"Invalid resume row: {next_row}")
-    embedder = embedder_factory(cache_dir, threads)
-    for start in range(next_row, len(records), batch_size):
-        end = min(start + batch_size, len(records))
-        vectors = np.asarray(list(embedder.passage_embed([item.text for item in records[start:end]])), dtype=np.float32)
-        if vectors.shape != (end - start, MODEL_DIMENSION):
-            raise BuildError(f"Embedding shape {vectors.shape} != {(end - start, MODEL_DIMENSION)}")
+    if progress.get("incremental_reuse"):
+        embedded_rows = {int(value) for value in progress.get("embedded_row_indices", [])}
+        pending = [item for item in records if (item.collection_id, item.record_id, hashlib.sha256(item.text.encode("utf-8")).hexdigest()) not in reuse_vectors and item.row_index not in embedded_rows]
+    else:
+        pending = records[next_row:]
+    if pending:
+        embedder = embedder_factory(cache_dir, threads)
+    for start in range(0, len(pending), batch_size):
+        batch = pending[start:start + batch_size]
+        vectors = np.asarray(list(embedder.passage_embed([item.text for item in batch])), dtype=np.float32)
+        if vectors.shape != (len(batch), MODEL_DIMENSION):
+            raise BuildError(f"Embedding shape {vectors.shape} != {(len(batch), MODEL_DIMENSION)}")
         if not np.isfinite(vectors).all():
-            raise BuildError(f"Non-finite embedding in rows {start}:{end}")
+            raise BuildError(f"Non-finite embedding in rows {batch[0].row_index}:{batch[-1].row_index + 1}")
         norms = np.linalg.norm(vectors, axis=1)
         if not np.allclose(norms, 1.0, rtol=1e-3, atol=1e-3):
-            raise BuildError(f"Embeddings are not normalized in rows {start}:{end}")
-        matrix[start:end] = vectors
+            raise BuildError(f"Embeddings are not normalized in rows {batch[0].row_index}:{batch[-1].row_index + 1}")
+        matrix[[item.row_index for item in batch]] = vectors
         matrix.flush()
-        progress["next_row"] = end
+        if progress.get("incremental_reuse"):
+            progress["embedded_row_indices"] = [*progress.get("embedded_row_indices", []), *(item.row_index for item in batch)]
+            progress["next_row"] = len(records) if start + len(batch) == len(pending) else 0
+        else:
+            progress["next_row"] = batch[-1].row_index + 1
         progress["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
         atomic_json(progress_path, progress)
 
@@ -305,6 +364,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--project-root", type=Path)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--threads", type=int, default=4)
+    parser.add_argument("--reuse-dir", type=Path, help="Completed compatible embedding artifact used to reuse unchanged chunk vectors")
     return parser.parse_args(argv)
 
 
@@ -318,6 +378,7 @@ def main(argv: list[str] | None = None) -> int:
             project_root=args.project_root,
             batch_size=args.batch_size,
             threads=args.threads,
+            reuse_dir=args.reuse_dir,
         )
     except (BuildError, OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -75,7 +75,13 @@ function cleanAnswer(answer) {
   return String(answer || "").replace(/^\s*[*•]\s+/gm, "- ").trim();
 }
 
-function prioritizedHits(context, question) {
+function isInstrumentInventoryQuestion(question) {
+  const q = String(question || "").toLowerCase();
+  return /\b(sensor|sensors|instrument|instruments|equipment)\b/.test(q) &&
+    /\b(site|location|located|deployed|seafloor|southern hydrate ridge|hydrate ridge)\b/.test(q);
+}
+
+function prioritizedHits(context, question, limit = 6) {
   const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])];
   return [...(context.hits || [])].map((hit, index) => {
     const title = String(hit.title || "").toLowerCase();
@@ -86,7 +92,7 @@ function prioritizedHits(context, question) {
     const rcaScope = /(regional cabled array|cabled array|coszo|axial|hydrate ridge|oregon shelf|oregon offshore)/.test(`${title}\n${text}`) ? 10 : 0;
     const primaryCorpus = /^(instruments|websites|arcada|coszo)/.test(collection) ? 4 : 0;
     return { hit, index, score: relevance + rcaScope + primaryCorpus };
-  }).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, 6).map(({ hit }) => hit);
+  }).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, limit).map(({ hit }) => hit);
 }
 
 function answerMode(question) {
@@ -165,7 +171,7 @@ function answerLinks(question, hits) {
 
 function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
-  let hits = prioritizedHits(context, question);
+  let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : 6);
   if (product) {
     const productHits = hits.filter((hit) =>
       `${hit.title || ""}\n${hit.text || ""}`.toLowerCase().includes(product),
@@ -307,7 +313,7 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
     : "";
   const compactInstruction = mode === "compact"
     ? `This is a data-availability, download, or list question. ${namedProductInstruction} Return a direct answer followed by at most four single-sentence bullets; each bullet names one available dataset or route, with its year or coverage and file type only when established. Use no sub-bullets, section headings, capability descriptions, deployment background, calibration details, or related literature. Keep the whole answer under 120 words. The interface renders links separately.`
-    : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that.";
+    : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
   const formatInstruction = mode === "compact"
     ? "Use plain text, with no Markdown hashes or asterisks. Obey the 120-word, single-sentence-bullet limit exactly."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
@@ -408,7 +414,8 @@ export default {
         return response({ error: "service is not configured" }, 503, cors);
       }
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
-        query, limit: MAX_HITS, graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: 8, tool_limit: 3,
+        query, limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS,
+        graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
       const evidenceHits = selectedEvidenceHits(context, query);
       const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);

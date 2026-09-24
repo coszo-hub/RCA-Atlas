@@ -29,6 +29,7 @@ COLLECTION_NAMES = {
     "COSZOHub": ("coszo_hub", "COSZO Hub computational outputs"),
     "Datasheets/graphrag": ("datasheets", "Instrument datasheets"),
     "Figures/graphrag": ("figures", "Curated figures"),
+    "FETCH": ("fetch", "FETCH acoustic ranging stations"),
     "Instruments": ("instruments", "RCA and COSZO instruments"),
     "Literature": ("literature", "Scientific literature"),
     "Nereus/graphrag": ("nereus", "Nereus operational data"),
