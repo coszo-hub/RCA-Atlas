@@ -347,6 +347,14 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
       lastError = error;
     }
   }
+  // Last, a paid route when one is configured, so Auto still answers when every free route is out of quota.
+  if (requestedModel === "auto" && env.OPENAI_API_KEY) {
+    try {
+      return await generateOpenAIAnswer(prompt, "gpt-5.4-mini", mode, env);
+    } catch (error) {
+      lastError = error;
+    }
+  }
   throw lastError;
 }
 
