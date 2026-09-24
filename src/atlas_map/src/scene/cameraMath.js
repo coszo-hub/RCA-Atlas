@@ -35,9 +35,12 @@ export const motionDuration = (ms, reduced) => (reduced ? 0 : ms);
 export const approach = (value, target, dt, speed, reduced) =>
   reduced ? target : value + (target - value) * Math.min(1, dt * speed);
 
+// Focus inside a panel (site panel, chat, HUD) keeps the arrows there, so a panel scrolls instead of the map moving.
+export const inPanel = el => !!el?.closest?.(".panel, aside");
+
 // macOS sends no keyup for other keys while Cmd is held, so modified arrows never start a move.
 export const isMoveKey = e =>
-  !!e.key?.startsWith("Arrow") && !(e.metaKey || e.ctrlKey || e.altKey) && !isTypingTarget(e.target);
+  !!e.key?.startsWith("Arrow") && !(e.metaKey || e.ctrlKey || e.altKey) && !isTypingTarget(e.target) && !inPanel(e.target);
 
 // Side panels cover the map's edges. The view's center moves to the middle of the free area between
 // them (pixels to shift right), and a view framed for the full width pulls back to fit the free width.

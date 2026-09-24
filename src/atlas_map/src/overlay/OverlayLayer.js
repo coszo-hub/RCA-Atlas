@@ -25,7 +25,7 @@ export class OverlayLayer {
       const d = el("site", ringSvg(site, bundle.sensorById, bundle.familyByKey, size) +
         `<div class="name">${site.label}<span class="mono">${site.sensorIds.length}</span></div>`);
       const n = site.sensorIds.length;   // labels are unique; names are not (two "Axial Seamount Base" sites)
-      d.setAttribute("role", "button"); d.setAttribute("aria-label", `${site.label}, ${n} sensor${n === 1 ? "" : "s"}`); d.tabIndex = 0;
+      d.setAttribute("role", "button"); d.setAttribute("aria-label", `${site.label}, ${n} sensor${n === 1 ? "" : "s"}`); d.tabIndex = -1;   // update() makes it a tab stop once it is on screen
       const hover = ev => { this._hovered = site.id; handlers.onSiteHover?.(site, ev); };
       d.onmouseenter = hover; d.onmousemove = hover;
       d.onmouseleave = () => { this._hovered = null; handlers.onSiteHover?.(site, null); };
@@ -89,6 +89,8 @@ export class OverlayLayer {
       const vis = onScreen && !s.hidden;
       if (!vis && this._hovered === s.site.id) { this._hovered = null; this.h.onSiteHover?.(s.site, null); }
       Object.assign(s.d.style, { left: `${x}px`, top: `${y}px`, opacity: onScreen ? (s.hidden ? 0.12 : s.inFocus ? 1 : 0.25) : 0, pointerEvents: vis ? "auto" : "none" });
+      const tab = vis ? 0 : -1;   // a marker that cannot be seen or clicked is not a tab stop either
+      if (s.d.tabIndex !== tab) s.d.tabIndex = tab;
       if (vis && s.inFocus) labelItems.push({ id: s.site.id, x: x - s.size / 2, y, w: s.size + 12 + s.site.label.length * 6.4, h: 18, priority: s.site.sensorIds.length });
       s._x = x; s._y = y;
     }

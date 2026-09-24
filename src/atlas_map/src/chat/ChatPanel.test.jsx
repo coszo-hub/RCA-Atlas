@@ -37,6 +37,24 @@ describe("ChatPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
     await waitFor(() => expect(screen.getByText(/The chat is unavailable/)).toBeInTheDocument());
   });
+  it("an error message that ends in a period still reads cleanly", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 504, json: async () => ({ error: { source: "Atlas chat", message: "The chat service did not answer in time." } }) })));
+    render(<ChatPanel selection={{}} />);
+    fireEvent.change(screen.getByRole("textbox", { name: /Ask/ }), { target: { value: "hello there" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(screen.getByText("The chat is unavailable right now (The chat service did not answer in time). The map still works.")).toBeInTheDocument());
+  });
+  it("citations without an id still render, each once", async () => {
+    const warn = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ answer: "Two sources.", citations: [{ id: null, title: "First", url: null }, { id: null, title: "Second", url: null }] }) })));
+    render(<ChatPanel selection={{}} />);
+    fireEvent.change(screen.getByRole("textbox", { name: /Ask/ }), { target: { value: "hello there" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(screen.getByText("Second")).toBeInTheDocument());
+    expect(screen.getByText("First")).toBeInTheDocument();
+    expect(warn.mock.calls.some(c => String(c[0]).includes("same key"))).toBe(false);
+    warn.mockRestore();
+  });
 });
 
 describe("ChatPanel layout", () => {

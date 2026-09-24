@@ -56,4 +56,24 @@ describe("OverlayLayer", () => {
     layer.update();
     expect(h.onSiteHover).toHaveBeenLastCalledWith(expect.objectContaining({ id: "axial-seamount-base" }), null);
   });
+  it("markers are tab stops only while they can be seen (not in region mode, off screen, or behind terrain)", () => {
+    const { container, scene, layer } = setup(-9000);
+    const btn = container.querySelector('[aria-label="Axial Base, 3 sensors"]');
+    layer.update();
+    expect(btn.tabIndex).toBe(0);
+    scene.frame = { ...scene.frame, regionMode: true };
+    layer.update();
+    expect(btn.tabIndex).toBe(-1);
+    scene.frame = { ...scene.frame, regionMode: false };
+    scene.project = () => [-500, 100, 0.5];   // off screen
+    layer.update();
+    expect(btn.tabIndex).toBe(-1);
+    scene.project = () => [100, 100, 0.5];
+    scene.elevAt = () => 0;   // behind terrain
+    layer.update();
+    expect(btn.tabIndex).toBe(-1);
+    scene.elevAt = () => -9000;
+    layer.update();
+    expect(btn.tabIndex).toBe(0);
+  });
 });

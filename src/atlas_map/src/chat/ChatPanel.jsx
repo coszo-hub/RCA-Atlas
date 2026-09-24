@@ -26,7 +26,7 @@ export default function ChatPanel({ selection, onOpenChange }) {
     const r = await chat(q);
     setBusy(false);
     setMessages(m => [...m, r.ok ? { role: "assistant", text: r.data.answer, citations: r.data.citations }
-      : { role: "error", text: `The chat is unavailable right now (${r.message}). The map still works.` }]);
+      : { role: "error", text: `The chat is unavailable right now (${String(r.message ?? "no reason given").trim().replace(/[.\s]+$/, "")}). The map still works.` }]);
   };
 
   if (!open) return <button className="chat-tab panel" aria-label="Open chat" onClick={() => setOpen(true)}>Ask the Atlas</button>;
@@ -39,7 +39,7 @@ export default function ChatPanel({ selection, onOpenChange }) {
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
             <p>{m.text}</p>
-            {m.citations?.length > 0 && <ol className="cites">{m.citations.map(c => <li key={c.id}>{c.url ? <a href={c.url} target="_blank" rel="noreferrer">{c.title}</a> : c.title}</li>)}</ol>}
+            {m.citations?.length > 0 && <ol className="cites">{m.citations.map((c, j) => <li key={c.id ?? `c${j}`}>{c.url ? <a href={c.url} target="_blank" rel="noreferrer">{c.title}</a> : c.title}</li>)}</ol>}
           </div>
         ))}
         {busy && <p className="muted">Thinking…</p>}

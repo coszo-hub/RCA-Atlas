@@ -9,8 +9,10 @@ export default function LiveStatus({ sensor, manifest }) {
   if (live.state === "loading") return <div className="live-status">{snapshot} · checking live…</div>;
   if (live.state === "ok") {
     const d = live.data;
-    return <div className="live-status">{statusLabel(d.status ?? "UNKNOWN")} · checked live{d.data?.checkedAt ? `, data ${d.data.code} at ${new Date(d.data.checkedAt).toUTCString().slice(17, 22)} UTC` : ""}
-      {d.evidenceMode && d.evidenceMode !== "live" ? " (Nereus snapshot fallback)" : ""}</div>;
+    // Nereus answers live, or falls back to its snapshot when the instrument check fails; never claim both.
+    const how = !d.evidenceMode || d.evidenceMode === "live" ? "checked live"
+      : d.evidenceMode === "snapshot" ? "from Nereus snapshot" : `from Nereus (${d.evidenceMode})`;
+    return <div className="live-status">{statusLabel(d.status ?? "UNKNOWN")} · {how}{d.data?.checkedAt ? `, data ${d.data.code} at ${new Date(d.data.checkedAt).toUTCString().slice(17, 22)} UTC` : ""}</div>;
   }
   if (live.error.kind === "unreachable") {
     return <div className="live-status degraded"><span>Live data unavailable. Showing snapshot from {fmtDate(sensor.statusAsOf ?? manifest?.corpusSnapshot)}.</span>

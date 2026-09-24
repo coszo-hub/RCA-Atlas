@@ -61,4 +61,10 @@ describe("SensorDetail", () => {
     render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
     await waitFor(() => expect(screen.getByText(/^Status unknown · checked live/)).toBeInTheDocument());
   });
+  it("a Nereus snapshot answer says so and does not claim a live check", async () => {
+    vi.stubGlobal("fetch", statusReply(200, { refdes: "R", status: "OPERATIONAL", data: null, evidenceMode: "snapshot", source: "Nereus" }));
+    render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
+    await waitFor(() => expect(screen.getByText("Operating · from Nereus snapshot")).toBeInTheDocument());
+    expect(screen.queryByText(/checked live/)).toBeNull();
+  });
 });

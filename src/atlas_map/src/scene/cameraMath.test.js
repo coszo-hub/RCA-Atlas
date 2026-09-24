@@ -44,6 +44,16 @@ describe("cameraMath", () => {
     expect(isMoveKey({ key: "ArrowUp", target: input })).toBe(false);
     for (const mod of ["metaKey", "ctrlKey", "altKey"]) expect(isMoveKey({ key: "ArrowLeft", target: div, [mod]: true })).toBe(false);
   });
+  it("arrow keys stay with a panel that has focus, so it can scroll", () => {
+    const aside = document.createElement("aside"), row = document.createElement("button");
+    aside.appendChild(row);
+    const hud = document.createElement("div"); hud.className = "panel controls";
+    const seg = document.createElement("button"); hud.appendChild(seg);
+    expect(isMoveKey({ key: "ArrowDown", target: row })).toBe(false);
+    expect(isMoveKey({ key: "ArrowDown", target: aside })).toBe(false);
+    expect(isMoveKey({ key: "ArrowUp", target: seg })).toBe(false);
+    expect(isMoveKey({ key: "ArrowUp", target: document.body })).toBe(true);
+  });
   it("a keydown without a key (Chrome autofill) is not a move key", () => {
     expect(isMoveKey({ key: undefined, target: document.createElement("div") })).toBe(false);
     expect(isMoveKey({ target: document.createElement("div") })).toBe(false);
