@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -24,7 +26,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SOURCE_DIR = PROJECT_ROOT / "source_material/original_documents/OOI_DAS_Geometry"
 SOURCE_ROOT = "http://piweb.ooirsn.uw.edu/das/processed/metadata/Geometry/OOI_RCA_DAS_channel_location_with_depth/"
 READ_ME_URL = "http://piweb.ooirsn.uw.edu/das/processed/metadata/readme.pdf"
+ARTICLE_URL = "https://oceanobservatories.org/2026/03/multi-span-fiber-sensing-expands-reach-of-ooi-regional-cabled-array/"
+ARTICLE_FILE = "multi_span_fiber_sensing_2026-03-31.html"
 DATASET_ID = "INSTRUMENT-981a1c15a947d3b1a1"
+# PI-DAS25 is the canonical shared inventory entity for the 2025--26
+# multi-span/OptoDAS deployment.  It must not be conflated with the separate
+# 2021 OptaSense/Silixa channel-geometry campaign above.
+DAS25_DATASET_ID = "INSTRUMENT-8f08939e9167bac57c"
 
 
 def _sha256(path: Path) -> str:
@@ -85,6 +93,27 @@ def parse_locations(path: Path, cable: str, source_sha256: str) -> list[dict[str
     return locations
 
 
+def article_content(path: Path) -> str:
+    """Extract only the publisher article body; preserve caption text and URLs."""
+    raw = path.read_text(encoding="utf-8", errors="replace")
+    match = re.search(r'<div class="fl-post-content clearfix" itemprop="text">(.*?)</div><!-- \.fl-post-content -->', raw, re.DOTALL)
+    if not match:
+        raise ValueError(f"Could not locate OOI article body in {path}")
+    body = match.group(1)
+    # Retain publisher-provided destinations as citable retrieval paths before
+    # flattening HTML, because a plain-text chunk otherwise loses each href.
+    body = re.sub(
+        r'(?is)<a\b[^>]*\bhref=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+        lambda found: f"{re.sub(r'(?s)<[^>]+>', ' ', found.group(2)).strip()} ({html.unescape(found.group(1))})",
+        body,
+    )
+    body = re.sub(r"(?i)<br\s*/?>", "\n", body)
+    body = re.sub(r"(?i)</(?:p|h2|li|ul|div)>", "\n", body)
+    text = html.unescape(re.sub(r"(?s)<[^>]+>", " ", body))
+    text = re.sub(r"[ \t]*\n[ \t]*", "\n", re.sub(r"[ \t]+", " ", text)).strip()
+    return re.sub(r"\s+([,.;:])", r"\1", text)
+
+
 def build(source_dir: Path, output_dir: Path) -> dict[str, Any]:
     source_dir, output_dir = Path(source_dir), Path(output_dir)
     files = {cable: source_dir / f"{cable}_DAS_latlondepth.txt" for cable in ("north", "south")}
@@ -115,7 +144,7 @@ def build(source_dir: Path, output_dir: Path) -> dict[str, Any]:
         "source_kind": "published_experiment_documentation",
         "source_is_untrusted_data": True,
     })
-    entities, chunks, relationships = [], [], []
+    entities, chunks, relationships, figures = [], [], [], []
     for cable, rows in by_cable.items():
         entity_id = _id("ENTITY-OOI-DAS-CABLE", cable)
         source_id = source_rows[0 if cable == "north" else 1]["source_id"]
@@ -143,11 +172,44 @@ def build(source_dir: Path, output_dir: Path) -> dict[str, Any]:
             {"relationship_id": _id("OOI-DAS-GEOMETRY-REL", entity_id, "HAS_CHUNK", chunk_id), "source_id": entity_id, "predicate": "HAS_CHUNK", "target_id": chunk_id, "evidence_source_ids": [source_id]},
             {"relationship_id": _id("OOI-DAS-GEOMETRY-REL", DATASET_ID, "USES_CHANNEL_MAP", entity_id), "source_id": DATASET_ID, "predicate": "USES_CHANNEL_MAP", "target_id": entity_id, "evidence_source_ids": [source_id, source_rows[2]["source_id"]]},
         ])
+    article_path = next((path for path in (
+        source_dir / ARTICLE_FILE,
+        PROJECT_ROOT / "source_material/original_documents/OOI_DAS_2025" / ARTICLE_FILE,
+    ) if path.is_file()), source_dir / ARTICLE_FILE)
+    if article_path.is_file():
+        article_sha = _sha256(article_path)
+        article_source_id = _id("SOURCE-OOI-DAS25-ARTICLE", article_sha)
+        source_rows.append({
+            "source_id": article_source_id, "title": "Multi-Span Fiber Sensing Expands Reach of OOI Regional Cabled Array",
+            "source_url": ARTICLE_URL, "source_file": ARTICLE_FILE, "sha256": article_sha,
+            "source_kind": "official_ooi_news_article", "published": "2026-03-31", "source_is_untrusted_data": True,
+        })
+        document_id = _id("DOCUMENT-OOI-DAS25-ARTICLE", ARTICLE_URL)
+        content = article_content(article_path)
+        chunk_id = _id("OOI-DAS25-ARTICLE-CHUNK", article_sha)
+        entities.append({"entity_id": document_id, "name": "Multi-Span Fiber Sensing Expands Reach of OOI Regional Cabled Array",
+                         "entity_type": "official_ooi_article", "published": "2026-03-31", "source_is_untrusted_data": True})
+        chunks.append({"chunk_id": chunk_id, "parent_id": document_id, "document_id": document_id, "position": 0,
+                       "title": "Official OOI DAS25 deployment, data access, and mask summary", "text": content,
+                       "word_count": len(content.split()), "source_ids": [article_source_id], "source_urls": [ARTICLE_URL], "source_is_untrusted_data": True})
+        relationships.extend([
+            {"relationship_id": _id("OOI-DAS25-ARTICLE-REL", document_id, "HAS_CHUNK", chunk_id), "source_id": document_id, "predicate": "HAS_CHUNK", "target_id": chunk_id, "evidence_source_ids": [article_source_id]},
+            {"relationship_id": _id("OOI-DAS25-ARTICLE-REL", DAS25_DATASET_ID, "DOCUMENTED_BY", document_id), "source_id": DAS25_DATASET_ID, "predicate": "DOCUMENTED_BY", "target_id": document_id, "evidence_source_ids": [article_source_id]},
+        ])
+        figures.append({
+            "figure_id": _id("FIGURE-OOI-DAS25", "multispan-map"), "title": "OOI RCA multi-span DAS cable coverage map",
+            "caption": "Location of the OOI RCA cables off the Oregon coast, shown in red. The portions successfully interrogated with the Nokia multi-span system are black; white dashed lines show the OptoDAS first-span coverage on the south cable; repeaters are green.",
+            "image_url": "https://oceanobservatories.org/wp-content/uploads/2026/04/multispan_ooi_website_map_plot-1-2048x794-1.jpeg",
+            "source_url": ARTICLE_URL, "document_id": document_id, "source_id": article_source_id,
+            "credit": "Z. Krauss, University of Washington", "source_is_untrusted_data": True,
+        })
     _write_jsonl(output_dir / "channel_locations.jsonl", locations)
     _write_jsonl(output_dir / "sources.jsonl", source_rows)
     _write_jsonl(output_dir / "entities.jsonl", entities)
     _write_jsonl(output_dir / "chunks.jsonl", chunks)
     _write_jsonl(output_dir / "relationships.jsonl", relationships)
+    if figures:
+        _write_jsonl(output_dir / "figures.jsonl", figures)
     _write_jsonl(output_dir / "tools.jsonl", [
         {**schema, "runtime": "src/ooi_das_geometry/ooi_das_geometry_tools.py",
          "requires_user_invocation_after_corpus_answer": True,
@@ -158,7 +220,7 @@ def build(source_dir: Path, output_dir: Path) -> dict[str, Any]:
         "schema_version": "1.0", "collection": "OOI RCA OptaSense DAS channel geometry", "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "embedding_input": "chunks.jsonl", "graph_node_inputs": ["entities.jsonl", "sources.jsonl", "chunks.jsonl"],
         "graph_edge_input": "relationships.jsonl", "structured_inputs": ["channel_locations.jsonl"], "live_tool_manifest": "tools.jsonl",
-        "counts": {"channel_locations": len(locations), "entities": len(entities), "chunks": len(chunks), "relationships": len(relationships)},
+        "counts": {"channel_locations": len(locations), "entities": len(entities), "chunks": len(chunks), "relationships": len(relationships), "figures": len(figures)},
         "validation_status": "pass", "limitations": ["Published channel locations are preliminary.", "Only applies to OptaSense geometry; do not infer a Silixa channel mapping."],
     }
     (output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
