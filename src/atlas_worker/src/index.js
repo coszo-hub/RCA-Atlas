@@ -313,7 +313,6 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
   if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
-  if (OPENROUTER_FREE_MODELS[requestedModel]) return generateOpenRouterAnswer(prompt, mode, env, OPENROUTER_FREE_MODELS[requestedModel]);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
   const model = ["gemini-2.5-flash", "gemini-3.5-flash-lite"].includes(requestedModel)
     ? requestedModel : (env.ANSWER_MODEL || "gemini-2.5-flash");
@@ -347,13 +346,6 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   if (requestedModel === "auto" && env.GROQ_API_KEY) {
     try {
       return await generateGroqAnswer(prompt, mode, env);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-  if (requestedModel === "auto" && env.OPENROUTER_API_KEY) {
-    try {
-      return await generateOpenRouterAnswer(prompt, mode, env);
     } catch (error) {
       lastError = error;
     }
@@ -406,7 +398,7 @@ export default {
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
     const quick = body?.answer_mode === "quick";
-    const requestedModel = ["gemini-2.5-flash", "gemini-3.5-flash-lite", ...Object.keys(GROQ_MODELS), ...Object.keys(OPENROUTER_FREE_MODELS), ...OPENAI_MODELS].includes(body?.model)
+    const requestedModel = ["gemini-2.5-flash", "gemini-3.5-flash-lite", ...Object.keys(GROQ_MODELS), ...OPENAI_MODELS].includes(body?.model)
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
