@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi import Query
 from fastapi.responses import JSONResponse
 
 from coszo_hub_tools.pi_portal_agent_tools import PI_DATASETS
 
-from . import errors, thinning
+from . import errors, seismic, thinning
 from .app_support import call_toolkit
 
 VAR_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,120}")
@@ -114,3 +115,36 @@ def register(app, settings, deps, cache, limiter) -> None:
                     "entries": entries[:MAX_FILE_ENTRIES],
                     "truncated": bool(res.get("truncated")) or len(entries) > MAX_FILE_ENTRIES}
         return cache.get_or_set(f"files:{instrument_key}:{endpoint}:{path}", TTL["files"], fetch)
+
+    @app.get("/waveform/{station_id}")
+    def waveform(station_id: str, minutes: int = 10, channel: str | None = None):
+        m = re.fullmatch(r"([A-Z0-9]{1,2})\.([A-Z0-9]{1,5})", station_id)
+        if not m:
+            return _bad("station must look like NET.STA")
+        net, sta = m.groups()
+        known = deps.index.station(net, sta)
+        if known is None:
+            return _missing("atlas", "unknown seismic station")
+        if not 1 <= minutes <= settings.max_waveform_minutes:
+            return _bad(f"minutes must be between 1 and {settings.max_waveform_minutes}")
+        cha = channel or known.get("channel") or "HHZ"
+        end = deps.now().replace(second=0, microsecond=0) - timedelta(minutes=2)
+        begin = end - timedelta(minutes=minutes)
+        b, e = begin.strftime("%Y-%m-%dT%H:%M:%SZ"), end.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        def fetch():
+            with limiter.slot("EarthScope"):
+                try:
+                    res = call_toolkit("EarthScope", lambda: deps.earthscope.download_waveform(net, sta, cha, b, e, "--"))
+                except errors.UpstreamError as exc:
+                    if "no waveform data" in exc.message.lower():
+                        return {"station": station_id, "channel": cha, "rate": None, "points": [], "rawCount": 0,
+                                "sourceUrl": None, "message": "No recording in this window."}
+                    raise
+            d = seismic.decode(Path(res["file"]))
+            times = [d["startMs"] + i * 1000.0 / d["rate"] for i in range(len(d["samples"]))] if d["rate"] else []
+            tt, vv = thinning.minmax(times, d["samples"], settings.max_points)
+            return {"station": station_id, "channel": cha, "rate": d["rate"],
+                    "points": [[int(t), v] for t, v in zip(tt, vv)], "rawCount": len(d["samples"]),
+                    "sourceUrl": res.get("source_url"), "message": None if d["samples"] else "No recording in this window."}
+        return cache.get_or_set(f"wave:{station_id}:{cha}:{b}:{e}", TTL["waveform"], fetch)
