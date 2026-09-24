@@ -58,7 +58,7 @@ export default function Controls({ scene, compact = false, deep = false, onDeep 
   const [exag, setExag] = useState(scene?.U?.exag?.value ?? 6);
   useEffect(() => { if (scene) scene.onExag = v => setExag(v); return () => { if (scene) scene.onExag = null; }; }, [scene]);
   const [detail, setDetail] = useState("16 m");   // the finest Axial summit level on screen
-  const [das, setDas] = useState(true);
+  const [das, setDas] = useState(false);
   const [dasKinds, setDasKinds] = useState({ conventional: true, multidas: true, optodas: true });
   useEffect(() => { const id = setInterval(() => scene?.auv && setDetail(scene.auv.finest()), 250); return () => clearInterval(id); }, [scene]);
   if (!expanded) return <MinTab className="controls-toggle" onClick={() => setOverride(true)}>Terrain controls</MinTab>;

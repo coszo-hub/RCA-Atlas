@@ -47,6 +47,9 @@ describe("Controls", () => {
   it("can independently show or hide each DAS experiment", () => {
     const s = { ...fakeScene(), dasLines: [{}], setDasVisible: vi.fn(), setDasKindVisible: vi.fn() };
     render(<Controls scene={s} />);
+    expect(screen.queryByRole("group", { name: "2025–26 MultiDAS" })).toBeNull();
+    fireEvent.click(within(screen.getByRole("group", { name: "DAS coverage" })).getByRole("button", { name: "On" }));
+    expect(s.setDasVisible).toHaveBeenCalledWith(true);
     fireEvent.click(within(screen.getByRole("group", { name: "2025–26 MultiDAS" })).getByRole("button", { name: "Off" }));
     expect(s.setDasKindVisible).toHaveBeenCalledWith("multidas", false);
     fireEvent.click(within(screen.getByRole("group", { name: "DAS coverage" })).getByRole("button", { name: "Off" }));

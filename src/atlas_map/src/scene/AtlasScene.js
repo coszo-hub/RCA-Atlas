@@ -109,12 +109,13 @@ export class AtlasScene {
 
   addDas(das) {
     const common = { transparent: true, depthTest: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -70 };
-    this.dasShown = true; this.dasKinds = new Map();
+    this.dasShown = false; this.dasKinds = new Map();
     this.dasLines = (das?.layers || []).map(info => {
       this.dasKinds.set(info.kind, true);
       const mat = new LineMaterial({ color: info.color, linewidth: info.kind === "multidas" ? 4.2 : 2.7,
         opacity: 0.95, dashed: info.kind === "optodas", dashSize: 0.7, gapSize: 0.45, ...common });
       const line = new Line2(new LineGeometry(), mat);
+      line.visible = false;
       line.userData = { pts: densify(info.coords), info }; line.renderOrder = 7;
       this.scene.add(line); return line;
     });
