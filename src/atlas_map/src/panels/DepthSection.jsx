@@ -9,8 +9,8 @@ export default function DepthSection({ site, bundle, elevAt, onSensor }) {
   const [hover, setHover] = useState(null);
   const order = useMemo(() => Object.fromEntries(bundle.families.map((f, i) => [f.key, i])), [bundle]);
   const sensors = site.sensorIds.map(id => bundle.sensorById[id]);
-  const scale = depthScale(site, H), pts = layout(site, sensors, order, W - PAD, H);
   const prof = profile(site, elevAt);
+  const scale = depthScale(site, H), pts = layout(site, sensors, order, W - PAD, H, prof);
   const floorPath = "M " + prof.map(p => `${PAD + p.x * (W - PAD)} ${scale.y(Math.max(0, p.depth))}`).join(" L ") + ` L ${W} ${H} L ${PAD} ${H} Z`;
   return (
     <figure className="depth-section" aria-label={`Depth cross-section of ${site.name}`}>

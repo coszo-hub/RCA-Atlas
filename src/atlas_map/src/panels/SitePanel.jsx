@@ -4,12 +4,17 @@ import Glyph from "../ui/Glyph.jsx";
 import { fmtDepth, fmtRange, statusLabel } from "../data/format.js";
 import "./panels.css";
 
-export default function SitePanel({ site, bundle, elevAt, onClose, onSensor, children }) {
+export default function SitePanel({ site, bundle, elevAt, onClose, onBack, onSensor, children }) {
+  const inDetail = children != null && children !== false;
   useEffect(() => {
-    // Escape inside a text field belongs to that field (the search box clears itself).
-    const onKey = e => { if (e.key === "Escape" && !e.target?.closest?.("input, textarea")) onClose(); };
+    // Escape steps back from a sensor to the site, then closes. Inside a text field it belongs
+    // to that field (the search box clears itself).
+    const onKey = e => {
+      if (e.key !== "Escape" || e.target?.closest?.("input, textarea")) return;
+      if (inDetail && onBack) onBack(); else onClose();
+    };
     addEventListener("keydown", onKey); return () => removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, onBack, inDetail]);
   const sensors = site.sensorIds.map(id => bundle.sensorById[id]);
   const region = bundle.regions.find(r => r.key === site.region)?.label;
   // Site names repeat across sites; the label is unique, so show it whenever it adds information.

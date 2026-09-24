@@ -9,13 +9,15 @@ export default function LiveStatus({ sensor, manifest }) {
   if (live.state === "loading") return <div className="live-status">{snapshot} · checking live…</div>;
   if (live.state === "ok") {
     const d = live.data;
-    return <div className="live-status">{statusLabel(d.status)} · checked live{d.data?.checkedAt ? `, data ${d.data.code} at ${new Date(d.data.checkedAt).toUTCString().slice(17, 22)} UTC` : ""}
+    return <div className="live-status">{statusLabel(d.status ?? "UNKNOWN")} · checked live{d.data?.checkedAt ? `, data ${d.data.code} at ${new Date(d.data.checkedAt).toUTCString().slice(17, 22)} UTC` : ""}
       {d.evidenceMode && d.evidenceMode !== "live" ? " (Nereus snapshot fallback)" : ""}</div>;
   }
   if (live.error.kind === "unreachable") {
     return <div className="live-status degraded"><span>Live data unavailable. Showing snapshot from {fmtDate(sensor.statusAsOf ?? manifest?.corpusSnapshot)}.</span>
       <button onClick={live.retry}>Retry</button></div>;
   }
-  if (live.error.kind === "notfound") return <div className="live-status">{snapshot} · not tracked live by Nereus</div>;
+  if (live.error.kind === "notfound") {
+    return <div className="live-status">{snapshot} · {live.error.source === "Nereus" ? "not tracked live by Nereus" : `${live.error.source}: ${live.error.message}`}</div>;
+  }
   return <div className="live-status degraded">{snapshot} · {live.error.source} failed: {live.error.message} <button onClick={live.retry}>Retry</button></div>;
 }

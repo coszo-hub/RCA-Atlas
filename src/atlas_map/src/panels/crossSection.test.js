@@ -43,6 +43,33 @@ describe("layout", () => {
   });
 });
 
+describe("layout on a sloped floor", () => {
+  it("snaps seafloor sensors (no depth, or within 25 m of the floor) to the profile at their x", () => {
+    const site = b.siteById["oregon-shelf"];
+    const slope = lon => -(80 + (lon - site.lon) * 2000);   // floor deepens eastward, ~±25 m across 2 km
+    const prof = profile(site, slope);
+    const sensors = ["a", "b", "c", "d"].map(id => ({ ...b.sensorById["shelf-bpr"], id }))
+      .concat([{ ...b.sensorById["shelf-bpr"], id: "e", depth: 70 }]);   // within 25 m: snaps too
+    const pts = layout(site, sensors, order, 400, 300, prof);
+    const s = depthScale(site, 300);
+    const floorAt = fx => {   // piecewise-linear floor line in viewBox units
+      const i = Math.min(prof.length - 2, Math.floor(fx * (prof.length - 1)));
+      const t = fx * (prof.length - 1) - i;
+      return s.y(Math.max(0, prof[i].depth + (prof[i + 1].depth - prof[i].depth) * t));
+    };
+    expect(new Set(pts.map(p => Math.round(p.y))).size).toBeGreaterThan(1);   // not all at the center depth
+    for (const p of pts) expect(Math.abs(p.y - floorAt(p.x / 400))).toBeLessThan(1);
+  });
+  it("water-column sensors keep their true depth", () => {
+    const site = b.siteById["axial-seamount-base"];
+    const prof = profile(site, lon => -(2614 + (lon - site.lon) * 4000));
+    const pts = layout(site, site.sensorIds.map(id => b.sensorById[id]), order, 400, 300, prof);
+    const s = depthScale(site, 300), sp = pts.find(p => p.id === "sp-ctd"), dp = pts.find(p => p.id === "dp-ctd");
+    expect(sp.y).toBeCloseTo(s.y(5)); expect(sp.y2).toBeCloseTo(s.y(200));
+    expect(dp.y).toBeCloseTo(s.y(250)); expect(dp.y2).toBeCloseTo(s.y(2457));
+  });
+});
+
 describe("profile", () => {
   it("samples 2 km east-west, depth positive", () => {
     const pts = profile(b.siteById["oregon-shelf"], () => -80, 5);

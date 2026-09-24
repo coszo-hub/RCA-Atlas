@@ -41,4 +41,21 @@ describe("SensorDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.getByText(/Operating · checked live/)).toBeInTheDocument());
   });
+  const statusReply = (status, body) => vi.fn(async () => ({ ok: status < 400, status, json: async () => body }));
+  it("404 from Nereus: not tracked live", async () => {
+    vi.stubGlobal("fetch", statusReply(404, { error: { source: "Nereus", message: "Nereus has no record of this sensor." } }));
+    render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
+    await waitFor(() => expect(screen.getByText(/not tracked live by Nereus/)).toBeInTheDocument());
+  });
+  it("404 from the atlas gateway: shows its message, not the Nereus wording", async () => {
+    vi.stubGlobal("fetch", statusReply(404, { error: { source: "atlas", message: "unknown sensor" } }));
+    render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
+    await waitFor(() => expect(screen.getByText(/atlas: unknown sensor/)).toBeInTheDocument());
+    expect(screen.queryByText(/not tracked live by Nereus/)).toBeNull();
+  });
+  it("live status without a status word reads Status unknown", async () => {
+    vi.stubGlobal("fetch", statusReply(200, { refdes: "R", status: null, data: null, evidenceMode: "live", source: "Nereus" }));
+    render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
+    await waitFor(() => expect(screen.getByText(/^Status unknown · checked live/)).toBeInTheDocument());
+  });
 });

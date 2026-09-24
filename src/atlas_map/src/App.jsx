@@ -98,7 +98,7 @@ function Atlas({ bundle, onError }) {
           <Tooltip hover={hover} bundle={bundle} />
           {siteId && (
             <SitePanel key={siteId} site={bundle.siteById[siteId]} bundle={bundle} elevAt={scene.elevAt}
-              onClose={closeSite} onSensor={setSensorId}>
+              onClose={closeSite} onBack={() => setSensorId(null)} onSensor={setSensorId}>
               {sensorId && <SensorDetail key={sensorId} sensor={bundle.sensorById[sensorId]} bundle={bundle} onBack={() => setSensorId(null)} />}
             </SitePanel>
           )}

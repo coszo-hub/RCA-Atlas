@@ -25,7 +25,16 @@ export function profile(site, elevAt, n = 81) {
   });
 }
 
-export function layout(site, sensors, familyOrder, width, height) {
+// Depth of the profile line at fraction fx (0..1) of its width, linearly interpolated.
+export function profileDepthAt(prof, fx) {
+  const f = Math.min(1, Math.max(0, fx)) * (prof.length - 1), i = Math.min(prof.length - 2, Math.floor(f));
+  return prof[i].depth + (prof[i + 1].depth - prof[i].depth) * (f - i);
+}
+
+const SNAP_M = 25;   // a sensor within this of the site's seafloor depth is on the seafloor
+
+// `prof` (optional, from profile()) lets seafloor sensors follow the drawn floor line at their fanned x.
+export function layout(site, sensors, familyOrder, width, height, prof = null) {
   const s = depthScale(site, height);
   const sorted = [...sensors].sort((a, b) => familyOrder[a.family] - familyOrder[b.family] || a.id.localeCompare(b.id));
   const x0 = width * 0.2, x1 = width * 0.8, n = sorted.length;
@@ -34,7 +43,10 @@ export function layout(site, sensors, familyOrder, width, height) {
     if (sensor.depthRange && sensor.depthRange[0] !== sensor.depthRange[1]) {
       return { id: sensor.id, family: sensor.family, x, y: s.y(sensor.depthRange[0]), y2: s.y(sensor.depthRange[1]) };
     }
-    const depth = sensor.depthRange ? sensor.depthRange[0] : sensor.depth ?? site.seafloor;
-    return { id: sensor.id, family: sensor.family, x, y: s.y(depth) };
+    const depth = sensor.depthRange ? sensor.depthRange[0] : sensor.depth ?? null;
+    if (prof && prof.length > 1 && (depth == null || Math.abs(depth - site.seafloor) <= SNAP_M)) {
+      return { id: sensor.id, family: sensor.family, x, y: s.y(Math.max(0, profileDepthAt(prof, x / width))) };
+    }
+    return { id: sensor.id, family: sensor.family, x, y: s.y(depth ?? site.seafloor) };
   });
 }
