@@ -223,6 +223,20 @@ async function generateGroqAnswer(prompt, mode, env) {
   return { answer: cleanAnswer(answer), model: "Groq GPT-OSS 120B" };
 }
 
+async function generateOpenRouterAnswer(prompt, mode, env) {
+  if (!env.OPENROUTER_API_KEY) throw new Error("OpenRouter is not configured");
+  const model = env.OPENROUTER_FREE_MODEL || "z-ai/glm-5.2:free";
+  const upstream = await postJson("https://openrouter.ai/api/v1/chat/completions", {
+    model,
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.15,
+    max_tokens: mode === "compact" ? 400 : 4096,
+  }, { authorization: `Bearer ${env.OPENROUTER_API_KEY}` });
+  const answer = upstream.choices?.[0]?.message?.content?.trim();
+  if (!answer) throw new Error("OpenRouter model returned no answer");
+  return { answer: cleanAnswer(answer), model: `OpenRouter ${upstream.model || model}` };
+}
+
 async function generateOpenAIAnswer(prompt, requestedModel, mode, env) {
   if (!env.OPENAI_API_KEY) throw new Error("OpenAI is not configured");
   const upstream = await postJson("https://api.openai.com/v1/responses", {
@@ -290,9 +304,23 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
       if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 750));
     }
   }
-  // Auto stays Gemini-first for its native evidence handling, but a temporary
-  // free-tier quota limit should fall back to the independently verified Groq route.
-  if (requestedModel === "auto" && env.GROQ_API_KEY) return generateGroqAnswer(prompt, mode, env);
+  // Auto stays Gemini-first for its native evidence handling. Each free route
+  // is attempted independently: a temporary quota or capacity failure moves to
+  // the next provider rather than ending the answer request.
+  if (requestedModel === "auto" && env.GROQ_API_KEY) {
+    try {
+      return await generateGroqAnswer(prompt, mode, env);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (requestedModel === "auto" && env.OPENROUTER_API_KEY) {
+    try {
+      return await generateOpenRouterAnswer(prompt, mode, env);
+    } catch (error) {
+      lastError = error;
+    }
+  }
   throw lastError;
 }
 
