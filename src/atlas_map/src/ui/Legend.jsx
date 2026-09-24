@@ -1,8 +1,19 @@
+import { useEffect, useState } from "react";
 import "./ui.css";
 
-export default function Legend({ credit }) {
+// Collapsed to a small toggle while a side panel (site or chat) is open, expanded otherwise;
+// the user can flip it either way until the panels change.
+export default function Legend({ credit, compact = false }) {
+  const [override, setOverride] = useState(null);
+  useEffect(() => setOverride(null), [compact]);
+  const expanded = override ?? !compact;
+  if (!expanded) {
+    return <button className="panel legend-toggle" aria-expanded="false" onClick={() => setOverride(true)}>Legend</button>;
+  }
   return (
     <div className="panel legend">
+      <div className="legend-head"><span className="eyebrow">Legend</span>
+        <button aria-label="Collapse legend" aria-expanded="true" onClick={() => setOverride(false)}>–</button></div>
       <div><div className="eyebrow">Site marker</div>
         <div className="row">One segment per sensor, colored by family</div>
         <div className="row"><svg className="glyph"><path d="M1 6h10" style={{ stroke: "var(--text-secondary)" }} strokeWidth="3" /></svg>Operating</div>

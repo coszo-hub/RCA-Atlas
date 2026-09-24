@@ -5,14 +5,17 @@ import "./chat.css";
 
 const KEY = "atlas.chat.open";
 
-export default function ChatPanel({ selection }) {
+export default function ChatPanel({ selection, onOpenChange }) {
   const [open, setOpen] = useState(() => localStorage.getItem(KEY) !== "false");
   const [messages, setMessages] = useState([]), [draft, setDraft] = useState(""), [busy, setBusy] = useState(false);
   const end = useRef(null);
   useEffect(() => {
     localStorage.setItem(KEY, String(open));
-    document.documentElement.style.setProperty("--left-inset", open ? "412px" : "16px");
-  }, [open]);
+    const root = document.documentElement.style;
+    root.setProperty("--left-inset", open ? "412px" : "16px");
+    root.setProperty("--strip-reserve", open ? "0px" : "132px");   // the family strip keeps clear of the minimized tab
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
   useEffect(() => { end.current?.scrollIntoView?.({ block: "end" }); }, [messages]);
 
   const ask = async question => {

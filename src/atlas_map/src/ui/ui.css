@@ -1,4 +1,15 @@
-.controls { top: 16px; right: var(--right-inset); padding: 10px 12px; width: 252px; display: flex; flex-direction: column; gap: 10px; transition: right 220ms ease; }
+/* Map HUD: a fixed top row between the side panels. Its stacks are in normal flow; the row itself ignores the pointer. */
+.hud-top { position: fixed; top: 16px; left: var(--left-inset); right: var(--right-inset); z-index: 5; display: flex; flex-wrap: wrap;
+  justify-content: space-between; align-items: flex-start; gap: 8px; pointer-events: none; container: hud / inline-size;
+  transition: left 220ms ease, right 220ms ease; }
+.hud-top .panel { position: relative; pointer-events: auto; }
+.hud-top .header { z-index: 6; }   /* the search results drop over the regions below */
+.left-stack, .right-stack { display: flex; flex-direction: column; gap: 8px; }
+.left-stack { align-items: flex-start; }
+.right-stack { align-items: flex-end; margin-left: auto; }
+/* Too narrow for header and controls side by side: the controls wrap below, so drop their key hints to save height. */
+@container hud (max-width: 579px) { .controls .hint { display: none; } }
+.controls { padding: 10px 12px; width: 252px; display: flex; flex-direction: column; gap: 10px; }
 .ctl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--hairline-strong); border-radius: 4px; overflow: hidden; }
 .seg button { background: transparent; color: var(--text-secondary); border: 0; padding: 5px 10px; font-size: 12px; cursor: pointer; }
@@ -8,12 +19,12 @@
 kbd { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); border: 1px solid var(--hairline-strong); border-radius: 3px; padding: 0 4px; margin: 0 1px; }
 input[type=range] { width: 110px; accent-color: var(--text-primary); }
 input[type=range]:disabled { opacity: 0.35; }
-.regions { left: var(--left-inset); bottom: 16px; padding: 6px; min-width: 220px; display: flex; flex-direction: column; transition: left 220ms ease; }
+.regions { padding: 6px; min-width: 220px; display: flex; flex-direction: column; }
 .regions button { display: flex; justify-content: space-between; gap: 16px; background: transparent; border: 0; padding: 7px 10px; border-radius: 4px; cursor: pointer; text-align: left; }
 .regions button:hover { background: var(--surface-2); }
 .regions button[aria-pressed="true"] { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--text-primary); }
 .regions .n { color: var(--text-muted); font-size: 12px; }
-.header { top: 16px; left: var(--left-inset); width: 320px; padding: 14px 16px 12px; transition: left 220ms ease; }
+.header { width: 320px; padding: 14px 16px 12px; }
 .header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
 .header p { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
 .header .stats { display: flex; gap: 22px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hairline); }
@@ -26,12 +37,19 @@ input[type=range]:disabled { opacity: 0.35; }
 .search li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 3px; cursor: pointer; }
 .search li[aria-selected="true"], .search li:hover { background: var(--surface-2); }
 .search .sub { color: var(--text-muted); font-size: 12px; }
-.families { left: calc((var(--left-inset) + 100vw - var(--right-inset)) / 2); transform: translateX(-50%); bottom: 16px; padding: 6px; display: flex; gap: 2px; white-space: nowrap; transition: left 220ms ease; }
+/* Centered between the side panels, never wider than the space between them (less the minimized chat tab, both sides so it stays centered). */
+.families { left: calc((var(--left-inset) + 100vw - var(--right-inset)) / 2); transform: translateX(-50%); bottom: 16px; padding: 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px;
+  width: max-content; max-width: calc(100vw - var(--left-inset) - var(--right-inset) - 2 * var(--strip-reserve)); transition: left 220ms ease, max-width 220ms ease; }
+.families button { white-space: nowrap; }
 .families button { display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 7px 11px; border-radius: 4px; cursor: pointer; transition: opacity 160ms ease; }
 .families button:hover { background: var(--surface-2); }
 .families button.muted { opacity: 0.35; }
 .families .n { color: var(--text-muted); font-size: 12px; }
-.legend { right: var(--right-inset); bottom: 16px; width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; transition: right 220ms ease; }
+.legend { width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+.legend-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: -4px; }
+.legend-head button { background: transparent; border: 1px solid var(--hairline-strong); border-radius: 4px; width: 24px; height: 22px; cursor: pointer; color: var(--text-secondary); }
+.legend-toggle { padding: 7px 12px; cursor: pointer; color: var(--text-secondary); font-size: 12px; }
+.legend-toggle:hover { color: var(--text-primary); }
 .legend .row { display: flex; align-items: center; gap: 9px; color: var(--text-secondary); font-size: 12px; line-height: 20px; }
 .legend .glyph { width: 18px; height: 12px; flex: none; }
 .ramp { height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(219,219,204) 0%, rgb(158,181,176) 14.6%, rgb(97,130,135) 41.7%, rgb(54,79,89) 62.5%, rgb(31,41,48) 100%); }

@@ -38,6 +38,7 @@ function Atlas({ bundle, onError }) {
   const [hover, setHover] = useState(null);   // {kind, item, x, y}
   const [siteId, setSiteId] = useState(null);   // the site panel (Task 7) opens for it
   const [sensorId, setSensorId] = useState(null);   // the sensor detail (Task 8) opens for it
+  const [chatOpen, setChatOpen] = useState(true);   // ChatPanel owns and persists it; the legend follows it
 
   const openSite = useCallback((site, sc) => {
     setSiteId(site.id); setSensorId(null); setHover(null); sc.flyToPoint(site.lon, site.lat, 6); layerRef.current?.setSelected(site.id);
@@ -89,17 +90,25 @@ function Atlas({ bundle, onError }) {
       <div id="atlas-overlay" ref={overlayRef} />
       {scene && (
         <>
-          <Header bundle={bundle} onPick={r => {
-            const target = r.kind === "site" ? bundle.siteById[r.id] : bundle.siteById[bundle.sensorById[r.id].site];
-            openSite(target, scene);
-            if (r.kind === "sensor") setSensorId(r.id);
-          }} />
-          <Controls scene={scene} />
-          <RegionNav regions={bundle.regions} sensors={bundle.sensors} active={regionKey} onSelect={key => selectRegion(key, scene)} />
+          {/* The top row spans the map between the side panels and wraps when it is narrow:
+              header and regions on the left, view controls and legend on the right. */}
+          <div className="hud-top">
+            <div className="left-stack">
+              <Header bundle={bundle} onPick={r => {
+                const target = r.kind === "site" ? bundle.siteById[r.id] : bundle.siteById[bundle.sensorById[r.id].site];
+                openSite(target, scene);
+                if (r.kind === "sensor") setSensorId(r.id);
+              }} />
+              <RegionNav regions={bundle.regions} sensors={bundle.sensors} active={regionKey} onSelect={key => selectRegion(key, scene)} />
+            </div>
+            <div className="right-stack">
+              <Controls scene={scene} />
+              <Legend credit={bundle.terrainMeta.credit} compact={!!siteId || chatOpen} />
+            </div>
+          </div>
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
-          <Legend credit={bundle.terrainMeta.credit} />
           <Tooltip hover={hover} bundle={bundle} />
-          <ChatPanel selection={{ site, sensor }} />
+          <ChatPanel selection={{ site, sensor }} onOpenChange={setChatOpen} />
           {site && (
             <SitePanel key={siteId} site={site} bundle={bundle} elevAt={scene.elevAt}
               onClose={closeSite} onBack={() => setSensorId(null)} onSensor={setSensorId}>

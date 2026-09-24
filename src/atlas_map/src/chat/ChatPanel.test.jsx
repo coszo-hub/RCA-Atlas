@@ -38,3 +38,18 @@ describe("ChatPanel", () => {
     await waitFor(() => expect(screen.getByText(/The chat is unavailable/)).toBeInTheDocument());
   });
 });
+
+describe("ChatPanel layout", () => {
+  it("sets the left inset and the strip reserve, and reports open state", () => {
+    const onOpenChange = vi.fn();
+    render(<ChatPanel selection={{}} onOpenChange={onOpenChange} />);
+    const css = n => document.documentElement.style.getPropertyValue(n);
+    expect(css("--left-inset")).toBe("412px");
+    expect(css("--strip-reserve")).toBe("0px");
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
+    fireEvent.click(screen.getByRole("button", { name: "Minimize chat" }));
+    expect(css("--left-inset")).toBe("16px");
+    expect(css("--strip-reserve")).not.toBe("0px");
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+});
