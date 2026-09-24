@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { mockGateway } from "./mocks.js";
 
 const ready = page => page.waitForFunction(() => window.__atlas?.scene?.frame?.dist > 0, null, { timeout: 30_000 });
+const dockButton = (page, name) => page.locator(".hud-dock").getByRole("button", { name, exact: true });
 const regionButton = (page, name) => page.getByRole("navigation", { name: "Regions" }).getByRole("button", { name: new RegExp(`^${name}`) });
 async function openSensorBySearch(page, text) {
   await page.getByRole("searchbox", { name: /Search sensors and sites/ }).fill(text);
@@ -42,6 +43,7 @@ test("3D contours and 2D top-down", async ({ page }) => {
   await ready(page);
   await regionButton(page, "Axial Seamount").click();
   await page.waitForTimeout(2200);
+  await dockButton(page, "Terrain controls").click();
   await page.getByRole("button", { name: "Contours" }).click();
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "e2e/screens/05-contours-3d.png" });
@@ -115,11 +117,12 @@ test("Axial detail sharpens as you zoom", async ({ page }) => {
   await page.waitForTimeout(6000);
   const s = await page.evaluate(() => window.__atlas.lod());
   expect(s.L2).toBeGreaterThan(0);
+  await dockButton(page, "Terrain controls").click();   // the readout is in the terrain popover
   await expect(page.getByText("1 m", { exact: true })).toBeVisible();
   await page.screenshot({ path: "e2e/screens/07-axial-1m.png" });
 });
 
-test("the GMRT and MBARI credits are on screen by default; the chat alone does not collapse the legend", async ({ page }) => {
+test("the GMRT and MBARI credits are on screen by default, clear of the open legend", async ({ page }) => {
   await mockGateway(page);
   await page.goto("/");
   await ready(page);
@@ -129,7 +132,9 @@ test("the GMRT and MBARI credits are on screen by default; the chat alone does n
   await expect(credit).toContainText("GMRT, Ryan et al. (2009), CC BY 4.0");
   const hasTiles = await page.evaluate(() => !!window.__atlas.scene.auv);
   if (hasTiles) await expect(credit).toContainText("MBARI");
-  await expect(page.getByText("Seafloor depth")).toBeVisible();   // legend expanded
+  await expect(page.getByText("Seafloor depth")).toHaveCount(0);   // the legend waits behind its dock button
+  await dockButton(page, "Legend").click();
+  await expect(page.getByText("Seafloor depth")).toBeVisible();
   // The credit line stays clear of every panel and inside the window.
   const clear = await page.evaluate(() => {
     const c = document.querySelector(".credit").getBoundingClientRect();
@@ -150,10 +155,14 @@ for (const [width, height] of [[1600, 1000], [1366, 768], [1280, 800]]) {
     await page.evaluate(() => window.__atlas.open("axial-seamount-base"));
     await expect(page.getByRole("heading", { name: "Axial Seamount Base" })).toBeVisible();
     await page.waitForTimeout(2500);   // the flight (1.3 s) and the glide to the new center
-    const wraps = width - 412 - 472 < 580;
-    // Wrapped, the terrain controls and the legend collapse to toggles.
-    await expect(page.getByRole("button", { name: "Terrain controls", exact: true })).toHaveCount(wraps ? 1 : 0);
-    await expect(page.getByRole("button", { name: "Legend", exact: true })).toBeVisible();
+    // The dock stays one row at the top right of the free map, left of the side panel and clear of the header.
+    for (const name of ["Terrain controls", "Legend", "Help"]) await expect(dockButton(page, name)).toBeVisible();
+    const dock = await page.evaluate(() => {
+      const r = el => document.querySelector(el).getBoundingClientRect();
+      const d = r(".dock-bar"), side = r(".side-panel"), head = r(".header");
+      return { leftOfPanel: d.right <= side.left - 16, clearOfHeader: d.left >= head.right, top: d.top, height: d.height };
+    });
+    expect(dock).toEqual({ leftOfPanel: true, clearOfHeader: true, top: 16, height: 30 });
     const hit = await page.evaluate(() => {
       const m = document.querySelector(".site.selected"), b = m.getBoundingClientRect();
       const el = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
@@ -163,6 +172,44 @@ for (const [width, height] of [[1600, 1000], [1366, 768], [1280, 800]]) {
     await page.screenshot({ path: `e2e/screens/08-site-${width}x${height}.png` });
   });
 }
+
+test("the dock opens one popover at a time and closes it on Escape or a click on the map", async ({ page }) => {
+  await mockGateway(page);
+  await page.goto("/");
+  await ready(page);
+  await page.evaluate(() => window.__atlas.open("axial-seamount-base"));
+  await expect(page.getByRole("heading", { name: "Axial Seamount Base" })).toBeVisible();
+  await page.waitForTimeout(2500);
+  const center = () => page.evaluate(() => window.__atlas.scene.controls.target.toArray().map(v => v.toFixed(3)).join());
+  const before = await center();
+  await page.screenshot({ path: "e2e/screens/09-dock-closed.png" });
+  const terrain = dockButton(page, "Terrain controls"), legend = dockButton(page, "Legend"), help = dockButton(page, "Help");
+  await terrain.click();
+  await expect(terrain).toHaveAttribute("aria-expanded", "true");
+  await page.getByRole("button", { name: "Contours" }).click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: "e2e/screens/10-dock-terrain.png" });
+  await legend.click();
+  await expect(terrain).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("button", { name: "Contours" })).toBeHidden();
+  await expect(page.getByText("Beneath Axial")).toHaveCount(0);
+  await expect(page.getByText("DAS coverage").last()).toBeVisible();
+  await page.waitForTimeout(300);   // the entrance
+  await page.screenshot({ path: "e2e/screens/11-dock-legend.png" });
+  await help.click();
+  await expect(page.getByText(/Drag to move/)).toBeVisible();
+  await page.waitForTimeout(300);   // the entrance
+  await page.screenshot({ path: "e2e/screens/12-dock-help.png" });
+  await page.keyboard.press("Escape");   // closes the popover only; the site panel stays
+  await expect(help).toHaveAttribute("aria-expanded", "false");
+  await expect(help).toBeFocused();
+  await expect(page.getByRole("heading", { name: "Axial Seamount Base" })).toBeVisible();
+  await terrain.click();
+  await expect(page.getByRole("button", { name: "Contours" })).toHaveAttribute("aria-pressed", "true");   // kept
+  expect(await center()).toBe(before);   // opening popovers never reframed the map
+  await page.mouse.click(700, 600);
+  await expect(terrain).toHaveAttribute("aria-expanded", "false");
+});
 
 test("reduced motion: the operating halo rests faint instead of solid", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1600, height: 1000 } });

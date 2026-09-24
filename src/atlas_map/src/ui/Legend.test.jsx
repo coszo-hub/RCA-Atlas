@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import Legend from "./Legend.jsx";
 import { FAMILIES } from "../test/fixtures.js";
@@ -32,25 +32,10 @@ describe("Legend subsurface", () => {
   });
 });
 
-describe("Legend collapse (layout ruling)", () => {
-  it("is expanded when no side panel is open, and the user can collapse it", () => {
-    render(<Legend credit="GMRT" compact={false} />);
+describe("Legend in the dock", () => {
+  it("is always expanded, with no minimize control of its own (the dock opens and closes it)", () => {
+    render(<Legend credit="GMRT" />);
     expect(screen.getByText("Seafloor depth")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Minimize legend" }));
-    expect(screen.queryByText("Seafloor depth")).toBeNull();
-    expect(screen.getByRole("button", { name: "Legend" })).toHaveAttribute("aria-expanded", "false");
-  });
-  it("collapses to a Legend toggle while a panel is open, and the user can expand it", () => {
-    render(<Legend credit="GMRT" compact />);
-    expect(screen.queryByText("Seafloor depth")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Legend" }));
-    expect(screen.getByText("Seafloor depth")).toBeInTheDocument();
-  });
-  it("follows the panels again when they open or close", () => {
-    const { rerender } = render(<Legend credit="GMRT" compact={false} />);
-    fireEvent.click(screen.getByRole("button", { name: "Minimize legend" }));
-    rerender(<Legend credit="GMRT" compact />);
-    rerender(<Legend credit="GMRT" compact={false} />);
-    expect(screen.getByText("Seafloor depth")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

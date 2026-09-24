@@ -1,14 +1,27 @@
-/* Map HUD: a fixed top row between the side panels. Its stacks are in normal flow; the row itself ignores the pointer. */
-.hud-top { position: fixed; top: 16px; left: var(--left-inset); right: var(--right-inset); z-index: 5; display: flex; flex-wrap: wrap;
-  justify-content: space-between; align-items: flex-start; gap: 8px; pointer-events: none; container: hud / inline-size;
+/* Map HUD: a fixed top row between the side panels. Its stacks are in normal flow; the row itself ignores the pointer.
+   The dock on the right is one button tall, so the row never wraps; on the narrowest map (chat and side panel open
+   at 1280 px) the header gives up a little width instead. */
+.hud-top { position: fixed; top: 16px; left: var(--left-inset); right: var(--right-inset); z-index: 5; display: flex;
+  justify-content: space-between; align-items: flex-start; gap: 8px; pointer-events: none;
   transition: left 220ms ease, right 220ms ease; }
 .hud-top .panel { position: relative; pointer-events: auto; }
-.hud-top .header { z-index: 6; }   /* the search results drop over the regions below */
+.hud-top .header { z-index: 6; max-width: 100%; }   /* the search results drop over the regions below */
 .left-stack, .right-stack { display: flex; flex-direction: column; gap: 8px; }
-.left-stack { align-items: flex-start; }
-.right-stack { align-items: flex-end; margin-left: auto; }
-/* Too narrow for header and controls side by side: the controls wrap below, so drop their key hints to save height. */
-@container hud (max-width: 579px) { .controls .hint { display: none; } }
+.left-stack { align-items: flex-start; min-width: 0; }
+.right-stack { flex: none; align-items: flex-end; margin-left: auto; }
+/* The dock: a row of icon buttons; each opens its popover under the dock, right-aligned to it and out of flow, so an
+   open popover never moves the row or reframes the map. The entrance is off under reduced motion (tokens.css). */
+.hud-dock { position: relative; }
+.dock-bar { display: flex; gap: 6px; }
+.hud-top .dock-btn { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; cursor: pointer; color: var(--text-secondary);
+  transition: color 120ms ease, border-color 120ms ease; }
+.hud-top .dock-btn:hover, .hud-top .dock-btn[aria-expanded="true"] { color: var(--text-primary); border-color: var(--hairline-strong); }
+.hud-top .dock-btn:focus-visible { outline: 1px solid var(--text-secondary); outline-offset: 2px; }
+.hud-top .dock-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 7; animation: dock-in 120ms ease-out; }
+.hud-top .dock-pop[hidden] { display: none; }
+@keyframes dock-in { from { opacity: 0; transform: translateY(-4px); } }
+.help { width: 252px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.help .hint { border-top: 0; padding-top: 0; }
 .controls { padding: 10px 12px; width: 252px; display: flex; flex-direction: column; gap: 10px; }
 .ctl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--hairline-strong); border-radius: 4px; overflow: hidden; }
@@ -64,8 +77,6 @@ input[type=range]:disabled { opacity: 0.35; }
 .families .families-tab:hover { color: var(--text-primary); background: transparent; }
 .hud-toggle { padding: 7px 12px; cursor: pointer; color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
 .hud-toggle:hover { color: var(--text-primary); }
-/* Wrapped top row: the collapsed controls and legend sit side by side under the header, one line tall. */
-.right-stack.compact { flex-direction: row; align-items: flex-start; }
 /* Always-visible map credits, in the 16 px bottom margin under the family strip, at the map's right edge. Nothing
    else uses that margin, so a line longer than the map is wide runs on under the chat panel's edge rather than being cut. */
 .credit { position: fixed; right: var(--right-inset); bottom: 2px; z-index: 4; color: var(--text-muted); font-size: 10px; line-height: 12px;
