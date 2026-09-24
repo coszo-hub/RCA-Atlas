@@ -7,6 +7,7 @@ import FamilyFilter from "./ui/FamilyFilter.jsx";
 import Header from "./ui/Header.jsx";
 import Legend from "./ui/Legend.jsx";
 import RegionNav from "./ui/RegionNav.jsx";
+import SensorDetail from "./panels/SensorDetail.jsx";
 import SitePanel from "./panels/SitePanel.jsx";
 import Tooltip from "./ui/Tooltip.jsx";
 
@@ -97,7 +98,9 @@ function Atlas({ bundle, onError }) {
           <Tooltip hover={hover} bundle={bundle} />
           {siteId && (
             <SitePanel key={siteId} site={bundle.siteById[siteId]} bundle={bundle} elevAt={scene.elevAt}
-              onClose={closeSite} onSensor={setSensorId} />
+              onClose={closeSite} onSensor={setSensorId}>
+              {sensorId && <SensorDetail key={sensorId} sensor={bundle.sensorById[sensorId]} bundle={bundle} onBack={() => setSensorId(null)} />}
+            </SitePanel>
           )}
         </>
       )}

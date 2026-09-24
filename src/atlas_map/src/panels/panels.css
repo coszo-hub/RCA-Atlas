@@ -22,3 +22,20 @@
 .sp-row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sp-row .d { color: var(--text-muted); font-size: 11.5px; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .seafloor, .sensor { animation: none; opacity: 1; stroke-dashoffset: 0; } }
+.sensor-detail h2 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; margin: 10px 0 4px; }
+.sensor-detail h3, .gtd h3, .sources h3, .no-feed h3, .live-data h3 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 18px 0 6px; }
+.back { background: transparent; border: 0; color: var(--text-secondary); cursor: pointer; padding: 0; margin-top: 10px; }
+.meta { color: var(--text-secondary); font-size: 12px; }
+.live-status { margin-top: 8px; font-size: 12.5px; }
+.live-status.degraded { color: var(--text-secondary); }
+.live-status button { margin-left: 8px; background: transparent; border: 1px solid var(--hairline-strong); border-radius: 3px; cursor: pointer; }
+.route { border-top: 1px solid var(--hairline); padding: 8px 0; }
+.route a { color: var(--text-primary); }
+.route p { margin: 4px 0; color: var(--text-secondary); font-size: 12px; }
+.snippet { background: var(--surface-0); border: 1px solid var(--hairline); border-radius: 4px; }
+.snip-head { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 11px; color: var(--text-muted); }
+.snip-head button { background: transparent; border: 0; cursor: pointer; color: var(--text-secondary); }
+.snippet pre { margin: 0; padding: 8px; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+.sources a { display: block; color: var(--text-secondary); font-size: 12px; word-break: break-all; margin: 3px 0; }
+.correction { color: var(--text-secondary); font-size: 12px; }
+.muted { color: var(--text-muted); }
