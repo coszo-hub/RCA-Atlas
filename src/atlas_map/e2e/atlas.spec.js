@@ -103,3 +103,17 @@ test("missing bundle shows the build command", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText(/build_atlas_bundle/)).toBeVisible();
 });
+
+test("Axial detail sharpens as you zoom", async ({ page }) => {
+  await mockGateway(page);
+  await page.goto("/");
+  await ready(page);
+  const hasTiles = await page.evaluate(async () => (await fetch("/atlas/auv/index.json")).ok);
+  test.skip(!hasTiles, "AUV tiles not built (plan 1, Task 9)");
+  await page.evaluate(() => window.__atlas.scene.flyTo({ ll: [-130.009, 45.953], dist: 3.2, polar: 0.95, az: -0.5, exag: 2 }));
+  await page.waitForTimeout(6000);
+  const s = await page.evaluate(() => window.__atlas.lod());
+  expect(s.L2).toBeGreaterThan(0);
+  await expect(page.getByText("1 m", { exact: true })).toBeVisible();
+  await page.screenshot({ path: "e2e/screens/07-axial-1m.png" });
+});

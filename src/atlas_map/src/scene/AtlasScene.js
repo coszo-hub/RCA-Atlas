@@ -6,6 +6,7 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { KX, KZ, toX, toZ } from "./geo.js";
 import { buildArrays, stack } from "./grid.js";
 import { terrainMaterial } from "./terrainMaterial.js";
+import { AuvLod } from "./AuvLod.js";
 import { approach, centerShift, ease, fitDist, isMoveKey, motionDuration, moveStep, viewPose } from "./cameraMath.js";
 
 export { loadGrids } from "./grid.js";
@@ -16,7 +17,7 @@ export class AtlasScene {
     this.targets = { flat: 0, lines: 0, mode: 0, mute: 0 }; this._view = "3d";
     this.insets = [16, 16]; this.framed = false; this._shift = [0, 0]; this._shiftTo = [0, 0];
     this._motion = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
-    this.elevAt = stack([grids.axial, grids.hydrate, grids.overview]);
+    this.elevAt = stack([grids.axial, grids.hydrate, grids.overview]);   // until `ready` adds the AUV survey
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true }));
     r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(innerWidth, innerHeight);
     this.scene = new THREE.Scene(); this.scene.background = new THREE.Color("#121211");
@@ -24,9 +25,16 @@ export class AtlasScene {
     const shrink = (b, m) => new THREE.Vector4(b[0] + m, b[1] - m, b[2] + m, b[3] - m);
     this.U = { exag: { value: 6 }, flat: { value: 0 }, lines: { value: 0 }, mode: { value: 0 }, mute: { value: 0 },
                holeA: shrink(grids.axial.box, 0.35), holeB: shrink(grids.hydrate.box, 0.35) };
-    this._addTerrain(grids.overview, 100, true, 1);
-    this._addTerrain(grids.axial, 50, false, 3);
-    this._addTerrain(grids.hydrate, 50, false, 3);
+    // Terrain, including the MBARI 1 m Axial summit tiles when they are built. Await `ready` before
+    // anything samples elevAt for good (cable, moorings, markers): the AUV survey changes the summit's heights.
+    this.ready = (async () => {
+      this.auv = await AuvLod.create(this.scene, this.U, terrainMaterial);
+      this._addTerrain(grids.overview, 100, true, 1);
+      this._addTerrain(grids.axial, 50, false, 3, this.auv ? { holeC: this.auv.box } : {});
+      this._addTerrain(grids.hydrate, 50, false, 3);
+      const base = stack([grids.axial, grids.hydrate, grids.overview]);
+      this.elevAt = (lon, lat) => this.auv?.sample(lon, lat) ?? base(lon, lat);
+    })();
 
     const c = (this.controls = new OrbitControls(this.camera, canvas));
     c.enableDamping = !this.reducedMotion; c.dampingFactor = 0.08; c.screenSpacePanning = false; c.zoomToCursor = true;
@@ -53,14 +61,14 @@ export class AtlasScene {
     this._raf = requestAnimationFrame(this._tick);
   }
 
-  _addTerrain(grid, interval, holes, smooth) {
+  _addTerrain(grid, interval, holes, smooth, extra = {}) {
     const a = buildArrays(grid, smooth);
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(a.positions, 3));
     g.setAttribute("elev", new THREE.BufferAttribute(a.elev, 1));
     g.setAttribute("grad", new THREE.BufferAttribute(a.grad, 2));
     g.setIndex(new THREE.BufferAttribute(a.index, 1));
-    const m = terrainMaterial(this.U, interval, holes);
+    const m = terrainMaterial(this.U, interval, holes, extra);
     if (!holes) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
     this.scene.add(new THREE.Mesh(g, m));
   }
@@ -187,6 +195,7 @@ export class AtlasScene {
     const reduced = this.reducedMotion;
     this.controls.enableDamping = !reduced;   // no coasting after a drag under reduced motion
     this.controls.update();
+    this.auv?.update(this.controls.target, this.camera.position.distanceTo(this.controls.target), now);
     for (const [key, speed] of [["flat", 5], ["lines", 6], ["mode", 8], ["mute", 8]]) {
       this.U[key].value = approach(this.U[key].value, this.targets[key], dt, speed, reduced);
     }

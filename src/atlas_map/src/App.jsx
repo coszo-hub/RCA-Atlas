@@ -53,9 +53,11 @@ function Atlas({ bundle, onError }) {
 
   useEffect(() => {
     let sc, layer, cancelled = false;
-    loadGrids(bundle.terrainMeta).then(grids => {
+    loadGrids(bundle.terrainMeta).then(async grids => {
       if (cancelled) return;
       sc = new AtlasScene(canvasRef.current, bundle, grids);
+      await sc.ready;   // the cable, moorings, and markers sample the final elevAt (with the AUV survey)
+      if (cancelled) return;
       sc.addCable(bundle.cable);
       sc.addMoorings(bundle.sites);
       const at = ev => ({ x: ev.clientX, y: ev.clientY });
@@ -71,7 +73,7 @@ function Atlas({ bundle, onError }) {
       sc.onFrame = () => layer.update();
       // Test hook for the browser tests: fly to a view, or open a site or a sensor by id.
       window.__atlas = {
-        scene: sc, layer, flyTo: view => sc.flyTo(view),
+        scene: sc, layer, flyTo: view => sc.flyTo(view), lod: () => sc.auv?.stats(),
         open: id => {
           const sensor = bundle.sensorById[id], target = bundle.siteById[sensor ? sensor.site : id];
           if (!target) return false;
@@ -137,7 +139,7 @@ function Atlas({ bundle, onError }) {
             </div>
             <div className="right-stack">
               <Controls scene={scene} />
-              <Legend credit={bundle.terrainMeta.credit} compact={!!siteId || chatOpen} />
+              <Legend credit={bundle.terrainMeta.credit} compact={!!siteId || chatOpen} auv={!!scene.auv} />
             </div>
           </div>
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />

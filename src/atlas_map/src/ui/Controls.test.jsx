@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Controls from "./Controls.jsx";
 
@@ -27,5 +27,21 @@ describe("Controls", () => {
     render(<Controls scene={fakeScene()} />);
     expect(screen.getByText(/Ctrl/)).toBeInTheDocument();
     expect(screen.getByText(/Drag to move/)).toBeInTheDocument();
+  });
+  it("reads out the finest Axial summit level on screen", () => {
+    vi.useFakeTimers();
+    try {
+      let finest = "16 m";
+      render(<Controls scene={{ ...fakeScene(), auv: { finest: () => finest } }} />);
+      expect(screen.getByText("Axial detail")).toBeInTheDocument();
+      expect(screen.getByText("16 m")).toBeInTheDocument();
+      finest = "1 m";
+      act(() => { vi.advanceTimersByTime(300); });
+      expect(screen.getByText("1 m")).toBeInTheDocument();
+    } finally { vi.useRealTimers(); }
+  });
+  it("has no Axial detail row when the AUV tiles are not built", () => {
+    render(<Controls scene={fakeScene()} />);
+    expect(screen.queryByText("Axial detail")).toBeNull();
   });
 });

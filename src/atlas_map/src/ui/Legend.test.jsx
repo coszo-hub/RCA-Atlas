@@ -12,6 +12,15 @@ describe("Legend", () => {
   });
 });
 
+describe("Legend credits", () => {
+  it("credits MBARI for the Axial summit only when its tiles are shown", () => {
+    const { rerender } = render(<Legend credit="GMRT" />);
+    expect(screen.queryByText(/MBARI/)).toBeNull();
+    rerender(<Legend credit="GMRT" auv />);
+    expect(screen.getByText(/Axial summit: MBARI AUV survey \(cruise V2506\), 1 m\./)).toBeInTheDocument();
+  });
+});
+
 describe("Legend collapse (layout ruling)", () => {
   it("is expanded when no side panel is open, and the user can collapse it", () => {
     render(<Legend credit="GMRT" compact={false} />);

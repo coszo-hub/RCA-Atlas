@@ -18,6 +18,8 @@ export default function Controls({ scene }) {
   const [view, setView] = useState("3d"), [style, setStyle] = useState("relief"), [color, setColor] = useState("depth");
   const [exag, setExag] = useState(scene?.U?.exag?.value ?? 6);
   useEffect(() => { if (scene) scene.onExag = v => setExag(v); return () => { if (scene) scene.onExag = null; }; }, [scene]);
+  const [detail, setDetail] = useState("16 m");   // the finest Axial summit level on screen
+  useEffect(() => { const id = setInterval(() => scene?.auv && setDetail(scene.auv.finest()), 250); return () => clearInterval(id); }, [scene]);
   return (
     <div className="panel controls">
       <Seg label="View" options={[["3d", "3D"], ["2d", "2D"]]} value={view} onChange={v => { setView(v); scene.setView(v); }} />
@@ -28,6 +30,7 @@ export default function Controls({ scene }) {
         <input id="exag" type="range" min="1" max="12" step="0.1" value={exag} disabled={view === "2d"}
           aria-label="Vertical exaggeration" onChange={e => { const v = +e.target.value; setExag(v); scene.flight = null; scene.setExag(v); }} />
       </div>
+      {scene?.auv && <div className="ctl-row"><span className="eyebrow">Axial detail</span><span className="mono" aria-live="polite">{detail}</span></div>}
       <div className="hint">Drag to move · <kbd>Ctrl</kbd>-drag to rotate · Scroll to zoom · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> to move · Hover the cable or a node for details</div>
     </div>
   );

@@ -3,7 +3,7 @@ import "./ui.css";
 
 // Collapsed to a small toggle while a side panel (site or chat) is open, expanded otherwise;
 // the user can flip it either way until the panels change.
-export default function Legend({ credit, compact = false }) {
+export default function Legend({ credit, compact = false, auv = false }) {
   const [override, setOverride] = useState(null);
   useEffect(() => setOverride(null), [compact]);
   const expanded = override ?? !compact;
@@ -28,7 +28,7 @@ export default function Legend({ credit, compact = false }) {
         <div className="row"><svg className="glyph"><rect x="3" y="3" width="6" height="6" fill="#121211" stroke="#ecebe6" strokeWidth="1.5" /></svg>Primary node</div></div>
       <div><div className="eyebrow">Seafloor depth</div>
         <div className="ramp" /><div className="ramp-labels mono"><span>0 m</span><span>1,500</span><span>3,000</span><span>4,800</span></div></div>
-      <div className="attribution">Bathymetry: {credit}. Cable: NOAA/BOEM Marine Cadastre, OOI mariner notices; west of the US EEZ approximate. Status: Nereus.</div>
+      <div className="attribution">Bathymetry: {credit}.{auv && " Axial summit: MBARI AUV survey (cruise V2506), 1 m."} Cable: NOAA/BOEM Marine Cadastre, OOI mariner notices; west of the US EEZ approximate. Status: Nereus.</div>
     </div>
   );
 }
