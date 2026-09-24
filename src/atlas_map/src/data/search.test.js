@@ -8,6 +8,7 @@ describe("searchAtlas", () => {
     const r = searchAtlas(b, "axial");
     expect(r[0]).toMatchObject({ kind: "site" });
     expect(r.map(x => x.id)).toContain("axial-seamount-base");
+    expect(r.find(x => x.id === "axial-seamount-base").sub).toBe("Axial Base");
   });
   it("matches refdes and type", () => {
     expect(searchAtlas(b, "ctdpfb301").map(x => x.id)).toEqual(["base-ctd"]);

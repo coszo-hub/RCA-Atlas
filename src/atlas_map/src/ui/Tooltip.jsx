@@ -23,7 +23,7 @@ function SiteCard({ site, bundle }) {
   const extra = site.unlocatedIds.length;
   return (<>
     <div className="t-name">{site.name}</div>
-    <div className="t-sub">{sensors.length} sensors · seafloor {fmtDepth(site.seafloor)} · {counts.map(([fam, n]) => `${n} ${fam.label.toLowerCase()}`).join(", ")}</div>
+    <div className="t-sub">{sensors.length} sensor{sensors.length === 1 ? "" : "s"} · seafloor {fmtDepth(site.seafloor)} · {counts.map(([fam, n]) => `${n} ${fam.label.toLowerCase()}`).join(", ")}</div>
     {site.column.length > 0 && <div className="t-col">{site.column.map(c => <span key={c.kind}><b>{c.kind}</b> {fmtRange(c.a, c.b)} </span>)}</div>}
     <div className="t-list">{rows.slice(0, 16)}</div>
     {rows.length > 16 && <div className="t-more">+{rows.length - 16} more. Click to open the depth section.</div>}
@@ -34,11 +34,12 @@ function SiteCard({ site, bundle }) {
 export default function Tooltip({ hover, bundle }) {
   const ref = useRef(null);
   // A long site card is taller than the fixed clamp allows: measure it and open it above the cursor when it
-  // would run off the bottom of the window.
+  // would run off the bottom of the window. Always set top, so a short card never inherits a tall card's lift.
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || !hover || hover.y + 18 + el.offsetHeight <= innerHeight - 8) return;
-    el.style.top = `${Math.max(8, hover.y - 18 - el.offsetHeight)}px`;
+    if (!el || !hover) return;
+    const h = el.offsetHeight, fits = hover.y + 18 + h <= innerHeight - 8;
+    el.style.top = `${fits ? Math.min(hover.y + 18, innerHeight - 240) : Math.max(8, hover.y - 18 - h)}px`;
   });
   if (!hover) return null;
   const { kind, item, x, y } = hover;

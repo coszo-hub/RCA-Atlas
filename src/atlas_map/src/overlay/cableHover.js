@@ -8,3 +8,15 @@ export function nearest(px, py, lines, maxPx = 7) {
   }
   return best;
 }
+
+// Projected points behind the camera (z > 1) are dropped; the runs on either side stay separate lines.
+export function frontRuns(proj) {
+  const runs = [];
+  let run = [];
+  for (const p of proj) {
+    if (p[2] < 1) run.push(p);
+    else { if (run.length > 1) runs.push(run); run = []; }
+  }
+  if (run.length > 1) runs.push(run);
+  return runs;
+}

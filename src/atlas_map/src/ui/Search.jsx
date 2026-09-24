@@ -19,7 +19,7 @@ export default function Search({ bundle, onPick }) {
         <ul role="listbox">
           {results.map((r, i) => (
             <li key={`${r.kind}-${r.id}`} role="option" aria-selected={i === active} onMouseDown={() => pick(r)}>
-              <span>{r.title}</span><span className="sub">{r.kind === "site" ? "Site" : r.sub}</span>
+              <span>{r.title}</span><span className="sub">{r.sub}</span>
             </li>
           ))}
         </ul>

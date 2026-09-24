@@ -12,7 +12,7 @@
 .site .halo { transform-origin: center; animation: breathe 3.2s ease-in-out infinite; }
 @keyframes breathe { 0%, 100% { opacity: 0; transform: scale(0.85); } 50% { opacity: 0.5; transform: scale(1.12); } }
 .site .name { position: absolute; left: calc(100% + 6px); top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 11.5px;
-  text-shadow: 0 0 2px #0b0b0a, 0 0 5px #0b0b0a, 0 0 8px #0b0b0a; transition: opacity 160ms ease; }
+  text-shadow: 0 0 2px #0b0b0a, 0 0 5px #0b0b0a, 0 0 8px #0b0b0a; transition: opacity 160ms ease; pointer-events: none; }
 .site .name span { color: var(--text-secondary); margin-left: 6px; }
 .clabel { position: absolute; transform: translate(10px, -7px); display: flex; flex-direction: column; gap: 2px; white-space: nowrap; font-size: 11px;
   text-shadow: 0 0 2px #0b0b0a, 0 0 5px #0b0b0a, 0 0 8px #0b0b0a; transition: opacity 160ms ease; pointer-events: none; }

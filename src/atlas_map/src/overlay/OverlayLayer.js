@@ -1,7 +1,7 @@
 import { fromX, fromZ, toX, toZ } from "../scene/geo.js";
 import { occluded } from "../scene/occlusion.js";
 import { fmtDepth, fmtRange } from "../data/format.js";
-import { nearest } from "./cableHover.js";
+import { frontRuns, nearest } from "./cableHover.js";
 import { place } from "./labels.js";
 import { ringSize, ringSvg } from "./ring.js";
 import "./overlay.css";
@@ -24,11 +24,13 @@ export class OverlayLayer {
       const size = ringSize(site.sensorIds.length);
       const d = el("site", ringSvg(site, bundle.sensorById, bundle.familyByKey, size) +
         `<div class="name">${site.label}<span class="mono">${site.sensorIds.length}</span></div>`);
-      d.setAttribute("role", "button"); d.setAttribute("aria-label", `${site.name}, ${site.sensorIds.length} sensors`); d.tabIndex = 0;
-      d.onmouseenter = ev => handlers.onSiteHover?.(site, ev); d.onmousemove = ev => handlers.onSiteHover?.(site, ev);
-      d.onmouseleave = () => handlers.onSiteHover?.(site, null);
+      const n = site.sensorIds.length;   // labels are unique; names are not (two "Axial Seamount Base" sites)
+      d.setAttribute("role", "button"); d.setAttribute("aria-label", `${site.label}, ${n} sensor${n === 1 ? "" : "s"}`); d.tabIndex = 0;
+      const hover = ev => { this._hovered = site.id; handlers.onSiteHover?.(site, ev); };
+      d.onmouseenter = hover; d.onmousemove = hover;
+      d.onmouseleave = () => { this._hovered = null; handlers.onSiteHover?.(site, null); };
       d.onclick = () => handlers.onSiteClick?.(site);
-      d.onkeydown = ev => { if (ev.key === "Enter") handlers.onSiteClick?.(site); };
+      d.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); handlers.onSiteClick?.(site); } };
       return { site, d, name: d.querySelector(".name"), size, inFocus: true };
     });
     this.columns = bundle.sites.filter(s => s.column.length).map(site => ({ site, d: el("clabel",
@@ -42,14 +44,18 @@ export class OverlayLayer {
       return { node, d, code: d.querySelector("span") };
     });
     this.places = PLACES.map(p => ({ ...p, d: el("place", p.t) }));
+    this._clearCable = () => { scene.renderer.domElement.style.cursor = ""; handlers.onCableHover?.(null, null); };
     this._onMove = ev => {
       if (ev.buttons) return;
-      const lines = (scene.cableLines ?? []).filter(l => l.userData.info && l.userData.proj).map(l => ({ info: l.userData.info, pts: l.userData.proj }));
+      const lines = (scene.cableLines ?? []).filter(l => l.userData.info && l.userData.proj)
+        .flatMap(l => frontRuns(l.userData.proj).map(pts => ({ info: l.userData.info, pts })));
       const hit = nearest(ev.clientX, ev.clientY, lines);
       scene.renderer.domElement.style.cursor = hit ? "help" : "";
       handlers.onCableHover?.(hit, hit ? ev : null);
     };
     scene.renderer.domElement.addEventListener("pointermove", this._onMove);
+    scene.renderer.domElement.addEventListener("pointerleave", this._clearCable);
+    scene.renderer.domElement.addEventListener("pointerdown", this._clearCable);
   }
 
   setFocus(focus) {
@@ -76,6 +82,7 @@ export class OverlayLayer {
       const onScreen = !regionMode && z < 1 && x > -40 && x < innerWidth + 40 && y > -40 && y < innerHeight + 40;
       s.hidden = onScreen && occluded(cam, [px, py + 0.01, pz], ground);
       const vis = onScreen && !s.hidden;
+      if (!vis && this._hovered === s.site.id) { this._hovered = null; this.h.onSiteHover?.(s.site, null); }
       Object.assign(s.d.style, { left: `${x}px`, top: `${y}px`, opacity: onScreen ? (s.hidden ? 0.12 : s.inFocus ? 1 : 0.25) : 0, pointerEvents: vis ? "auto" : "none" });
       if (vis && s.inFocus) labelItems.push({ id: s.site.id, x: x - s.size / 2, y, w: s.size + 12 + s.site.label.length * 6.4, h: 18, priority: s.site.sensorIds.length });
       s._x = x; s._y = y;
@@ -104,5 +111,9 @@ export class OverlayLayer {
     }
   }
 
-  dispose() { this.scene.renderer.domElement.removeEventListener("pointermove", this._onMove); this.c.innerHTML = ""; }
+  dispose() {
+    const c = this.scene.renderer.domElement;
+    c.removeEventListener("pointermove", this._onMove); c.removeEventListener("pointerleave", this._clearCable);
+    c.removeEventListener("pointerdown", this._clearCable); this.c.innerHTML = "";
+  }
 }

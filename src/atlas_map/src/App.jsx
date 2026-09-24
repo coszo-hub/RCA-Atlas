@@ -37,7 +37,7 @@ function Atlas({ bundle, onError }) {
   const [sensorId, setSensorId] = useState(null);   // the sensor detail (Task 8) opens for it
 
   const openSite = useCallback((site, sc) => {
-    setSiteId(site.id); setSensorId(null); sc.flyToPoint(site.lon, site.lat, 6); layerRef.current?.setSelected(site.id);
+    setSiteId(site.id); setSensorId(null); setHover(null); sc.flyToPoint(site.lon, site.lat, 6); layerRef.current?.setSelected(site.id);
   }, []);
   const selectRegion = useCallback((key, sc) => {
     setRegionKey(key); sc.flyTo(key === "overview" ? bundle.overview : bundle.regions.find(r => r.key === key).view);

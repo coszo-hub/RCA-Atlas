@@ -37,6 +37,25 @@ describe("Tooltip", () => {
       if (desc) Object.defineProperty(HTMLElement.prototype, "offsetHeight", desc); else delete HTMLElement.prototype.offsetHeight;
     }
   });
+  it("moving from a tall, lifted card to a short one puts the short card back below the cursor", () => {
+    let h = 400;
+    const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get() { return h; } });
+    try {
+      const y = innerHeight - 100;
+      const { container, rerender } = render(<Tooltip bundle={b} hover={{ kind: "site", item: b.siteById["axial-seamount-base"], x: 10, y }} />);
+      expect(container.querySelector(".tip").style.top).toBe(`${y - 18 - 400}px`);
+      h = 50;
+      rerender(<Tooltip bundle={b} hover={{ kind: "node", item: b.cable.nodes[0], x: 10, y }} />);
+      expect(container.querySelector(".tip").style.top).toBe(`${Math.min(y + 18, innerHeight - 240)}px`);
+    } finally {
+      if (desc) Object.defineProperty(HTMLElement.prototype, "offsetHeight", desc); else delete HTMLElement.prototype.offsetHeight;
+    }
+  });
+  it("site: singular sensor count", () => {
+    const { container } = render(<Tooltip bundle={b} hover={{ kind: "site", item: b.siteById["oregon-shelf"], x: 0, y: 0 }} />);
+    expect(container.querySelector(".t-sub").textContent).toMatch(/^1 sensor ·/);
+  });
   it("renders nothing without hover", () => {
     const { container } = render(<Tooltip bundle={b} hover={null} />);
     expect(container).toBeEmptyDOMElement();

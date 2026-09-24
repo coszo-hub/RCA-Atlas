@@ -10,7 +10,7 @@ export function searchAtlas(bundle, query, limit = 8) {
   const out = [];
   for (const s of bundle.sites) {
     const sc = score([s.name, s.label]);
-    if (sc) out.push({ kind: "site", id: s.id, title: s.name, sub: `${s.sensorIds.length} sensors`, sc: sc + 0.5 });
+    if (sc) out.push({ kind: "site", id: s.id, title: s.name, sub: s.label, sc: sc + 0.5 });
   }
   for (const s of bundle.sensors) {
     if (s.lat == null) continue;
