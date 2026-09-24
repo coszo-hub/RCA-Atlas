@@ -290,7 +290,8 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
   if (OPENROUTER_FREE_MODELS[requestedModel]) return generateOpenRouterAnswer(prompt, mode, env, OPENROUTER_FREE_MODELS[requestedModel]);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
-  const model = requestedModel === "gemini-2.5-flash" ? requestedModel : (env.ANSWER_MODEL || "gemini-2.5-flash");
+  const model = ["gemini-2.5-flash", "gemini-3.5-flash-lite"].includes(requestedModel)
+    ? requestedModel : (env.ANSWER_MODEL || "gemini-2.5-flash");
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
   const request = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -379,7 +380,7 @@ export default {
     if (!validOrigin(origin, env)) return response({ error: "origin not allowed" }, 403, cors);
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
-    const requestedModel = ["gemini-2.5-flash", ...Object.keys(GROQ_MODELS), ...Object.keys(OPENROUTER_FREE_MODELS), ...OPENAI_MODELS].includes(body?.model)
+    const requestedModel = ["gemini-2.5-flash", "gemini-3.5-flash-lite", ...Object.keys(GROQ_MODELS), ...Object.keys(OPENROUTER_FREE_MODELS), ...OPENAI_MODELS].includes(body?.model)
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
