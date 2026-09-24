@@ -112,20 +112,31 @@ async function generateAnswer(question, context, env) {
   const sourceListText = sourceList.map((c) => c.title).join("; ");
   const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
   const model = env.ANSWER_MODEL || "gemini-2.5-flash";
-  const upstream = await postJson(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`,
-    {
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.15,
-        maxOutputTokens: 4096,
-        thinkingConfig: { thinkingBudget: 1024 },
-      },
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
+  const request = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.15,
+      maxOutputTokens: 4096,
+      thinkingConfig: { thinkingBudget: 1024 },
     },
-  );
-  const answer = upstream.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
-  if (!answer) throw new Error("model returned no answer");
-  return { answer, model };
+  };
+
+  // A temporary upstream 429/5xx must not discard an already-complete evidence
+  // package. Retry once inside the Worker before returning an availability error.
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const upstream = await postJson(endpoint, request);
+      const answer = upstream.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
+      if (!answer) throw new Error("model returned no answer");
+      return { answer, model };
+    } catch (error) {
+      lastError = error;
+      if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 750));
+    }
+  }
+  throw lastError;
 }
 
 function axialCountDay(question) {
