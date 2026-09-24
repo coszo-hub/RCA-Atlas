@@ -19,6 +19,6 @@ Needs the bundle from `atlas_map_data`. Chat needs the Graph-RAG API running; se
 
 `/files` entries are `{name, kind, path, url, date}`, newest first; `path` is relative to the endpoint root. `message` is set when the PI portal folder has more than 5,000 entries, so the newest may be missing; link out via `sourceUrl`. `/status` reports `evidenceMode` as `live` or `snapshot`. Unexpected failures return 500 with source `atlas`.
 
-Waveform MiniSEED is written under a temp dir (`atlas-gateway-earthscope-*`) and each request's folder is deleted after decoding.
+Waveform MiniSEED is written under a temp dir (`atlas-gateway-earthscope-*`) and each request's folder is deleted after decoding; the temp dir itself is removed when the gateway shuts down.
 
 Tests: `PYTHONPATH=src .venv/bin/python -m unittest discover -s src/atlas_map_gateway/tests -t src -v`

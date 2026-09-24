@@ -1,6 +1,8 @@
 """uvicorn atlas_map_gateway.main:app --app-dir src --host 127.0.0.1 --port 8787"""
 from __future__ import annotations
 
+import shutil
+
 import httpx
 
 from . import errors, toolkits
@@ -37,11 +39,12 @@ def make_chat(settings: Settings, http: httpx.Client):
 def build() -> "FastAPI":
     settings = load_settings()
     kits = toolkits.make(settings)
+    root = kits["earthscope_root"]
     return create_app(settings, Deps(
         index=BundleIndex.from_dir(settings.bundle_dir),
         erddap=ErddapClient(httpx.Client(timeout=settings.upstream_timeout)),
         chat=make_chat(settings, httpx.Client(timeout=settings.chat_timeout)),
-        **kits))
+        **kits), on_shutdown=lambda: shutil.rmtree(root, ignore_errors=True))
 
 
 def __getattr__(name):   # PEP 562: `atlas_map_gateway.main:app` builds on first access, so tests can import make_chat

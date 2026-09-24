@@ -1,10 +1,8 @@
 """Maleen's toolkits, imported from their folders without modification."""
 from __future__ import annotations
 
-import atexit
 import importlib
 import os
-import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -25,10 +23,10 @@ def make(settings: Settings) -> dict:
     os.environ.setdefault("EARTHSCOPE_TIMEOUT_SECONDS", str(t))
     # One retry at most: with the toolkit default of 2 and backoff, a slow listing can hold a PI slot for ~25 s.
     os.environ.setdefault("PI_PORTAL_MAX_RETRIES", "1")
-    # Waveform MiniSEED lands in a gateway-owned temp root; the waveform route deletes each request dir after decoding.
+    # Waveform MiniSEED lands in a gateway-owned temp root; the waveform route deletes each request dir after
+    # decoding and main.build removes the root on shutdown.
     earthscope_root = Path(tempfile.mkdtemp(prefix="atlas-gateway-earthscope-")).resolve()
     os.environ["EARTHSCOPE_RUNTIME_ROOT"] = str(earthscope_root)
-    atexit.register(shutil.rmtree, earthscope_root, True)
     return {
         "nereus": _load("nereus_pipeline", "nereus_agent_tools").NereusToolkit(timeout=t),
         "qaqc": _load("agentic_qaqc", "qaqc_agent_tools").QAQCToolkit(timeout=t),

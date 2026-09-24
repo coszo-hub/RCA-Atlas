@@ -77,6 +77,13 @@ class StatusTest(unittest.TestCase):
         self.assertEqual(r.status_code, 500)
         self.assertEqual(r.json(), {"error": {"source": "atlas", "message": "internal error"}})
 
+    def test_shutdown_hook_runs_when_the_app_stops(self):
+        stopped = []
+        with TestClient(create_app(SETTINGS, deps(nereus=FakeNereus(OK)), on_shutdown=lambda: stopped.append(1))) as c:
+            self.assertEqual(c.get("/health").json(), {"ok": True})
+            self.assertEqual(stopped, [])
+        self.assertEqual(stopped, [1])
+
     def test_status_is_cached(self):
         n = FakeNereus(OK)
         c = self.client(n)

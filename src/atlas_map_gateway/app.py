@@ -1,6 +1,7 @@
 """Gateway app. Every upstream call goes through call_toolkit or the ERDDAP client, the limiter, and the cache."""
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,8 +38,16 @@ def not_found(source: str, message: str) -> JSONResponse:
     return JSONResponse(errors.body(source, message), status_code=404)
 
 
-def create_app(settings: Settings, deps: Deps) -> FastAPI:
-    app = FastAPI(title="Atlas gateway", docs_url=None, redoc_url=None)
+def create_app(settings: Settings, deps: Deps, on_shutdown: Callable[[], None] | None = None) -> FastAPI:
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        try:
+            yield
+        finally:
+            if on_shutdown:
+                on_shutdown()
+
+    app = FastAPI(title="Atlas gateway", docs_url=None, redoc_url=None, lifespan=lifespan)
     errors.install(app)
     cache = TTLCache()
     limiter = HostLimiter(settings.per_host_limit, settings.upstream_timeout)
