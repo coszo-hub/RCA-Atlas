@@ -19,7 +19,7 @@ _TYPES = {
     "chemistry": """ctd dissolved_oxygen ph pco2 nitrate fluorometer spectrophotometer mass_spectrometer
                     dissolved_gas thermistor thermistor_ph thermistor_array osmotic_sampler dna_sampler fluid_sampler""",
     "currents": "adcp velocimeter three_dimensional_current_meter par irradiance",
-    "acoustic": "hydrophone low_frequency_hydrophone camera sonar camera_temperature_campaign_system",
+    "acoustic": "hydrophone low_frequency_hydrophone camera sonar camera_temperature_campaign_system acoustic_ranging_station",
     "fiber": "das distributed_fiber_sensing_experiment",
 }
 FAMILY_OF_TYPE = {t: fam for fam, types in _TYPES.items() for t in types.split()}

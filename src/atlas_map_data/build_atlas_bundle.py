@@ -42,6 +42,8 @@ def _pi_endpoints(data: Path) -> dict[str, list[dict]]:
 def build(out: Path, runtime: Path, data: Path) -> dict:
     rows = load_jsonl(data / "Instruments" / "instruments.jsonl")
     records = [sensors.sensor_from_row(r) for r in rows]
+    fetch_rows = load_jsonl(data / "FETCH" / "instruments.jsonl") if (data / "FETCH" / "instruments.jsonl").exists() else []
+    records.extend(sensors.sensor_from_fetch_row(r) for r in fetch_rows)
     sensors.apply_corrections(records, sensors.load_corrections(paths.PACKAGE / "corrections.json"))
 
     index = status.load_status_index(load_jsonl(data / "Nereus" / "graphrag" / "entities.jsonl"),
@@ -50,16 +52,18 @@ def build(out: Path, runtime: Path, data: Path) -> dict:
     pi = _pi_endpoints(data)
     channels = _vertical_channels(data)
     for r in records:
-        r.update(status.resolve(r, index))
+        if not r.get("status"):
+            r.update(status.resolve(r, index))
         r["statusGroup"] = status.STATUS_GROUP.get(r["status"])   # unknown values fail in validate
-        r["access"] = access.build_access(r, external, pi, channels)
+        if not r.get("access"):
+            r["access"] = access.build_access(r, external, pi, channels)
 
     grids = {n: terrain.read_esri_ascii(runtime / "terrain" / f"{n}.asc", n) for n in terrain.FINEST_FIRST}
     stack = terrain.Stack([grids[n] for n in terrain.FINEST_FIRST])
     located = [r for r in records if validate.is_located(r)]
     unlocated = [r for r in records if not validate.is_located(r)]
     site_list, unplaced = sites.build_sites(located, unlocated, stack.elev)
-    errors = validate.validate(records, site_list, unplaced, len(rows), stack)
+    errors = validate.validate(records, site_list, unplaced, len(records), stack)
 
     if not errors:
         _write(out / "families.json", {"families": families.FAMILIES})
@@ -71,7 +75,7 @@ def build(out: Path, runtime: Path, data: Path) -> dict:
             (out / "terrain").mkdir(parents=True, exist_ok=True)
             terrain.write_bin(g, out / "terrain" / f"{n}.bin")
         _write(out / "terrain" / "terrain.json", {"credit": terrain.CREDIT, "grids": {n: g.meta() for n, g in grids.items()}})
-    summary = {"builtAt": datetime.now(timezone.utc).isoformat(), "total": len(rows), "located": len(located),
+    summary = {"builtAt": datetime.now(timezone.utc).isoformat(), "total": len(records), "located": len(located),
                "unlocated": len(unlocated), "unplaced": len(unplaced), "sites": len(site_list),
                "corpusSnapshot": json.loads((data / "Instruments" / "manifest.json").read_text()).get("created_at")
                if (data / "Instruments" / "manifest.json").exists() else None,

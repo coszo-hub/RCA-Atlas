@@ -18,17 +18,19 @@ class FullBuildTest(unittest.TestCase):
             out = Path(d)
             summary = build_atlas_bundle.build(out, paths.RUNTIME, paths.DATA)
             self.assertEqual(summary["errors"], [])
-            self.assertEqual(summary["total"], 168)
-            self.assertEqual(summary["located"], 152)
+            self.assertEqual(summary["total"], 171)
+            self.assertEqual(summary["located"], 155)
             self.assertEqual(summary["unlocated"], 16)
             self.assertEqual(summary["unplaced"], 5)
-            self.assertEqual(summary["sites"], 28)
+            self.assertEqual(summary["sites"], 31)
             self.assertTrue(summary["corpusSnapshot"])          # data/Instruments/manifest.json created_at
             bundle = json.loads((out / "sensors.json").read_text())
             by_id = {s["id"]: s for s in bundle["sensors"]}
             profiler = [s for s in bundle["sensors"] if s["siteCode"] == "RS03AXPS"][0]
             self.assertEqual((profiler["lat"], profiler["lon"]), (45.8168, -129.754))
             self.assertEqual(by_id["EARTHSCOPE-OO-AXCC1"]["family"], "seismic")
+            self.assertEqual(by_id["FETCH-2504"]["family"], "acoustic")
+            self.assertEqual(len(by_id["FETCH-2504"]["access"]), 2)
             for das in ("PI-DAS24", "PI-DAS25", "PI-DAS-OPTASENSE"):   # placeholder 45.0, -128.0 cleared
                 self.assertIsNone(by_id[das]["lat"])
                 self.assertIsNone(by_id[das]["lon"])

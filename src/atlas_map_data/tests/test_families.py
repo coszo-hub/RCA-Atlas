@@ -13,7 +13,7 @@ class FamilyTableTest(unittest.TestCase):
             "fluid_sampler", "fluorometer", "geodetic_and_seismic_sensor_module", "hpies", "hydrophone",
             "irradiance", "low_frequency_hydrophone", "mass_spectrometer", "nitrate",
             "ocean_bottom_seismic_package", "osmotic_sampler", "par", "pco2", "ph", "pressure",
-            "seismometer", "self_calibrating_pressure_recorder", "self_calibrating_pressure_sensor",
+            "seismometer", "self_calibrating_pressure_recorder", "self_calibrating_pressure_sensor", "acoustic_ranging_station",
             "short_period_seismometer", "sonar", "spectrophotometer", "thermistor", "thermistor_array",
             "thermistor_ph", "three_dimensional_current_meter", "tiltmeter", "velocimeter",
         ]

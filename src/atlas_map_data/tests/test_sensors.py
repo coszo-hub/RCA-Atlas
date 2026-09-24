@@ -46,6 +46,16 @@ class SensorRecordTest(unittest.TestCase):
         self.assertIsNone(s["depth"])
         self.assertIsNone(s["depthRange"])
 
+    def test_fetch_station_has_acoustic_family_and_repository_routes(self):
+        s = sensors.sensor_from_fetch_row({
+            "canonical_id": "FETCH-2504", "instrument_id": "FETCH-TRANSPONDER-2504",
+            "name": "FETCH Northern acoustic ranging station (2504)", "instrument_type": "acoustic_ranging_station",
+            "latitude": 45.95882833, "longitude": -130.0114997, "location": "Axial Seamount summit caldera",
+            "projects": ["FETCH", "Regional Cabled Array"], "source_urls": ["https://github.com/MaleenKidiwela/AxialFetch"],
+        })
+        self.assertEqual((s["family"], s["refdes"], s["status"]), ("acoustic", None, "UNKNOWN"))
+        self.assertEqual([r["kind"] for r in s["access"]], ["repository", "repository"])
+
     def test_apply_position_correction(self):
         recs = [sensors.sensor_from_row(ROW)]
         unlocated = sensors.sensor_from_row(dict(ROW, canonical_id="RS03AXPS-PC03A-4B-CTDPFK301", latitude=None, longitude=None))

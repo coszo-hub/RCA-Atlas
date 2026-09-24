@@ -51,6 +51,35 @@ def sensor_from_row(row: dict) -> dict:
     }
 
 
+FETCH_RAW_DATA_URL = "https://github.com/MaleenKidiwela/AxialFetch/tree/dbd132197b484490488fe16173df63140bb0ed22/Data"
+FETCH_DISTANCE_DATA_URL = "https://github.com/MaleenKidiwela/AxialFetch/tree/dbd132197b484490488fe16173df63140bb0ed22/src/output/distances"
+
+
+def sensor_from_fetch_row(row: dict) -> dict:
+    """Map-ready record for a documented FETCH station.
+
+    FETCH has no OOI reference designator, so it intentionally has no Nereus,
+    ERDDAP, or QA/QC route. Its repository publishes raw station records and
+    processed baseline distances instead.
+    """
+    return {
+        "id": row["canonical_id"], "instrumentId": row["instrument_id"], "name": row["name"],
+        "type": row["instrument_type"], "family": family_for(row["instrument_type"]),
+        "lat": row.get("latitude"), "lon": row.get("longitude"), "depth": None,
+        "depthRange": None, "waterDepth": None, "siteCode": "FETCH", "node": None,
+        "refdes": None, "location": row.get("location"), "projects": row.get("projects") or [],
+        "coszoRole": None, "manufacturer": None, "model": None,
+        "sources": list(row.get("source_urls") or []), "arcadaId": None, "corrections": [],
+        "status": "UNKNOWN", "statusSource": "FETCH source snapshot", "statusAsOf": None,
+        "access": [
+            {"kind": "repository", "label": "FETCH raw station data", "url": FETCH_RAW_DATA_URL,
+             "how": "Raw station records for the three acoustic ranging stations."},
+            {"kind": "repository", "label": "FETCH processed baseline distances", "url": FETCH_DISTANCE_DATA_URL,
+             "how": "Calibrated inter-station acoustic baseline-distance products."},
+        ],
+    }
+
+
 def load_corrections(path: Path) -> list[dict]:
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)["corrections"]
