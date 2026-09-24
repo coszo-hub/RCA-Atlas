@@ -222,7 +222,13 @@ Layout:
 
 ### Scene
 
-- **Navigation.** Drag to orbit, scroll to zoom toward the cursor, right-drag to pan, double-click to fly to a point.
+- **Navigation.**
+  - Drag moves the view across the seafloor.
+  - Ctrl-drag rotates and tilts around the view center. On a Mac, Cmd-drag and right-drag also rotate, and the Ctrl-click context menu is suppressed.
+  - Scroll zooms toward the cursor.
+  - Holding the arrow keys moves the camera smoothly: up and down move forward and back along the current heading, left and right move sideways. The speed scales with zoom, so a one-second hold covers about a third of the screen at any zoom level. Arrow keys are ignored while a text field or slider has focus.
+  - On touch screens, one finger moves the view and two fingers zoom and rotate.
+  - A one-line hint under the terrain controls lists these.
 - **Cursor parallax.** When the view has been idle for about one second, the camera tilts slightly toward the cursor: up to ±2.6° across and ±1.4° up and down. It stops while dragging or flying.
 - **Opening view.** The whole area from the coast to Axial, at 6× vertical exaggeration. Four region labels show sensor counts.
 - **Region flights.** Clicking a region flies the camera there over 1.8 s, easing the exaggeration to 2.5–4×. Once the camera is close enough, site markers replace the region labels.
