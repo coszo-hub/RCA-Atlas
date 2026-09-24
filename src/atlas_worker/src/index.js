@@ -175,6 +175,31 @@ function selectedEvidenceHits(context, question) {
   return hits;
 }
 
+function quickGraphAnswer(context, question) {
+  const genericTerms = new Set(["what", "which", "where", "when", "purpose", "instrument", "instruments", "available", "about", "there"]);
+  const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])]
+    .filter((term) => !genericTerms.has(term));
+  const hits = [...selectedEvidenceHits(context, question)].sort((a, b) => {
+    const titleScore = (hit) => terms.reduce((score, term) => score +
+      (String(hit.title || "").toLowerCase().includes(term) ? 100 : 0), 0);
+    return titleScore(b) - titleScore(a);
+  }).slice(0, 3);
+  if (!hits.length) throw new Error("no retrieved evidence");
+  const excerpt = (text) => {
+    const normalized = String(text || "").replace(/\s+/g, " ").trim();
+    const sentenceEnd = normalized.slice(0, 420).search(/[.!?](?:\s|$)/);
+    return (sentenceEnd >= 0 ? normalized.slice(0, sentenceEnd + 1) : normalized.slice(0, 420)).trim();
+  };
+  const statements = hits.map((hit) => `- ${hit.title}: ${excerpt(hit.text)}`).filter((line) => !line.endsWith(": "));
+  const entities = [...new Set((context.neighbors || []).slice(0, 6)
+    .map((node) => node.name || node.local_id).filter(Boolean))];
+  return [
+    "Quick answer from RCA Atlas evidence (no language model):",
+    ...statements,
+    ...(entities.length ? [`Related graph entities: ${entities.join(", ")}.`] : []),
+  ].join("\n");
+}
+
 function evidencePackage(hits, sourceNumbers) {
   const sections = [];
   let remaining = MAX_EVIDENCE_CHARS;
@@ -380,6 +405,7 @@ export default {
     if (!validOrigin(origin, env)) return response({ error: "origin not allowed" }, 403, cors);
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
+    const quick = body?.answer_mode === "quick";
     const requestedModel = ["gemini-2.5-flash", "gemini-3.5-flash-lite", ...Object.keys(GROQ_MODELS), ...Object.keys(OPENROUTER_FREE_MODELS), ...OPENAI_MODELS].includes(body?.model)
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
@@ -412,6 +438,18 @@ export default {
           answer_model: "RCA Atlas graph route",
           answer_citations: [downloadSource], answer_links: [downloadSource],
           hits: evidenceHits.map(publicHit), neighbors: context.neighbors || [], tool_hints: context.tool_hints || [],
+        }, 200, cors);
+      }
+      if (quick) {
+        return response({
+          query,
+          answer: quickGraphAnswer(context, query),
+          answer_model: "RCA Atlas graph evidence (no LLM)",
+          answer_citations: citations(evidenceHits),
+          answer_links: answerLinks(query, evidenceHits),
+          hits: (context.hits || []).map(publicHit),
+          neighbors: context.neighbors || [],
+          tool_hints: context.tool_hints || [],
         }, 200, cors);
       }
       const generated = await generateAnswer(query, context, env, requestedModel);
