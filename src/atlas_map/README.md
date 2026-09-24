@@ -30,8 +30,15 @@ there builds from this one. The map lives at `rca-atlas/map/` (https://coszo.org
 3. In a checkout of `coszo-hub.github.io`: `rsync -a --delete <this repo>/src/atlas_map/dist/ rca-atlas/map/`, then commit and open a PR there.
    Pages redeploys a minute or two after the merge.
 
-The public build has no gateway, so live data and chat say the service is not running. To use a hosted gateway, build with
-`VITE_ATLAS_GATEWAY=https://<gateway>` (it must allow the coszo.org origin).
+Build for the site with both services set:
+
+    VITE_ATLAS_CHAT_URL=https://rca-atlas.quakehunt.workers.dev \
+    VITE_ATLAS_GATEWAY=https://<gateway hostname> npm run build
+
+- `VITE_ATLAS_CHAT_URL`: chat goes to the RCA Atlas Cloudflare Worker (`src/atlas_worker`), the same one behind
+  coszo.org/rca-atlas/. It only accepts the coszo.org origin, so this works on the site, not locally.
+- `VITE_ATLAS_GATEWAY`: live status, charts, waveforms, plots and files come from the gateway on the VM
+  (`src/atlas_map_gateway/README.md`, "Run on the VM"). Without it those sections say the service is not running.
 
 ## Test
 

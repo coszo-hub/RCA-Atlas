@@ -1,0 +1,19 @@
+# systemd user unit: the live-data gateway for coszo.org/rca-atlas/map/, on loopback behind the Cloudflare Tunnel.
+# Install: see ../README.md, "Run on the VM". Assumes the repo is checked out at ~/RCA-Atlas with its .venv.
+[Unit]
+Description=RCA Atlas live-data gateway
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/RCA-Atlas
+Environment=PYTHONPATH=src
+# The published map calls it from coszo.org; chat goes to the RCA Atlas Worker, so /chat is off here.
+Environment=ATLAS_ALLOWED_ORIGINS=https://coszo.org
+Environment=ATLAS_CHAT=off
+Environment=ATLAS_BUNDLE_DIR=%h/RCA-Atlas/runtime_data/AtlasGateway/bundle
+ExecStart=%h/RCA-Atlas/.venv/bin/uvicorn atlas_map_gateway.main:app --app-dir src --host 127.0.0.1 --port 8787 --no-access-log
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

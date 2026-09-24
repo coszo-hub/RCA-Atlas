@@ -19,6 +19,8 @@ class Settings:
     max_waveform_minutes: int = 60
     max_points: int = 2000
     per_host_limit: int = 4
+    allowed_origins: tuple[str, ...] = ()   # browser origins allowed to call it cross-site, e.g. https://coszo.org
+    chat_enabled: bool = True   # off on a public host: the published map asks the RCA Atlas Worker, and /chat spends the Graph-RAG key
 
 
 def read_dotenv(path: Path) -> dict[str, str]:
@@ -41,4 +43,6 @@ def load_settings(env: Mapping[str, str] | None = None, dotenv: Path | None = No
         api_url=merged.get("ATLAS_API_URL", f"http://127.0.0.1:{port}"),
         api_key=merged.get("ATLAS_API_KEY", merged.get("GRAPHRAG_API_KEY", "")),
         bundle_dir=Path(merged.get("ATLAS_BUNDLE_DIR", REPO / "src" / "atlas_map" / "public" / "atlas")),
+        chat_enabled=merged.get("ATLAS_CHAT", "on").strip().lower() not in ("off", "0", "false", "no"),
+        allowed_origins=tuple(o.strip().rstrip("/") for o in merged.get("ATLAS_ALLOWED_ORIGINS", "").split(",") if o.strip()),
     )

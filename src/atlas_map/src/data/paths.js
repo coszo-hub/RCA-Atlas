@@ -4,3 +4,5 @@ export const atlasUrl = path => `${import.meta.env.BASE_URL}atlas/${path}`;
 // The gateway: Vite proxies /api to it in development. A static host has none unless VITE_ATLAS_GATEWAY points at one;
 // without it the live sections say the service is not running and the rest of the map works.
 export const GATEWAY = import.meta.env.VITE_ATLAS_GATEWAY || "/api";
+// Chat: the RCA Atlas Cloudflare Worker (the one behind coszo.org/rca-atlas/) when set; otherwise the gateway's /chat.
+export const CHAT_URL = import.meta.env.VITE_ATLAS_CHAT_URL || null;

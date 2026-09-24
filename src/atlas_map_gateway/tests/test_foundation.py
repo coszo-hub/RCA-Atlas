@@ -123,3 +123,43 @@ class LimiterTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CorsTest(unittest.TestCase):
+    def test_no_cross_origin_headers_by_default(self):
+        from fastapi.testclient import TestClient
+        from atlas_map_gateway.app import create_app
+        from atlas_map_gateway.tests.fakes import SETTINGS, deps
+        r = TestClient(create_app(SETTINGS, deps())).get("/health", headers={"Origin": "https://coszo.org"})
+        self.assertNotIn("access-control-allow-origin", r.headers)
+
+    def test_allowed_origin_gets_cors_and_preflight(self):
+        import dataclasses
+        from fastapi.testclient import TestClient
+        from atlas_map_gateway.app import create_app
+        from atlas_map_gateway.tests.fakes import SETTINGS, deps
+        c = TestClient(create_app(dataclasses.replace(SETTINGS, allowed_origins=("https://coszo.org",)), deps()))
+        self.assertEqual(c.get("/health", headers={"Origin": "https://coszo.org"}).headers["access-control-allow-origin"], "https://coszo.org")
+        self.assertNotIn("access-control-allow-origin", c.get("/health", headers={"Origin": "https://evil.example"}).headers)
+        pre = c.options("/chat", headers={"Origin": "https://coszo.org", "Access-Control-Request-Method": "POST",
+                                          "Access-Control-Request-Headers": "content-type"})
+        self.assertEqual(pre.status_code, 200)
+
+    def test_origins_come_from_the_environment(self):
+        from atlas_map_gateway.config import load_settings
+        s = load_settings({"ATLAS_ALLOWED_ORIGINS": "https://coszo.org/, https://www.coszo.org"}, dotenv=Path("/nonexistent"))
+        self.assertEqual(s.allowed_origins, ("https://coszo.org", "https://www.coszo.org"))
+
+
+class ChatSwitchTest(unittest.TestCase):
+    def test_chat_off_is_404_and_read_from_the_environment(self):
+        import dataclasses
+        from fastapi.testclient import TestClient
+        from atlas_map_gateway.app import create_app
+        from atlas_map_gateway.config import load_settings
+        from atlas_map_gateway.tests.fakes import SETTINGS, deps
+        r = TestClient(create_app(SETTINGS, dataclasses.replace(deps(), chat=None))).post("/chat", json={"question": "what is axial?"})
+        self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.json()["error"]["source"], "atlas")
+        self.assertFalse(load_settings({"ATLAS_CHAT": "off"}, dotenv=Path("/nonexistent")).chat_enabled)
+        self.assertTrue(load_settings({}, dotenv=Path("/nonexistent")).chat_enabled)

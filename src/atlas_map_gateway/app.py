@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from . import errors, routes_data
@@ -48,6 +49,9 @@ def create_app(settings: Settings, deps: Deps, on_shutdown: Callable[[], None] |
                 on_shutdown()
 
     app = FastAPI(title="Atlas gateway", docs_url=None, redoc_url=None, lifespan=lifespan)
+    if settings.allowed_origins:   # the published map (coszo.org) calls it from another origin; locally Vite proxies it
+        app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins), allow_methods=["GET", "POST"],
+                           allow_headers=["Content-Type"], max_age=86400)
     errors.install(app)
     cache = TTLCache()
     limiter = HostLimiter(settings.per_host_limit, settings.upstream_timeout)

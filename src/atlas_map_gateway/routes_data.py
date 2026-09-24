@@ -182,6 +182,8 @@ def register(app, settings, deps, cache, limiter) -> None:
 
     @app.post("/chat")
     def chat(body: ChatBody):
+        if deps.chat is None:
+            return _missing("atlas", "chat is not served here; ask the RCA Atlas Worker")
         question = body.question.strip()
         if len(question) < 2:
             return _bad("ask a question")

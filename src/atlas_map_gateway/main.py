@@ -43,7 +43,7 @@ def build() -> "FastAPI":
     return create_app(settings, Deps(
         index=BundleIndex.from_dir(settings.bundle_dir),
         erddap=ErddapClient(httpx.Client(timeout=settings.upstream_timeout)),
-        chat=make_chat(settings, httpx.Client(timeout=settings.chat_timeout)),
+        chat=make_chat(settings, httpx.Client(timeout=settings.chat_timeout)) if settings.chat_enabled else None,
         **kits), on_shutdown=lambda: shutil.rmtree(root, ignore_errors=True))
 
 
