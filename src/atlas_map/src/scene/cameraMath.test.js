@@ -44,4 +44,8 @@ describe("cameraMath", () => {
     expect(isMoveKey({ key: "ArrowUp", target: input })).toBe(false);
     for (const mod of ["metaKey", "ctrlKey", "altKey"]) expect(isMoveKey({ key: "ArrowLeft", target: div, [mod]: true })).toBe(false);
   });
+  it("a keydown without a key (Chrome autofill) is not a move key", () => {
+    expect(isMoveKey({ key: undefined, target: document.createElement("div") })).toBe(false);
+    expect(isMoveKey({ target: document.createElement("div") })).toBe(false);
+  });
 });

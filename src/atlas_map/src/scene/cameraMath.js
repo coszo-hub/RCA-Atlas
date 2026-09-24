@@ -37,4 +37,4 @@ export const approach = (value, target, dt, speed, reduced) =>
 
 // macOS sends no keyup for other keys while Cmd is held, so modified arrows never start a move.
 export const isMoveKey = e =>
-  e.key.startsWith("Arrow") && !(e.metaKey || e.ctrlKey || e.altKey) && !isTypingTarget(e.target);
+  !!e.key?.startsWith("Arrow") && !(e.metaKey || e.ctrlKey || e.altKey) && !isTypingTarget(e.target);

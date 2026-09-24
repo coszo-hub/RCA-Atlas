@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { toX, toZ } from "./geo.js";
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
+import { KX, KZ, toX, toZ } from "./geo.js";
 import { buildArrays, stack } from "./grid.js";
 import { terrainMaterial } from "./terrainMaterial.js";
 import { approach, ease, isMoveKey, motionDuration, moveStep, viewPose } from "./cameraMath.js";
@@ -25,7 +28,7 @@ export class AtlasScene {
     this._addTerrain(grids.hydrate, 50, false, 3);
 
     const c = (this.controls = new OrbitControls(this.camera, canvas));
-    c.enableDamping = true; c.dampingFactor = 0.08; c.screenSpacePanning = false; c.zoomToCursor = true;
+    c.enableDamping = !this.reducedMotion; c.dampingFactor = 0.08; c.screenSpacePanning = false; c.zoomToCursor = true;
     c.maxPolarAngle = Math.PI * 0.46; c.minDistance = 2; c.maxDistance = 1400;
     // Drag moves; Ctrl/Cmd/Shift-drag rotates (OrbitControls swaps PAN→ROTATE with a modifier); right-drag rotates.
     c.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
@@ -39,7 +42,7 @@ export class AtlasScene {
     };
     this._onKeyUp = e => (e.key === "Meta" ? this.held.clear() : this.held.delete(e.key));
     this._onBlur = () => this.held.clear();
-    this._onResize = () => { r.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.onResize?.(); };
+    this._onResize = () => { r.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this._resolution(); this.onResize?.(); };
     addEventListener("keydown", this._onKeyDown); addEventListener("keyup", this._onKeyUp);
     addEventListener("blur", this._onBlur); addEventListener("resize", this._onResize);
 
@@ -60,6 +63,60 @@ export class AtlasScene {
     if (!holes) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
     this.scene.add(new THREE.Mesh(g, m));
   }
+
+  addCable(cable) {
+    const common = { transparent: true, depthTest: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -60 };
+    this.mats = {
+      cable: new LineMaterial({ color: 0xecebe6, linewidth: 1.5, opacity: 0.95, ...common }),
+      casing: new LineMaterial({ color: 0x0b0b0a, linewidth: 3.8, opacity: 0.55, ...common }),
+      approx: new LineMaterial({ color: 0xecebe6, linewidth: 1.5, opacity: 0.8, dashed: true, dashSize: 1.2, gapSize: 0.9, ...common }),
+      range: new LineMaterial({ color: 0xecebe6, linewidth: 3, transparent: true, opacity: 0.95 }),
+    };
+    this.cableLines = [];
+    for (const line of cable.lines) {
+      const pts = densify(line.coords);
+      for (const mat of [this.mats.casing, line.accuracy === "approximate" ? this.mats.approx : this.mats.cable]) {
+        const l = new Line2(new LineGeometry(), mat);
+        l.userData = { pts, info: mat === this.mats.casing ? null : line };
+        l.renderOrder = mat === this.mats.casing ? 5 : 6;
+        this.scene.add(l); this.cableLines.push(l);
+      }
+    }
+    this._resolution();
+    this.updateLines();
+  }
+
+  addMoorings(sites) {   // call after addCable, which creates the shared materials
+    this.moorings = [];
+    const mastMat = (this.mats.mast = new THREE.LineDashedMaterial({ color: 0xecebe6, transparent: true, opacity: 0.35, dashSize: 0.12, gapSize: 0.1 }));
+    for (const site of sites.filter(s => s.column.length)) {
+      const mast = new THREE.Line(new THREE.BufferGeometry(), mastMat);
+      const ranges = site.column.map(c => { const l = new Line2(new LineGeometry(), this.mats.range); l.userData = c; this.scene.add(l); return l; });
+      this.scene.add(mast); this.moorings.push({ site, mast, ranges });
+    }
+    this.updateLines();
+  }
+
+  updateLines() {
+    const e = this.e;
+    for (const l of this.cableLines ?? []) {
+      const arr = [];
+      for (const [lon, lat] of l.userData.pts) arr.push(toX(lon), Math.min(this.elevAt(lon, lat), 0) * e + 0.03 + 0.012 * this.U.exag.value, toZ(lat));
+      l.geometry.dispose(); l.geometry = new LineGeometry(); l.geometry.setPositions(arr);
+      if (l.material.dashed) l.computeLineDistances();
+    }
+    for (const m of this.moorings ?? []) {
+      const x = toX(m.site.lon), z = toZ(m.site.lat), floorY = -m.site.seafloor * e;
+      m.mast.geometry.setFromPoints([new THREE.Vector3(x, floorY, z), new THREE.Vector3(x, 0, z)]); m.mast.computeLineDistances();
+      for (const r of m.ranges) {
+        const c = r.userData, y0 = -c.a * e, y1 = c.a === c.b ? y0 - 0.0001 - 0.02 * this.U.exag.value : -c.b * e;
+        r.geometry.dispose(); r.geometry = new LineGeometry(); r.geometry.setPositions([x, y0, z, x, y1, z]);
+      }
+    }
+    this._lastLayout = [this.U.exag.value, this.U.flat.value];
+  }
+
+  _resolution() { for (const m of Object.values(this.mats ?? {})) m.resolution?.set(innerWidth, innerHeight); }
 
   get reducedMotion() { return !!this._motion?.matches; }
   get e() { return this.U.exag.value * 0.001 * (1 - this.U.flat.value); }
@@ -114,10 +171,17 @@ export class AtlasScene {
       this.camera.position.x += d[0]; this.camera.position.z += d[2];
       this.controls.target.x += d[0]; this.controls.target.z += d[2];
     }
-    this.controls.update();
     const reduced = this.reducedMotion;
+    this.controls.enableDamping = !reduced;   // no coasting after a drag under reduced motion
+    this.controls.update();
     for (const [key, speed] of [["flat", 5], ["lines", 6], ["mode", 8], ["mute", 8]]) {
       this.U[key].value = approach(this.U[key].value, this.targets[key], dt, speed, reduced);
+    }
+    const [le, lf] = this._lastLayout ?? [];
+    if (le !== this.U.exag.value || Math.abs((lf ?? 0) - this.U.flat.value) > 1e-4) this.updateLines();
+    if (this.mats) {
+      const colAlpha = Math.max(0, 1 - this.U.flat.value * 3);
+      this.mats.range.opacity = 0.95 * colAlpha; this.mats.mast.opacity = 0.35 * colAlpha;
     }
     this.camera.updateMatrixWorld();   // overlays project with exactly this frame's camera
     const dist = this.camera.position.distanceTo(this.controls.target);
@@ -134,4 +198,15 @@ export class AtlasScene {
     this.renderer.domElement.removeEventListener("contextmenu", this._onContext);
     this.controls.dispose(); this.renderer.dispose();
   }
+}
+
+function densify(coords, stepKm = 0.3) {
+  const out = [];
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [a, b] = [coords[i], coords[i + 1]];
+    const n = Math.max(1, Math.ceil(Math.hypot((b[0] - a[0]) * KX, (b[1] - a[1]) * KZ) / stepKm));
+    for (let j = 0; j < n; j++) out.push([a[0] + (b[0] - a[0]) * j / n, a[1] + (b[1] - a[1]) * j / n]);
+  }
+  out.push(coords[coords.length - 1]);
+  return out;
 }
