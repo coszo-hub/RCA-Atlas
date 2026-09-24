@@ -181,7 +181,7 @@ A FastAPI app on `127.0.0.1:8787`. It imports his existing toolkits rather than 
 - `PIPortalToolkit` (`src/coszo_hub_tools/pi_portal_agent_tools.py`)
 - `EarthScopeFDSNToolkit` (`src/coszo_hub_tools/earthscope_fdsn_agent_tools.py`)
 
-Each is called through its `dispatch(toolkit, name, arguments)` function, so the gateway inherits their host allowlists, bounds and sanitizers.
+Each is called through its public methods (for example `instrument_status`, `search_plots`, `browse`, `download_waveform`), so the gateway inherits their host allowlists, bounds and sanitizers.
 
 | Endpoint | Calls | Returns | Cache |
 |---|---|---|---|
@@ -189,8 +189,8 @@ Each is called through its `dispatch(toolkit, name, arguments)` function, so the
 | `GET /series/{refdes}/variables` | ERDDAP `info` | variables with units, time coverage | 1 h |
 | `GET /series/{refdes}?var=&start=&end=` | ERDDAP `tabledap` CSV | time series thinned to ≤2,000 points (min/max per bucket), plus the full-resolution ERDDAP URL for download | 5 min |
 | `GET /plots/{refdes}` | `qaqc_search_plots` | latest plot URLs by variable and time span | 30 min |
-| `GET /waveform/{net}.{sta}?minutes=` | `earthscope_download_waveform` | decoded, thinned samples for up to 60 min | 5 min |
-| `GET /files/{pi_instrument}?path=` | `pi_portal_browse` | one directory listing | 5 min |
+| `GET /waveform/{net}.{sta}?minutes=&channel=` | `download_waveform` | decoded, thinned samples for up to 60 min; `channel` must be three letters or digits (default: the bundle's channel, else HHZ) | 5 min |
+| `GET /files/{pi_instrument}?endpoint=&path=` | `browse` | one directory listing, newest first, at most 200 entries: `{name, kind, path, url, date}`, plus a `message` when the portal folder has more than 5,000 entries. `endpoint` is the bundle's `endpointId`, required when an instrument has several. | 5 min |
 | `POST /chat` | existing API `/v1/answer` | answer and citations, passed through unchanged | none |
 
 ERDDAP is the only new client. It maps a reference designator to its dataset ID with the pattern `ooi-{refdes lowercased}`, for example `ooi-rs03axps-pc03a-4a-ctdpfa303`. The mapping is checked against the cached dataset list, so a missing dataset returns "no public feed" rather than an error.
@@ -202,7 +202,7 @@ Limits:
 - Every upstream call has an 8-second timeout.
 - Each upstream host is limited to 4 requests in flight.
 
-The chat proxy holds the Graph-RAG API key server-side and forwards only the question and the fixed answer options. MiniSEED decoding uses ObsPy, a dependency of the gateway only.
+The chat proxy holds the Graph-RAG API key server-side and forwards only the question and the fixed answer options. MiniSEED decoding uses pymseed, a dependency of the gateway only.
 
 ### Website: `src/atlas_map/`
 
