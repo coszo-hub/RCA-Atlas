@@ -46,6 +46,31 @@ class SitesTest(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(sorted(result[0]["sensorIds"]), ["a", "b", "c"])
 
+    def test_repeated_labels_get_a_distinguishing_token(self):
+        dlat = 1.0 / sites.KZ                      # 1 km apart: four separate sites, all "Summit"
+        located = [
+            s("EARTHSCOPE-OO-HYS13", 44.56, -125.15, loc="Summit", node=None, code=None),
+            s("ctd", 44.56 + dlat, -125.15, loc="Summit", node="MJ01B", code="RS01SUM2"),
+            s("pi-cam", 44.56 + dlat, -125.15, loc="Summit", node=None, code=None),
+            s("strain-ew", 44.56 + 2 * dlat, -125.15, loc="Summit", node=None, code=None),
+            s("strain-ns", 44.56 + 3 * dlat, -125.15, loc="Summit", node=None, code=None),
+            s("lonely", 45.9, -130.0, loc="Elsewhere"),
+        ]
+        result, _ = sites.build_sites(located, [], FLAT)
+        labels = sorted(t["label"] for t in result)
+        self.assertEqual(labels, ["Elsewhere", "Summit · 3", "Summit · 4", "Summit · HYS13", "Summit · MJ01B"])
+        self.assertTrue(all(t["name"] in ("Summit", "Elsewhere") for t in result))
+        self.assertEqual(sorted(t["id"] for t in result),
+                         ["elsewhere", "summit", "summit-2", "summit-3", "summit-4"])
+
+    def test_labels_distinguish_by_site_code_and_colliding_tokens_by_ordinal(self):
+        dlat = 1.0 / sites.KZ
+        located = [s("a", 45.9, -130.0, loc="Vent", node=None, code="RS03INT1"),
+                   s("b", 45.9 + dlat, -130.0, loc="Vent", node="MJ03D", code="RS03INT2"),
+                   s("c", 45.9 + 2 * dlat, -130.0, loc="Vent", node="MJ03D", code="RS03INT2")]
+        result, _ = sites.build_sites(located, [], FLAT)
+        self.assertEqual([t["label"] for t in result], ["Vent · RS03INT1", "Vent · MJ03D 2", "Vent · MJ03D 3"])
+
     def test_regions_by_longitude(self):
         self.assertEqual(sites.region_for(-130.0), "axial")
         self.assertEqual(sites.region_for(-125.39), "slope")

@@ -10,6 +10,7 @@ from .sensors import COLUMN_KIND
 KX = 111.32 * math.cos(math.radians(45.15))
 KZ = 111.13
 SITE_RADIUS_KM = 0.15
+EARTHSCOPE_ID = re.compile(r"EARTHSCOPE-[A-Z0-9]+-[A-Z0-9]+")
 
 REGIONS = [
     {"key": "axial", "label": "Axial Seamount", "lonMin": -180.0, "lonMax": -129.0,
@@ -43,6 +44,32 @@ def _label(name: str) -> str:
     return name.replace(", Axial Seamount", "").replace("Axial Seamount ", "Axial ")
 
 
+def _label_token(members: list[dict]) -> str | None:
+    stations = {m["id"].split("-")[-1] for m in members}
+    if len(stations) == 1 and all(EARTHSCOPE_ID.fullmatch(m["id"]) for m in members):
+        return stations.pop()                     # EARTHSCOPE-OO-HYS13 -> HYS13
+    for key in ("node", "siteCode"):
+        value = next((m[key] for m in members if m.get(key)), None)
+        if value:
+            return value
+    return None
+
+
+def unique_labels(sites: list[dict], members_of: dict[str, list[dict]]) -> None:
+    """A repeated label gets " · " plus the EarthScope station when the site is one station, else the site's
+    first node or site code, else its ordinal among the sites sharing the label. Names and ids are unchanged."""
+    groups: dict[str, list[dict]] = {}
+    for site in sites:
+        groups.setdefault(site["label"], []).append(site)
+    for label, group in groups.items():
+        if len(group) < 2:
+            continue
+        tokens = [_label_token(members_of[t["id"]]) or str(i) for i, t in enumerate(group, 1)]
+        for i, (site, token) in enumerate(zip(group, tokens), 1):
+            clash = tokens.count(token) > 1
+            site["label"] = f"{label} · {token}" + (f" {i}" if clash else "")
+
+
 def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
@@ -62,7 +89,7 @@ def build_sites(located: list[dict], unlocated: list[dict],
             clusters.remove(other)
         home.append(sensor)
 
-    result, used_ids = [], set()
+    result, used_ids, members_of = [], set(), {}
     for members in clusters:
         lat = sum(m["lat"] for m in members) / len(members)
         lon = sum(m["lon"] for m in members) / len(members)
@@ -96,6 +123,8 @@ def build_sites(located: list[dict], unlocated: list[dict],
             "column": sorted(({"kind": k, "a": v[0], "b": v[1]} for k, v in column.items()), key=lambda c: c["a"]),
             "unlocatedIds": [],
         })
+        members_of[site_id] = members
+    unique_labels(result, members_of)
 
     unplaced = []
     for u in unlocated:
