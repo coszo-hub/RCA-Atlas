@@ -10,6 +10,7 @@ import RegionNav from "./ui/RegionNav.jsx";
 import SensorDetail from "./panels/SensorDetail.jsx";
 import SitePanel from "./panels/SitePanel.jsx";
 import Tooltip from "./ui/Tooltip.jsx";
+import ChatPanel from "./chat/ChatPanel.jsx";
 
 export default function App() {
   const [bundle, setBundle] = useState(null);
@@ -80,6 +81,8 @@ function Atlas({ bundle, onError }) {
     document.documentElement.style.setProperty("--right-inset", siteId ? "472px" : "16px");
   }, [siteId]);
 
+  const site = siteId ? bundle.siteById[siteId] : null;
+  const sensor = sensorId ? bundle.sensorById[sensorId] : null;
   return (
     <>
       <canvas ref={canvasRef} className="atlas-scene" aria-label="3D map of the seafloor off Oregon" />
@@ -96,10 +99,11 @@ function Atlas({ bundle, onError }) {
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
           <Legend credit={bundle.terrainMeta.credit} />
           <Tooltip hover={hover} bundle={bundle} />
-          {siteId && (
-            <SitePanel key={siteId} site={bundle.siteById[siteId]} bundle={bundle} elevAt={scene.elevAt}
+          <ChatPanel selection={{ site, sensor }} />
+          {site && (
+            <SitePanel key={siteId} site={site} bundle={bundle} elevAt={scene.elevAt}
               onClose={closeSite} onBack={() => setSensorId(null)} onSensor={setSensorId}>
-              {sensorId && <SensorDetail key={sensorId} sensor={bundle.sensorById[sensorId]} bundle={bundle} onBack={() => setSensorId(null)} />}
+              {sensor && <SensorDetail key={sensorId} sensor={sensor} bundle={bundle} onBack={() => setSensorId(null)} />}
             </SitePanel>
           )}
         </>
