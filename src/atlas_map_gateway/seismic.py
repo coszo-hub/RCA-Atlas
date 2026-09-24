@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -17,3 +18,16 @@ def decode(path: Path) -> dict:
         start = start.split(".")[0] + "Z"
     start_ms = int(datetime.fromisoformat(start.replace("Z", "+00:00")).timestamp() * 1000)
     return {"start": start, "startMs": start_ms, "rate": float(seg.samprate), "samples": list(seg.datasamples)}
+
+
+def discard_request_dir(file: Path, root: Path | None) -> bool:
+    """Delete the EarthScope request dir holding `file` (<root>/requests/<request id>/), and nothing else.
+
+    Only acts when the gateway owns `root`; a file anywhere else is left alone."""
+    if root is None:
+        return False
+    request_dir = Path(file).resolve().parent
+    if request_dir.parent != (Path(root).resolve() / "requests"):
+        return False
+    shutil.rmtree(request_dir, ignore_errors=True)
+    return True

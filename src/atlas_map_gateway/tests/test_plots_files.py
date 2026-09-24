@@ -12,9 +12,20 @@ PLOTS = {"ok": True, "plots": [
      "data_range": "full", "depth_or_profile": "", "url": "https://ec2.qaqc.ooi-rca.net/QAQC_plots/a.png"},
     {"reference_designator": REF + "0", "variable": "temperature", "time_span": "week", "overlay": "none",
      "data_range": "full", "depth_or_profile": "", "url": "https://ec2.qaqc.ooi-rca.net/QAQC_plots/b.png"}]}
-LISTING = {"ok": True, "instrument_id": "PI-COVIS", "endpoint_label": "COVIS raw", "relative_path": "2026/",
-           "source_url": "http://piweb.ooirsn.uw.edu/covis/data/COVIS/2026/", "truncated": False,
-           "entries": [{"name": "09/", "kind": "directory"}]}
+COVIS_ROOT = "http://piweb.ooirsn.uw.edu/covis/data/COVIS/"
+
+
+def raw_entry(relative_path: str, observation_date: str | None = None) -> dict:
+    """One entry exactly as PIPortalToolkit._parse_listing builds it."""
+    directory = relative_path.endswith("/")
+    return {"name": relative_path.rstrip("/").rsplit("/", 1)[-1], "relative_path": relative_path,
+            "kind": "directory" if directory else "file", "url": COVIS_ROOT + relative_path,
+            "observation_date": observation_date}
+
+
+LISTING = {"ok": True, "instrument_id": "PI-COVIS", "endpoint_id": "covis-raw", "endpoint_label": "COVIS raw",
+           "relative_path": "2026/", "source_url": COVIS_ROOT + "2026/", "count": 2, "truncated": False,
+           "entries": [raw_entry("2026/08/"), raw_entry("2026/09/")]}
 COVIS_RAW = "PI-PORTAL-ENDPOINT-f13948dc081a8b044c"
 CTD_ONLY = "PI-PORTAL-ENDPOINT-2c2cf0f8c135aeb3b5"
 
@@ -37,7 +48,12 @@ class PlotsFilesTest(unittest.TestCase):
         pi = FakePI(LISTING)
         r = TestClient(create_app(SETTINGS, deps(pi=pi))).get("/files/PI-COVIS", params={"path": "2026/", "endpoint": COVIS_RAW})
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()["entries"], [{"name": "09/", "kind": "directory"}])
+        body = r.json()
+        self.assertEqual(body["entries"], [
+            {"name": "09", "kind": "directory", "path": "2026/09/", "url": COVIS_ROOT + "2026/09/", "date": None},
+            {"name": "08", "kind": "directory", "path": "2026/08/", "url": COVIS_ROOT + "2026/08/", "date": None}])
+        self.assertEqual((body["path"], body["sourceUrl"], body["truncated"], body["message"]),
+                         ("2026/", COVIS_ROOT + "2026/", False, None))
         # The bundle's corpus endpoint id is translated to the toolkit's own endpoint id (matched by URL).
         self.assertEqual(pi.calls, [("PI-COVIS", "covis-raw", "2026/")])
         self.assertEqual(pi.limits, [5000])
@@ -68,14 +84,33 @@ class PlotsFilesTest(unittest.TestCase):
 
     def test_files_newest_first_and_truncated(self):
         days = [f"2026-{m:02d}-{d:02d}" for m in range(1, 10) for d in range(1, 29)]   # 252 days, oldest first
-        entries = [{"name": f"{day}.dat", "kind": "file", "observation_date": day} for day in days]
-        pi = FakePI({**LISTING, "entries": entries, "truncated": False})
+        entries = [raw_entry(f"CTD_{day.replace('-', '')}.dat", day) for day in days]
+        pi = FakePI({**LISTING, "relative_path": "", "entries": entries, "truncated": False})
         body = TestClient(create_app(SETTINGS, deps(pi=pi))).get("/files/PI-CTDPFA110").json()
         self.assertEqual(len(body["entries"]), 200)
         self.assertTrue(body["truncated"])
-        self.assertEqual(body["entries"][0]["name"], "2026-09-28.dat")
-        self.assertEqual([e["name"] for e in body["entries"]], sorted((e["name"] for e in body["entries"]), reverse=True))
-        self.assertNotIn("2026-01-01.dat", [e["name"] for e in body["entries"]])
+        self.assertIsNone(body["message"])   # the gateway's own 200 cap: the newest 200 are all there
+        self.assertEqual(body["entries"][0], {"name": "CTD_20260928.dat", "kind": "file", "path": "CTD_20260928.dat",
+                                              "url": COVIS_ROOT + "CTD_20260928.dat", "date": "2026-09-28"})
+        dates = [e["date"] for e in body["entries"]]
+        self.assertEqual(dates, sorted(dates, reverse=True))
+        self.assertNotIn("2026-01-01", dates)
+
+    def test_files_undated_entries_sort_newest_name_first(self):
+        years = [raw_entry(f"{y}/") for y in (2018, 2019, 2020, 2021)]   # year folders carry no observation_date
+        pi = FakePI({**LISTING, "relative_path": "", "entries": years})
+        body = TestClient(create_app(SETTINGS, deps(pi=pi))).get("/files/PI-COVIS", params={"endpoint": COVIS_RAW}).json()
+        self.assertEqual([(e["name"], e["path"]) for e in body["entries"]],
+                         [("2021", "2021/"), ("2020", "2020/"), ("2019", "2019/"), ("2018", "2018/")])
+
+    def test_files_upstream_truncation_carries_a_message_and_source_url(self):
+        pi = FakePI({**LISTING, "count": 5000, "truncated": True})
+        body = TestClient(create_app(SETTINGS, deps(pi=pi))).get(
+            "/files/PI-COVIS", params={"path": "2026/", "endpoint": COVIS_RAW}).json()
+        self.assertTrue(body["truncated"])
+        self.assertEqual(body["message"], "This folder has more than 5,000 entries; the newest may be missing. "
+                                          "Open the folder on the PI portal to see everything.")
+        self.assertEqual(body["sourceUrl"], COVIS_ROOT + "2026/")
 
     def test_files_unknown_instrument_404(self):
         r = TestClient(create_app(SETTINGS, deps(pi=FakePI(LISTING)))).get("/files/PI-NOPE")

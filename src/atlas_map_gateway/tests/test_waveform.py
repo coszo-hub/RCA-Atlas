@@ -1,4 +1,6 @@
 import dataclasses
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -51,6 +53,58 @@ class WaveformRouteTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["points"], [])
         self.assertEqual(r.json()["message"], "No recording in this window.")
+
+    def test_channel_must_be_three_letters_or_digits(self):
+        for channel in ("HH*", "HHZ,HHN", "hhz", "HH", "HHZZ", "H?Z", ""):
+            with self.subTest(channel=channel):
+                es = FakeEarthScope(OK)
+                r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1", params={"channel": channel})
+                self.assertEqual(r.status_code, 422)
+                self.assertEqual(r.json()["error"]["source"], "atlas")
+                self.assertEqual(es.calls, [])
+        es = FakeEarthScope(OK)
+        r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1", params={"channel": "HHN"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(es.calls[0][2], "HHN")
+
+    def test_request_dir_is_deleted_after_decoding(self):
+        root = Path(tempfile.mkdtemp(prefix="atlas-gateway-test-"))
+        self.addCleanup(shutil.rmtree, root, True)
+        request_dir = root / "requests" / "earthscope-20260923T115800Z-abc123def456"
+        request_dir.mkdir(parents=True)
+        shutil.copy(MSEED, request_dir / "OO.AXCC1.blank.HHZ.20260923T114800Z.mseed")
+        (request_dir / "manifest.json").write_text("{}")
+        es = FakeEarthScope({**OK, "file": str(request_dir / "OO.AXCC1.blank.HHZ.20260923T114800Z.mseed")})
+        r = TestClient(create_app(SETTINGS, deps(earthscope=es, earthscope_root=root))).get("/waveform/OO.AXCC1")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["rawCount"], 12001)
+        self.assertFalse(request_dir.exists())
+        self.assertTrue((root / "requests").is_dir())   # only the request's own dir goes
+
+    def test_files_outside_the_gateway_root_are_never_deleted(self):
+        root = Path(tempfile.mkdtemp(prefix="atlas-gateway-test-"))
+        self.addCleanup(shutil.rmtree, root, True)
+        for owned_root in (None, root):   # no root configured, and a root the fixture is not under
+            with self.subTest(root=owned_root):
+                r = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK), earthscope_root=owned_root))).get("/waveform/OO.AXCC1")
+                self.assertEqual(r.status_code, 200)
+                self.assertTrue(MSEED.exists())
+        self.assertFalse(seismic.discard_request_dir(root / "stray.mseed", root))   # directly in the root: not a request dir
+        self.assertTrue(root.exists())
+
+    def test_corrupt_miniseed_is_500_and_still_cleaned_up(self):
+        root = Path(tempfile.mkdtemp(prefix="atlas-gateway-test-"))
+        self.addCleanup(shutil.rmtree, root, True)
+        request_dir = root / "requests" / "earthscope-20260923T115800Z-000000000000"
+        request_dir.mkdir(parents=True)
+        (request_dir / "bad.mseed").write_bytes(b"this is not miniseed" * 50)
+        es = FakeEarthScope({**OK, "file": str(request_dir / "bad.mseed")})
+        app = create_app(SETTINGS, deps(earthscope=es, earthscope_root=root))
+        with self.assertLogs("atlas_map_gateway", level="ERROR"):
+            r = TestClient(app, raise_server_exceptions=False).get("/waveform/OO.AXCC1")
+        self.assertEqual(r.status_code, 500)
+        self.assertEqual(r.json(), {"error": {"source": "atlas", "message": "internal error"}})
+        self.assertFalse(request_dir.exists())
 
     def test_busy_limiter_is_503_with_display_source(self):
         busy = dataclasses.replace(SETTINGS, per_host_limit=1, upstream_timeout=0.01)

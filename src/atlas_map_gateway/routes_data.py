@@ -49,8 +49,19 @@ def _toolkit_endpoint_id(instrument_key: str, url: str) -> str:
     raise errors.UpstreamError("PI portal", "this endpoint is not in the PI portal registry")
 
 
+CHANNEL_RE = re.compile(r"[A-Z0-9]{3}")
+UPSTREAM_TRUNCATED = ("This folder has more than 5,000 entries; the newest may be missing. "
+                      "Open the folder on the PI portal to see everything.")
+
+
+def _entry(raw: dict) -> dict:
+    """The toolkit's listing entry as the website reads it. `path` is relative to the endpoint root."""
+    return {"name": raw.get("name"), "kind": raw.get("kind"), "path": raw.get("relative_path"),
+            "url": raw.get("url"), "date": raw.get("observation_date") or None}
+
+
 def _newest_first(entries: list[dict]) -> list[dict]:
-    return sorted(entries, key=lambda e: (e.get("observation_date") or "", e.get("name") or ""), reverse=True)
+    return sorted(entries, key=lambda e: (e["date"] or "", e["path"] or ""), reverse=True)
 
 
 def register(app, settings, deps, cache, limiter) -> None:
@@ -118,11 +129,15 @@ def register(app, settings, deps, cache, limiter) -> None:
         def fetch():
             with limiter.slot("PI portal"):
                 res = call_toolkit("PI portal", lambda: deps.pi.browse(instrument_key, toolkit_endpoint, path, 5000))
-            entries = _newest_first(res.get("entries", []))
+            entries = _newest_first([_entry(e) for e in res.get("entries", [])])
+            # The toolkit keeps the first 5000 entries in listing order, before this sort; say so rather than
+            # pretend the list is the newest.
+            upstream_truncated = bool(res.get("truncated"))
             return {"instrumentKey": instrument_key, "endpointLabel": res.get("endpoint_label"),
                     "path": res.get("relative_path", path), "sourceUrl": res.get("source_url"),
                     "entries": entries[:MAX_FILE_ENTRIES],
-                    "truncated": bool(res.get("truncated")) or len(entries) > MAX_FILE_ENTRIES}
+                    "truncated": upstream_truncated or len(entries) > MAX_FILE_ENTRIES,
+                    "message": UPSTREAM_TRUNCATED if upstream_truncated else None}
         return cache.get_or_set(f"files:{instrument_key}:{endpoint}:{path}", TTL["files"], fetch)
 
     @app.get("/waveform/{station_id}")
@@ -136,6 +151,8 @@ def register(app, settings, deps, cache, limiter) -> None:
             return _missing("atlas", "unknown seismic station")
         if not 1 <= minutes <= settings.max_waveform_minutes:
             return _bad(f"minutes must be between 1 and {settings.max_waveform_minutes}")
+        if channel is not None and not CHANNEL_RE.fullmatch(channel):
+            return _bad("channel must be three letters or digits, like HHZ")   # the toolkit would accept wildcards
         cha = channel or known.get("channel") or "HHZ"
         end = deps.now().replace(second=0, microsecond=0) - timedelta(minutes=2)
         begin = end - timedelta(minutes=minutes)
@@ -150,7 +167,11 @@ def register(app, settings, deps, cache, limiter) -> None:
                         return {"station": station_id, "channel": cha, "rate": None, "points": [], "rawCount": 0,
                                 "sourceUrl": None, "message": "No recording in this window."}
                     raise
-            d = seismic.decode(Path(res["file"]))
+            file = Path(res["file"])
+            try:
+                d = seismic.decode(file)
+            finally:
+                seismic.discard_request_dir(file, deps.earthscope_root)
             times = [d["startMs"] + i * 1000.0 / d["rate"] for i in range(len(d["samples"]))] if d["rate"] else []
             tt, vv = thinning.minmax(times, d["samples"], settings.max_points)
             return {"station": station_id, "channel": cha, "rate": d["rate"],

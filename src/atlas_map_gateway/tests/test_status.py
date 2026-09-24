@@ -61,6 +61,22 @@ class StatusTest(unittest.TestCase):
         self.assertEqual(r.status_code, 503)
         self.assertEqual(r.json(), {"error": {"source": "Nereus", "message": "Nereus is busy; try again shortly"}})
 
+    def test_evidence_mode_is_normalized(self):
+        cases = {"live": "live", "live_cache": "live", "snapshot_fallback": "snapshot", "something_new": "something_new"}
+        for raw, shown in cases.items():
+            with self.subTest(raw=raw):
+                r = self.client(FakeNereus({**OK, "evidence_mode": raw})).get(f"/status/{REF}")
+                self.assertEqual(r.status_code, 200)
+                self.assertEqual(r.json()["evidenceMode"], shown)
+
+    def test_unexpected_failure_is_500_with_error_shape(self):
+        # A non-dict instrument makes the route itself fail (AttributeError): the catch-all keeps the error contract.
+        app = create_app(SETTINGS, deps(nereus=FakeNereus({**OK, "instruments": ["not-a-dict"]})))
+        with self.assertLogs("atlas_map_gateway", level="ERROR"):
+            r = TestClient(app, raise_server_exceptions=False).get(f"/status/{REF}")
+        self.assertEqual(r.status_code, 500)
+        self.assertEqual(r.json(), {"error": {"source": "atlas", "message": "internal error"}})
+
     def test_status_is_cached(self):
         n = FakeNereus(OK)
         c = self.client(n)

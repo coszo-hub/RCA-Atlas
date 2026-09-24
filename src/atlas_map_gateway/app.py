@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import FastAPI
@@ -15,6 +16,8 @@ from .cache import HostLimiter, TTLCache
 from .config import Settings
 
 STATUS_TTL = 120
+# Nereus reports "live", "live_cache" (its own 60 s disk cache of a live answer) or "snapshot_fallback".
+EVIDENCE_MODES = {"live": "live", "live_cache": "live", "snapshot_fallback": "snapshot"}
 
 
 @dataclass
@@ -24,6 +27,7 @@ class Deps:
     qaqc: Any = None
     pi: Any = None
     earthscope: Any = None
+    earthscope_root: Path | None = None   # only request dirs under here are deleted after decoding
     erddap: Any = None
     chat: Callable[[str], dict] | None = None
     now: Callable[[], datetime] = field(default=lambda: datetime.now(timezone.utc))
@@ -60,7 +64,7 @@ def create_app(settings: Settings, deps: Deps) -> FastAPI:
             data = ((match.get("latestDataStatusConnection") or {}).get("status")) or None
             return {"refdes": refdes, "status": match.get("operationalStatusCode"),
                     "data": {k: data.get(k) for k in ("code", "checkedAt", "delay")} if data else None,
-                    "evidenceMode": res.get("evidence_mode"), "source": "Nereus", "sourceUrl": res.get("source_url")}
+                    "evidenceMode": EVIDENCE_MODES.get(res.get("evidence_mode"), res.get("evidence_mode")), "source": "Nereus", "sourceUrl": res.get("source_url")}
 
         result = cache.get_or_set(f"status:{refdes}", STATUS_TTL, fetch)
         return result if result else not_found("Nereus", "Nereus does not track this sensor")

@@ -1,9 +1,12 @@
+import os
+import shutil
 import tempfile
 import threading
 import unittest
 from pathlib import Path
+from unittest import mock
 
-from atlas_map_gateway import bundle_index, cache, config, errors
+from atlas_map_gateway import bundle_index, cache, config, errors, toolkits
 
 FIX = Path(__file__).parent / "fixtures" / "bundle"
 
@@ -23,6 +26,29 @@ class SettingsTest(unittest.TestCase):
         s = config.load_settings(env={}, dotenv=Path("/nonexistent"))
         self.assertEqual((s.upstream_timeout, s.chat_timeout, s.max_series_days, s.max_waveform_minutes, s.max_points, s.per_host_limit),
                          (8.0, 60.0, 31, 60, 2000, 4))
+
+
+class ToolkitsTest(unittest.TestCase):
+    def test_make_caps_pi_retries_and_owns_the_earthscope_root(self):
+        with mock.patch.dict(os.environ, {}, clear=False):
+            for var in ("PI_PORTAL_MAX_RETRIES", "EARTHSCOPE_RUNTIME_ROOT"):
+                os.environ.pop(var, None)
+            kits = toolkits.make(config.load_settings(env={}, dotenv=Path("/nonexistent")))
+            root = kits.pop("earthscope_root")
+            self.addCleanup(shutil.rmtree, root, True)
+            self.assertEqual(os.environ["PI_PORTAL_MAX_RETRIES"], "1")
+            self.assertEqual(kits["pi"].max_retries, 1)
+            self.assertTrue(root.name.startswith("atlas-gateway-earthscope-"))
+            self.assertEqual(Path(tempfile.gettempdir()).resolve(), root.parent)
+            self.assertEqual(os.environ["EARTHSCOPE_RUNTIME_ROOT"], str(root))
+            self.assertEqual(kits["earthscope"].runtime_root, root)
+            self.assertEqual(set(kits), {"nereus", "qaqc", "pi", "earthscope"})
+
+    def test_explicit_pi_retries_setting_wins(self):
+        with mock.patch.dict(os.environ, {"PI_PORTAL_MAX_RETRIES": "3"}, clear=False):
+            kits = toolkits.make(config.load_settings(env={}, dotenv=Path("/nonexistent")))
+            self.addCleanup(shutil.rmtree, kits["earthscope_root"], True)
+            self.assertEqual(kits["pi"].max_retries, 3)
 
 
 class BundleIndexTest(unittest.TestCase):
