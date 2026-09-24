@@ -1,0 +1,30 @@
+from __future__ import annotations
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+
+class UpstreamError(Exception):
+    def __init__(self, source: str, message: str, status: int = 502):
+        super().__init__(message)
+        self.source, self.message, self.status = source, message, status
+
+
+class Busy(Exception):
+    def __init__(self, source: str):
+        super().__init__(source)
+        self.source = source
+
+
+def body(source: str, message: str) -> dict:
+    return {"error": {"source": source, "message": message}}
+
+
+def install(app: FastAPI) -> None:
+    @app.exception_handler(UpstreamError)
+    def _upstream(_: Request, exc: UpstreamError):
+        return JSONResponse(body(exc.source, exc.message), status_code=exc.status)
+
+    @app.exception_handler(Busy)
+    def _busy(_: Request, exc: Busy):
+        return JSONResponse(body(exc.source, f"{exc.source} is busy; try again shortly"), status_code=503)

@@ -1,0 +1,10 @@
+{"sensors": [
+  {"id": "RS03AXPS-PC03A-4A-CTDPFA303", "refdes": "RS03AXPS-PC03A-4A-CTDPFA303",
+   "access": [{"kind": "erddap", "datasetId": "ooi-rs03axps-pc03a-4a-ctdpfa303", "url": "https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/ooi-rs03axps-pc03a-4a-ctdpfa303.html"},
+              {"kind": "qaqc", "refdes": "RS03AXPS-PC03A-4A-CTDPFA303", "url": "https://ec2.qaqc.ooi-rca.net/"}]},
+  {"id": "RS01SBPD-DP01A-01-CTDPFL104", "refdes": "RS01SBPD-DP01A-01-CTDPFL104", "access": []},
+  {"id": "EARTHSCOPE-OO-AXCC1", "refdes": null,
+   "access": [{"kind": "earthscope", "network": "OO", "station": "AXCC1", "channel": "HHZ", "url": "https://service.earthscope.org/"}]},
+  {"id": "PI-COVIS", "refdes": null,
+   "access": [{"kind": "pi_portal", "instrumentKey": "PI-COVIS", "url": "http://piweb.ooirsn.uw.edu/covis/data/COVIS/"}]}
+], "unplaced": []}
