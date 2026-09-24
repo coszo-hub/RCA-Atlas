@@ -26,6 +26,7 @@ export const variables = (refdes, o) => api(`/series/${encodeURIComponent(refdes
 export const series = (refdes, p, o) => api(`/series/${encodeURIComponent(refdes)}?${q(p)}`, o);
 export const plots = (refdes, o) => api(`/plots/${encodeURIComponent(refdes)}`, o);
 export const waveform = (station, minutes, channel, o) => api(`/waveform/${station}?${q({ minutes, channel })}`, o);
+export const waveformHealth = (station, channel, o) => api(`/waveform/${station}/health?${q({ channel })}`, o);
 export const files = (key, endpoint, path, o) => api(`/files/${encodeURIComponent(key)}?${q({ endpoint, path })}`, o);
 export async function chat(question, { signal, fetchImpl = fetch } = {}) {
   let response;

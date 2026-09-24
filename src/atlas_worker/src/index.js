@@ -35,7 +35,7 @@ function validOrigin(origin, env) {
   return origin === (env.ALLOWED_ORIGIN || "https://coszo.org");
 }
 
-const LIVE_GATEWAY_PATH = /^\/(?:status\/[A-Z0-9-]+|series\/[A-Z0-9-]+(?:\/variables)?|plots\/[A-Z0-9-]+|waveform\/[A-Z0-9.]+|files\/[A-Za-z0-9_-]+)$/;
+const LIVE_GATEWAY_PATH = /^\/(?:status\/[A-Z0-9-]+|series\/[A-Z0-9-]+(?:\/variables)?|plots\/[A-Z0-9-]+|waveform\/[A-Z0-9.]+(?:\/health)?|files\/[A-Za-z0-9_-]+)$/;
 
 async function proxyLiveData(env, url, cors) {
   if (!env.ATLAS_MAP_GATEWAY_ORIGIN) return response({ error: "live data service is not configured" }, 503, cors);

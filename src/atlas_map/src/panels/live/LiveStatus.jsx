@@ -1,10 +1,19 @@
-import { status as fetchStatus } from "../../api/gateway.js";
+import { status as fetchStatus, waveformHealth } from "../../api/gateway.js";
 import { fmtDate, statusLabel } from "../../data/format.js";
 import { useLive } from "./useLive.js";
 
 export default function LiveStatus({ sensor, manifest }) {
   const live = useLive(sensor.refdes ? `status:${sensor.refdes}` : null, o => fetchStatus(sensor.refdes, o));
+  const earthscope = sensor.refdes ? null : sensor.access.find(a => a.kind === "earthscope");
+  const waveform = useLive(earthscope ? `wave-health:${earthscope.network}.${earthscope.station}:${earthscope.channel}` : null,
+    o => waveformHealth(`${earthscope.network}.${earthscope.station}`, earthscope.channel, o));
   const snapshot = `${statusLabel(sensor.status)}${sensor.statusSource ? ` · ${sensor.statusSource}` : ""}`;
+  if (earthscope) {
+    if (waveform.state === "idle" || waveform.state === "loading") return <div className="live-status">Checking recent EarthScope waveform…</div>;
+    if (waveform.state === "ok") return <div className="live-status">{waveform.data.recording ? "Waveform available" : "No waveform in the recent window"} · EarthScope checked live</div>;
+    if (waveform.error.kind === "unreachable") return <div className="live-status degraded">EarthScope live check unavailable <button onClick={waveform.retry}>Retry</button></div>;
+    return <div className="live-status degraded">EarthScope: {waveform.error.message} <button onClick={waveform.retry}>Retry</button></div>;
+  }
   if (!sensor.refdes || live.state === "idle") return <div className="live-status">{snapshot}</div>;
   if (live.state === "loading") return <div className="live-status">{snapshot} · checking live…</div>;
   if (live.state === "ok") {

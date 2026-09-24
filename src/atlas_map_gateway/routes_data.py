@@ -180,6 +180,19 @@ def register(app, settings, deps, cache, limiter) -> None:
                     "sourceUrl": res.get("source_url"), "message": None if d["samples"] else "No recording in this window."}
         return cache.get_or_set(f"wave:{station_id}:{cha}:{b}:{e}", TTL["waveform"], fetch)
 
+    @app.get("/waveform/{station_id}/health")
+    def waveform_health(station_id: str, channel: str | None = None):
+        """A narrow, honest station-health signal: can EarthScope serve a recent waveform?
+
+        This is deliberately not an OOI/Nereus operational status.  EarthScope
+        station records do not carry an OOI reference designator, but a recent
+        non-empty waveform is useful evidence that their public stream works.
+        """
+        data = waveform(station_id, minutes=1, channel=channel)
+        return {"station": data["station"], "channel": data["channel"],
+                "recording": bool(data["points"]), "checkedAt": deps.now().isoformat(),
+                "message": data["message"]}
+
     @app.post("/chat")
     def chat(body: ChatBody):
         question = body.question.strip()

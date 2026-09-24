@@ -54,6 +54,13 @@ class WaveformRouteTest(unittest.TestCase):
         self.assertEqual(r.json()["points"], [])
         self.assertEqual(r.json()["message"], "No recording in this window.")
 
+    def test_health_reports_recent_waveform_availability_without_claiming_operational_status(self):
+        r = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK)))).get("/waveform/OO.AXCC1/health")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["station"], "OO.AXCC1")
+        self.assertTrue(r.json()["recording"])
+        self.assertNotIn("status", r.json())
+
     def test_channel_must_be_three_letters_or_digits(self):
         for channel in ("HH*", "HHZ,HHN", "hhz", "HH", "HHZZ", "H?Z", ""):
             with self.subTest(channel=channel):
