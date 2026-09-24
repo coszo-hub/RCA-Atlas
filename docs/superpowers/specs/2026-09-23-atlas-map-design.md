@@ -134,6 +134,7 @@ Outputs, under `src/atlas_map/public/atlas/`:
 - `regions.json`: four regions with camera views
 - `cable.json`: cable polylines and node points, with source and accuracy
 - `terrain/*.bin` and `terrain/terrain.json`: elevation grids as little-endian Int16 meters, plus bounds and cell size
+- `auv/`: optional Axial summit tiles from MBARI's 1 m AUV survey, merged over a ship-survey background. These are level-of-detail tiles at 16 m, 4 m and 1 m (the 1 m tiles only near sites). Each tile is 257² Int16 decimeters relative to −1000 m, delta-encoded along each row, then gzipped. The tiles are built by a separate step that needs h5py and numpy. The site streams finer tiles as the camera approaches.
 
 Rules:
 

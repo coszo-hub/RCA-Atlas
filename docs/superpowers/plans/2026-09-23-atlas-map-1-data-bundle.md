@@ -1670,7 +1670,7 @@ def build(out: Path, runtime: Path, data: Path) -> dict:
         _write(out / "terrain" / "terrain.json", {"credit": terrain.CREDIT, "grids": {n: g.meta() for n, g in grids.items()}})
     summary = {"builtAt": datetime.now(timezone.utc).isoformat(), "total": len(rows), "located": len(located),
                "unlocated": len(unlocated), "unplaced": len(unplaced), "sites": len(site_list),
-               "corpusSnapshot": json.loads((data / "Instruments" / "manifest.json").read_text()).get("generated_at")
+               "corpusSnapshot": json.loads((data / "Instruments" / "manifest.json").read_text()).get("created_at")
                if (data / "Instruments" / "manifest.json").exists() else None,
                "warnings": external["warnings"], "errors": errors}
     if not errors:
