@@ -61,6 +61,12 @@ function citations(hits) {
   });
 }
 
+function cleanAnswer(answer) {
+  // The interface uses plain text. Normalize occasional model-emitted Markdown
+  // bullets so compact replies retain the same minimal visual language.
+  return String(answer || "").replace(/^\s*[*•]\s+/gm, "- ").trim();
+}
+
 function prioritizedHits(context, question) {
   const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])];
   return [...(context.hits || [])].map((hit, index) => {
@@ -73,6 +79,19 @@ function prioritizedHits(context, question) {
     const primaryCorpus = /^(instruments|websites|arcada|coszo)/.test(collection) ? 4 : 0;
     return { hit, index, score: relevance + rcaScope + primaryCorpus };
   }).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, 6).map(({ hit }) => hit);
+}
+
+function answerMode(question) {
+  const q = String(question || "").toLowerCase();
+  // These questions need an inventory or a route to data, not a narrative
+  // research synthesis. Keep the classifier deliberately narrow so broad
+  // scientific questions retain the full evidence-first answer style.
+  if (
+    /\b(what|which)\b[^?]{0,80}\b(data|datasets?|files?)\b[^?]{0,80}\b(available|exist|download)/.test(q) ||
+    /\b(where|how)\b[^?]{0,80}\b(download|get|access)\b/.test(q) ||
+    /\b(list|show)\b[^?]{0,80}\b(data|datasets?|files?|sources?)\b/.test(q)
+  ) return "compact";
+  return "research";
 }
 
 function evidencePackage(hits, sourceNumbers) {
@@ -110,15 +129,22 @@ async function generateAnswer(question, context, env) {
   const evidence = evidencePackage(evidenceHits, sourceNumbers);
   if (!evidence) throw new Error("no retrieved evidence");
   const sourceListText = sourceList.map((c) => c.title).join("; ");
-  const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  const mode = answerMode(question);
+  const compactInstruction = mode === "compact"
+    ? "This is a data-availability, download, or list question. Return a direct answer followed by at most four single-sentence bullets; each bullet names one available dataset or route, with its year or coverage and file type only when established. Use no sub-bullets, section headings, capability descriptions, deployment background, calibration details, or related literature. Keep the whole answer under 120 words. The interface renders links separately."
+    : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that.";
+  const formatInstruction = mode === "compact"
+    ? "Use plain text, with no Markdown hashes or asterisks. Obey the 120-word, single-sentence-bullet limit exactly."
+    : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
+  const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
   const model = env.ANSWER_MODEL || "gemini-2.5-flash";
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
   const request = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.15,
-      maxOutputTokens: 4096,
-      thinkingConfig: { thinkingBudget: 1024 },
+      maxOutputTokens: mode === "compact" ? 400 : 4096,
+      thinkingConfig: { thinkingBudget: mode === "compact" ? 128 : 1024 },
     },
   };
 
@@ -130,7 +156,7 @@ async function generateAnswer(question, context, env) {
       const upstream = await postJson(endpoint, request);
       const answer = upstream.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
       if (!answer) throw new Error("model returned no answer");
-      return { answer, model };
+      return { answer: cleanAnswer(answer), model };
     } catch (error) {
       lastError = error;
       if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 750));
