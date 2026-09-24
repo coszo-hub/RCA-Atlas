@@ -24,6 +24,7 @@ COLLECTION_NAMES = {
     # ``arcada`` is the stable internal/provenance ID for the pinned upstream
     # package.  It is presented to RCA Atlas users as RCA Information.
     "Arcada": ("arcada", "RCA Information"),
+    "AxialMonitoring": ("axial_monitoring", "OSU Axial monitoring"),
     "AxialEarthquakes/graphrag": ("axial_earthquakes", "Axial Seamount earthquakes"),
     "COSZOHub": ("coszo_hub", "COSZO Hub computational outputs"),
     "Datasheets/graphrag": ("datasheets", "Instrument datasheets"),
