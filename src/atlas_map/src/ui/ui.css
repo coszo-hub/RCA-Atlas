@@ -9,15 +9,16 @@
 .left-stack, .right-stack { display: flex; flex-direction: column; gap: 8px; }
 .left-stack { align-items: flex-start; min-width: 0; }
 .right-stack { flex: none; align-items: flex-end; margin-left: auto; }
-/* The dock: a row of icon buttons; each opens its popover under the dock, right-aligned to it and out of flow, so an
-   open popover never moves the row or reframes the map. The entrance is off under reduced motion (tokens.css). */
+/* The dock: a row of icon buttons; open panels stack under it, right-aligned and out of flow, so an open panel
+   never moves the row or reframes the map. The entrance is off under reduced motion (tokens.css). */
 .hud-dock { position: relative; }
 .dock-bar { display: flex; gap: 6px; }
 .hud-top .dock-btn { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; cursor: pointer; color: var(--text-secondary);
   transition: color 120ms ease, border-color 120ms ease; }
 .hud-top .dock-btn:hover, .hud-top .dock-btn[aria-expanded="true"] { color: var(--text-primary); border-color: var(--hairline-strong); }
 .hud-top .dock-btn:focus-visible { outline: 1px solid var(--text-secondary); outline-offset: 2px; }
-.hud-top .dock-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 7; animation: dock-in 120ms ease-out; }
+.hud-top .dock-pops { position: absolute; top: calc(100% + 8px); right: 0; z-index: 7; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.hud-top .dock-pop { animation: dock-in 120ms ease-out; }
 .hud-top .dock-pop[hidden] { display: none; }
 @keyframes dock-in { from { opacity: 0; transform: translateY(-4px); } }
 .help { width: 252px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }

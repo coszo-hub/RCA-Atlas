@@ -13,9 +13,9 @@ strip, the chat panel and the side panels stay as they are.
 
 - A dock of three square icon buttons, top-right of the map, in a single row: **Terrain**, **Legend**,
   **Help**. Each button has an accessible name and a tooltip-style title; `aria-expanded` reflects its popover.
-- Clicking a button opens its popover directly beneath the dock, right-aligned to it. Only one popover is
-  open at a time; opening another closes the first. Clicking the same button again, pressing Escape, or
-  clicking anywhere outside the dock and popover closes it. Escape returns focus to the button.
+- Clicking a button opens its popover beneath the dock, right-aligned to it. A popover stays open until its
+  own button is clicked again (Escape and clicks elsewhere do not close it), and several can be open at once,
+  stacked under the dock in the buttons' order (terrain, legend, help).
 - **Terrain popover**: exactly today's `Controls` content (view, style, colour, vertical exaggeration,
   Axial detail, subsurface toggle and quake timeline, and the per-experiment DAS controls from `main`),
   minus the hint line. The terrain state (view, style, colour, exaggeration, DAS toggles, timeline) must

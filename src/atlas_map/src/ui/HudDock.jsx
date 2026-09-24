@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Controls from "./Controls.jsx";
 import Legend from "./Legend.jsx";
 import "./ui.css";
@@ -20,43 +20,33 @@ function Help() {
   );
 }
 
-// The top-right dock: one button each for the terrain controls, the legend and help, each opening its panel as a
-// popover under the dock. One is open at a time; its button again, Escape, or a click outside the dock closes it.
+// The top-right dock: one button each for the terrain controls, the legend and help. Each button toggles its panel,
+// which stays open until that button is clicked again; open panels stack under the dock in the buttons' order.
 // The terrain controls stay mounted while closed so their switches keep their state; the legend and help are
 // stateless and mount only while open (the legend fits its height from where it opens).
 export default function HudDock({ scene, deep = false, onDeep, credit, auv = false, subsurface = null }) {
-  const [open, setOpen] = useState(null);
-  const ref = useRef(null), buttons = useRef({});
-  useEffect(() => {
-    if (!open) return;
-    const onDown = e => { if (!ref.current?.contains(e.target)) setOpen(null); };
-    // Capture, so Escape closes the popover only and does not also reach the side panel behind it.
-    const onKey = e => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      setOpen(null); buttons.current[open]?.focus();
-    };
-    addEventListener("pointerdown", onDown, true); addEventListener("keydown", onKey, true);
-    return () => { removeEventListener("pointerdown", onDown, true); removeEventListener("keydown", onKey, true); };
-  }, [open]);
+  const [open, setOpen] = useState(() => new Set());
+  const toggle = key => setOpen(o => { const n = new Set(o); if (!n.delete(key)) n.add(key); return n; });
   const pop = key => `hud-pop-${key}`;
   return (
-    <div className="hud-dock" ref={ref}>
+    <div className="hud-dock">
       <div className="dock-bar">
         {ITEMS.map(([key, label]) => (
-          <button key={key} ref={el => { buttons.current[key] = el; }} className="panel dock-btn" aria-label={label} title={label}
-            aria-expanded={open === key} aria-controls={key === "terrain" || open === key ? pop(key) : undefined}
-            onClick={() => setOpen(o => (o === key ? null : key))}>
+          <button key={key} className="panel dock-btn" aria-label={label} title={label}
+            aria-expanded={open.has(key)} aria-controls={key === "terrain" || open.has(key) ? pop(key) : undefined}
+            onClick={() => toggle(key)}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" aria-hidden="true">{ICONS[key]}</svg>
           </button>
         ))}
       </div>
-      <div id={pop("terrain")} className="dock-pop" role="group" aria-label="Terrain controls" hidden={open !== "terrain"}>
-        <Controls scene={scene} deep={deep} onDeep={onDeep} />
+      <div className="dock-pops">
+        <div id={pop("terrain")} className="dock-pop" role="group" aria-label="Terrain controls" hidden={!open.has("terrain")}>
+          <Controls scene={scene} deep={deep} onDeep={onDeep} />
+        </div>
+        {open.has("legend") && <div id={pop("legend")} className="dock-pop" role="group" aria-label="Legend">
+          <Legend credit={credit} auv={auv} subsurface={subsurface} /></div>}
+        {open.has("help") && <div id={pop("help")} className="dock-pop" role="group" aria-label="Help"><Help /></div>}
       </div>
-      {open === "legend" && <div id={pop("legend")} className="dock-pop" role="group" aria-label="Legend">
-        <Legend credit={credit} auv={auv} subsurface={subsurface} /></div>}
-      {open === "help" && <div id={pop("help")} className="dock-pop" role="group" aria-label="Help"><Help /></div>}
     </div>
   );
 }

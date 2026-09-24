@@ -27,39 +27,32 @@ describe("HudDock", () => {
     expect(screen.getByText(/Drag to move/)).toBeVisible();
     expect(screen.getByText("Ctrl")).toBeVisible();
   });
-  it("opens one popover at a time; the same button closes it again", () => {
+  it("each popover stays open until its own button is clicked again, and several can be open together", () => {
     dock();
     fireEvent.click(btn("Terrain controls"));
     fireEvent.click(btn("Legend"));
-    expect(btn("Terrain controls")).toHaveAttribute("aria-expanded", "false");
+    expect(btn("Terrain controls")).toHaveAttribute("aria-expanded", "true");
     expect(btn("Legend")).toHaveAttribute("aria-expanded", "true");
-    expect(screen.queryByRole("button", { name: "Contours" })).toBeNull();
+    expect(btn("Contours")).toBeVisible();
+    expect(screen.getByText("Seafloor depth")).toBeVisible();
     fireEvent.click(btn("Legend"));
     expect(btn("Legend")).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText("Seafloor depth")).toBeNull();
+    expect(btn("Contours")).toBeVisible();
   });
-  it("Escape closes the popover, returns focus to its button, and goes no further", () => {
+  it("Escape and clicks elsewhere leave the popovers open, and Escape still reaches the page", () => {
     const behind = vi.fn();   // e.g. the side panel, which closes on Escape
     addEventListener("keydown", behind);
     try {
       dock();
       fireEvent.click(btn("Terrain controls"));
-      btn("Contours").focus();
-      fireEvent.keyDown(document.activeElement, { key: "Escape" });
-      expect(btn("Terrain controls")).toHaveAttribute("aria-expanded", "false");
-      expect(btn("Terrain controls")).toHaveFocus();
-      expect(behind).not.toHaveBeenCalled();
-      fireEvent.keyDown(document.body, { key: "Escape" });   // closed, Escape is the page's again
+      fireEvent.click(btn("Legend"));
+      fireEvent.keyDown(document.body, { key: "Escape" });
+      fireEvent.pointerDown(document.body);
+      expect(btn("Terrain controls")).toHaveAttribute("aria-expanded", "true");
+      expect(btn("Legend")).toHaveAttribute("aria-expanded", "true");
       expect(behind).toHaveBeenCalledTimes(1);
     } finally { removeEventListener("keydown", behind); }
-  });
-  it("a click outside the dock and popover closes it; one inside does not", () => {
-    dock();
-    fireEvent.click(btn("Legend"));
-    fireEvent.pointerDown(screen.getByText("Seafloor depth"));
-    expect(btn("Legend")).toHaveAttribute("aria-expanded", "true");
-    fireEvent.pointerDown(document.body);
-    expect(btn("Legend")).toHaveAttribute("aria-expanded", "false");
   });
   it("keeps the terrain settings across closing and reopening", () => {
     const s = fakeScene();

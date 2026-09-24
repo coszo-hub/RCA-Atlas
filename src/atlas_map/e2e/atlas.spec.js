@@ -173,15 +173,13 @@ for (const [width, height] of [[1600, 1000], [1366, 768], [1280, 800]]) {
   });
 }
 
-test("the dock opens one popover at a time and closes it on Escape or a click on the map", async ({ page }) => {
+test("the dock's panels stay open until their button is clicked again, stacked under the dock", async ({ page }) => {
   await mockGateway(page);
   await page.goto("/");
   await ready(page);
   await page.evaluate(() => window.__atlas.open("axial-seamount-base"));
   await expect(page.getByRole("heading", { name: "Axial Seamount Base" })).toBeVisible();
   await page.waitForTimeout(2500);
-  const center = () => page.evaluate(() => window.__atlas.scene.controls.target.toArray().map(v => v.toFixed(3)).join());
-  const before = await center();
   await page.screenshot({ path: "e2e/screens/09-dock-closed.png" });
   const terrain = dockButton(page, "Terrain controls"), legend = dockButton(page, "Legend"), help = dockButton(page, "Help");
   await terrain.click();
@@ -190,25 +188,27 @@ test("the dock opens one popover at a time and closes it on Escape or a click on
   await page.waitForTimeout(400);
   await page.screenshot({ path: "e2e/screens/10-dock-terrain.png" });
   await legend.click();
-  await expect(terrain).toHaveAttribute("aria-expanded", "false");
-  await expect(page.getByRole("button", { name: "Contours" })).toBeHidden();
-  await expect(page.getByText("Beneath Axial")).toHaveCount(0);
+  await expect(terrain).toHaveAttribute("aria-expanded", "true");   // both open, the legend under the terrain panel
+  await expect(page.getByRole("button", { name: "Contours" })).toBeVisible();
   await expect(page.getByText("DAS coverage").last()).toBeVisible();
+  const [t, l] = await Promise.all([page.locator("#hud-pop-terrain").boundingBox(), page.locator("#hud-pop-legend").boundingBox()]);
+  expect(l.y).toBeGreaterThanOrEqual(t.y + t.height);
   await page.waitForTimeout(300);   // the entrance
   await page.screenshot({ path: "e2e/screens/11-dock-legend.png" });
+  await page.keyboard.press("Escape");   // the site panel closes; the dock's panels stay
+  await page.mouse.click(700, 600);
+  await expect(terrain).toHaveAttribute("aria-expanded", "true");
+  await expect(legend).toHaveAttribute("aria-expanded", "true");
   await help.click();
   await expect(page.getByText(/Drag to move/)).toBeVisible();
   await page.waitForTimeout(300);   // the entrance
   await page.screenshot({ path: "e2e/screens/12-dock-help.png" });
-  await page.keyboard.press("Escape");   // closes the popover only; the site panel stays
-  await expect(help).toHaveAttribute("aria-expanded", "false");
-  await expect(help).toBeFocused();
-  await expect(page.getByRole("heading", { name: "Axial Seamount Base" })).toBeVisible();
+  await legend.click();
+  await expect(legend).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByText("Seafloor depth")).toHaveCount(0);
+  await terrain.click();
   await terrain.click();
   await expect(page.getByRole("button", { name: "Contours" })).toHaveAttribute("aria-pressed", "true");   // kept
-  expect(await center()).toBe(before);   // opening popovers never reframed the map
-  await page.mouse.click(700, 600);
-  await expect(terrain).toHaveAttribute("aria-expanded", "false");
 });
 
 test("in a short window the legend popover ends 8 px above the family strip and scrolls", async ({ page }) => {
