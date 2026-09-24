@@ -283,8 +283,11 @@ async function generateOpenAIAnswer(prompt, requestedModel, mode, env) {
   const upstream = await postJson("https://api.openai.com/v1/responses", {
     model: requestedModel,
     input: prompt,
-    reasoning: { effort: requestedModel === "gpt-5.6-sol" ? "high" : "medium" },
-    max_output_tokens: mode === "compact" ? 400 : 4096,
+    // Reasoning tokens count against max_output_tokens: a compact answer at medium effort spent all 400 on
+    // reasoning and returned no text, so compact answers reason lightly within a larger budget (the prompt
+    // still holds the answer to 120 words).
+    reasoning: { effort: requestedModel === "gpt-5.6-sol" ? "high" : mode === "compact" ? "low" : "medium" },
+    max_output_tokens: mode === "compact" ? 1200 : 4096,
     store: false,
   }, { authorization: `Bearer ${env.OPENAI_API_KEY}` });
   const answer = upstream.output_text || upstream.output?.flatMap((item) => item.content || [])
