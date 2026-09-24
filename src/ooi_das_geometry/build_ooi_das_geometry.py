@@ -17,6 +17,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from ooi_das_geometry_tools import TOOL_SCHEMAS
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SOURCE_DIR = PROJECT_ROOT / "source_material/original_documents/OOI_DAS_Geometry"
@@ -146,10 +148,16 @@ def build(source_dir: Path, output_dir: Path) -> dict[str, Any]:
     _write_jsonl(output_dir / "entities.jsonl", entities)
     _write_jsonl(output_dir / "chunks.jsonl", chunks)
     _write_jsonl(output_dir / "relationships.jsonl", relationships)
+    _write_jsonl(output_dir / "tools.jsonl", [
+        {**schema, "runtime": "src/ooi_das_geometry/ooi_das_geometry_tools.py",
+         "requires_user_invocation_after_corpus_answer": True,
+         "source_is_untrusted_data": True}
+        for schema in TOOL_SCHEMAS
+    ])
     manifest = {
         "schema_version": "1.0", "collection": "OOI RCA OptaSense DAS channel geometry", "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "embedding_input": "chunks.jsonl", "graph_node_inputs": ["entities.jsonl", "sources.jsonl", "chunks.jsonl"],
-        "graph_edge_input": "relationships.jsonl", "structured_inputs": ["channel_locations.jsonl"],
+        "graph_edge_input": "relationships.jsonl", "structured_inputs": ["channel_locations.jsonl"], "live_tool_manifest": "tools.jsonl",
         "counts": {"channel_locations": len(locations), "entities": len(entities), "chunks": len(chunks), "relationships": len(relationships)},
         "validation_status": "pass", "limitations": ["Published channel locations are preliminary.", "Only applies to OptaSense geometry; do not infer a Silixa channel mapping."],
     }
