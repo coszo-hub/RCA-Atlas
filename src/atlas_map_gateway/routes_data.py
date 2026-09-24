@@ -64,3 +64,30 @@ def register(app, settings, deps, cache, limiter) -> None:
                     "downloadUrl": deps.erddap.csv_url(ds, var, t0, t1),
                     "message": None if raw["times"] else "No readings in this range."}
         return cache.get_or_set(f"series:{ds}:{var}:{t0.isoformat()}:{t1.isoformat()}", TTL["series"], fetch)
+
+    @app.get("/plots/{refdes}")
+    def plots(refdes: str):
+        if not deps.index.has_refdes(refdes):
+            return _missing("atlas", "unknown sensor")
+
+        def fetch():
+            with limiter.slot("QA/QC"):
+                res = call_toolkit("QA/QC", lambda: deps.qaqc.search_plots(reference_designator=refdes, limit=200))
+            return {"refdes": refdes, "plots": [
+                {"variable": p["variable"], "timeSpan": p["time_span"], "overlay": p["overlay"],
+                 "dataRange": p["data_range"], "depth": p.get("depth_or_profile", ""), "url": p["url"]}
+                for p in res.get("plots", []) if p.get("reference_designator") == refdes]}
+        return cache.get_or_set(f"plots:{refdes}", TTL["plots"], fetch)
+
+    @app.get("/files/{instrument_key}")
+    def files(instrument_key: str, path: str = "", endpoint: str | None = None):
+        if not deps.index.has_pi(instrument_key):
+            return _missing("atlas", "unknown PI instrument")
+
+        def fetch():
+            with limiter.slot("PI portal"):
+                res = call_toolkit("PI portal", lambda: deps.pi.browse(instrument_key, endpoint, path, 200))
+            return {"instrumentKey": instrument_key, "endpointLabel": res.get("endpoint_label"),
+                    "path": res.get("relative_path", path), "sourceUrl": res.get("source_url"),
+                    "entries": res.get("entries", []), "truncated": bool(res.get("truncated"))}
+        return cache.get_or_set(f"files:{instrument_key}:{endpoint}:{path}", TTL["files"], fetch)
