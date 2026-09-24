@@ -1,13 +1,20 @@
 """Bundle checks. Any returned string fails the build."""
 from __future__ import annotations
 
+from .status import STATUS_GROUP
+
 TOLERANCE_M = 250
+
+
+def is_located(sensor: dict) -> bool:
+    """A position counts only when both coordinates are set; corrections may null a placeholder position."""
+    return sensor.get("lat") is not None and sensor.get("lon") is not None
 
 
 def validate(sensors: list[dict], sites: list[dict], unplaced: list[dict], total_rows: int, stack) -> list[str]:
     errors = []
-    located = [s for s in sensors if s.get("lat") is not None]
-    unlocated = [s for s in sensors if s.get("lat") is None]
+    located = [s for s in sensors if is_located(s)]
+    unlocated = [s for s in sensors if not is_located(s)]
     if len(located) + len(unlocated) != total_rows:
         errors.append(f"counts do not reconcile: {len(located)} located + {len(unlocated)} unlocated != {total_rows} inventory rows")
     site_ids = {t["id"] for t in sites}
@@ -15,10 +22,14 @@ def validate(sensors: list[dict], sites: list[dict], unplaced: list[dict], total
     for s in sensors:
         if s["id"] not in listed:
             errors.append(f"{s['id']}: not listed by any site or as unplaced")
-        if s.get("lat") is not None and s.get("site") not in site_ids:
+        if is_located(s) and s.get("site") not in site_ids:
             errors.append(f"{s['id']}: site {s.get('site')!r} does not exist")
         if not s.get("family"):
             errors.append(f"{s['id']}: no family")
+        if s.get("status") not in STATUS_GROUP:
+            errors.append(f"{s['id']}: unrecognised Nereus status {s.get('status')!r}; add it to status.STATUS_GROUP")
+        if (s.get("lat") is None) != (s.get("lon") is None):
+            errors.append(f"{s['id']}: position is half set (lat {s.get('lat')}, lon {s.get('lon')})")
     for s in located:
         if not stack.covered(s["lon"], s["lat"]):
             errors.append(f"{s['id']}: position {s['lat']}, {s['lon']} is outside every terrain grid")

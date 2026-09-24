@@ -51,13 +51,13 @@ def build(out: Path, runtime: Path, data: Path) -> dict:
     channels = _vertical_channels(data)
     for r in records:
         r.update(status.resolve(r, index))
-        r["statusGroup"] = status.STATUS_GROUP[r["status"]]
+        r["statusGroup"] = status.STATUS_GROUP.get(r["status"])   # unknown values fail in validate
         r["access"] = access.build_access(r, external, pi, channels)
 
     grids = {n: terrain.read_esri_ascii(runtime / "terrain" / f"{n}.asc", n) for n in terrain.FINEST_FIRST}
     stack = terrain.Stack([grids[n] for n in terrain.FINEST_FIRST])
-    located = [r for r in records if r["lat"] is not None]
-    unlocated = [r for r in records if r["lat"] is None]
+    located = [r for r in records if validate.is_located(r)]
+    unlocated = [r for r in records if not validate.is_located(r)]
     site_list, unplaced = sites.build_sites(located, unlocated, stack.elev)
     errors = validate.validate(records, site_list, unplaced, len(rows), stack)
 

@@ -45,6 +45,19 @@ class ValidateTest(unittest.TestCase):
         errs = validate.validate([sensor("a", lon=-140.0)], [SITE], [], 1, FlatStack())
         self.assertTrue(any("outside" in e for e in errs))
 
+    def test_unrecognised_status_is_an_error_naming_sensor_and_status(self):
+        s = dict(sensor("a"), status="HIBERNATING")
+        errs = validate.validate([s], [SITE], [], 1, FlatStack())
+        self.assertTrue(any("a:" in e and "'HIBERNATING'" in e for e in errs), errs)
+
+    def test_null_position_counts_as_unlocated(self):
+        s = sensor("a", lat=None, lon=None, site=None)
+        self.assertEqual(validate.validate([s], [{"id": "s1", "sensorIds": [], "unlocatedIds": ["a"]}], [], 1, FlatStack()), [])
+
+    def test_half_set_position_is_an_error(self):
+        errs = validate.validate([sensor("a", lon=None)], [SITE], [], 1, FlatStack())
+        self.assertTrue(any("half set" in e for e in errs), errs)
+
     def test_site_references_must_agree(self):
         errs = validate.validate([sensor("a", site="s2")], [SITE], [], 1, FlatStack())
         self.assertTrue(any("site" in e for e in errs))

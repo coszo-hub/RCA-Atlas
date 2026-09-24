@@ -4,6 +4,11 @@
       "match": {"siteCode": ["RS03AXPS", "RS03AXPD"], "lat": [45.9316]},
       "set": {"lat": 45.8168, "lon": -129.754},
       "reason": "The inventory places the Axial Base shallow and deep profilers at 45.9316, -129.9808 in the caldera, where the seafloor is 1,516 m, but lists them at 2,607 m. Moved to the Axial Base seafloor package position (RS03AXBS)."
+    },
+    {
+      "match": {"id": ["PI-DAS24", "PI-DAS25", "PI-DAS-OPTASENSE"], "lat": [45.0]},
+      "set": {"lat": null, "lon": null},
+      "reason": "The inventory gives these fiber-optic (DAS) experiments exactly 45.0, -128.0, a placeholder coordinate carried over from the PI HTML source. It lies about 300 km offshore on the abyssal plain, away from any RCA node. The experiments run along the cable and their exact positions are unknown, so the position is cleared and they are listed as unlocated."
     }
   ]
 }

@@ -59,6 +59,15 @@ class SensorRecordTest(unittest.TestCase):
         self.assertIsNone(unlocated["lat"])
         self.assertEqual(unlocated["corrections"], [])
 
+    def test_correction_can_clear_a_placeholder_position(self):
+        das = sensors.sensor_from_row(dict(ROW, canonical_id="PI-DAS24", site=None, node=None, instrument_code=None,
+                                           latitude=45.0, longitude=-128.0, depth_m=None))
+        elsewhere = sensors.sensor_from_row(dict(ROW, canonical_id="PI-DAS99", latitude=45.5, longitude=-128.0))
+        sensors.apply_corrections([das, elsewhere], [{"match": {"id": ["PI-DAS24", "PI-DAS99"], "lat": [45.0]},
+                                                      "set": {"lat": None, "lon": None}, "reason": "placeholder"}])
+        self.assertEqual((das["lat"], das["lon"], das["corrections"]), (None, None, ["placeholder"]))
+        self.assertEqual((elsewhere["lat"], elsewhere["corrections"]), (45.5, []))   # both id and lat must match
+
     def test_correction_matching_nothing_is_reported(self):
         recs = [sensors.sensor_from_row(ROW)]
         with self.assertRaises(ValueError):
@@ -67,6 +76,11 @@ class SensorRecordTest(unittest.TestCase):
     def test_shipped_corrections_file_loads(self):
         fixes = sensors.load_corrections(Path(sensors.__file__).with_name("corrections.json"))
         self.assertTrue(any("RS03AXPS" in f["match"].get("siteCode", []) for f in fixes))
+        das = [f for f in fixes if "PI-DAS24" in f["match"].get("id", [])]
+        self.assertEqual(len(das), 1)
+        self.assertEqual(sorted(das[0]["match"]["id"]), ["PI-DAS-OPTASENSE", "PI-DAS24", "PI-DAS25"])
+        self.assertEqual(das[0]["match"]["lat"], [45.0])
+        self.assertEqual(das[0]["set"], {"lat": None, "lon": None})
 
 
 if __name__ == "__main__":
