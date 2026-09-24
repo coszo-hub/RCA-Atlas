@@ -58,6 +58,14 @@ class PlotsFilesTest(unittest.TestCase):
         self.assertEqual(r.json()["endpointLabel"], "CTDPFA110 daily data")
         self.assertEqual(pi.calls, [("PI-CTDPFA110", None, "")])
 
+    def test_files_several_endpoints_require_endpoint_param(self):
+        pi = FakePI(LISTING)
+        r = TestClient(create_app(SETTINGS, deps(pi=pi))).get("/files/PI-COVIS")
+        self.assertEqual(r.status_code, 422)
+        self.assertEqual(r.json(), {"error": {"source": "atlas",
+                                              "message": "this instrument has several data endpoints; pass endpoint"}})
+        self.assertEqual(pi.calls, [])
+
     def test_files_newest_first_and_truncated(self):
         days = [f"2026-{m:02d}-{d:02d}" for m in range(1, 10) for d in range(1, 29)]   # 252 days, oldest first
         entries = [{"name": f"{day}.dat", "kind": "file", "observation_date": day} for day in days]
@@ -76,13 +84,13 @@ class PlotsFilesTest(unittest.TestCase):
 
     def test_traversal_rejected_by_toolkit_is_422(self):
         pi = FakePI(exc=ValueError("Relative path escapes the endpoint"))
-        r = TestClient(create_app(SETTINGS, deps(pi=pi))).get("/files/PI-COVIS", params={"path": "../../etc"})
+        r = TestClient(create_app(SETTINGS, deps(pi=pi))).get("/files/PI-COVIS", params={"path": "../../etc", "endpoint": COVIS_RAW})
         self.assertEqual(r.status_code, 422)
         self.assertEqual(r.json()["error"]["source"], "PI portal")
 
     def test_busy_limiter_is_503_with_display_source(self):
         busy = dataclasses.replace(SETTINGS, per_host_limit=1, upstream_timeout=0.01)
-        for source, path in (("QA/QC", f"/plots/{REF}"), ("PI portal", "/files/PI-COVIS")):
+        for source, path in (("QA/QC", f"/plots/{REF}"), ("PI portal", f"/files/PI-COVIS?endpoint={COVIS_RAW}")):
             with self.subTest(source=source):
                 app = create_app(busy, deps(qaqc=FakeQAQC(PLOTS), pi=FakePI(LISTING)))
                 with app.state.limiter.slot(source):

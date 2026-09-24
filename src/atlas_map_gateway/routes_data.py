@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fastapi import Query
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from coszo_hub_tools.pi_portal_agent_tools import PI_DATASETS
 
@@ -16,6 +17,12 @@ from .app_support import call_toolkit
 VAR_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,120}")
 TTL = {"variables": 3600, "series": 300, "plots": 1800, "waveform": 300, "files": 300}
 MAX_FILE_ENTRIES = 200
+
+
+class ChatBody(BaseModel):
+    # Module level, not inside register(): with `from __future__ import annotations` FastAPI resolves the
+    # annotation from module globals, and a function-local model would be read as a query parameter.
+    question: str = Field(min_length=2, max_length=1000)
 
 
 def _bad(message: str) -> JSONResponse:
@@ -105,6 +112,8 @@ def register(app, settings, deps, cache, limiter) -> None:
             if url is None:
                 return _missing("atlas", "unknown endpoint for this PI instrument")
             toolkit_endpoint = _toolkit_endpoint_id(instrument_key, url)
+        elif deps.index.pi_endpoint_count(instrument_key) > 1:
+            return _bad("this instrument has several data endpoints; pass endpoint")
 
         def fetch():
             with limiter.slot("PI portal"):
@@ -148,3 +157,11 @@ def register(app, settings, deps, cache, limiter) -> None:
                     "points": [[int(t), v] for t, v in zip(tt, vv)], "rawCount": len(d["samples"]),
                     "sourceUrl": res.get("source_url"), "message": None if d["samples"] else "No recording in this window."}
         return cache.get_or_set(f"wave:{station_id}:{cha}:{b}:{e}", TTL["waveform"], fetch)
+
+    @app.post("/chat")
+    def chat(body: ChatBody):
+        question = body.question.strip()
+        if len(question) < 2:
+            return _bad("ask a question")
+        with limiter.slot("Atlas chat"):
+            return deps.chat(question)

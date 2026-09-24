@@ -45,3 +45,6 @@ class BundleIndex:
 
     def pi_endpoint_url(self, key: str, endpoint_id: str) -> str | None:
         return self.pi_endpoints.get(key, {}).get(endpoint_id)
+
+    def pi_endpoint_count(self, key: str) -> int:
+        return len(self.pi_endpoints.get(key, {}))
