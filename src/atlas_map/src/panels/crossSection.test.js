@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { depthScale, layout, profile } from "./crossSection.js";
+import { depthScale, layout, profile, profileDepthAt } from "./crossSection.js";
 import { bundleFixture } from "../test/fixtures.js";
 
 const b = bundleFixture();
@@ -59,6 +59,21 @@ describe("layout on a sloped floor", () => {
     };
     expect(new Set(pts.map(p => Math.round(p.y))).size).toBeGreaterThan(1);   // not all at the center depth
     for (const p of pts) expect(Math.abs(p.y - floorAt(p.x / 400))).toBeLessThan(1);
+  });
+  it("a recorded depth 33 m below the site floor (MJ03C-like) still snaps to the line", () => {
+    const site = b.siteById["oregon-shelf"];
+    const prof = profile(site, lon => -(80 + (lon - site.lon) * 2000));
+    const deep = [{ ...b.sensorById["shelf-bpr"], id: "vent", depth: site.seafloor + 33 }];
+    const [p] = layout(site, deep, order, 400, 300, prof);
+    const s = depthScale(site, 300);
+    expect(p.y).toBeCloseTo(s.y(profileDepthAt(prof, p.x / 400)), 5);
+    expect(Math.abs(p.y - s.y(site.seafloor + 33))).toBeGreaterThan(1);   // not left at its recorded depth
+  });
+  it("a single depth shallower than seafloor - 60 m is in the water column and keeps it", () => {
+    const site = b.siteById["axial-seamount-base"];
+    const prof = profile(site, lon => -(2614 + (lon - site.lon) * 4000));
+    const [p] = layout(site, [{ ...b.sensorById["base-ctd"], id: "moored", depth: 2614 - 61 }], order, 400, 300, prof);
+    expect(p.y).toBeCloseTo(depthScale(site, 300).y(2614 - 61));
   });
   it("water-column sensors keep their true depth", () => {
     const site = b.siteById["axial-seamount-base"];

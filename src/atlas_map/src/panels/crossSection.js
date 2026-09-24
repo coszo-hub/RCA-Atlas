@@ -31,7 +31,9 @@ export function profileDepthAt(prof, fx) {
   return prof[i].depth + (prof[i + 1].depth - prof[i].depth) * (f - i);
 }
 
-const SNAP_M = 25;   // a sensor within this of the site's seafloor depth is on the seafloor
+// The data build's water-column rule (atlas_map_data/sites.py `_in_water`). Everything else is on the
+// seafloor, even when its recorded depth differs from the 45 m terrain grid by tens of meters.
+const inWater = (sensor, seafloor) => Boolean(sensor.depthRange) || (sensor.depth != null && sensor.depth < seafloor - 60);
 
 // `prof` (optional, from profile()) lets seafloor sensors follow the drawn floor line at their fanned x.
 export function layout(site, sensors, familyOrder, width, height, prof = null) {
@@ -44,7 +46,7 @@ export function layout(site, sensors, familyOrder, width, height, prof = null) {
       return { id: sensor.id, family: sensor.family, x, y: s.y(sensor.depthRange[0]), y2: s.y(sensor.depthRange[1]) };
     }
     const depth = sensor.depthRange ? sensor.depthRange[0] : sensor.depth ?? null;
-    if (prof && prof.length > 1 && (depth == null || Math.abs(depth - site.seafloor) <= SNAP_M)) {
+    if (prof && prof.length > 1 && !inWater(sensor, site.seafloor)) {
       return { id: sensor.id, family: sensor.family, x, y: s.y(Math.max(0, profileDepthAt(prof, x / width))) };
     }
     return { id: sensor.id, family: sensor.family, x, y: s.y(depth ?? site.seafloor) };
