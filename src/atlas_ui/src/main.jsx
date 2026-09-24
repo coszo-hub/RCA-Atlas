@@ -55,6 +55,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("How many earthquakes occurred at Axial Seamount yesterday?");
+  const [answerModel, setAnswerModel] = useState("auto");
   const [askedQuestion, setAskedQuestion] = useState("");
   const graph = useMemo(() => evidenceGraph(result), [result]);
   const answer = result?.answer || "";
@@ -86,7 +87,7 @@ function App() {
       const response = await fetch(`${WORKER_URL}/v1/answer`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: question }),
+        body: JSON.stringify({ query: question, model: answerModel }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.answer) throw new Error(data.error || "Atlas is temporarily unavailable");
@@ -103,7 +104,7 @@ function App() {
     <main className="atlas-main">
       <form className="query-form" onSubmit={ask}>
         <BorderBeam size="md" colorVariant="colorful" strength={0.7} active={!loading}>
-          <div className="search-box"><span className="atlas-chip">Atlas</span><textarea value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question" rows="2" disabled={loading}/><div className="composer-footer"><span className="composer-chip">Evidence</span><span className="composer-chip">Auto</span><button type="submit" aria-label="Search Ask Atlas" disabled={loading}>↑</button></div></div>
+          <div className="search-box"><span className="atlas-chip">Atlas</span><textarea value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question" rows="2" disabled={loading}/><div className="composer-footer"><span className="composer-chip">Evidence</span><label className="model-select"><span className="visually-hidden">Answer model</span><select value={answerModel} onChange={(event) => setAnswerModel(event.target.value)} disabled={loading}><option value="auto">Auto</option><option value="gemini-2.5-flash">Gemini Flash</option></select></label><button type="submit" aria-label="Search Ask Atlas" disabled={loading}>↑</button></div></div>
         </BorderBeam>
       </form>
       {searched && <section className="response" aria-live="polite">

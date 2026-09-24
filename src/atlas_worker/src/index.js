@@ -203,7 +203,7 @@ async function postJson(url, body, headers = {}) {
   return result.json();
 }
 
-async function generateAnswer(question, context, env) {
+async function generateAnswer(question, context, env, requestedModel = "auto") {
   const product = namedDataProduct(question);
   const evidenceHits = selectedEvidenceHits(context, question);
   const sourceList = citations(evidenceHits);
@@ -228,7 +228,7 @@ async function generateAnswer(question, context, env) {
     ? "Use plain text, with no Markdown hashes or asterisks. Obey the 120-word, single-sentence-bullet limit exactly."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
-  const model = env.ANSWER_MODEL || "gemini-2.5-flash";
+  const model = requestedModel === "gemini-2.5-flash" ? requestedModel : (env.ANSWER_MODEL || "gemini-2.5-flash");
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
   const request = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -300,6 +300,7 @@ export default {
     if (!validOrigin(origin, env)) return response({ error: "origin not allowed" }, 403, cors);
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
+    const requestedModel = body?.model === "gemini-2.5-flash" ? "gemini-2.5-flash" : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
       const liveToolResult = await liveAxialCount(query);
@@ -332,7 +333,7 @@ export default {
           hits: evidenceHits.map(publicHit), neighbors: context.neighbors || [], tool_hints: context.tool_hints || [],
         }, 200, cors);
       }
-      const generated = await generateAnswer(query, context, env);
+      const generated = await generateAnswer(query, context, env, requestedModel);
       return response({
         query, answer: generated.answer, answer_model: generated.model,
         answer_citations: citations(evidenceHits),
