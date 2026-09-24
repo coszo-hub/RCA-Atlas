@@ -66,3 +66,6 @@ input[type=range]:disabled { opacity: 0.35; }
 .t-item > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t-item .d { color: var(--text-muted); font-size: 11px; }
 .t-more { color: var(--text-muted); font-size: 11.5px; margin-top: 4px; }
+.t-site { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.t-site > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-site .d, .t-none { color: var(--text-muted); font-size: 11px; }

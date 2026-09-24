@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import Glyph from "./Glyph.jsx";
 import { fmtDepth, fmtRange, statusLabel } from "../data/format.js";
+import { sitesNear } from "../data/nearby.js";
 import "./ui.css";
 
 const CABLE_TEXT = {
@@ -8,25 +9,55 @@ const CABLE_TEXT = {
   approximate: "Approximate route. No public chart exists beyond the US Exclusive Economic Zone, so this is drawn straight between known points and could be off by a few km.",
 };
 
+const SITE_ROWS = 14, NODE_SITES = 12;
+
+// Where a primary node's position comes from, by its accuracy, when the bundle names no source of its own.
+const NODE_SOURCE = {
+  charted: "OOI mariner safety notices and COSZO cruise records, on the charted cable route",
+  approximate: "no published node coordinates; placed from OOI records",
+};
+
+function NodeCard({ node, bundle }) {
+  const near = sitesNear(bundle.sites, node.lon, node.lat, 30);
+  const source = node.source ?? NODE_SOURCE[node.accuracy] ?? "OOI records";
+  return (<>
+    <div className="t-name">{node.name}</div>
+    <div className="t-sub">{node.description}</div>
+    <div className="t-list">
+      <div className="t-head">Catalogued sites within 30 km</div>
+      {near.length === 0 && <div className="t-none">None.</div>}
+      {near.slice(0, NODE_SITES).map(({ site, km }) => (
+        <div key={site.id} className="t-site"><span title={site.name}>{site.label}</span>
+          <span className="d mono">{site.sensorIds.length} sensor{site.sensorIds.length === 1 ? "" : "s"} · {km < 10 ? km.toFixed(1) : Math.round(km)} km</span></div>))}
+    </div>
+    {near.length > NODE_SITES && <div className="t-more">+{near.length - NODE_SITES} more within 30 km.</div>}
+    <div className="t-more">Position {node.accuracy}. Source: {source}.{node.note ? ` ${node.note}` : ""}</div>
+  </>);
+}
+
 function SiteCard({ site, bundle }) {
   const f = bundle.familyByKey, sensors = site.sensorIds.map(id => bundle.sensorById[id]);
   const counts = bundle.families.map(fam => [fam, sensors.filter(s => s.family === fam.key).length]).filter(([, n]) => n);
+  // Up to SITE_ROWS sensors, grouped by platform; platform headings do not count toward the cap.
   const rows = [];
+  let listed = 0;
   for (const part of site.parts) {
-    const inPart = sensors.filter(s => (s.location ?? site.name) === part);
-    if (site.parts.length > 1 && inPart.length) rows.push(<div key={`h-${part}`} className="t-head">{part}</div>);
+    const inPart = sensors.filter(s => (s.location ?? site.name) === part).slice(0, SITE_ROWS - listed);
+    if (!inPart.length) continue;
+    if (site.parts.length > 1) rows.push(<div key={`h-${part}`} className="t-head">{part}</div>);
     for (const s of inPart) rows.push(
       <div key={s.id} className="t-item"><Glyph glyph={f[s.family].glyph} color={f[s.family].color} />
         <span title={s.name}>{s.name}</span>
         <span className="d mono">{statusLabel(s.status)} · {s.depthRange ? fmtRange(...s.depthRange) : fmtDepth(s.depth)}</span></div>);
+    listed += inPart.length;
   }
-  const extra = site.unlocatedIds.length;
+  const hiddenRows = sensors.length - listed, extra = site.unlocatedIds.length;
   return (<>
     <div className="t-name">{site.name}</div>
     <div className="t-sub">{sensors.length} sensor{sensors.length === 1 ? "" : "s"} · seafloor {fmtDepth(site.seafloor)} · {counts.map(([fam, n]) => `${n} ${fam.label.toLowerCase()}`).join(", ")}</div>
     {site.column.length > 0 && <div className="t-col">{site.column.map(c => <span key={c.kind}><b>{c.kind}</b> {fmtRange(c.a, c.b)} </span>)}</div>}
-    <div className="t-list">{rows.slice(0, 16)}</div>
-    {rows.length > 16 && <div className="t-more">+{rows.length - 16} more. Click to open the depth section.</div>}
+    <div className="t-list">{rows}</div>
+    {hiddenRows > 0 && <div className="t-more">+{hiddenRows} more. Click to open the depth section.</div>}
     {extra > 0 && <div className="t-more">{extra} more sensor{extra > 1 ? "s have" : " has"} no recorded position.</div>}
   </>);
 }
@@ -47,11 +78,7 @@ export default function Tooltip({ hover, bundle }) {
   return (
     <div ref={ref} className="tip" style={style} role="tooltip">
       {kind === "site" && <SiteCard site={item} bundle={bundle} />}
-      {kind === "node" && (<>
-        <div className="t-name">{item.name}</div>
-        <div className="t-sub">{item.description}</div>
-        <div className="t-more">Position {item.accuracy}{item.note ? `. ${item.note}` : ""}</div>
-      </>)}
+      {kind === "node" && <NodeCard node={item} bundle={bundle} />}
       {kind === "cable" && (<>
         <div className="t-name">{item.kind}</div>
         <div className="t-sub">{item.route}{item.lengthKm ? ` · ${Math.round(item.lengthKm)} km` : ""}</div>
