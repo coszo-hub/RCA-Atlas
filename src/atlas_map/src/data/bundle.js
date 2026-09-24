@@ -1,17 +1,29 @@
+export const BUILD_COMMAND = "PYTHONPATH=src .venv/bin/python -m atlas_map_data.build_atlas_bundle";
+
 export class BundleMissingError extends Error {
   constructor() {
-    super("The atlas data bundle is missing. Build it with: PYTHONPATH=src .venv/bin/python -m atlas_map_data.build_atlas_bundle");
+    super(`The atlas data bundle is missing. Build it with: ${BUILD_COMMAND}`);
     this.name = "BundleMissingError";
   }
 }
 
+// Vite's SPA fallback answers a missing file with 200 text/html, so a 404, a non-JSON
+// content type, or a body that fails to parse all mean the file is not there.
 async function getJson(fetchImpl, url) {
+  const missing = () => (url.endsWith("manifest.json") ? new BundleMissingError()
+    : new Error(`The atlas data bundle is incomplete: ${url} is missing or not JSON. Rebuild it with: ${BUILD_COMMAND}`));
   const res = await fetchImpl(url);
   if (!res.ok) {
-    if (url.endsWith("manifest.json") && res.status === 404) throw new BundleMissingError();
+    if (res.status === 404) throw missing();
     throw new Error(`Could not load ${url} (HTTP ${res.status})`);
   }
-  return res.json();
+  const type = res.headers?.get("content-type");
+  if (type != null && !type.includes("json")) throw missing();
+  try {
+    return await res.json();
+  } catch {
+    throw missing();
+  }
 }
 
 export async function loadBundle(fetchImpl = fetch) {

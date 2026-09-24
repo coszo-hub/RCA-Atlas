@@ -9,7 +9,11 @@ const GROUP = {
 const n = v => Math.round(v).toLocaleString("en-US");
 
 export const fmtDepth = m => (m == null ? "—" : `${n(m)} m`);
-export const fmtRange = (a, b) => (a === b ? `${n(a)} m` : `${n(a)}–${n(b)} m`);
+export const fmtRange = (a, b) => (a == null || b == null ? "—" : a === b ? `${n(a)} m` : `${n(a)}–${n(b)} m`);
 export const statusLabel = raw => LABEL[raw] ?? raw;
 export const statusGroup = raw => GROUP[raw] ?? "unknown";
-export const fmtDate = iso => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "unknown date");
+export const fmtDate = iso => {
+  const d = iso ? new Date(iso) : null;
+  return d && !Number.isNaN(d.getTime())
+    ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "unknown date";
+};

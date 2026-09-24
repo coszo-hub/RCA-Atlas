@@ -7,6 +7,8 @@ describe("format", () => {
     expect(fmtDepth(null)).toBe("—");
     expect(fmtRange(5, 200)).toBe("5–200 m");
     expect(fmtRange(200, 200)).toBe("200 m");
+    expect(fmtRange(null, 200)).toBe("—");
+    expect(fmtRange(5, null)).toBe("—");
   });
   it("status", () => {
     expect(statusLabel("NOT_DEPLOYED")).toBe("Not deployed");
@@ -17,5 +19,6 @@ describe("format", () => {
   it("dates", () => {
     expect(fmtDate("2026-09-19T07:41:44+00:00")).toBe("Sep 19, 2026");
     expect(fmtDate(null)).toBe("unknown date");
+    expect(fmtDate("not a date")).toBe("unknown date");
   });
 });

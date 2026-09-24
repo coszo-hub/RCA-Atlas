@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BundleMissingError, loadBundle } from "./bundle.js";
+import { BUILD_COMMAND, BundleMissingError, loadBundle } from "./bundle.js";
 import { CABLE, FAMILIES, MANIFEST, REGIONS, SENSORS, SITES } from "../test/fixtures.js";
 
 const files = {
@@ -24,5 +24,18 @@ describe("loadBundle", () => {
   it("reports a missing bundle with the build command", async () => {
     await expect(loadBundle(fakeFetch({ "/atlas/manifest.json": undefined }))).rejects.toBeInstanceOf(BundleMissingError);
     await expect(loadBundle(fakeFetch({ "/atlas/manifest.json": undefined }))).rejects.toThrow(/build_atlas_bundle/);
+  });
+  // Vite's SPA fallback answers a missing file with 200 text/html (index.html).
+  const htmlFallback = { ok: true, status: 200, headers: { get: () => "text/html" },
+    json: async () => { throw new SyntaxError("Unexpected token '<'"); } };
+  const withHtmlFor = target => async url => (url === target ? htmlFallback : fakeFetch()(url));
+  it("treats an HTML fallback for the manifest as a missing bundle", async () => {
+    await expect(loadBundle(withHtmlFor("/atlas/manifest.json"))).rejects.toBeInstanceOf(BundleMissingError);
+  });
+  it("reports an HTML fallback for another bundle file as an incomplete bundle", async () => {
+    const run = () => loadBundle(withHtmlFor("/atlas/sites.json"));
+    await expect(run()).rejects.toThrow(/incomplete: \/atlas\/sites\.json is missing or not JSON/);
+    await expect(run()).rejects.toThrow(BUILD_COMMAND);
+    await expect(run()).rejects.not.toBeInstanceOf(BundleMissingError);
   });
 });

@@ -47,3 +47,7 @@ src/atlas_ui/dist/
 *.key
 # Atlas map: generated from private corpus data
 /src/atlas_map/public/atlas/
+/src/atlas_map/dist/
+/src/atlas_map/test-results/
+/src/atlas_map/playwright-report/
+/src/atlas_map/e2e/screens/
