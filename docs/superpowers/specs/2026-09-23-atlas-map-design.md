@@ -138,7 +138,7 @@ Outputs, under `src/atlas_map/public/atlas/`:
 Rules:
 
 - **Families** come from one explicit type-to-family table. An unknown type fails the build.
-- **Sites.** Sensors within 150 m of each other that share a site code form one site. Seismic stations with their own coordinates form their own sites.
+- **Sites.** A site is one physical location: every sensor within 150 m of another, whatever its OOI site code. For example, the Axial Base seafloor package, shallow profiler and deep profiler form one site of 33 sensors. The site is named after its seafloor platform, and the platforms it contains are kept as `parts` for the hover card and panel. Seismic stations with their own coordinates form their own sites.
 - **Status.** Use the Nereus status when the reference designator matches. Otherwise "planned" for sensors the inventory marks as a new COSZO sensor suite, otherwise "unknown".
 - **Corrections** live in a small reviewed table (`corrections.json`) keyed by sensor or site, each with a reason. The build applies them and records them on the sensor.
 
@@ -245,9 +245,11 @@ Layout:
   - planned: thin stroke
   - unknown: thin dashed stroke
 - **Operating halo.** Sites with at least one operating sensor get a faint halo that breathes on a 3.2 s cycle.
-- **Water-column stems.** Sites with water-column sensors get a thin vertical line from the seafloor up to their shallowest sensor.
+- **Vertical placement.** Every site marker sits on the seafloor at its true position, because that is where the platform or mooring is anchored. Nothing on the map floats. The height of the 3D scene is seafloor depth, and nothing else.
+- **Water column.** A site with a mooring gets a thin dashed line from the seafloor up to the sea surface. The depths where sensors actually sample are drawn solid on top of it: the shallow profiler at 5–200 m, the 200 m platform, and the deep profiler at 250 m to about 150 m above the seafloor. One stacked label at the surface end reads, for example: "Sea surface 0 m / Shallow profiler 5–200 m / 200 m platform 200 m / Deep profiler 250–2,457 m / Seafloor 2,614 m". The legend explains the line.
+- **Anchoring.** Markers and labels are projected every frame with the exact camera used for that frame's render, including the cursor-parallax offset, so they never drift. A marker hidden behind terrain from the current viewpoint fades to 12% opacity and loses its label and hover. This is tested by walking the sight line across the elevation grid.
 - **Labels** show the site name and sensor count. Where labels would collide, the site with more sensors keeps its label.
-- **Hover** shows the site name, seafloor depth, a family breakdown, and up to 12 sensors with status and depth.
+- **Hover** shows the site name, seafloor depth, a family breakdown, the water-column reach, and up to 14 sensors grouped by platform, with status and depth or depth range.
 
 ### Family filter
 
