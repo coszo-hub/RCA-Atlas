@@ -295,13 +295,17 @@ def _instrument_chunk(record: dict[str, Any], endpoints: list[dict[str, Any]], s
     formats = ", ".join(record["formats"])
     aliases = ", ".join(record["aliases"]) or "none recorded"
     caveats = " ".join(record["caveats"]) if record["caveats"] else "No additional caveat was recorded."
+    hardware = ""
+    if record.get("manufacturer") or record.get("model") or record.get("sensor_components"):
+        components = ", ".join(record.get("sensor_components") or []) or "not separately recorded"
+        hardware = f" Interrogator hardware: manufacturer {record.get('manufacturer') or 'not separately recorded'}; model {record.get('model') or 'not separately recorded'}; components {components}."
     return (
         f"Data for {record['name']} are available to download from {routes}. "
         f"Physical site: {record['physical_site']} (canonical graph site: {site['name']}; "
         f"OOI site {record.get('ooi_site') or 'not applicable'}, node {record.get('node') or 'not applicable'}). "
         f"Available formats: {formats}. Directory layout: {record['observed_layout']}; "
         f"audited path pattern: {record['path_pattern']}. Aliases: {aliases}. "
-        f"Caveats: {caveats} Official OOI context: {record['official_url']}"
+        f"Caveats: {caveats}{hardware} Official OOI context: {record['official_url']}"
     )
 
 
@@ -477,6 +481,9 @@ def build(output_dir: Path, instrument_corpus: Path | None = None) -> dict[str, 
             "ooi_site": dataset.get("ooi_site"),
             "node": dataset.get("node"),
             "depth_m": dataset.get("depth_m"),
+            "manufacturer": shared_row.get("manufacturer"),
+            "model": shared_row.get("model"),
+            "sensor_components": list(shared_row.get("sensor_components") or []),
             "formats": _canonical_format_list(dataset["formats"]),
             "path_pattern": dataset["path_pattern"],
             "observed_layout": dataset["observed_layout"],

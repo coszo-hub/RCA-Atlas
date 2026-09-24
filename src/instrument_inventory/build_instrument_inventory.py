@@ -143,6 +143,17 @@ def build(data_root: Path, output: Path) -> None:
         source_url="https://oceanobservatories.org/pi-instrument/multi-span-distributed-fiber-sensing-on-the-ocean-observatories-initiative-regional-cabled-array/",
         page_id="PAGE-cf03b8afa91f9be0",
     )
+    sources["SOURCE-OOI-DAS-2021-README"] = source(
+        "SOURCE-OOI-DAS-2021-README", "OOI RCN 2001 DAS/DTS experiment readme",
+        "source_material/original_documents/OOI_DAS_Geometry/readme.pdf", "published_experiment_documentation",
+        source_url="http://piweb.ooirsn.uw.edu/das/processed/metadata/readme.pdf",
+    )
+    sources["SOURCE-UPSTREAM-OOI-DAS25"] = source(
+        "SOURCE-UPSTREAM-OOI-DAS25", "UW Fiber Lab OOI DAS 2025 documentation",
+        "https://github.com/uwfiberlab/OOI_DAS_2025", "versioned_upstream_repository",
+        source_url="https://github.com/uwfiberlab/OOI_DAS_2025/tree/3248e6cda8d38d2b6e6bc3952a9c27ffd362e919",
+        upstream_commit="3248e6cda8d38d2b6e6bc3952a9c27ffd362e919",
+    )
     sources["SOURCE-COSZO-GEOPHYSICAL-LIST"] = source(
         "SOURCE-COSZO-GEOPHYSICAL-LIST", "OOI RCA and COSZO Geophysical Data List",
         "coszo/OOI RCA_ COSZO Geophysical Data List.xlsx", "spreadsheet",
@@ -220,8 +231,10 @@ def build(data_root: Path, output: Path) -> None:
                          ev("SOURCE-LITERATURE", "COSZO-REF-129", "DOI 10.1029/2020EA001269")]
         if canonical == "PI-DAS24":
             evidence.append(ev("SOURCE-WEB-DAS24", "PAGE-08de9a173dad7b20-CHUNK-001"))
+            evidence.append(ev("SOURCE-UPSTREAM-OOI-DAS25", "documentation/optodas_readme.pdf", "2025 OptoDAS documentation states the same configuration as the 2024 OOI DAS experiment"))
         if canonical == "PI-DAS25":
             evidence.append(ev("SOURCE-WEB-DAS25", "PAGE-cf03b8afa91f9be0-CHUNK-001"))
+            evidence.append(ev("SOURCE-UPSTREAM-OOI-DAS25", "README.md; documentation/multispan_das_readme.pdf; documentation/optodas_readme.pdf"))
         instrument_type = doc.get("instrument_type") or "instrument"
         name = doc["title"]
         aliases = list(aliases)
@@ -230,6 +243,18 @@ def build(data_root: Path, output: Path) -> None:
         manufacturer = None
         model = None
         sensor_components: list[str] = []
+        if canonical == "PI-DAS24":
+            manufacturer = "Alcatel Subsea Networks"
+            model = "OptoDAS"
+            sensor_components = ["OptoDAS interrogator"]
+            notes = "The upstream 2025 OptoDAS documentation identifies the interrogator as the same configuration as the 2024 OOI DAS experiment."
+            urls.append(sources["SOURCE-UPSTREAM-OOI-DAS25"]["source_url"])
+        if canonical == "PI-DAS25":
+            manufacturer = "Nokia Bell Labs; Alcatel Subsea Networks"
+            model = "Nokia multi-span DAS; OptoDAS"
+            sensor_components = ["Nokia multi-span DAS interrogator (north and south cables)", "Alcatel Subsea Networks OptoDAS interrogator (south cable first span)"]
+            notes = "Two distinct interrogator systems were operated during the 2025-2026 deployment; retain their data products and quality caveats separately."
+            urls.append(sources["SOURCE-UPSTREAM-OOI-DAS25"]["source_url"])
         # OOI's source catalog labels PREST records only as generic "pressure".
         # These are absolute pressure gauges; retain the commonly used tidal
         # pressure gauge name as an alias and distinguish its bottom-pressure role.
@@ -433,9 +458,9 @@ def build(data_root: Path, output: Path) -> None:
          ev("SOURCE-LITERATURE", "OOI-ZOT-006", "DOI 10.1121/10.0036696"),
          ev("SOURCE-LITERATURE", "OOI-ZOT-119", "DOI 10.1121/10.0017104")],
         coszo_role=None, aliases=[], site=None, node=None, station=None, network=None, instrument_code=None,
-        latitude=None, longitude=None, depth_m=None, manufacturer="Optasense and Silixa", model=None,
-        sensor_components=["two Optasense DAS interrogators", "one Silixa DAS interrogator", "one Silixa DTS unit"],
-        source_system="OOI PI page and literature", source_urls=[sources["SOURCE-WEB-DAS-2021"]["source_url"]],
+        latitude=None, longitude=None, depth_m=None, manufacturer="OptaSense; Silixa", model="OptaSense QuantX DAS; Silixa iDASv3 DAS; Silixa ULTIMA SM DTS",
+        sensor_components=["two OptaSense QuantX DAS interrogators", "one Silixa iDASv3 DAS interrogator", "one Silixa ULTIMA SM DTS interrogator"],
+        source_system="OOI PI page, OOI experiment readme, and literature", source_urls=[sources["SOURCE-WEB-DAS-2021"]["source_url"], sources["SOURCE-OOI-DAS-2021-README"]["source_url"]],
         arcada_document_id=None, notes="Temporary shore-station interrogator experiment; not a permanent seafloor instrument.",
     )
     add(

@@ -98,6 +98,16 @@ class PIPortalGraphTests(unittest.TestCase):
                 self.assertIn(endpoint["label"], text)
                 self.assertIn(endpoint["url"], text)
 
+    def test_das_interrogator_hardware_is_inherited_from_shared_inventory(self) -> None:
+        by_key = {row["portal_instrument_key"]: row for row in self.instruments}
+        self.assertEqual(by_key["PI-DAS24"]["manufacturer"], "Alcatel Subsea Networks")
+        self.assertEqual(by_key["PI-DAS24"]["model"], "OptoDAS")
+        self.assertIn("Nokia multi-span DAS", by_key["PI-DAS25"]["model"])
+        self.assertIn("Silixa iDASv3", by_key["PI-DAS-OPTASENSE-SILIXA"]["model"])
+        chunks = {row["parent_id"]: row["text"] for row in self.chunks}
+        for key in ("PI-DAS-OPTASENSE-SILIXA", "PI-DAS24", "PI-DAS25"):
+            self.assertIn("Interrogator hardware:", chunks[by_key[key]["instrument_id"]])
+
     def test_exact_urls_hosts_and_official_pages(self) -> None:
         endpoint_by_key = {(row["instrument_key"], row["endpoint_key"]): row for row in self.endpoints}
         for instrument_key, dataset in PI_INSTRUMENTS.items():
