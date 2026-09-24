@@ -344,7 +344,7 @@ Opening a sensor replaces the cross-section with the detail view. A back control
 
 ```sh
 PYTHONPATH=src .venv/bin/python -m atlas_map_data.build_atlas_bundle   # writes src/atlas_map/public/atlas/
-uvicorn atlas_map_gateway.app:app --app-dir src --port 8787  # live lookups and chat proxy
+PYTHONPATH=src .venv/bin/uvicorn atlas_map_gateway.main:app --app-dir src --host 127.0.0.1 --port 8787   # live lookups and chat proxy
 cd src/atlas_map && npm install && npm run dev               # http://127.0.0.1:5175
 ```
 
