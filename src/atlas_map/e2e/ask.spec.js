@@ -19,7 +19,7 @@ async function open(page, opts) {
 const risen = page => page.waitForFunction(() => { const e = window.__atlas.evidence(); return e.shown && e.spikes.every(s => s.height > 0) && e.spikes.length > 0; }, null, { timeout: 8000 });
 
 test("instruments: numbered spikes rise; hover grows one, click flies there with a card, ← / → tour, Escape clears", async ({ page }) => {
-  await open(page);
+  await open(page, { askDelay: 1500 });   // long enough to see the map wait for the answer
   await page.screenshot({ path: "e2e/screens/ask-empty.png" });
   const before = await target(page);
   await ask(page, "What's been measuring Axial's inflation before the next eruption?");

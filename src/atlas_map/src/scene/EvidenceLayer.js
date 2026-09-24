@@ -273,7 +273,8 @@ export class EvidenceLayer {
           const h = spikeHeight(dist) * s.grow * (on ? 1 : s.vary) * rise;
           const u = s.mat.uniforms;
           u.uBase.value.set(x, y, z); u.uHeight.value = h; u.uRes.value.set(innerWidth, innerHeight);
-          u.uWidth.value = on ? 44 : 28; u.uGlow.value = on ? 1.6 : 1; u.uAlpha.value = (anyOn && !on ? 0.45 : 1) * (sinking ? sink : Math.min(1, rise * 3));
+          u.uWidth.value = on ? 44 : 28; u.uGlow.value = on ? 1.6 : 1;
+          u.uColor.value.set((on && s.items.find(x => x.n === hl)?.color) || s.color);   // a merged spike takes the focused item's colour u.uAlpha.value = (anyOn && !on ? 0.45 : 1) * (sinking ? sink : Math.min(1, rise * 3));
           s.mesh.visible = front && rise > 0.001;
           const p = sc.project(x, y + h, z); top = [p[0], p[1]];
         } else {
