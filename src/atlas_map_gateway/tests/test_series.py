@@ -114,6 +114,13 @@ class SeriesRouteTest(unittest.TestCase):
         r = client([]).get(f"/series/{REF}", params={"var": "time,lat", "start": "2026-09-20T00:00:00Z", "end": "2026-09-21T00:00:00Z"})
         self.assertEqual(r.status_code, 422)
 
+    def test_long_erddap_variable_names_pass(self):
+        var = "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate_profiler_depth_enabled"
+        csv = f"time,{var}\nUTC,1e-9\n2026-09-20T00:00:00Z,1.5\n"
+        r = client([], csv=csv).get(f"/series/{REF}", params={"var": var, "start": "2026-09-20T00:00:00Z", "end": "2026-09-21T00:00:00Z"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()["points"]), 1)
+
     def test_end_before_start_is_422(self):
         r = client([]).get(f"/series/{REF}", params={"var": "sea_water_temperature", "start": "2026-09-21T00:00:00Z", "end": "2026-09-20T00:00:00Z"})
         self.assertEqual(r.status_code, 422)

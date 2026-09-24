@@ -50,6 +50,26 @@ class AccessTest(unittest.TestCase):
         es = [x for x in routes if x["kind"] == "earthscope"][0]
         self.assertEqual((es["channel"], es["channelSource"]), ("BHZ", "station metadata"))
 
+    def test_earthscope_channel_from_inventory(self):
+        ext = {**EXT, "earthscope": {"AXAS1": {"lat": 45.93, "lon": -130.01, "channels": ["EHE", "EHZ", "LHZ"]}}}
+        es = [x for x in access.build_access(rec(id="EARTHSCOPE-OO-AXAS1"), ext, PI, {}) if x["kind"] == "earthscope"][0]
+        self.assertEqual((es["channel"], es["channelSource"]), ("EHZ", "EarthScope inventory"))
+        es = [x for x in access.build_access(rec(id="EARTHSCOPE-OO-AXAS1"), ext, PI, {"OO.AXAS1": "SHZ"}) if x["kind"] == "earthscope"][0]
+        self.assertEqual(es["channel"], "SHZ")   # the corpus's station metadata still wins
+
+    def test_low_frequency_hydrophone_gets_its_station_hdh(self):
+        ext = {**EXT, "earthscope": {"AXCC1": {"lat": 45.954683, "lon": -130.008772, "channels": ["HHZ", "HDH"]},
+                                     "AXAS1": {"lat": 45.9336, "lon": -130.0137, "channels": ["EHZ"]}}}
+        near = rec(refdes="RS03CCAL-MJ03F-06-HYDLFA305", lat=45.9547, lon=-130.0090)
+        es = [x for x in access.build_access(near, ext, PI, {}) if x["kind"] == "earthscope"]
+        self.assertEqual([(x["station"], x["channel"]) for x in es], [("AXCC1", "HDH")])
+        far = rec(refdes="RS03CCAL-MJ03F-06-HYDLFA305", lat=45.70, lon=-130.0090)
+        self.assertEqual([x for x in access.build_access(far, ext, PI, {}) if x["kind"] == "earthscope"], [])
+        planned = rec(refdes="COSZO-OO-CZMID-HYDLF", lat=45.9547, lon=-130.0090)
+        self.assertEqual([x for x in access.build_access(planned, ext, PI, {}) if x["kind"] == "earthscope"], [])
+        broadband = rec(refdes="RS03CCAL-MJ03F-06-HYDBBA305", lat=45.9547, lon=-130.0090)
+        self.assertEqual([x for x in access.build_access(broadband, ext, PI, {}) if x["kind"] == "earthscope"], [])
+
     def test_pi_portal_endpoints(self):
         routes = access.build_access(rec(instrumentId="INSTRUMENT-pi"), EXT, PI, {})
         pi = [x for x in routes if x["kind"] == "pi_portal"]
@@ -81,7 +101,7 @@ class AccessTest(unittest.TestCase):
             ext = access.load_external(Path(d))
         self.assertEqual(ext["erddap"], set())
         self.assertEqual(ext["qaqc"], set())
-        self.assertEqual(len(ext["warnings"]), 2)
+        self.assertEqual(len(ext["warnings"]), 3)   # ERDDAP, QA/QC, EarthScope
 
     def test_refresh_qaqc_parses_refdes_from_plot_paths(self):
         paths = ["RS03AXPS/RS03AXPS-PC03A-4A-CTDPFA303_temperature_week_none_full.png",

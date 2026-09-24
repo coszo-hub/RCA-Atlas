@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import math
 import re
 import urllib.parse
 import urllib.request
@@ -13,8 +14,13 @@ from pathlib import Path
 ERDDAP = "https://erddap.dataexplorer.oceanobservatories.org/erddap"
 QAQC = "https://ec2.qaqc.ooi-rca.net"
 OOI_EXPLORER = "https://dataexplorer.oceanobservatories.org"
-# Corpus channels.jsonl lists no vertical channel for the OO stations; HHZ (200 Hz) verified live for OO.AXCC1.
+# Corpus channels.jsonl lists no vertical channel for most OO stations. The EarthScope inventory (cached by
+# --refresh-external) fills them in: broadband stations publish HHZ, the short-period ones (AXAS1, AXEC1, HYS11, ...) EHZ.
 DEFAULT_VERTICAL_CHANNEL = "HHZ"
+VERTICAL_PREFERENCE = ("HHZ", "EHZ", "BHZ", "SHZ")
+FDSN_STATION = "https://service.earthscope.org/fdsnws/station/1/query"
+# An OOI low-frequency hydrophone is archived at EarthScope as the HDH channel of the seismic station on its node.
+HYDROPHONE_MATCH_KM = 2.0
 ALLOWED_HOSTS = {
     "erddap.dataexplorer.oceanobservatories.org", "dataexplorer.oceanobservatories.org",
     "oceanobservatories.org", "ooinet.oceanobservatories.org", "ec2.qaqc.ooi-rca.net",
@@ -46,13 +52,18 @@ def _allowed(url: str) -> bool:
 
 
 def load_external(runtime: Path) -> dict:
-    out = {"erddap": set(), "qaqc": set(), "warnings": []}
+    out = {"erddap": set(), "qaqc": set(), "earthscope": {}, "warnings": []}
     for key, name, field in (("erddap", "erddap_datasets.json", "datasetIds"), ("qaqc", "qaqc_refdes.json", "refdes")):
         path = runtime / name
         if path.exists():
             out[key] = set(json.loads(path.read_text())[field])
         else:
             out["warnings"].append(f"{name} missing; run build_atlas_bundle.py --refresh-external")
+    path = runtime / "earthscope_channels.json"
+    if path.exists():
+        out["earthscope"] = json.loads(path.read_text())["stations"]
+    else:
+        out["warnings"].append("earthscope_channels.json missing; run build_atlas_bundle.py --refresh-external")
     return out
 
 
@@ -65,6 +76,45 @@ def refresh_erddap(runtime: Path, urlopen=urllib.request.urlopen) -> int:
     (runtime / "erddap_datasets.json").write_text(json.dumps(
         {"retrievedAt": datetime.now(timezone.utc).isoformat(), "source": url, "datasetIds": ids}, indent=1))
     return len(ids)
+
+
+def refresh_earthscope(runtime: Path, network: str = "OO", urlopen=urllib.request.urlopen) -> int:
+    """The network's open channels (active now), per station, with the station position."""
+    url = f"{FDSN_STATION}?net={network}&level=channel&format=text&endafter={datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%S}"
+    with urlopen(url, timeout=60) as resp:
+        lines = resp.read().decode("utf-8").splitlines()
+    stations: dict[str, dict] = {}
+    for line in lines[1:]:
+        p = line.split("|")
+        if len(p) < 6:
+            continue
+        st = stations.setdefault(p[1], {"lat": float(p[4]), "lon": float(p[5]), "channels": []})
+        if p[3] not in st["channels"]:
+            st["channels"].append(p[3])
+    runtime.mkdir(parents=True, exist_ok=True)
+    (runtime / "earthscope_channels.json").write_text(json.dumps(
+        {"retrievedAt": datetime.now(timezone.utc).isoformat(), "source": url, "network": network, "stations": stations}, indent=1))
+    return len(stations)
+
+
+def inventory_vertical(station: dict | None) -> str | None:
+    return next((c for c in VERTICAL_PREFERENCE if station and c in station["channels"]), None)
+
+
+def hydrophone_station(record: dict, inventory: dict) -> tuple[str, float] | None:
+    """The station publishing this OOI low-frequency hydrophone as HDH: the nearest one within HYDROPHONE_MATCH_KM.
+    OOI (RS...) sensors only: COSZO's planned hydrophones have stations registered but publish nothing yet."""
+    refdes = record.get("refdes") or ""
+    if not refdes.startswith("RS") or "HYDLF" not in refdes or record.get("lat") is None:
+        return None
+    best = None
+    for name, st in inventory.items():
+        if "HDH" not in st["channels"]:
+            continue
+        d = math.hypot((st["lat"] - record["lat"]) * 111.2, (st["lon"] - record["lon"]) * 111.32 * math.cos(math.radians(record["lat"])))
+        if d <= HYDROPHONE_MATCH_KM and (best is None or d < best[1]):
+            best = (name, d)
+    return best
 
 
 def refresh_qaqc(runtime: Path, index_paths: list[str]) -> int:
@@ -92,15 +142,25 @@ def build_access(record: dict, external: dict, pi_endpoints: dict[str, list[dict
         routes.append({"kind": "ooi_explorer", "label": "OOI Data Explorer", "refdes": refdes,
                        "url": f"{OOI_EXPLORER}/#ooi/search/{urllib.parse.quote(refdes)}",
                        "how": "Browse and request OOI data products for this instrument."})
+    inventory = external.get("earthscope", {})
     station = earthscope_station(record)
     if station:
         net, sta = station
-        channel = vertical_channels.get(f"{net}.{sta}")
+        channel, source = vertical_channels.get(f"{net}.{sta}"), "station metadata"
+        if not channel:
+            channel, source = inventory_vertical(inventory.get(sta)), "EarthScope inventory"
         routes.append({"kind": "earthscope", "label": "EarthScope FDSN", "network": net, "station": sta,
                        "channel": channel or DEFAULT_VERTICAL_CHANNEL,
-                       "channelSource": "station metadata" if channel else "default",
+                       "channelSource": source if channel else "default",
                        "url": f"https://service.earthscope.org/fdsnws/station/1/query?net={net}&sta={sta}&level=channel&format=text",
                        "how": "Public seismic waveforms (MiniSEED) and station metadata; no login."})
+    hyd = hydrophone_station(record, inventory)
+    if hyd:
+        sta, km = hyd
+        routes.append({"kind": "earthscope", "label": "EarthScope FDSN (hydrophone)", "network": "OO", "station": sta,
+                       "channel": "HDH", "channelSource": f"co-located station, {km:.1f} km",
+                       "url": f"https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta={sta}&cha=HDH&level=channel&format=text",
+                       "how": "Public hydrophone waveforms (MiniSEED, 200 samples/s) from the seismic station on this node; no login."})
     for ep in pi_endpoints.get(record["instrumentId"], []):
         routes.append({"kind": "pi_portal", "label": f"PI data portal: {ep['label']}", "instrumentKey": ep["instrument_key"],
                        "endpointId": ep["endpoint_id"],

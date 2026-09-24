@@ -14,7 +14,8 @@ from coszo_hub_tools.pi_portal_agent_tools import PI_DATASETS
 from . import errors, seismic, thinning
 from .app_support import call_toolkit
 
-VAR_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,120}")
+# ERDDAP names run long: OOI fluorometers' CDOM variable is 158 characters.
+VAR_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,254}")
 TTL = {"variables": 3600, "series": 300, "plots": 1800, "waveform": 300, "files": 300}
 MAX_FILE_ENTRIES = 200
 

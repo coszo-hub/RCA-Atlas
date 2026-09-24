@@ -24,7 +24,9 @@ class BundleIndex:
                 if a["kind"] == "erddap":
                     ix.erddap[s["refdes"]] = a["datasetId"]
                 elif a["kind"] == "earthscope":
-                    ix.stations[f"{a['network']}.{a['station']}"] = {"channel": a.get("channel")}
+                    key = f"{a['network']}.{a['station']}"   # a station's default stays its seismometer, not a hydrophone's HDH
+                    if key not in ix.stations or ix.stations[key]["channel"] == "HDH":
+                        ix.stations[key] = {"channel": a.get("channel")}
                 elif a["kind"] == "pi_portal":
                     ix.pi_keys.add(a["instrumentKey"])
                     if a.get("endpointId"):

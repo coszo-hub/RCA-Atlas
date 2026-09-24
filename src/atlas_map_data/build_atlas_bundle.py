@@ -93,6 +93,7 @@ def main(argv: list[str] | None = None) -> int:
             terrain.fetch_gmrt(name, paths.RUNTIME / "terrain")
     if args.refresh_external:
         print(f"ERDDAP datasets: {access.refresh_erddap(paths.RUNTIME)}")
+        print(f"EarthScope OO stations: {access.refresh_earthscope(paths.RUNTIME)}")
         sys.path.insert(0, str(paths.REPO / "src" / "agentic_qaqc"))
         from qaqc_agent_tools import QAQCToolkit  # his toolkit; stdlib only
         print(f"QA/QC reference designators: {access.refresh_qaqc(paths.RUNTIME, QAQCToolkit().get_index())}")

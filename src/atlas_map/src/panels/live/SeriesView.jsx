@@ -3,19 +3,20 @@ import { series, variables } from "../../api/gateway.js";
 import { fmtDate } from "../../data/format.js";
 import Chart from "./Chart.jsx";
 import Failure from "./Failure.jsx";
+import { defaultMeasurement } from "./measurement.js";
 import { checkCustom, preset } from "./ranges.js";
 import { useLive } from "./useLive.js";
-
-const DEFAULT_VAR = "sea_water_temperature";
 
 export default function SeriesView({ refdes }) {
   const vars = useLive(`vars:${refdes}`, o => variables(refdes, o));
   const [varName, setVar] = useState(null), [range, setRange] = useState("24h"), [custom, setCustom] = useState(null);
   const [draft, setDraft] = useState({ from: "", to: "" }), [draftErr, setDraftErr] = useState(null);
   const listed = vars.data?.variables ?? [];
-  const chosen = varName ?? (listed.some(v => v.name === DEFAULT_VAR) ? DEFAULT_VAR : listed[0]?.name);
-  // A preset is fixed when chosen, so re-renders do not refetch as the clock ticks.
-  const presetWin = useMemo(() => (range === "custom" ? null : preset(range)), [range]);
+  const chosen = varName ?? defaultMeasurement(refdes, listed.map(v => v.name));
+  // A preset is fixed when chosen, so re-renders do not refetch as the clock ticks. It ends at the newest reading.
+  const dataEnd = vars.data?.coverage?.end ?? null;
+  const presetWin = useMemo(() => (range === "custom" ? null : preset(range, new Date(), dataEnd)), [range, dataEnd]);
+  const behind = presetWin && Date.now() - Date.parse(presetWin.end) > 3 * 3600e3;
   const win = range === "custom" ? custom : presetWin;
   const key = chosen && win ? `series:${refdes}:${chosen}:${win.start}:${win.end}` : null;
   const data = useLive(key, o => series(refdes, { var: chosen, start: win.start, end: win.end }, o));
@@ -49,6 +50,7 @@ export default function SeriesView({ refdes }) {
           {draftErr && <p className="degraded">{draftErr}</p>}
         </div>
       )}
+      {behind && <p className="muted">The newest reading is from {fmtDate(dataEnd)}; the {range} window ends there.</p>}
       {data.state === "loading" && <p className="muted">Loading readings…</p>}
       {data.state === "error" && <Failure error={data.error} retry={data.retry} />}
       {data.state === "ok" && (data.data.points.length
