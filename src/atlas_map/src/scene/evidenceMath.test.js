@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { edgeChip, eventShown, frameView, groupSpikes, placeCard, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
+import { edgeChip, eventShown, frameView, groupSpikes, hypoMeters, placeCard, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
 
 describe("spikeHeight", () => {
   it("scales with camera distance so spikes read the same from region to close zoom, within limits", () => {
@@ -98,6 +98,11 @@ describe("frameView", () => {
   it("one point still gets a close, readable view", () => {
     expect(frameView([[-130, 45.95]], { az: 0, exag: 3 }).dist).toBe(9);
   });
+});
+
+it("hypocentres sit below the catalog datum", () => {
+  expect(hypoMeters(0.63)).toBe(-2130);
+  expect(hypoMeters(null, 1400)).toBe(-1400);
 });
 
 it("quakePx grows with magnitude and never vanishes", () => {

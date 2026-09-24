@@ -14,7 +14,7 @@ import { INSET as inset, hudBottom } from "./ui/layout.js";
 import Tooltip from "./ui/Tooltip.jsx";
 import AskPanel, { askStartsOpen } from "./ask/AskPanel.jsx";
 import { EvidenceLayer } from "./scene/EvidenceLayer.js";
-import { frameView } from "./scene/evidenceMath.js";
+import { frameView, hypoMeters } from "./scene/evidenceMath.js";
 import { tourOf } from "./evidence/resolve.js";
 
 
@@ -158,9 +158,8 @@ function Atlas({ bundle, onError }) {
     select: n => {
       setAsk(a => ({ ...a, activeN: n }));
       const it = n == null ? null : tourOf(ask.evidence).find(x => x.n === n);
-      // A quake is framed at its hypocentre (hypo71 depths are below the catalog's 1.5 km datum).
-      const depth = it?.time ? -((scene?.subsurface?.data?.datumM ?? 1500) + (it.depth_km ?? 0) * 1000) : undefined;
-      // Quakes keep a wide view (a close one would sit inside the magma chamber's surface).
+      // A quake is framed at its hypocentre, from a wide view (a close one would sit inside the magma chamber's surface).
+      const depth = it?.time ? hypoMeters(it.depth_km, scene?.subsurface?.data?.datumM) : undefined;
       const dist = it?.kind === "cable" ? 70 : it?.time ? Math.min(25, Math.max(12, scene?.frame.dist ?? 12)) : 7;
       if (it && scene) scene.flyToPoint(it.lon, it.lat, dist, depth);
     },

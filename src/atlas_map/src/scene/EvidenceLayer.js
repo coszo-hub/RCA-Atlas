@@ -4,7 +4,7 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { KX, KZ, toX, toZ } from "./geo.js";
 import { approach } from "./cameraMath.js";
-import { edgeChip, groupSpikes, placeCard, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
+import { edgeChip, groupSpikes, hypoMeters, placeCard, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
 import "./evidence.css";
 
 // An Ask Atlas answer's evidence in the scene. Located items rise as numbered, glowing spikes from the seafloor
@@ -37,7 +37,7 @@ const beamFrag = `
     float core = 1.0 - smoothstep(0.03, 0.12, x);                            // a hot line ~3 px wide
     float glow = exp(-x * x * 50.0) * 0.8 + exp(-x * x * 8.0) * 0.25;        // tight bloom, then a wide haze
     float along = pow(1.0 - vC.y, 0.7) * smoothstep(0.0, 0.04, 1.0 - vC.y);  // bright at the seafloor, fading to the tip
-    vec3 col = mix(uColor, vec3(1.0, 0.96, 0.86), core * 0.7);
+    vec3 col = mix(uColor * 1.25, vec3(1.0, 0.96, 0.86), core * (uGlow > 1.2 ? 0.6 : 0.3));   // the family colour, hot at the core
     gl_FragColor = vec4(col, (core * 0.95 + glow * uGlow) * along * uAlpha);
   }`;
 
@@ -140,7 +140,7 @@ export class EvidenceLayer {
     for (const s of this.sets) if (!s.sinkT0) { s.sinkT0 = now; if (s.hasItems) wait = reduced ? 0 : SINK_MS; }
     this.active = null; this.hover = null; this._renderCard();
     if (!ev) return;
-    const set = { ev, t0: now + wait, spikes: [], cables: [], quakes: null, chips: new Map() };
+    const set = { ev, t0: now + wait, spikes: [], cables: [], quakes: null };
     const { spikes, cables } = groupSpikes(ev.located);
     spikes.forEach((g, i) => set.spikes.push(this._spike(g, i)));
     cables.forEach((it, i) => set.cables.push(this._cable(it, spikes.length + i)));
@@ -206,11 +206,11 @@ export class EvidenceLayer {
 
   _quakes(events) {
     const n = events.length, pos = new Float32Array(n * 3), elev = new Float32Array(n), order = new Float32Array(n), size = new Float32Array(n), idx = new Float32Array(n);
-    const datum = this.sc.subsurface?.data?.datumM ?? 1500;   // hypo71 depths are below the catalog's 1.5 km datum
+    const datum = this.sc.subsurface?.data?.datumM;
     const t0 = Date.parse(events[0].time), span = Math.max(1, Date.parse(events[n - 1].time) - t0);
     events.forEach((e, i) => {
       pos[i * 3] = toX(e.lon); pos[i * 3 + 2] = toZ(e.lat);
-      elev[i] = -(datum + (e.depth_km ?? 0) * 1000); order[i] = (Date.parse(e.time) - t0) / span; size[i] = quakePx(e.mag); idx[i] = i;
+      elev[i] = hypoMeters(e.depth_km, datum); order[i] = (Date.parse(e.time) - t0) / span; size[i] = quakePx(e.mag); idx[i] = i;
     });
     const g = new THREE.BufferGeometry();
     for (const [k, a, s] of [["position", pos, 3], ["elev", elev, 1], ["order", order, 1], ["size", size, 1], ["idx", idx, 1]]) g.setAttribute(k, new THREE.BufferAttribute(a, s));
@@ -228,7 +228,7 @@ export class EvidenceLayer {
     if (!it) { this.card.style.display = "none"; this.card._n = null; return; }
     const isEvent = it.time != null;
     const title = isEvent ? `Earthquake ${it.n} · ${it.time.slice(11, 19)} UTC` : `${it.n} · ${it.label}`;
-    const meta = isEvent ? [it.mag != null && `M ${it.mag.toFixed(1)}`, it.depth_km != null && `${it.depth_km.toFixed(2)} km below datum`].filter(Boolean).join(" · ")
+    const meta = isEvent ? [it.mag != null && `M ${(Math.abs(it.mag) < 0.05 ? 0 : it.mag).toFixed(1)}`, it.depth_km != null && `${it.depth_km.toFixed(2)} km below datum`].filter(Boolean).join(" · ")
       : it.kind === "cable" ? it.site : [it.refdes ?? it.site, fmtDepth(it.depth)].filter(Boolean).join(" · ");
     const text = !isEvent && it.excerpt ? `<p class="${it.quote ? "q" : ""}">${esc(it.quote ? `“…${it.excerpt}…”` : it.excerpt)}</p>` : "";
     const btns = [
@@ -282,7 +282,10 @@ export class EvidenceLayer {
         const shown = front && rise > 0.02, d = s.dom, dim = anyOn && !on;
         const place = (el, px, py, vis) => { el.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px)`; el.style.opacity = vis ? (dim ? 0.55 : 1) : 0; el.style.pointerEvents = vis ? "auto" : "none"; };
         place(d.base, bx, by, shown);
-        tags.push({ d: d.tag, x: top[0], y: top[1], w: 12 + 7 * s.label.length, vis: shown && rise > 0.3, place });
+        // A merged spike leads with the number in focus.
+        const text = on && s.ns.length > 1 ? `${hl} +${s.ns.length - 1}` : s.label;
+        if (d.tag.textContent !== text) d.tag.firstChild.textContent = text;
+        tags.push({ d: d.tag, x: top[0], y: top[1], w: 12 + 7 * text.length, vis: shown && rise > 0.3, place });
         d.halo.style.transform = `translate(${bx.toFixed(1)}px, ${by.toFixed(1)}px)`; d.halo.classList.toggle("on", on && shown);
         d.tag.classList.toggle("on", on); d.base.classList.toggle("on", on);
         if (d.hit) {
@@ -363,8 +366,7 @@ export class EvidenceLayer {
     u.uActive.value = i;
     const ev = i >= 0 ? set.ev.events[i] : null;
     if (ev) {
-      const datum = this.sc.subsurface?.data?.datumM ?? 1500, e = this.sc.e;
-      const p = this.sc.project(toX(ev.lon), -(datum + (ev.depth_km ?? 0) * 1000) * e, toZ(ev.lat));
+      const p = this.sc.project(toX(ev.lon), hypoMeters(ev.depth_km, this.sc.subsurface?.data?.datumM) * this.sc.e, toZ(ev.lat));
       q.halo.style.transform = `translate(${p[0].toFixed(1)}px, ${p[1].toFixed(1)}px)`;
       this._anchors.set(ev.n, { base: p, top: [p[0], p[1]] });
     }

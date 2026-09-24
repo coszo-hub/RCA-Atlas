@@ -21,6 +21,7 @@ const DOC_COLOR = "#8d8b84";
 const fmtDepth = m => (m == null ? "—" : `${Math.round(m).toLocaleString("en-US")} m`);
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const utc = iso => iso.slice(11, 19);
+export const fmtMag = m => (m == null ? "—" : `M ${(Math.abs(m) < 0.05 ? 0 : m).toFixed(1)}`);   // no "M -0.0"
 
 function stats(e) {
   const { ev, data, ms } = e, secs = `${(ms / 1000).toFixed(1)} s`, model = modelLabel(data.answer_model);
@@ -35,7 +36,7 @@ export default function AskPanel({ bundle, evidence, activeN, hoverN, keysBlocke
   const [open, setOpen] = useState(askStartsOpen);
   const [entries, setEntries] = useState([]), [draft, setDraft] = useState(""), [model, setModel] = useState("auto");
   const busy = entries.some(e => e.status === "pending");
-  const threadRef = useRef(null), inputRef = useRef(null), abortRef = useRef(null), nextId = useRef(1);
+  const threadRef = useRef(null), abortRef = useRef(null), nextId = useRef(1);
 
   // Before paint, so the top row starts beside the panel instead of sliding over from the edge on load.
   useLayoutEffect(() => {
@@ -118,7 +119,7 @@ export default function AskPanel({ bundle, evidence, activeN, hoverN, keysBlocke
         ))}
       </div>
       <form className="ask-composer" onSubmit={e => { e.preventDefault(); ask(draft); }}>
-        <textarea ref={inputRef} data-ask-composer="" aria-label="Ask a question" rows="1" value={draft}
+        <textarea data-ask-composer="" aria-label="Ask a question" rows="1" value={draft}
           placeholder={entries.length ? "Ask a follow-up…" : "Ask the Atlas…"} onChange={e => setDraft(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); ask(draft); } }} />
         <label className="ask-model"><span className="sr-only">Answer model</span>
@@ -169,7 +170,8 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
   );
 
   return (
-    <article className={`ask-entry${live || e.status !== "ok" ? "" : " past"}`} data-entry={e.id}>
+    <article className={`ask-entry${live || e.status !== "ok" ? "" : " past"}`} data-entry={e.id}
+      onClick={k => { if (e.status === "ok" && !live && !k.target.closest("a, button")) onShow(ev); }}>
       <h2 className="ask-q">{e.status === "ok" && !live
         ? <button className="ask-reshow" aria-label={`Show the evidence for: ${e.q}`} onClick={() => onShow(ev)}>{e.q}</button> : e.q}</h2>
       {e.status === "ok" && <div className="ask-stats mono">{stats(e)}</div>}
@@ -186,7 +188,7 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
               <div className="ask-label"><span id={`ev-${e.id}`}>Evidence on the map</span>{stepper}</div>
               <table className="ask-table" aria-labelledby={`ev-${e.id}`}>
                 <thead><tr><th>#</th><th>Instrument</th><th>Site</th><th className="r">Depth</th></tr></thead>
-                <tbody>{ev.located.map(x => row(x.n, <><td>{x.code}</td><td>{x.site}</td><td className="r">{fmtDepth(x.depth)}</td></>, x.color,
+                <tbody>{ev.located.map(x => row(x.n, <><td className={x.kind === "site" ? "k-site" : undefined}>{x.kind === "site" ? "site" : x.code}</td><td>{x.site}</td><td className="r">{fmtDepth(x.depth)}</td></>, x.color,
                   x.excerpt && (x.quote ? <q>{x.excerpt}</q> : x.excerpt)))}</tbody>
               </table>
             </>
@@ -197,13 +199,13 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
               <div className="ask-scroll">
                 <table className="ask-table" aria-labelledby={`ev-${e.id}`}>
                   <thead><tr><th>#</th><th>Time UTC</th><th>Mag</th><th className="r">Depth</th></tr></thead>
-                  <tbody>{ev.events.map(q => row(q.n, <><td>{utc(q.time)}</td><td>{q.mag == null ? "—" : `M ${q.mag.toFixed(1)}`}</td>
+                  <tbody>{ev.events.map(q => row(q.n, <><td>{utc(q.time)}</td><td>{fmtMag(q.mag)}</td>
                     <td className="r">{q.depth_km == null ? "—" : `${q.depth_km.toFixed(2)} km`}</td></>, "#ffcc66"))}</tbody>
                 </table>
               </div>
             </>
           )}
-          {!ev.located.length && !ev.events && <p className="ask-note">{ev.count ? "The catalog's hypocentres are not in this answer." : "No mapped instruments in this answer."}</p>}
+          {!ev.located.length && !ev.events && <p className="ask-note">{ev.count ? "This answer has the day's count but not its hypocentres." : "No mapped instruments in this answer."}</p>}
           {ev.documents.length > 0 && (
             <>
               <div className="ask-label"><span>Further reading</span></div>

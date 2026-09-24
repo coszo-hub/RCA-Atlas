@@ -18,6 +18,7 @@
 .ask-entry { padding: 10px 0 18px; transition: opacity 200ms ease; }
 .ask-entry + .ask-entry { border-top: 1px solid var(--hairline-strong); padding-top: 18px; }
 .ask-entry.past { opacity: 0.5; }
+.ask-entry.past { cursor: pointer; }
 .ask-entry.past:hover { opacity: 0.8; }
 .ask-q { margin: 4px 0 0; font-family: var(--font-serif); font-style: italic; font-weight: 400; font-size: 17px; line-height: 1.28; color: var(--text-primary);
   border-bottom: 1px solid var(--hairline); padding-bottom: 10px; }
@@ -55,6 +56,7 @@
 .ask-table td { padding: 7px 5px; color: #c9c7bf; border-bottom: 1px solid rgba(255, 255, 255, 0.05); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ask-table td.i { color: var(--c); font-weight: 600; text-align: center; overflow: visible; text-overflow: clip; padding: 7px 2px; }
 .ask-table .r { text-align: right; color: #8d8b84; }
+.ask-table td.k-site { color: var(--text-muted); font-style: italic; }
 .ask-table tbody tr:not(.ex) { cursor: pointer; transition: background 120ms; }
 .ask-table tbody tr.on td, .ask-table tbody tr.active td { color: #fff; background: rgba(255, 204, 102, 0.07); }
 .ask-table tbody tr.active td { border-bottom: none; }

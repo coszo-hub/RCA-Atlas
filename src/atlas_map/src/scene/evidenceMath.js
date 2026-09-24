@@ -15,6 +15,10 @@ export const sinkAt = (ms, reduced = false, dur = 300) => (reduced ? 0 : 1 - eas
 // Hypocentres appear in time order (order 0..1 through the day) over `dur` ms.
 export const eventShown = (order, ms, reduced = false, dur = 3000) => reduced || ms >= order * dur;
 
+// A hypocentre's elevation in metres: hypo71 depths are below the Axial catalog's 1.5 km datum (as the relocated
+// subsurface catalog's are), so they sit with it beneath the caldera.
+export const hypoMeters = (depthKm, datumM = 1500) => -(datumM + (depthKm ?? 0) * 1000);
+
 // A quake's point size in pixels by magnitude (Axial's are mostly M -0.5 to 2).
 export const quakePx = mag => 7 + 6 * clamp((mag ?? -1) + 1, 0, 4);
 

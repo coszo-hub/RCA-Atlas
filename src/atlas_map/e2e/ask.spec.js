@@ -20,9 +20,11 @@ const risen = page => page.waitForFunction(() => { const e = window.__atlas.evid
 
 test("instruments: numbered spikes rise; hover grows one, click flies there with a card, ← / → tour, Escape clears", async ({ page }) => {
   await open(page);
+  await page.screenshot({ path: "e2e/screens/ask-empty.png" });
   const before = await target(page);
   await ask(page, "What's been measuring Axial's inflation before the next eruption?");
   await expect(page.getByText("Reading the corpus…")).toBeVisible();
+  await page.screenshot({ path: "e2e/screens/ask-reading.png" });
   expect((await evidence(page)).shown).toBe(false);   // the map waits for the answer
   await expect(page.getByRole("table", { name: "Evidence on the map" })).toBeVisible();
   await risen(page);
