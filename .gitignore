@@ -45,3 +45,5 @@ src/atlas_ui/dist/
 *.db
 *.pem
 *.key
+# Atlas map: generated from private corpus data
+/src/atlas_map/public/atlas/
