@@ -209,32 +209,42 @@ const OPENAI_MODELS = new Set([
   "gpt-5.5-pro",
   "gpt-5.4-mini",
 ]);
+const GROQ_MODELS = {
+  "groq-gpt-oss-120b": { id: "openai/gpt-oss-120b", label: "Groq GPT-OSS 120B" },
+  "groq-gpt-oss-20b": { id: "openai/gpt-oss-20b", label: "Groq GPT-OSS 20B" },
+  "groq-qwen3-8-27b": { id: "qwen/qwen3.8-27b", label: "Groq Qwen 3.8 27B" },
+};
+const OPENROUTER_FREE_MODELS = {
+  "openrouter-glm-5-2": "z-ai/glm-5.2:free",
+  "openrouter-qwen3-8-27b": "qwen/qwen3.8-27b:free",
+  "openrouter-nex-n2-5-pro": "nex-agi/nex-n2.5-pro:free",
+  "openrouter-gemma-4-31b": "google/gemma-4-31b-it:free",
+};
 
-async function generateGroqAnswer(prompt, mode, env) {
+async function generateGroqAnswer(prompt, mode, env, selected = GROQ_MODELS["groq-gpt-oss-120b"]) {
   if (!env.GROQ_API_KEY) throw new Error("Groq is not configured");
   const upstream = await postJson("https://api.groq.com/openai/v1/chat/completions", {
-    model: "openai/gpt-oss-120b",
+    model: selected.id,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
     max_tokens: mode === "compact" ? 400 : 4096,
   }, { authorization: `Bearer ${env.GROQ_API_KEY}` });
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("Groq model returned no answer");
-  return { answer: cleanAnswer(answer), model: "Groq GPT-OSS 120B" };
+  return { answer: cleanAnswer(answer), model: selected.label };
 }
 
-async function generateOpenRouterAnswer(prompt, mode, env) {
+async function generateOpenRouterAnswer(prompt, mode, env, selectedModel = env.OPENROUTER_FREE_MODEL || "z-ai/glm-5.2:free") {
   if (!env.OPENROUTER_API_KEY) throw new Error("OpenRouter is not configured");
-  const model = env.OPENROUTER_FREE_MODEL || "z-ai/glm-5.2:free";
   const upstream = await postJson("https://openrouter.ai/api/v1/chat/completions", {
-    model,
+    model: selectedModel,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
     max_tokens: mode === "compact" ? 400 : 4096,
   }, { authorization: `Bearer ${env.OPENROUTER_API_KEY}` });
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("OpenRouter model returned no answer");
-  return { answer: cleanAnswer(answer), model: `OpenRouter ${upstream.model || model}` };
+  return { answer: cleanAnswer(answer), model: `OpenRouter ${upstream.model || selectedModel}` };
 }
 
 async function generateOpenAIAnswer(prompt, requestedModel, mode, env) {
@@ -277,7 +287,8 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
     ? "Use plain text, with no Markdown hashes or asterisks. Obey the 120-word, single-sentence-bullet limit exactly."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
-  if (requestedModel === "groq-gpt-oss-120b") return generateGroqAnswer(prompt, mode, env);
+  if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
+  if (OPENROUTER_FREE_MODELS[requestedModel]) return generateOpenRouterAnswer(prompt, mode, env, OPENROUTER_FREE_MODELS[requestedModel]);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
   const model = requestedModel === "gemini-2.5-flash" ? requestedModel : (env.ANSWER_MODEL || "gemini-2.5-flash");
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
@@ -368,7 +379,7 @@ export default {
     if (!validOrigin(origin, env)) return response({ error: "origin not allowed" }, 403, cors);
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
-    const requestedModel = ["gemini-2.5-flash", "groq-gpt-oss-120b", ...OPENAI_MODELS].includes(body?.model)
+    const requestedModel = ["gemini-2.5-flash", ...Object.keys(GROQ_MODELS), ...Object.keys(OPENROUTER_FREE_MODELS), ...OPENAI_MODELS].includes(body?.model)
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
