@@ -12,6 +12,7 @@ class BundleIndex:
     erddap: dict[str, str] = field(default_factory=dict)
     stations: dict[str, dict] = field(default_factory=dict)
     pi_keys: set[str] = field(default_factory=set)
+    pi_endpoints: dict[str, dict[str, str]] = field(default_factory=dict)   # instrumentKey -> {endpointId: url}
 
     @classmethod
     def from_dir(cls, path: Path) -> "BundleIndex":
@@ -26,6 +27,8 @@ class BundleIndex:
                     ix.stations[f"{a['network']}.{a['station']}"] = {"channel": a.get("channel")}
                 elif a["kind"] == "pi_portal":
                     ix.pi_keys.add(a["instrumentKey"])
+                    if a.get("endpointId"):
+                        ix.pi_endpoints.setdefault(a["instrumentKey"], {})[a["endpointId"]] = a.get("url")
         return ix
 
     def has_refdes(self, refdes: str) -> bool:
@@ -39,3 +42,6 @@ class BundleIndex:
 
     def has_pi(self, key: str) -> bool:
         return key in self.pi_keys
+
+    def pi_endpoint_url(self, key: str, endpoint_id: str) -> str | None:
+        return self.pi_endpoints.get(key, {}).get(endpoint_id)

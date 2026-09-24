@@ -7,11 +7,14 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Query
 from fastapi.responses import JSONResponse
 
+from coszo_hub_tools.pi_portal_agent_tools import PI_DATASETS
+
 from . import errors, thinning
 from .app_support import call_toolkit
 
 VAR_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,120}")
 TTL = {"variables": 3600, "series": 300, "plots": 1800, "waveform": 300, "files": 300}
+MAX_FILE_ENTRIES = 200
 
 
 def _bad(message: str) -> JSONResponse:
@@ -28,6 +31,18 @@ def _parse_time(value: str) -> datetime | None:
     except ValueError:
         return None
     return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def _toolkit_endpoint_id(instrument_key: str, url: str) -> str:
+    """The bundle carries corpus endpoint ids; PIPortalToolkit.browse wants its own registry id. Match on the URL."""
+    for endpoint in PI_DATASETS.get(instrument_key, {}).get("endpoints", []):
+        if endpoint["url"] == url:
+            return endpoint["endpoint_id"]
+    raise errors.UpstreamError("PI portal", "this endpoint is not in the PI portal registry")
+
+
+def _newest_first(entries: list[dict]) -> list[dict]:
+    return sorted(entries, key=lambda e: (e.get("observation_date") or "", e.get("name") or ""), reverse=True)
 
 
 def register(app, settings, deps, cache, limiter) -> None:
@@ -83,11 +98,19 @@ def register(app, settings, deps, cache, limiter) -> None:
     def files(instrument_key: str, path: str = "", endpoint: str | None = None):
         if not deps.index.has_pi(instrument_key):
             return _missing("atlas", "unknown PI instrument")
+        toolkit_endpoint = None
+        if endpoint is not None:
+            url = deps.index.pi_endpoint_url(instrument_key, endpoint)
+            if url is None:
+                return _missing("atlas", "unknown endpoint for this PI instrument")
+            toolkit_endpoint = _toolkit_endpoint_id(instrument_key, url)
 
         def fetch():
             with limiter.slot("PI portal"):
-                res = call_toolkit("PI portal", lambda: deps.pi.browse(instrument_key, endpoint, path, 200))
+                res = call_toolkit("PI portal", lambda: deps.pi.browse(instrument_key, toolkit_endpoint, path, 5000))
+            entries = _newest_first(res.get("entries", []))
             return {"instrumentKey": instrument_key, "endpointLabel": res.get("endpoint_label"),
                     "path": res.get("relative_path", path), "sourceUrl": res.get("source_url"),
-                    "entries": res.get("entries", []), "truncated": bool(res.get("truncated"))}
+                    "entries": entries[:MAX_FILE_ENTRIES],
+                    "truncated": bool(res.get("truncated")) or len(entries) > MAX_FILE_ENTRIES}
         return cache.get_or_set(f"files:{instrument_key}:{endpoint}:{path}", TTL["files"], fetch)

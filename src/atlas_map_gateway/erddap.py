@@ -39,6 +39,8 @@ class ErddapClient:
             rows = resp.json()["table"]["rows"]
         except (ValueError, KeyError, TypeError):
             raise UpstreamError("ERDDAP", "unexpected ERDDAP info response") from None
+        if not isinstance(rows, list) or not all(isinstance(r, list) and len(r) >= 5 for r in rows):
+            raise UpstreamError("ERDDAP", "unexpected ERDDAP info response")
         attrs: dict[tuple[str, str], str] = {(r[1], r[2]): r[4] for r in rows if r[0] == "attribute"}
         names = [r[1] for r in rows if r[0] == "variable"]
         variables = [{"name": n, "units": attrs.get((n, "units")), "longName": attrs.get((n, "long_name"))}
@@ -57,17 +59,19 @@ class ErddapClient:
         if resp.status_code != 200:
             raise UpstreamError("ERDDAP", f"ERDDAP returned HTTP {resp.status_code}")
         rows = list(csv.reader(io.StringIO(resp.text)))
-        if len(rows) < 2 or rows[0][:2] != ["time", var]:
+        if len(rows) < 2 or rows[0][:2] != ["time", var] or len(rows[1]) < 2:
             raise UpstreamError("ERDDAP", "unexpected ERDDAP CSV response")
         times, values = [], []
         for row in rows[2:]:
             try:
                 v = float(row[1])
+                t = datetime.fromisoformat(row[0].replace("Z", "+00:00"))
             except (ValueError, IndexError):
                 continue
             if math.isnan(v):
                 continue
-            t = datetime.strptime(row[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            if t.tzinfo is None:
+                t = t.replace(tzinfo=timezone.utc)
             times.append(int(t.timestamp() * 1000))
             values.append(v)
         return {"units": rows[1][1] or None, "times": times, "values": values}

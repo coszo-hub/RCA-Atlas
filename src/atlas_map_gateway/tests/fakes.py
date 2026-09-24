@@ -31,10 +31,11 @@ class FakeQAQC:
 
 class FakePI:
     def __init__(self, response=None, exc=None):
-        self.calls, self.response, self.exc = [], response, exc
+        self.calls, self.limits, self.response, self.exc = [], [], response, exc
 
     def browse(self, instrument_id, endpoint_id=None, relative_path="", limit=500):
         self.calls.append((instrument_id, endpoint_id, relative_path))
+        self.limits.append(limit)
         if self.exc:
             raise self.exc
         return self.response

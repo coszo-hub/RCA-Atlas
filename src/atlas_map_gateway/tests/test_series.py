@@ -76,6 +76,35 @@ class SeriesRouteTest(unittest.TestCase):
     def test_no_feed_is_404(self):
         r = client([]).get("/series/RS01SBPD-DP01A-01-CTDPFL104", params={"var": "x", "start": "2026-09-20T00:00:00Z", "end": "2026-09-21T00:00:00Z"})
         self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.json()["error"]["source"], "atlas")
+
+    def test_missing_query_param_is_422_with_error_body(self):
+        r = client([]).get(f"/series/{REF}", params={"start": "2026-09-20T00:00:00Z", "end": "2026-09-21T00:00:00Z"})
+        self.assertEqual(r.status_code, 422)
+        self.assertEqual(set(r.json()), {"error"})
+        self.assertEqual(r.json()["error"]["source"], "atlas")
+        self.assertIn("var", r.json()["error"]["message"])
+
+    def test_millisecond_times_parse(self):
+        csv = "time,sea_water_temperature\nUTC,degree_Celsius\n2026-09-20T00:00:00.000Z,7.32\n2026-09-20T00:00:00.500Z,7.33\n"
+        r = client([], csv=csv).get(f"/series/{REF}", params={"var": "sea_water_temperature",
+                                                              "start": "2026-09-20T00:00:00Z", "end": "2026-09-21T00:00:00Z"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["points"], [[1789862400000, 7.32], [1789862400500, 7.33]])
+
+    def test_malformed_info_is_502(self):
+        bad_rows = ([["attribute", "NC_GLOBAL"]], [None], ["x"], "rows")
+        for rows in bad_rows:
+            with self.subTest(rows=rows):
+                r = client([], info={"table": {"rows": rows}}).get(f"/series/{REF}/variables")
+                self.assertEqual(r.status_code, 502)
+                self.assertEqual(r.json()["error"]["source"], "ERDDAP")
+
+    def test_csv_missing_units_cell_is_502(self):
+        r = client([], csv="time,sea_water_temperature\nUTC\n").get(
+            f"/series/{REF}", params={"var": "sea_water_temperature", "start": "2026-09-20T00:00:00Z", "end": "2026-09-21T00:00:00Z"})
+        self.assertEqual(r.status_code, 502)
+        self.assertEqual(r.json()["error"]["source"], "ERDDAP")
 
     def test_range_over_31_days_is_422(self):
         r = client([]).get(f"/series/{REF}", params={"var": "sea_water_temperature", "start": "2026-08-01T00:00:00Z", "end": "2026-09-02T00:00:01Z"})

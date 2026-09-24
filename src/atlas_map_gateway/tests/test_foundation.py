@@ -38,6 +38,10 @@ class BundleIndexTest(unittest.TestCase):
         self.assertIsNone(self.ix.station("OO", "NOPE"))
         self.assertTrue(self.ix.has_pi("PI-COVIS"))
         self.assertFalse(self.ix.has_pi("PI-NOPE"))
+        self.assertEqual(self.ix.pi_endpoint_url("PI-COVIS", "PI-PORTAL-ENDPOINT-4c97c6557005bd2466"),
+                         "http://piweb.ooirsn.uw.edu/covis/data/BROWSE/")
+        self.assertIsNone(self.ix.pi_endpoint_url("PI-COVIS", "PI-PORTAL-ENDPOINT-2c2cf0f8c135aeb3b5"))  # another instrument's
+        self.assertIsNone(self.ix.pi_endpoint_url("PI-NOPE", "PI-PORTAL-ENDPOINT-4c97c6557005bd2466"))
 
 
 class CacheTest(unittest.TestCase):
