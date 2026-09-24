@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import collections
 import hashlib
+import html
 import json
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,10 +42,48 @@ def ev(source_id: str, record_id: str | None = None, locator: str | None = None)
     return out
 
 
+def _html_text(value: str) -> str:
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"(?s)<[^>]+>", " ", value))).strip()
+
+
+def official_ooi_hardware(cache_root: Path) -> dict[str, dict]:
+    """Read exact deployment rows from archived official OOI site inventories.
+
+    Site inventories change as deployments are recovered or replaced.  We only
+    enrich a record when its full reference designator occurs in a cached page;
+    unlisted historical records deliberately remain unresolved.
+    """
+    result: dict[str, dict] = {}
+    for path in sorted(cache_root.glob("RS*.html")):
+        raw = path.read_text(encoding="utf-8", errors="replace")
+        for row in re.findall(r"(?is)<tr[^>]*>(.*?)</tr>", raw):
+            cells = re.findall(r"(?is)<td[^>]*>(.*?)</td>", row)
+            if len(cells) < 5:
+                continue
+            canonical = _html_text(cells[0])
+            if not canonical.startswith("RS"):
+                continue
+            instrument_class = _html_text(cells[3])
+            make_model = _html_text(cells[4])
+            if not make_model or " - " not in make_model:
+                continue
+            manufacturer, model = (part.strip() for part in make_model.split(" - ", 1))
+            result[canonical] = {
+                "manufacturer": manufacturer,
+                "model": model,
+                "instrument_class": instrument_class,
+                "source_url": f"https://oceanobservatories.org/site/{path.stem.casefold()}/",
+                "source_file": path.name,
+                "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+    return result
+
+
 def build(data_root: Path, output: Path) -> None:
     if output.exists():
         shutil.rmtree(output)
     output.mkdir(parents=True)
+    ooi_hardware = official_ooi_hardware(data_root.parent / "source_material/original_documents/OOISiteInventory")
 
     sources: dict[str, dict] = {}
     sources["SOURCE-ARCADA-GRAPH"] = source(
@@ -67,6 +107,16 @@ def build(data_root: Path, output: Path) -> None:
         "SOURCE-WEB-AXIAL-A0A", "A-0-A Calibrated Pressure Instrument", "Websites/pages.jsonl", "web_page",
         source_url="https://oceanobservatories.org/pi-instrument/a-0-a-calibrated-pressure-instrument/",
         page_id="PAGE-05334b26ef3cc13b",
+    )
+    sources["SOURCE-OOI-PREST"] = source(
+        "SOURCE-OOI-PREST", "OOI Tidal Seafloor Pressure (PREST) instrument class",
+        "official_public_web", "official_web_page",
+        source_url="https://oceanobservatories.org/instrument-class/prest/",
+    )
+    sources["SOURCE-OOI-SITE-INVENTORY"] = source(
+        "SOURCE-OOI-SITE-INVENTORY", "Official OOI deployed-instrument site inventories",
+        "source_material/original_documents/OOISiteInventory", "official_web_page_archive",
+        source_url="https://oceanobservatories.org/instruments/",
     )
     sources["SOURCE-WEB-MARUM-CTD"] = source(
         "SOURCE-WEB-MARUM-CTD", "MARUM CTD-DO Instrument", "Websites/pages.jsonl", "web_page",
@@ -92,6 +142,17 @@ def build(data_root: Path, output: Path) -> None:
         "SOURCE-WEB-DAS25", "2025-2026 multispan RCA DAS", "Websites/pages.jsonl", "web_page",
         source_url="https://oceanobservatories.org/pi-instrument/multi-span-distributed-fiber-sensing-on-the-ocean-observatories-initiative-regional-cabled-array/",
         page_id="PAGE-cf03b8afa91f9be0",
+    )
+    sources["SOURCE-OOI-DAS-2021-README"] = source(
+        "SOURCE-OOI-DAS-2021-README", "OOI RCN 2001 DAS/DTS experiment readme",
+        "source_material/original_documents/OOI_DAS_Geometry/readme.pdf", "published_experiment_documentation",
+        source_url="http://piweb.ooirsn.uw.edu/das/processed/metadata/readme.pdf",
+    )
+    sources["SOURCE-UPSTREAM-OOI-DAS25"] = source(
+        "SOURCE-UPSTREAM-OOI-DAS25", "UW Fiber Lab OOI DAS 2025 documentation",
+        "https://github.com/uwfiberlab/OOI_DAS_2025", "versioned_upstream_repository",
+        source_url="https://github.com/uwfiberlab/OOI_DAS_2025/tree/3248e6cda8d38d2b6e6bc3952a9c27ffd362e919",
+        upstream_commit="3248e6cda8d38d2b6e6bc3952a9c27ffd362e919",
     )
     sources["SOURCE-COSZO-GEOPHYSICAL-LIST"] = source(
         "SOURCE-COSZO-GEOPHYSICAL-LIST", "OOI RCA and COSZO Geophysical Data List",
@@ -125,6 +186,7 @@ def build(data_root: Path, output: Path) -> None:
             "deployment_state": deployment_state,
             "evidence": evidence,
             "source_is_untrusted_data": True,
+            "measurement_roles": [],
             **extra,
         }
         records.append(row)
@@ -169,16 +231,64 @@ def build(data_root: Path, output: Path) -> None:
                          ev("SOURCE-LITERATURE", "COSZO-REF-129", "DOI 10.1029/2020EA001269")]
         if canonical == "PI-DAS24":
             evidence.append(ev("SOURCE-WEB-DAS24", "PAGE-08de9a173dad7b20-CHUNK-001"))
+            evidence.append(ev("SOURCE-UPSTREAM-OOI-DAS25", "documentation/optodas_readme.pdf", "2025 OptoDAS documentation states the same configuration as the 2024 OOI DAS experiment"))
         if canonical == "PI-DAS25":
             evidence.append(ev("SOURCE-WEB-DAS25", "PAGE-cf03b8afa91f9be0-CHUNK-001"))
+            evidence.append(ev("SOURCE-UPSTREAM-OOI-DAS25", "README.md; documentation/multispan_das_readme.pdf; documentation/optodas_readme.pdf"))
+        instrument_type = doc.get("instrument_type") or "instrument"
+        name = doc["title"]
+        aliases = list(aliases)
+        measurement_roles: list[str] = []
+        notes = None
+        manufacturer = None
+        model = None
+        sensor_components: list[str] = []
+        if canonical == "PI-DAS24":
+            manufacturer = "Alcatel Subsea Networks"
+            model = "OptoDAS"
+            sensor_components = ["OptoDAS interrogator"]
+            notes = "The upstream 2025 OptoDAS documentation identifies the interrogator as the same configuration as the 2024 OOI DAS experiment."
+            urls.append(sources["SOURCE-UPSTREAM-OOI-DAS25"]["source_url"])
+        if canonical == "PI-DAS25":
+            manufacturer = "Nokia Bell Labs; Alcatel Subsea Networks"
+            model = "Nokia multi-span DAS; OptoDAS"
+            sensor_components = ["Nokia multi-span DAS interrogator (north and south cables)", "Alcatel Subsea Networks OptoDAS interrogator (south cable first span)"]
+            notes = "Two distinct interrogator systems were operated during the 2025-2026 deployment; retain their data products and quality caveats separately."
+            urls.append(sources["SOURCE-UPSTREAM-OOI-DAS25"]["source_url"])
+        # OOI's source catalog labels PREST records only as generic "pressure".
+        # These are absolute pressure gauges; retain the commonly used tidal
+        # pressure gauge name as an alias and distinguish its bottom-pressure role.
+        if re.search(r"(?:^|-)PREST[A-Z0-9]+$", canonical):
+            instrument_type = "absolute_pressure_gauge"
+            name = re.sub(r"Seafloor Seafloor Pressure$", "Seafloor Pressure Sensor (Tidal Pressure Gauge)", name)
+            if "Tidal Pressure Gauge" not in name:
+                name += " (Tidal Pressure Gauge)"
+            aliases.extend(["tidal pressure gauge", "seafloor tidal pressure gauge", "bottom pressure gauge", "seafloor pressure sensor"])
+            measurement_roles = ["absolute_bottom_pressure_measurement", "ocean_tide_observation"]
+            manufacturer = "Sea-Bird Electronics"
+            model = "SBE 54"
+            sensor_components = ["SBE 54 absolute pressure sensor"]
+            series = "PREST Series B" if "-PRESTB" in canonical else "PREST Series A"
+            notes = f"OOI source catalog uses generic type 'pressure'. RCA Atlas normalizes PREST as an absolute pressure gauge. OOI identifies {series} as Sea-Bird Electronics SBE 54; 'tidal pressure gauge' is a scientific/common alias and measurement use."
+            evidence.append(ev("SOURCE-OOI-PREST", canonical, "OOI PREST instrument class and deployed-instrument listing"))
+            urls.append(sources["SOURCE-OOI-PREST"]["source_url"])
+        hardware = ooi_hardware.get(canonical)
+        if hardware:
+            manufacturer = hardware["manufacturer"]
+            model = hardware["model"]
+            evidence.append(ev("SOURCE-OOI-SITE-INVENTORY", canonical, f"{hardware['source_file']} sha256:{hardware['source_sha256']}"))
+            urls.append(hardware["source_url"])
         add(
-            canonical, doc["title"], doc.get("instrument_type") or "instrument", doc.get("location") or "RCA",
+            canonical, name, instrument_type, doc.get("location") or "RCA",
             projects, "catalogued_instance", "source_catalogue_state_not_normalized", evidence,
             coszo_role=coszo_role, aliases=aliases, site=doc.get("site"), node=doc.get("node"),
             instrument_code=doc.get("instrument"), station=None, network=None,
             latitude=doc.get("latitude"), longitude=doc.get("longitude"), depth_m=doc.get("depth_m"),
-            manufacturer=None, model=None, sensor_components=[], source_system=doc.get("source_system"),
-            source_urls=urls, arcada_document_id=doc["document_id"], notes=None,
+            manufacturer=manufacturer, model=model, sensor_components=sensor_components, source_system=doc.get("source_system"),
+            source_urls=urls, arcada_document_id=doc["document_id"], notes=notes,
+            source_catalog_instrument_type=doc.get("instrument_type"), measurement_roles=measurement_roles,
+            official_ooi_instrument_class=hardware["instrument_class"] if hardware else None,
+            official_ooi_hardware_verified=bool(hardware),
         )
 
     # COSZO site geometry and station mappings.
@@ -348,9 +458,9 @@ def build(data_root: Path, output: Path) -> None:
          ev("SOURCE-LITERATURE", "OOI-ZOT-006", "DOI 10.1121/10.0036696"),
          ev("SOURCE-LITERATURE", "OOI-ZOT-119", "DOI 10.1121/10.0017104")],
         coszo_role=None, aliases=[], site=None, node=None, station=None, network=None, instrument_code=None,
-        latitude=None, longitude=None, depth_m=None, manufacturer="Optasense and Silixa", model=None,
-        sensor_components=["two Optasense DAS interrogators", "one Silixa DAS interrogator", "one Silixa DTS unit"],
-        source_system="OOI PI page and literature", source_urls=[sources["SOURCE-WEB-DAS-2021"]["source_url"]],
+        latitude=None, longitude=None, depth_m=None, manufacturer="OptaSense; Silixa", model="OptaSense QuantX DAS; Silixa iDASv3 DAS; Silixa ULTIMA SM DTS",
+        sensor_components=["two OptaSense QuantX DAS interrogators", "one Silixa iDASv3 DAS interrogator", "one Silixa ULTIMA SM DTS interrogator"],
+        source_system="OOI PI page, OOI experiment readme, and literature", source_urls=[sources["SOURCE-WEB-DAS-2021"]["source_url"], sources["SOURCE-OOI-DAS-2021-README"]["source_url"]],
         arcada_document_id=None, notes="Temporary shore-station interrogator experiment; not a permanent seafloor instrument.",
     )
     add(
@@ -435,6 +545,33 @@ def build(data_root: Path, output: Path) -> None:
             relationships.append({"source_id": row["instrument_id"], "predicate": "SUPPORTED_BY", "target_id": evidence["source_id"],
                                   **{k: v for k, v in evidence.items() if k != "source_id"}})
 
+    # Topology and taxonomy bridges used by site-level sensor-inventory
+    # traversal.  The records already preserve their precise deployment labels;
+    # these edges make the Summit a child of Southern Hydrate Ridge and declare
+    # relevant instrument types as sensors without conflating them.
+    ridge_eid = entity_id("Southern Hydrate Ridge")
+    summit_eid = entity_id("Southern Hydrate Ridge Summit")
+    entities.setdefault(ridge_eid, {"entity_id": ridge_eid, "name": "Southern Hydrate Ridge", "type": "location", "method": "source_metadata"})
+    entities.setdefault(summit_eid, {"entity_id": summit_eid, "name": "Southern Hydrate Ridge Summit", "type": "location", "method": "source_metadata"})
+    relationships.append({"source_id": summit_eid, "predicate": "PART_OF", "target_id": ridge_eid,
+                          "method": "curated_site_hierarchy", "evidence_source_id": "SOURCE-WEB-COSZO-EXISTING"})
+    sensor_eid = entity_id("sensor")
+    entities[sensor_eid] = {"entity_id": sensor_eid, "name": "sensor", "type": "instrument_supertype", "method": "curated_instrument_taxonomy"}
+    for type_name in {"absolute_pressure_gauge", "velocimeter", "seismometer", "broadband_seismometer", "short_period_seismometer"}:
+        type_eid = entity_id(type_name)
+        if type_eid in entities:
+            relationships.append({"source_id": type_eid, "predicate": "IS_A", "target_id": sensor_eid,
+                                  "method": "curated_instrument_taxonomy"})
+    current_meter_eid = entity_id("current meter")
+    entities[current_meter_eid] = {"entity_id": current_meter_eid, "name": "current meter", "type": "instrument_supertype", "method": "curated_instrument_taxonomy"}
+    relationships.append({"source_id": current_meter_eid, "predicate": "IS_A", "target_id": sensor_eid,
+                          "method": "curated_instrument_taxonomy"})
+    for type_name in {"velocimeter", "three_dimensional_current_meter"}:
+        type_eid = entity_id(type_name)
+        if type_eid in entities:
+            relationships.append({"source_id": type_eid, "predicate": "IS_A", "target_id": current_meter_eid,
+                                  "method": "curated_instrument_taxonomy"})
+
     # One retrieval chunk per inventory record.
     chunks = []
     for row in records:
@@ -447,6 +584,8 @@ def build(data_root: Path, output: Path) -> None:
             f"Deployment state: {row['deployment_state']}\nAliases: {aliases}\n"
             f"Sensor components: {components}"
         )
+        if row.get("measurement_roles"):
+            text += f"\nMeasurement roles: {', '.join(row['measurement_roles'])}"
         if row.get("manufacturer"):
             text += f"\nManufacturer: {row['manufacturer']}"
         if row.get("model"):

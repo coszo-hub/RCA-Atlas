@@ -6,6 +6,17 @@ import "./style.css";
 
 const WORKER_URL = "https://rca-atlas.quakehunt.workers.dev";
 
+function modelLabel(model) {
+  if (model === "gemini-2.5-flash") return "Gemini 2.5 Flash";
+  if (model === "gemini-3.5-flash-lite") return "Gemini 3.5 Flash-Lite";
+  if (model === "RCA Atlas graph evidence (no LLM)") return "Graph evidence · no LLM";
+  if (model === "Groq GPT-OSS 120B") return "Groq GPT-OSS 120B";
+  if (model?.startsWith("OpenAI gpt-")) return model.replace("OpenAI ", "OpenAI ").replaceAll("-", " ");
+  if (model === "RCA Atlas graph route") return "RCA Atlas graph route";
+  if (model === "axial_count_events (live catalog)") return "Live Axial catalog";
+  return model || "Atlas Auto";
+}
+
 function evidenceGraph(result) {
   const seen = new Set();
   const nodes = [];
@@ -55,6 +66,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("How many earthquakes occurred at Axial Seamount yesterday?");
+  const [answerModel, setAnswerModel] = useState("auto");
   const [askedQuestion, setAskedQuestion] = useState("");
   const graph = useMemo(() => evidenceGraph(result), [result]);
   const answer = result?.answer || "";
@@ -86,7 +98,7 @@ function App() {
       const response = await fetch(`${WORKER_URL}/v1/answer`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: question }),
+        body: JSON.stringify({ query: question, model: answerModel, answer_mode: "evidence" }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.answer) throw new Error(data.error || "Atlas is temporarily unavailable");
@@ -103,7 +115,7 @@ function App() {
     <main className="atlas-main">
       <form className="query-form" onSubmit={ask}>
         <BorderBeam size="md" colorVariant="colorful" strength={0.7} active={!loading}>
-          <div className="search-box"><span className="atlas-chip">Atlas</span><textarea value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question" rows="2" disabled={loading}/><div className="composer-footer"><span className="composer-chip">Evidence</span><span className="composer-chip">Auto</span><button type="submit" aria-label="Search Ask Atlas" disabled={loading}>↑</button></div></div>
+          <div className="search-box"><span className="atlas-chip">Atlas</span><textarea value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question" rows="2" disabled={loading}/><div className="composer-footer"><span className="composer-chip">Evidence</span><label className="model-select"><span className="visually-hidden">Answer model</span><select value={answerModel} onChange={(event) => setAnswerModel(event.target.value)} disabled={loading}><option value="auto">Auto · free fallback</option><optgroup label="Gemini · free"><option value="gemini-2.5-flash">Flash</option><option value="gemini-3.5-flash-lite">Flash-Lite</option></optgroup><optgroup label="Groq · free"><option value="groq-gpt-oss-120b">GPT-OSS 120B</option><option value="groq-gpt-oss-20b">GPT-OSS 20B</option><option value="groq-qwen3-8-27b">Qwen 3.8 27B</option></optgroup><option value="gpt-5.4-mini">OpenAI GPT-5.4 Mini</option><optgroup label="OpenAI · API credit required"><option value="gpt-5.6-sol" disabled>GPT-5.6 Sol</option><option value="gpt-5.5" disabled>GPT-5.5</option><option value="gpt-5.5-pro" disabled>GPT-5.5 Pro</option></optgroup></select></label><button type="submit" aria-label="Search Ask Atlas" disabled={loading}>↑</button></div></div>
         </BorderBeam>
       </form>
       {searched && <section className="response" aria-live="polite">
@@ -111,6 +123,8 @@ function App() {
         {loading && <div className="solving"><ThinkingOrb state="solving" size={64} theme="dark" aria-label="Synthesizing evidence"/><span>Retrieving evidence</span></div>}
         {error && <p className="error">{error}</p>}
         {answer && <div className="generated">{typed}<span className={complete ? "cursor done" : "cursor"}>|</span></div>}
+        {complete && result.answer_model && <div className="answer-model">Answered by {modelLabel(result.answer_model)}</div>}
+        {complete && (result.answer_links || []).length > 0 && <div className="answer-links"><span>Download</span>{result.answer_links.map((source) => <a key={`${source.id}-${source.url}`} href={source.url} target="_blank" rel="noreferrer">{source.title || source.id} ↗</a>)}</div>}
         {complete && <div className="sources"><span>Sources</span>{(result.answer_citations || []).map((source) => source.url ? <a key={`${source.id}-${source.url}`} href={source.url} target="_blank" rel="noreferrer">{source.title || source.id} ↗</a> : <span className="source-label" key={source.id}>{source.title || source.id}</span>)}</div>}
         {complete && graph.nodes.length > 1 && <section className="graph-view"><div className="graph-caption"><span>Evidence map</span><small>Hover a dot for its source</small></div><div className="graph-stage"><EvidenceGraph graph={graph}/></div></section>}
       </section>}

@@ -115,6 +115,10 @@ def primary_id(collection_id: str, filename: str, record: dict[str, Any]) -> str
     # The two corpora use `id` consistently for all addressable records.
     if collection_id == "coszo_hub":
         value = record.get("id")
+    elif filename in {"tools.jsonl", "tool_manifest.json"}:
+        # Tool names are stable identifiers and may be relationship endpoints
+        # (for example, a PI-portal download tool ACCESSIBLE_WITH an endpoint).
+        value = record.get("tool_id") or record.get("name")
     elif filename == "chunks.jsonl" and collection_id == "coszo_hub":
         value = record.get("id")
     elif filename == "source_documents.jsonl" and collection_id in {"arcada", "literature"}:

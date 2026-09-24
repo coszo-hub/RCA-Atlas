@@ -152,6 +152,24 @@ file's SHA-256, modification time, and a combined bundle fingerprint so an
 answer records exactly which correction version it used. Set
 `COSZO_CHRONFIX_REFRESH_TTL_SECONDS` to control the pull interval (default 300).
 
+## DAS25 cable and channel metadata
+
+The PI portal registry records the known DAS25 cable extent, but it does not
+invent a geographic trace from a file path. When an authorized DAS25 OptoDAS
+HDF5 file is available, extract only its small `/cableSpec` metadata record:
+
+```sh
+python3 src/coszo_hub_tools/extract_das_hdf5_metadata.py \
+  /secure/raw/DAS25/example.hdf5 \
+  --source-url http://piweb.ooirsn.uw.edu/das25/data/OptoDAS/.../example.hdf5 \
+  --output data/PIPortal/das_spatial_metadata.jsonl
+```
+
+The raw HDF5 remains outside `data/`; the output stores its SHA-256, along-fiber
+channel distances, cable length, and WGS84 channel locations only if the file
+actually contains complete, valid per-channel coordinates. A distance axis is
+not treated as latitude/longitude.
+
 ## Run and test
 
 ```sh
@@ -160,6 +178,7 @@ python3 -m unittest src/coszo_hub_tools/test_coszo_hub_agent_tools.py -v
 python3 -m unittest src/coszo_hub_tools/test_ooi_m2m_agent_tools.py -v
 python3 -m unittest src/coszo_hub_tools/test_earthscope_fdsn_agent_tools.py -v
 python3 -m unittest src/coszo_hub_tools/test_pi_portal_agent_tools.py -v
+PYTHONPATH=src/coszo_hub_tools python3 -m unittest src/coszo_hub_tools/test_extract_das_hdf5_metadata.py -v
 ```
 
 Rebuild the static corpus after intentionally taking a new snapshot:

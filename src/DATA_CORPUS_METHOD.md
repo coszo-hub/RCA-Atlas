@@ -156,6 +156,7 @@ build can be retained for rollback. Current normalized outputs live under
 | `Literature` | `chunks.jsonl` | works, citation occurrences, authors/topics, glossary | rerun literature acquisition and graph build |
 | `Websites` | `chunks.jsonl` | pages, figures, links, entities | recrawl public sites and repackage |
 | `Instruments` | `chunks.jsonl` | instruments, types, sources, infrastructure | rebuild after upstream corpus changes |
+| `FETCH` | `chunks.jsonl` | three Axial acoustic-geodetic transponders, station coordinates, directed range baselines, source-backed range products | rebuild from the archived AxialFetch source snapshot |
 | `coszo` | `graphrag/chunks.jsonl` | PDF sources, documents, pages, figures, entities | rebuild from document inbox/originals |
 | `Datasheets` | `graphrag/chunks.jsonl` | PDF sources, pages, figures, products | rebuild from document inbox/originals |
 | `Figures` | `graphrag/chunks.jsonl` | image sources, visual records, entities | rebuild after adding curated images/descriptions |
@@ -170,6 +171,25 @@ The `manifest.json` in each collection is authoritative for the node files,
 edge file, embedding input, record counts, source revision, and known
 limitations. Counts below describe the current 2026-09-19 snapshot and will
 change when a collection is rebuilt.
+
+## FETCH acoustic geodetic transponders at Axial Seamount
+
+`src/fetch_transponders/build_fetch_corpus.py` builds the `FETCH` collection
+from the archived AxialFetch README and configuration under
+`source_material/original_documents/AxialFetch/`. The upstream repository,
+commit, source-file checksums, station identifiers, and coordinates are kept
+in the generated source records. The collection has three explicit
+ocean-bottom acoustic-geodetic transponders: Northern/2504, Western/2503, and
+Eastern/2502. It represents six directed acoustic ranges across the North-West
+(1.765 km), North-East (1.642 km), and West-East (3.260 km) station pairs.
+
+The retrieval chunks distinguish FETCH from generic hydrophones, DAS, and
+ambient-noise interferometry. They describe the source-backed inputs
+(pressure, temperature, sound speed, inclinometer, and acoustic travel time)
+and derived, tilt-corrected baseline-distance products. Neither deployment
+depth nor manufacturer is asserted: the archived source snapshot does not
+establish those fields. The raw multi-year time series remain source material
+and are not copied into the graph-ready collection.
 
 ## RCA Information (upstream Arcada provenance)
 

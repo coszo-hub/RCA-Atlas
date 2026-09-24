@@ -22,7 +22,10 @@ make_archive() {
   destination="$output_dir/${archive_name}-${short_fingerprint}.tar.zst"
   echo "Building $(basename "$destination")"
   tar --exclude='.DS_Store' --exclude='__pycache__' --exclude='*.pyc' \
-      --exclude='.env' --exclude='.env.*' -cf - "$@" |
+      --exclude='.env' --exclude='.env.*' \
+      --exclude='runtime_data/Literature/full_text_cache' \
+      --exclude='runtime_data/FreeLLMAPI/data' \
+      --exclude='runtime_data/**/__pycache__' -cf - "$@" |
     zstd -T0 -10 -f -o "$destination"
 }
 
@@ -61,4 +64,3 @@ print(json.dumps(manifest, indent=2))
 PY
 
 echo "Release assets are ready in $output_dir"
-

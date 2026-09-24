@@ -19,7 +19,7 @@ class CorpusCatalogTests(unittest.TestCase):
         ids = {row["collection_id"] for row in self.catalog["collections"]}
         expected = {value[0] for value in COLLECTION_NAMES.values()}
         self.assertEqual(ids, expected)
-        self.assertEqual(self.catalog["totals"]["collections"], 13)
+        self.assertEqual(self.catalog["totals"]["collections"], 15)
 
     def test_rca_information_has_a_friendly_display_name(self) -> None:
         collection = next(row for row in self.catalog["collections"] if row["collection_id"] == "arcada")

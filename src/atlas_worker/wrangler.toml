@@ -7,9 +7,15 @@ compatibility_date = "2026-09-21"
 [vars]
 ALLOWED_ORIGIN = "https://coszo.org"
 ANSWER_MODEL = "gemini-2.5-flash"
+# Update this when the OpenRouter free catalog changes; the Worker falls
+# through cleanly if its temporary provider capacity is unavailable.
+OPENROUTER_FREE_MODEL = "z-ai/glm-5.2:free"
 
 # Secrets, never committed. Configure after deployment:
 #   wrangler secret put GEMINI_API_KEY
+#   wrangler secret put GROQ_API_KEY
+#   wrangler secret put OPENROUTER_API_KEY
+#   wrangler secret put OPENAI_API_KEY
 #   wrangler secret put ATLAS_API_KEY
 #   wrangler secret put ATLAS_API_ORIGIN
 # Optional when Turnstile protection is added:

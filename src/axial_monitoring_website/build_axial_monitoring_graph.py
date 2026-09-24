@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+"""Build the graph-ready corpus for OSU's Axial monitoring landing page.
+
+The source page is deliberately archived first under ``source_material``.  This
+builder does not fetch the web, so rebuilding is reproducible from that source
+snapshot.  It represents changing plots as public live endpoints, not frozen
+scientific observations.  The page says the plots refresh every 15 minutes and
+are pre-QA; both constraints remain in the generated evidence.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+from datetime import datetime, timezone
+from html import unescape
+from pathlib import Path
+from urllib.parse import urljoin
+
+from axial_monitoring_tools import TOOL_SCHEMAS
+
+
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_SOURCE = ROOT / "source_material/original_documents/AxialCEOAS"
+DEFAULT_OUTPUT = ROOT / "data/AxialMonitoring"
+PAGE_URL = "https://axial.ceoas.oregonstate.edu/index.html"
+SOURCE_PAGES = (
+    "index.html", "axial_blog.html", "axial_expeditions.html", "Forecasts.html", "Forecasts2.html", "Forecasts3.html", "Forecasts4.html",
+    "mj03f.html", "mj03e.html", "mj03d.html", "mj03b.html", "diffs.html", "rates.html", "tilt.html", "alarms.html",
+    "CTD.html", "CTD2.html", "CTD3.html", "CTD4.html", "status.html",
+)
+
+STREAMS = (
+    ("BOTPT-A301-MJ03F", "BOTPT-A301-MJ03F — Central Caldera", "Central Caldera", "mj03f.html"),
+    ("BOTPT-A302-MJ03E", "BOTPT-A302-MJ03E — Eastern Caldera", "Eastern Caldera", "mj03e.html"),
+    ("BOTPT-A303-MJ03D", "BOTPT-A303-MJ03D — International District", "International District", "mj03d.html"),
+    ("BOTPT-A304-MJ03B", "BOTPT-A304-MJ03B — ASHES Vent Field", "ASHES Hydrothermal Field", "mj03b.html"),
+    ("CTDPFB304-MJ03B", "ASHES Seafloor CTD (MJ03B-CTDPFB304)", "ASHES Hydrothermal Field", "CTD.html"),
+    ("CTDPFB306-MJ03E", "Eastern Seafloor CTD (MJ03E-CTDPFB306)", "Eastern Caldera", "CTD2.html"),
+    ("CTDPFB305-MJ03F", "Central Seafloor CTD (MJ03F-CTDPFB305)", "Central Caldera", "CTD3.html"),
+    ("CTDPFB307-MJ03D", "Int. Dist. Seafloor CTD (MJ03D-CTDPFB307)", "International District", "CTD4.html"),
+)
+PRODUCTS = (
+    ("Differential Uplift Rate from MJ03E-F", "diffs.html", "derived_plot"),
+    ("Long-Term Rates of Uplift (BPR data)", "rates.html", "derived_plot"),
+    ("Long-Term Rates of Tilt (LILY data)", "tilt.html", "derived_plot"),
+    ("Event Alarms", "alarms.html", "operational_alarm_page"),
+    ("Inflation Forecasts — Method 1", "Forecasts.html", "forecast"),
+    ("Inflation Forecasts — Method 2", "Forecasts2.html", "forecast"),
+    ("Inflation Forecasts — Method 3", "Forecasts3.html", "forecast"),
+    ("Inflation Forecasts — Method 4", "Forecasts4.html", "forecast"),
+    ("Axial eruption status", "https://axial.ceoas.oregonstate.edu/status/", "status_page"),
+)
+
+
+def stable_id(prefix: str, value: str) -> str:
+    return f"{prefix}-{hashlib.sha256(value.encode('utf-8')).hexdigest()[:16]}"
+
+
+def clean_html(html: str) -> str:
+    html = re.sub(r"(?is)<(script|style).*?>.*?</\1>", " ", html)
+    def preserve_image_caption(match: re.Match) -> str:
+        tag = match.group(0)
+        alt = re.search(r'''(?is)\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))''', tag)
+        if not alt:
+            return " "
+        caption = next(value for value in alt.groups() if value is not None).strip()
+        return f" Figure caption: {unescape(caption)}. " if caption else " "
+    html = re.sub(r"(?is)<img\b[^>]*>", preserve_image_caption, html)
+    text = re.sub(r"(?s)<[^>]+>", " ", html)
+    return re.sub(r"\s+", " ", unescape(text)).strip()
+
+
+def page_title(raw: str, fallback: str) -> str:
+    match = re.search(r"(?is)<title[^>]*>(.*?)</title>", raw)
+    return clean_html(match.group(1)) if match else fallback
+
+
+def page_url(filename: str) -> str:
+    return "https://axial.ceoas.oregonstate.edu/status/" if filename == "status.html" else urljoin(PAGE_URL, filename)
+
+
+def text_chunks(text: str, *, maximum_words: int = 475, overlap_words: int = 60) -> list[str]:
+    words = text.split()
+    if not words:
+        return []
+    return [" ".join(words[start:start + maximum_words]) for start in range(0, len(words), maximum_words - overlap_words)]
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+
+
+def build(source: Path, output: Path) -> None:
+    source_dir = source if source.is_dir() else source.parent
+    landing_raw = (source_dir / "index.html").read_text(encoding="utf-8", errors="replace")
+    if "Realtime data from the OOI instruments at Axial Seamount" not in clean_html(landing_raw):
+        raise ValueError("Expected Axial CEOAS landing-page title was not found")
+
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "text").mkdir(exist_ok=True)
+    pages: list[dict] = []
+    chunks: list[dict] = []
+    sources: list[dict] = []
+    page_sources: dict[str, str] = {}
+    landing_chunk_ids: list[str] = []
+    retrieved_at = datetime.now(timezone.utc).isoformat()
+    for filename in SOURCE_PAGES:
+        path = source_dir / filename
+        if not path.is_file():
+            raise ValueError(f"Required archived Axial CEOAS page is missing: {path}")
+        raw = path.read_text(encoding="utf-8", errors="replace")
+        text = clean_html(raw)
+        if not text:
+            raise ValueError(f"Archived Axial CEOAS page has no extractable text: {path}")
+        url = page_url(filename)
+        page_id = stable_id("PAGE", url)
+        source_id = stable_id("SOURCE", url)
+        title = page_title(raw, filename)
+        text_path = output / "text" / f"{page_id}.md"
+        text_path.write_text(text + "\n", encoding="utf-8")
+        pages.append({"page_id": page_id, "url": url, "title": title, "site_host": "axial.ceoas.oregonstate.edu", "source_format": "static_html", "selection_reason": "RCA Axial operational monitoring and scientific context", "content_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(), "text_path": text_path.relative_to(output).as_posix(), "retrieved_at": retrieved_at, "text_source": "public_web_page", "source_is_untrusted_data": True, "data_caveat": "The publisher labels monitoring data as pre-commissioned and not through Quality Assurance checks."})
+        sources.append({"source_id": source_id, "name": title, "url": url, "publisher": "Oregon State University CEOAS", "access": "public", "content_sha256": pages[-1]["content_sha256"], "retrieved_at": retrieved_at, "rights_note": "Source URL and attribution retained; live plots remain at the publisher."})
+        page_sources[filename] = source_id
+        for position, part in enumerate(text_chunks(text), 1):
+            chunk_id = f"{page_id}-CHUNK-{position:03d}"
+            chunks.append({"chunk_id": chunk_id, "page_id": page_id, "source_url": url, "title": title, "section_heading": title, "position": position - 1, "word_count": len(part.split()), "text": part, "source_is_untrusted_data": True})
+            if filename == "index.html":
+                landing_chunk_ids.append(chunk_id)
+    entities: list[dict] = []
+    endpoints: list[dict] = []
+    relationships = []
+    for page in pages:
+        relationships.append({"source_id": page["page_id"], "predicate": "SOURCED_FROM", "target_id": page_sources[next(name for name in SOURCE_PAGES if page_url(name) == page["url"])]})
+    for chunk in chunks:
+        relationships.append({"source_id": chunk["page_id"], "predicate": "HAS_CHUNK", "target_id": chunk["chunk_id"]})
+    site_ids: dict[str, str] = {}
+    for stream_key, name, site, href in STREAMS:
+        stream_id = stable_id("AXIAL-STREAM", stream_key)
+        site_id = site_ids.setdefault(site, stable_id("AXIAL-SITE", site))
+        if not any(row["entity_id"] == site_id for row in entities):
+            entities.append({"entity_id": site_id, "name": site, "type": "Axial Seamount monitoring site", "method": "publisher_named_location"})
+        entities.append({
+            "entity_id": stream_id, "name": name, "type": "instrument_stream",
+            "canonical_id": stream_key, "method": "publisher_named_instrument_stream",
+            "data_caveat": "Live plot source; publisher says pre-commissioned data have not passed QA.",
+        })
+        endpoint_id = stable_id("AXIAL-ENDPOINT", href)
+        endpoints.append({"endpoint_id": endpoint_id, "name": name + " live plot", "url": urljoin(PAGE_URL, href), "endpoint_type": "public_live_plot", "refresh_cadence": "publisher states updated every 15 minutes", "access": "public"})
+        relationships.extend((
+            {"source_id": landing_chunk_ids[0], "predicate": "MENTIONS", "target_id": stream_id},
+            {"source_id": stream_id, "predicate": "LOCATED_AT", "target_id": site_id},
+            {"source_id": stream_id, "predicate": "LIVE_DATA_AVAILABLE_AT", "target_id": endpoint_id},
+        ))
+    for name, href, endpoint_type in PRODUCTS:
+        endpoint_id = stable_id("AXIAL-ENDPOINT", href)
+        endpoints.append({"endpoint_id": endpoint_id, "name": name, "url": urljoin(PAGE_URL, href), "endpoint_type": endpoint_type, "access": "public", "data_caveat": "Interpret changing status, alarms, forecasts, and plots as live publisher content."})
+        relationships.append({"source_id": stable_id("PAGE", PAGE_URL), "predicate": "LINKS_TO", "target_id": endpoint_id})
+
+    write_jsonl(output / "pages.jsonl", pages)
+    write_jsonl(output / "chunks.jsonl", chunks)
+    write_jsonl(output / "sources.jsonl", sources)
+    write_jsonl(output / "entities.jsonl", entities)
+    write_jsonl(output / "endpoints.jsonl", endpoints)
+    write_jsonl(output / "relationships.jsonl", relationships)
+    write_jsonl(output / "tools.jsonl", TOOL_SCHEMAS)
+    ids = {row["page_id"] for row in pages} | {row["chunk_id"] for row in chunks} | {row["source_id"] for row in sources} | {row["entity_id"] for row in entities} | {row["endpoint_id"] for row in endpoints}
+    unresolved = [row for row in relationships if row["source_id"] not in ids or row["target_id"] not in ids]
+    validation = {"status": "pass" if not unresolved else "fail", "checks": {"all_relationship_endpoints_resolve": not unresolved, "landing_page_title_verified": True, "all_archived_pages_present": len(pages) == len(SOURCE_PAGES), "all_live_endpoints_are_public_urls": all(row["url"].startswith("https://") for row in endpoints)}, "counts": {"pages": len(pages), "chunks": len(chunks), "sources": len(sources), "entities": len(entities), "endpoints": len(endpoints), "relationships": len(relationships)}, "problems": {"unresolved_relationships": unresolved}}
+    (output / "validation_report.json").write_text(json.dumps(validation, indent=2) + "\n", encoding="utf-8")
+    manifest = {"schema_version": "1.0", "generated_at": datetime.now(timezone.utc).isoformat(), "scope": "OSU Axial Seamount operational monitoring documentation and public live endpoints", "source_input": source_dir.relative_to(ROOT).as_posix(), "embedding_input": "chunks.jsonl", "graph_node_inputs": ["pages.jsonl", "chunks.jsonl", "sources.jsonl", "entities.jsonl", "endpoints.jsonl"], "graph_edge_input": "relationships.jsonl", "live_tool_manifest": "tools.jsonl", "validation_status": validation["status"], "counts": {**validation["counts"], "tools": len(TOOL_SCHEMAS)}, "limitations": ["Archived text explains monitoring methods, sensor roles, and historical plots; it is not a substitute for raw data.", "Live plots, alarms, forecasts, and status are not frozen observations and should be refreshed only when a user requests current information.", "Publisher labels the data as pre-commissioned and not through Quality Assurance checks."]}
+    (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    (output / "README.md").write_text("# OSU Axial monitoring corpus\n\nThis collection archives the public OSU Axial CEOAS explanatory pages and represents changing plots as live endpoints. It does not preserve current plot pixels as static scientific evidence. See `manifest.json` for caveats and provenance.\n", encoding="utf-8")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    args = parser.parse_args()
+    build(args.source, args.output)
+
+
+if __name__ == "__main__":
+    main()

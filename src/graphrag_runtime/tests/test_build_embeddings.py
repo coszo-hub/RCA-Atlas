@@ -120,6 +120,31 @@ class BuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(BuildError, "Duplicate record key"):
             load_records(self.catalog_path)
 
+    def test_reuses_unchanged_vectors_after_corpus_growth(self):
+        original = FakeEmbedder()
+        reuse = self.root / "reuse"
+        build_embeddings(
+            self.catalog_path, reuse, self.root / "cache", batch_size=2,
+            embedder_factory=lambda _cache, _threads: original,
+        )
+        rows = [json.loads(line) for line in self.input_path.read_text(encoding="utf-8").splitlines()]
+        rows.append({"chunk_id": "f", "text": "foxtrot"})
+        self.input_path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+        catalog = json.loads(self.catalog_path.read_text(encoding="utf-8"))
+        catalog["build_fingerprint_sha256"] = "e" * 64
+        catalog["collections"][0]["embedding_inputs"][0]["sha256"] = file_hash(self.input_path)
+        catalog["collections"][0]["embedding_inputs"][0]["records"] = len(rows)
+        catalog["totals"]["embedding_records"] = len(rows)
+        self.catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+        incremental = FakeEmbedder()
+        metadata = build_embeddings(
+            self.catalog_path, self.output, self.root / "cache", batch_size=2,
+            embedder_factory=lambda _cache, _threads: incremental, reuse_dir=reuse,
+        )
+        self.assertEqual(incremental.seen, ["foxtrot"])
+        self.assertEqual(metadata["reused_record_count"], 5)
+        self.assertEqual(np.load(self.output / "embeddings.npy").shape, (6, MODEL_DIMENSION))
+
 
 if __name__ == "__main__":
     unittest.main()
