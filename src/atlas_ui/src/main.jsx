@@ -6,6 +6,9 @@ import "./style.css";
 
 const WORKER_URL = "https://rca-atlas.quakehunt.workers.dev";
 
+// The Worker now cites sources inline as [n]; this page lists its sources below the answer, so drop the markers.
+const stripCitations = (text) => String(text || "").replace(/\s*\[\d+(?:\s*[,–-]\s*\d+)*\]/g, "");
+
 function modelLabel(model) {
   if (model === "gemini-2.5-flash") return "Gemini 2.5 Flash";
   if (model === "gemini-3.5-flash-lite") return "Gemini 3.5 Flash-Lite";
@@ -69,7 +72,7 @@ function App() {
   const [answerModel, setAnswerModel] = useState("auto");
   const [askedQuestion, setAskedQuestion] = useState("");
   const graph = useMemo(() => evidenceGraph(result), [result]);
-  const answer = result?.answer || "";
+  const answer = stripCitations(result?.answer);
 
   useEffect(() => {
     if (!answer) return undefined;
