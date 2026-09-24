@@ -99,3 +99,36 @@ describe("AuvLod", () => {
     expect(lod.stats().L2).toBe(1);
   });
 });
+
+describe("AuvLod fallback and load slots", () => {
+  it("a 16 m tile that arrives after a sibling failed adds nothing and everything built is disposed", async () => {
+    let release; const slow = new Promise(r => { release = r; });
+    vi.stubGlobal("fetch", serve(index(), { fail: ["L0/0_1.bin.gz"], hold: { "L0/0_0.bin.gz": slow } }));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const geo = vi.spyOn(THREE.BufferGeometry.prototype, "dispose"), tex = vi.spyOn(THREE.DataTexture.prototype, "dispose");
+    const s = scene(), mat = { dispose: vi.fn() };
+    const created = AuvLod.create(s, {}, () => mat, "/auv/");
+    await flush();
+    setTimeout(release, 50);
+    expect(await created).toBeNull();
+    await new Promise(r => setTimeout(r, 200));
+    expect(s.children).toEqual([]);
+    expect(geo).toHaveBeenCalledTimes(1);   // the late 0_0 geometry
+    expect(mat.dispose).toHaveBeenCalledTimes(3);   // one material per level
+    expect(tex).toHaveBeenCalledTimes(3);   // the coverage masks
+  });
+
+  it("tiles in their failure backoff do not take load slots", async () => {
+    const l1 = Array.from({ length: 7 }, (_, x) => [0, x]);
+    const f = serve(index(l1, []), { fail: ["L1/0_0.bin.gz"], hold: Object.fromEntries(l1.slice(1).map(([y, x]) => [`L1/${y}_${x}.bin.gz`, new Promise(() => {})])) });
+    vi.stubGlobal("fetch", f);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const lod = await AuvLod.create(scene(), {}, () => ({}), "/auv/");
+    const [cx, cz] = lod.center(1, "0_0"), t = { x: cx, z: cz };
+    const asked = key => f.mock.calls.some(([u]) => String(u).endsWith(`L1/${key}.bin.gz`));
+    lod.update(t, 10, 1000); await flush(); await flush();   // 0_0 fails at once; 0_1 … 0_5 stay in flight
+    expect(asked("0_6")).toBe(false);
+    lod.update(t, 10, 1300); await flush();   // one slot left: it goes to 0_6, not the failed 0_0
+    expect(asked("0_6")).toBe(true);
+  });
+});

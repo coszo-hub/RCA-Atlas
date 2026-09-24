@@ -25,7 +25,7 @@ export class AuvLod {
     const lod = new AuvLod(scene3d, U, makeMaterial, base, index);
     try { await lod._loadBase(); } catch (err) {
       // An optional layer: without its 16 m base the summit falls back to the GMRT grid.
-      for (const key of [...lod.shown[0].keys()]) lod._hide(0, key);
+      lod.dispose();
       console.warn(`Axial summit detail is unavailable: ${err.message}`);
       return null;
     }
@@ -97,6 +97,7 @@ export class AuvLod {
     this.masks[k].t.image.data[ty * L.tilesX + tx] = on ? 255 : 0; this.masks[k].t.needsUpdate = true;
   }
   _show(k, key, g) {
+    if (this.disposed) { g.dispose(); return; }   // a late arrival after the layer was dropped
     if (this.shown[k].has(key)) return;
     const mesh = new THREE.Mesh(g, this.mats[k]);
     mesh.frustumCulled = false;   // heights are applied in the shader; bounds at y=0 would cull wrongly
@@ -106,7 +107,21 @@ export class AuvLod {
     const mesh = this.shown[k].get(key); if (!mesh) return;
     this.scene3d.remove(mesh); this.shown[k].delete(key); this._setMask(k, key, false);
   }
-  async _loadBase() { await Promise.all([...this.levels[0].have].map(async key => this._show(0, key, await this._geometry(0, key)))); }
+  // Settle every 16 m tile before reporting a failure, so none arrives after the caller has cleaned up.
+  async _loadBase() {
+    const results = await Promise.allSettled([...this.levels[0].have].map(async key => this._show(0, key, await this._geometry(0, key))));
+    const failed = results.find(r => r.status === "rejected");
+    if (failed) throw failed.reason;
+  }
+
+  dispose() {
+    this.disposed = true;
+    for (let k = 0; k < this.shown.length; k++) for (const [key, mesh] of [...this.shown[k]]) { this._hide(k, key); if (k === 0) mesh.geometry.dispose(); }
+    for (const g of this.cache.values()) g.dispose();
+    this.cache.clear();
+    for (const m of this.mats) m.dispose?.();
+    for (const { t } of this.masks) t.dispose();
+  }
 
   sample(lon, lat) {
     const L0 = this.levels[0], N = this.index.tileCells, S = this.S;
@@ -125,7 +140,9 @@ export class AuvLod {
     const want = wanted(this.levels, target, camDist, this.center);
     for (const k of [2, 1]) {
       for (const key of [...this.shown[k].keys()]) if (!want[k].has(key)) this._hide(k, key);
-      const missing = [...want[k]].filter(key => !this.shown[k].has(key) && this.levels[k].have.has(key))
+      // Tiles already loading or in their failure backoff do not take one of the load slots.
+      const t = performance.now(), idle = key => !this.pending.has(`${k}:${key}`) && !(this.failed.get(`${k}:${key}`) > t);
+      const missing = [...want[k]].filter(key => !this.shown[k].has(key) && this.levels[k].have.has(key) && idle(key))
         .map(key => { const [cx, cz] = this.center(k, key); return [Math.hypot(cx - target.x, cz - target.z), key]; })
         .sort((a, b) => a[0] - b[0]).slice(0, Math.max(0, 6 - this.pending.size));
       for (const [, key] of missing) this._geometry(k, key).then(g => {
