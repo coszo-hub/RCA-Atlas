@@ -39,3 +39,23 @@
 .sources a { display: block; color: var(--text-secondary); font-size: 12px; word-break: break-all; margin: 3px 0; }
 .correction { color: var(--text-secondary); font-size: 12px; }
 .muted { color: var(--text-muted); }
+.series-bar { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.series-bar select, .plots select { background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--hairline-strong); border-radius: 4px; padding: 4px 6px; max-width: 220px; }
+.custom-range { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary); }
+.custom-range input { background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--hairline-strong); border-radius: 3px; }
+.chart { width: 100%; }
+.chart-foot { color: var(--text-muted); font-size: 11px; }
+.chart-foot a { color: var(--text-secondary); }
+.degraded { color: var(--text-secondary); font-size: 12.5px; }
+.degraded button { margin-left: 6px; background: transparent; border: 1px solid var(--hairline-strong); border-radius: 3px; cursor: pointer; }
+.plots figure { margin: 8px 0; } .plots img { width: 100%; border-radius: 3px; background: #fff; }
+.plots figcaption { color: var(--text-muted); font-size: 11px; }
+.files ul { list-style: none; padding: 0; margin: 6px 0; max-height: 220px; overflow-y: auto; }
+.files li button, .files li a { background: transparent; border: 0; color: var(--text-primary); cursor: pointer; padding: 3px 0; font-family: var(--font-mono); font-size: 12px; }
+.crumbs { color: var(--text-secondary); font-size: 11.5px; }
+.custom-range input { color-scheme: dark; padding: 3px 4px; }
+.custom-range button, .crumbs button { background: transparent; color: var(--text-primary); border: 1px solid var(--hairline-strong); border-radius: 3px; padding: 3px 10px; cursor: pointer; }
+.crumbs button { margin-left: 8px; padding: 1px 8px; font-size: 11px; }
+.custom-range .degraded { flex-basis: 100%; margin: 0; }
+.live-data details summary { cursor: pointer; color: var(--text-secondary); font-size: 12.5px; margin: 8px 0; }
+.files + .files, .series + .files, .waveform + .files { margin-top: 10px; }

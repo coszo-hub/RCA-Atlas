@@ -3,6 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import SensorDetail from "./SensorDetail.jsx";
 import { bundleFixture } from "../test/fixtures.js";
 
+// These tests cover status and access routes; the live views have their own tests (live/LiveData.test.jsx)
+// and would otherwise share these single-reply fetch stubs.
+vi.mock("./live/LiveData.jsx", () => ({ default: () => <section className="live-data" /> }));
 const b = bundleFixture();
 afterEach(() => vi.unstubAllGlobals());
 
