@@ -6,6 +6,7 @@ import argparse
 import collections
 import hashlib
 import json
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -125,6 +126,7 @@ def build(data_root: Path, output: Path) -> None:
             "deployment_state": deployment_state,
             "evidence": evidence,
             "source_is_untrusted_data": True,
+            "measurement_roles": [],
             **extra,
         }
         records.append(row)
@@ -171,14 +173,31 @@ def build(data_root: Path, output: Path) -> None:
             evidence.append(ev("SOURCE-WEB-DAS24", "PAGE-08de9a173dad7b20-CHUNK-001"))
         if canonical == "PI-DAS25":
             evidence.append(ev("SOURCE-WEB-DAS25", "PAGE-cf03b8afa91f9be0-CHUNK-001"))
+        instrument_type = doc.get("instrument_type") or "instrument"
+        name = doc["title"]
+        aliases = list(aliases)
+        measurement_roles: list[str] = []
+        notes = None
+        # OOI's source catalog labels PREST records only as generic "pressure".
+        # These are absolute pressure gauges; retain the commonly used tidal
+        # pressure gauge name as an alias and distinguish its bottom-pressure role.
+        if re.search(r"(?:^|-)PREST[A-Z0-9]+$", canonical):
+            instrument_type = "absolute_pressure_gauge"
+            name = re.sub(r"Seafloor Seafloor Pressure$", "Seafloor Pressure Sensor (Tidal Pressure Gauge)", name)
+            if "Tidal Pressure Gauge" not in name:
+                name += " (Tidal Pressure Gauge)"
+            aliases.extend(["tidal pressure gauge", "seafloor tidal pressure gauge", "bottom pressure gauge", "seafloor pressure sensor"])
+            measurement_roles = ["absolute_bottom_pressure_measurement", "ocean_tide_observation"]
+            notes = "OOI source catalog uses generic type 'pressure'. RCA Atlas normalizes PREST as an absolute pressure gauge; 'tidal pressure gauge' is a scientific/common alias and measurement use, not a separately verified manufacturer model."
         add(
-            canonical, doc["title"], doc.get("instrument_type") or "instrument", doc.get("location") or "RCA",
+            canonical, name, instrument_type, doc.get("location") or "RCA",
             projects, "catalogued_instance", "source_catalogue_state_not_normalized", evidence,
             coszo_role=coszo_role, aliases=aliases, site=doc.get("site"), node=doc.get("node"),
             instrument_code=doc.get("instrument"), station=None, network=None,
             latitude=doc.get("latitude"), longitude=doc.get("longitude"), depth_m=doc.get("depth_m"),
             manufacturer=None, model=None, sensor_components=[], source_system=doc.get("source_system"),
-            source_urls=urls, arcada_document_id=doc["document_id"], notes=None,
+            source_urls=urls, arcada_document_id=doc["document_id"], notes=notes,
+            source_catalog_instrument_type=doc.get("instrument_type"), measurement_roles=measurement_roles,
         )
 
     # COSZO site geometry and station mappings.
@@ -447,6 +466,8 @@ def build(data_root: Path, output: Path) -> None:
             f"Deployment state: {row['deployment_state']}\nAliases: {aliases}\n"
             f"Sensor components: {components}"
         )
+        if row.get("measurement_roles"):
+            text += f"\nMeasurement roles: {', '.join(row['measurement_roles'])}"
         if row.get("manufacturer"):
             text += f"\nManufacturer: {row['manufacturer']}"
         if row.get("model"):
