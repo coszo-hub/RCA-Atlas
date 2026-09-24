@@ -1,5 +1,5 @@
 const KIND = { 404: "notfound", 422: "bad", 502: "upstream", 503: "busy", 504: "timeout" };
-const ATLAS_WORKER = "https://rca-atlas.quakehunt.workers.dev";
+export const ATLAS_WORKER = "https://rca-atlas.quakehunt.workers.dev";
 // Development keeps Vite's local gateway proxy; the static production site
 // uses the same-origin-safe Worker proxy into that bounded gateway.
 const LIVE_DATA_API = import.meta.env.PROD ? `${ATLAS_WORKER}/v1/live` : "/api";
@@ -28,18 +28,3 @@ export const plots = (refdes, o) => api(`/plots/${encodeURIComponent(refdes)}`, 
 export const waveform = (station, minutes, channel, o) => api(`/waveform/${station}?${q({ minutes, channel })}`, o);
 export const waveformHealth = (station, channel, o) => api(`/waveform/${station}/health?${q({ channel })}`, o);
 export const files = (key, endpoint, path, o) => api(`/files/${encodeURIComponent(key)}?${q({ endpoint, path })}`, o);
-export async function chat(question, { signal, fetchImpl = fetch } = {}) {
-  let response;
-  try {
-    response = await fetchImpl(`${ATLAS_WORKER}/v1/answer`, {
-      method: "POST", signal, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: question, answer_mode: "evidence" }),
-    });
-  } catch (error) {
-    if (error?.name === "AbortError") throw error;
-    return { ok: false, kind: "unreachable", source: "RCA Atlas", message: "The Graph-RAG service is unavailable." };
-  }
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.answer) return { ok: false, kind: KIND[response.status] ?? "upstream", source: "RCA Atlas", message: data.error || "The Graph-RAG service is unavailable." };
-  return { ok: true, data: { answer: data.answer, citations: data.answer_citations || [] } };
-}

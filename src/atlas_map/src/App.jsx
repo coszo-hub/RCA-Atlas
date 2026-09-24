@@ -12,7 +12,10 @@ import SitePanel from "./panels/SitePanel.jsx";
 import UnplacedPanel from "./panels/UnplacedPanel.jsx";
 import { INSET as inset, hudBottom } from "./ui/layout.js";
 import Tooltip from "./ui/Tooltip.jsx";
-import ChatPanel, { chatStartsOpen } from "./chat/ChatPanel.jsx";
+import AskPanel, { askStartsOpen } from "./ask/AskPanel.jsx";
+import { EvidenceLayer } from "./scene/EvidenceLayer.js";
+import { frameView } from "./scene/evidenceMath.js";
+import { tourOf } from "./evidence/resolve.js";
 
 
 export default function App() {
@@ -35,6 +38,7 @@ export default function App() {
 
 function Atlas({ bundle, onError }) {
   const canvasRef = useRef(null), overlayRef = useRef(null), layerRef = useRef(null), hudRef = useRef(null), rightRef = useRef(null);
+  const evidenceRef = useRef(null), evLayerRef = useRef(null);
   const [scene, setScene] = useState(null);
   const [regionKey, setRegionKey] = useState("overview");
   const [focus, setFocus] = useState(new Set());
@@ -43,8 +47,12 @@ function Atlas({ bundle, onError }) {
   const [sensorId, setSensorId] = useState(null);   // the sensor detail (Task 8) opens for it
   const [unplacedOpen, setUnplacedOpen] = useState(false);   // the list of sensors with no position and no site
   const [sideMin, setSideMin] = useState(false);   // the site or unplaced panel is minimized to a tab; opening one restores it
-  const [chatOpen, setChatOpen] = useState(chatStartsOpen);   // ChatPanel owns and persists it; the top row follows it
+  const [chatOpen, setChatOpen] = useState(askStartsOpen);   // AskPanel owns and persists it; the top row follows it
+  // Ask Atlas, shared by the panel and the evidence layer: the answer whose evidence is on the map, the item whose
+  // card is open (click, ←/→), and the one under the pointer (a superscript, a table row, or a spike).
+  const [ask, setAsk] = useState({ evidence: null, activeN: null, hoverN: null });
   const [deep, setDeep] = useState(false);   // Axial's subsurface (earthquakes, magma chamber, faults) is shown
+  const evidenceDeep = useRef(false);   // the subsurface was turned on to show an answer's earthquakes
 
   // One right-hand panel at a time: a site (with its sensors) or the unplaced list (with theirs).
   const showSite = useCallback(site => {
@@ -70,7 +78,7 @@ function Atlas({ bundle, onError }) {
   }, [bundle]);
 
   useEffect(() => {
-    let sc, layer, cancelled = false;
+    let sc, layer, evLayer, cancelled = false;
     loadGrids(bundle.terrainMeta).then(async grids => {
       if (cancelled) return;
       sc = new AtlasScene(canvasRef.current, bundle, grids);
@@ -89,10 +97,18 @@ function Atlas({ bundle, onError }) {
         onCableHover: (line, ev) => setHover(h => (ev ? { kind: "cable", item: line, ...at(ev) } : h?.kind === "cable" ? null : h)),
       });
       layerRef.current = layer;
-      sc.onFrame = () => layer.update();
+      evLayer = new EvidenceLayer(evidenceRef.current, sc, bundle, {
+        onHover: n => setAsk(a => ({ ...a, hoverN: n })),
+        onSelect: n => askActions.current.select(n),
+        onLive: item => openSensor(item.id, sc),
+        onSite: item => item.siteId && openSite(bundle.siteById[item.siteId], sc),
+      });
+      evLayerRef.current = evLayer;
+      sc.onFrame = () => { layer.update(); evLayer.update(); };
       // Test hook for the browser tests: fly to a view, or open a site or a sensor by id.
       window.__atlas = {
         scene: sc, layer, flyTo: view => sc.flyTo(view), lod: () => sc.auv?.stats(),
+        evidence: () => ({ ...evLayer.snapshot(), located: askActions.current.evidence?.located ?? [] }),
         open: id => {
           if (bundle.sensorById[id]) return openSensor(id, sc);
           if (!bundle.siteById[id]) return false;
@@ -102,14 +118,53 @@ function Atlas({ bundle, onError }) {
       };
       setScene(sc);
     }).catch(err => { if (!cancelled) onError?.(err); });
-    return () => { cancelled = true; layer?.dispose(); sc?.dispose(); };
+    return () => { cancelled = true; evLayer?.dispose(); layer?.dispose(); sc?.dispose(); };
   }, [bundle, openSite, openSensor, selectRegion, onError]);
 
+  // Located evidence (or an answer's earthquakes) mutes the terrain, as a family focus does.
+  const evidenceShown = !!(ask.evidence?.located.length || ask.evidence?.events);
   useEffect(() => {
     if (!scene) return;
     layerRef.current?.setFocus(focus);
-    scene.setMute(focus.size ? 0.55 : 0);
-  }, [focus, scene]);
+    scene.setMute(focus.size || evidenceShown ? 0.55 : 0);
+  }, [focus, scene, evidenceShown]);
+
+  // A new answer on the map: the old spikes sink and the new rise; uncited site rings fade; the camera frames the
+  // evidence in the free area. Earthquakes turn the terrain to glass over the caldera (the subsurface view).
+  useEffect(() => {
+    if (!scene) return;
+    const ev = ask.evidence;
+    evLayerRef.current?.show(ev);
+    layerRef.current?.setEvidence(ev?.located.length ? new Set(ev.located.map(x => x.siteId).filter(Boolean)) : null);
+    if (ev?.events && scene.subsurface) {
+      if (!deep) { evidenceDeep.current = true; setDeep(true); }
+      scene.setSubsurface(true);
+    } else if (evidenceDeep.current) {
+      evidenceDeep.current = false; setDeep(false); scene.setSubsurface(false);
+    }
+    if (ev?.located.length) {
+      const off = scene.camera.position.clone().sub(scene.controls.target), flat = scene.U.flat.value > 0.5;
+      const polar = flat ? 0.001 : Math.min(0.95, Math.max(0.6, Math.acos(off.y / off.length())));
+      scene.flyTo(scene.fit(frameView(ev.located.map(x => [x.lon, x.lat]), { az: Math.atan2(off.x, off.z), exag: scene.U.exag.value, polar })));
+    }
+  }, [ask.evidence, scene]);   // deep is read here, not followed
+  useEffect(() => { evLayerRef.current?.setActive(ask.activeN); }, [ask.activeN, scene]);
+  useEffect(() => { evLayerRef.current?.setHover(ask.hoverN); }, [ask.hoverN, scene]);
+
+  // Selecting an item opens its card and flies to it (Escape or × closes it: null).
+  const askActions = useRef({});
+  askActions.current = {
+    evidence: ask.evidence,
+    select: n => {
+      setAsk(a => ({ ...a, activeN: n }));
+      const it = n == null ? null : tourOf(ask.evidence).find(x => x.n === n);
+      // A quake is framed at its hypocentre (hypo71 depths are below the catalog's 1.5 km datum).
+      const depth = it?.time ? -((scene?.subsurface?.data?.datumM ?? 1500) + (it.depth_km ?? 0) * 1000) : undefined;
+      // Quakes keep a wide view (a close one would sit inside the magma chamber's surface).
+      const dist = it?.kind === "cable" ? 70 : it?.time ? Math.min(25, Math.max(12, scene?.frame.dist ?? 12)) : 7;
+      if (it && scene) scene.flyToPoint(it.lon, it.lat, dist, depth);
+    },
+  };
 
   // A minimized side panel is a tab at the bottom right, so the map and top row take its width back.
   const panelOpen = (!!siteId || unplacedOpen) && !sideMin;
@@ -147,6 +202,7 @@ function Atlas({ bundle, onError }) {
     <>
       <canvas ref={canvasRef} className="atlas-scene" aria-label="3D map of the seafloor off Oregon" />
       <div id="atlas-overlay" ref={overlayRef} />
+      <div id="atlas-evidence" ref={evidenceRef} />
       {scene && (
         <>
           {/* The top row spans the map between the side panels: header and regions on the left, and on the
@@ -165,7 +221,9 @@ function Atlas({ bundle, onError }) {
           <Credit credit={bundle.terrainMeta.credit} auv={!!scene.auv} subsurface={deep} />
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
           <Tooltip hover={hover} bundle={bundle} />
-          <ChatPanel selection={{ site, sensor }} onOpenChange={setChatOpen} />
+          <AskPanel bundle={bundle} evidence={ask.evidence} activeN={ask.activeN} hoverN={ask.hoverN} keysBlocked={panelOpen}
+            onShow={ev => setAsk({ evidence: ev, activeN: null, hoverN: null })} onHover={n => setAsk(a => ({ ...a, hoverN: n }))}
+            onSelect={n => askActions.current.select(n)} onOpenChange={setChatOpen} />
           {site && (
             <SitePanel key={siteId} site={site} bundle={bundle} elevAt={scene.elevAt}
               onClose={closeSite} onBack={() => setSensorId(null)} onSensor={setSensorId} minimized={sideMin} onMinimize={setSideMin}>

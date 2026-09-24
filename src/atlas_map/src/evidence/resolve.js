@@ -10,13 +10,13 @@ export const SITE_COLOR = "#ecebe6";
 // DAS experiments by their PI-portal route (or name), and the DAS coverage layers (das.json) that draw them.
 // DAS24 ran on the south cable's first span, which is the OptoDAS layer's extent.
 const DAS_ROUTES = [
-  { id: "das25-multidas", url: /\/das25\/data\/multidas/i, text: /\bmulti[\s-]?(?:das|span)\b/i, kinds: ["multidas"], code: "MultiDAS", where: "North + south cables", label: "DAS25 MultiDAS, 2025–26" },
-  { id: "das25-optodas", url: /\/das25\/data\/optodas/i, text: /\boptodas\b/i, kinds: ["optodas"], code: "OptoDAS", where: "South cable, first span", label: "DAS25 OptoDAS, 2025–26" },
-  { id: "das25", url: /\/das25\//i, kinds: ["multidas", "optodas"], code: "DAS25", where: "North + south cables", label: "DAS25 fibre sensing, 2025–26" },
-  { id: "das24", url: /\/das24\//i, layers: ["optodas-south-first-span"], code: "DAS24", where: "South cable, first span", label: "DAS24 RAPID, 2024" },
+  { id: "das25-multidas", url: /\/das25\/data\/multidas/i, text: /\bmulti[\s-]?(?:das|span)\b/i, kinds: ["multidas"], code: "MultiDAS", where: "North & south", label: "DAS25 MultiDAS, 2025–26" },
+  { id: "das25-optodas", url: /\/das25\/data\/optodas/i, text: /\boptodas\b/i, kinds: ["optodas"], code: "OptoDAS", where: "South, first span", label: "DAS25 OptoDAS, 2025–26" },
+  { id: "das25", url: /\/das25\//i, kinds: ["multidas", "optodas"], code: "DAS25", where: "North & south", label: "DAS25 fibre sensing, 2025–26" },
+  { id: "das24", url: /\/das24\//i, layers: ["optodas-south-first-span"], code: "DAS24", where: "South, first span", label: "DAS24 RAPID, 2024" },
   { id: "das21-north", url: /\/das\/.*north ?cable/i, layers: ["conventional-north"], code: "DAS21", where: "North cable", label: "2021 DAS community test, north cable" },
   { id: "das21-south", url: /\/das\/.*south ?cable/i, layers: ["conventional-south"], code: "DAS21", where: "South cable", label: "2021 DAS community test, south cable" },
-  { id: "das21", url: /piweb\.ooirsn\.uw\.edu\/das\//i, kinds: ["conventional"], code: "DAS21", where: "North + south cables", label: "2021 DAS community test" },
+  { id: "das21", url: /piweb\.ooirsn\.uw\.edu\/das\//i, kinds: ["conventional"], code: "DAS21", where: "North & south", label: "2021 DAS community test" },
 ];
 
 const RECORD_KEYS = ["Instrument", "Canonical identifier", "Type", "Projects", "Location", "Status", "Deployment state", "Aliases",
@@ -203,3 +203,6 @@ export function resolveEvidence(response, bundle) {
   const ev = events(response.events);
   return { located, documents, events: ev?.length ? ev : null, count: countOf(response, ev) };
 }
+
+// The evidence the ← / → tour steps through: the located items, or the quake events.
+export const tourOf = ev => (ev?.located?.length ? ev.located : ev?.events ?? []);
