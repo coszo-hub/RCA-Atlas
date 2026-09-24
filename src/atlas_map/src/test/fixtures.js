@@ -27,6 +27,9 @@ export const SENSORS = [
     statusSource: "Inventory: new COSZO sensor", statusAsOf: null, sources: ["https://coszo.org/x"],
     access: [{ kind: "documentation", label: "Documentation", url: "https://coszo.org/x", how: "No public data feed is known yet." }] }),
   s("unlocated-bpt", { lat: null, lon: null, name: "Axial Base bottom pressure and tilt", family: "seismic" }),
+  // Unplaced: no position and no catalogued site (the real bundle has five, e.g. PI-MASSP-ASHES and the DAS experiments).
+  s("pi-massp", { lat: null, lon: null, name: "ASHES PI mass spectrometer", type: "mass_spectrometer", site: null, region: null,
+    location: null, siteCode: null, node: null, depth: null, waterDepth: null, status: "UNKNOWN", statusGroup: "unknown", statusSource: null, statusAsOf: null }),
 ];
 export const SITES = [
   { id: "axial-seamount-base", name: "Axial Seamount Base", label: "Axial Base", region: "axial", lat: 45.8168, lon: -129.754,
@@ -51,13 +54,13 @@ export const CABLE = {
             description: "Placeholder node with minimal internal electronics, available for future network expansion. No sensors connect here." }],
   hidden: 5,
 };
-export const MANIFEST = { builtAt: "2026-09-23T18:00:00Z", total: 6, located: 5, sites: 3, corpusSnapshot: "2026-09-19", warnings: [], errors: [] };
+export const MANIFEST = { builtAt: "2026-09-23T18:00:00Z", total: 7, located: 5, sites: 3, corpusSnapshot: "2026-09-19", warnings: [], errors: [] };
 
 export function bundleFixture() {
   const familyByKey = Object.fromEntries(FAMILIES.map(f => [f.key, f]));
   return {
     families: FAMILIES, familyByKey, sensors: SENSORS, sensorById: Object.fromEntries(SENSORS.map(x => [x.id, x])),
-    sites: SITES, siteById: Object.fromEntries(SITES.map(x => [x.id, x])), unplaced: [],
+    sites: SITES, siteById: Object.fromEntries(SITES.map(x => [x.id, x])), unplaced: ["pi-massp"],
     regions: REGIONS.regions, overview: REGIONS.overview, cable: CABLE, terrainMeta: null, manifest: MANIFEST,
   };
 }

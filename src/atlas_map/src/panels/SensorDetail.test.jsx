@@ -67,4 +67,17 @@ describe("SensorDetail", () => {
     await waitFor(() => expect(screen.getByText("Operating · from Nereus snapshot")).toBeInTheDocument());
     expect(screen.queryByText(/checked live/)).toBeNull();
   });
+  it("works without a site: the back control names where it returns and calls back", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const onBack = vi.fn();
+    render(<SensorDetail sensor={b.sensorById["pi-massp"]} bundle={b} onBack={onBack} backLabel="Unplaced sensors" />);
+    fireEvent.click(screen.getByRole("button", { name: "← Unplaced sensors" }));
+    expect(onBack).toHaveBeenCalled();
+    expect(screen.getByText(/No live feed/)).toBeInTheDocument();
+  });
+  it("without a site or a back label, the back control reads Back", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    render(<SensorDetail sensor={b.sensorById["pi-massp"]} bundle={b} onBack={() => {}} />);
+    expect(screen.getByRole("button", { name: "← Back" })).toBeInTheDocument();
+  });
 });

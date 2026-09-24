@@ -14,6 +14,12 @@ describe("SitePanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /sp-ctd/ }));
     expect(onSensor).toHaveBeenCalledWith("sp-ctd");
   });
+  it("an unlocated sensor listed under Also at this site opens its detail", () => {
+    const onSensor = vi.fn();
+    render(<SitePanel site={b.siteById["axial-seamount-base"]} bundle={b} elevAt={() => -2614} onClose={() => {}} onSensor={onSensor} />);
+    fireEvent.click(screen.getByRole("button", { name: "Axial Base bottom pressure and tilt, location not recorded" }));
+    expect(onSensor).toHaveBeenCalledWith("unlocated-bpt");
+  });
   it("closes on Escape", () => {
     const onClose = vi.fn();
     render(<SitePanel site={b.siteById["oregon-shelf"]} bundle={b} elevAt={() => -80} onClose={onClose} onSensor={() => {}} />);

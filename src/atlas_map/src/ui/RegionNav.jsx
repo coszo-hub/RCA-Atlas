@@ -1,6 +1,6 @@
 import "./ui.css";
 
-export default function RegionNav({ regions, sensors, active, onSelect }) {
+export default function RegionNav({ regions, sensors, active, onSelect, unplaced = 0, unplacedOpen = false, onUnplaced }) {
   const located = sensors.filter(s => s.lat != null);
   const items = [["overview", "Full array", located.length],
     ...regions.map(r => [r.key, r.label, located.filter(s => s.region === r.key).length])];
@@ -12,6 +12,12 @@ export default function RegionNav({ regions, sensors, active, onSelect }) {
           {label}<span className="n mono">{n}</span>
         </button>
       ))}
+      {/* Sensors with no position and no site are not on the map; this is the way to them. */}
+      {unplaced > 0 && onUnplaced && (
+        <button className="unplaced" aria-pressed={unplacedOpen} onClick={onUnplaced} title="Sensors with no recorded position and no catalogued site">
+          Unplaced sensors<span className="n mono">{unplaced}</span>
+        </button>
+      )}
     </nav>
   );
 }

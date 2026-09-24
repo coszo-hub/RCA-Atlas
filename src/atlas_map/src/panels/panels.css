@@ -18,7 +18,7 @@
 .sp-family h3 { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 16px 0 4px; }
 .sp-row { display: flex; justify-content: space-between; gap: 10px; width: 100%; background: transparent; border: 0; padding: 6px 4px; border-radius: 3px; text-align: left; cursor: pointer; }
 .sp-row:hover { background: var(--surface-2); }
-.sp-row.static { cursor: default; }
+.sp-note { color: var(--text-secondary); font-size: 12px; line-height: 1.5; margin: 12px 0 0; }
 .sp-row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sp-row .d { color: var(--text-muted); font-size: 11.5px; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .seafloor, .sensor { animation: none; opacity: 1; stroke-dashoffset: 0; } }
