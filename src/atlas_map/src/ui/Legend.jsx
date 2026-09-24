@@ -7,7 +7,7 @@ export default function Legend({ credit, auv = false, subsurface = null }) {
   const ref = useRef(null);
   // The legend is taller than a short window: measured from its top under the dock, it ends 16 px above the bottom
   // edge, or 8 px above the family strip when the strip reaches under it, and scrolls. The strip changes width with
-  // the panels, so refit when it changes size.
+  // the panels, so refit when it changes size, and once the popover's entrance ends (it starts 4 px higher).
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -17,10 +17,10 @@ export default function Legend({ credit, auv = false, subsurface = null }) {
       el.style.maxHeight = `${Math.max(120, (under ? strip.top - 8 : innerHeight - 16) - box.top)}px`;
     };
     fit();
-    addEventListener("resize", fit);
+    addEventListener("resize", fit); addEventListener("animationend", fit);
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null, strip = document.querySelector(".families");
     if (ro && strip) ro.observe(strip);
-    return () => { removeEventListener("resize", fit); ro?.disconnect(); };
+    return () => { removeEventListener("resize", fit); removeEventListener("animationend", fit); ro?.disconnect(); };
   }, []);
   return (
     <div className="panel legend" ref={ref}>

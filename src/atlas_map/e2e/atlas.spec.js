@@ -211,6 +211,22 @@ test("the dock opens one popover at a time and closes it on Escape or a click on
   await expect(terrain).toHaveAttribute("aria-expanded", "false");
 });
 
+test("in a short window the legend popover ends 8 px above the family strip and scrolls", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 700 });
+  await mockGateway(page);
+  await page.goto("/");
+  await ready(page);
+  await page.evaluate(() => window.__atlas.open("axial-seamount-base"));
+  await page.waitForTimeout(2500);
+  await dockButton(page, "Legend").click();
+  await page.waitForTimeout(300);   // the entrance
+  const fit = await page.evaluate(() => {
+    const l = document.querySelector(".legend"), s = document.querySelector(".families").getBoundingClientRect();
+    return { gap: Math.round(s.top - l.getBoundingClientRect().bottom), scrolls: l.scrollHeight > l.clientHeight };
+  });
+  expect(fit).toEqual({ gap: 8, scrolls: true });
+});
+
 test("reduced motion: the operating halo rests faint instead of solid", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1600, height: 1000 } });
   const page = await context.newPage();
