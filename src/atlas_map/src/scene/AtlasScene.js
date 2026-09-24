@@ -107,6 +107,20 @@ export class AtlasScene {
     this.updateLines();
   }
 
+  addDas(das) {
+    const common = { transparent: true, depthTest: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -70 };
+    this.dasLines = (das?.layers || []).map(info => {
+      const mat = new LineMaterial({ color: info.color, linewidth: info.kind === "multidas" ? 4.2 : 2.7,
+        opacity: 0.95, dashed: info.kind === "optodas", dashSize: 0.7, gapSize: 0.45, ...common });
+      const line = new Line2(new LineGeometry(), mat);
+      line.userData = { pts: densify(info.coords), info }; line.renderOrder = 7;
+      this.scene.add(line); return line;
+    });
+    this.updateLines();
+  }
+
+  setDasVisible(on) { for (const line of this.dasLines ?? []) line.visible = on; }
+
   addMoorings(sites) {   // call after addCable, which creates the shared materials
     this.moorings = [];
     const mastMat = (this.mats.mast = new THREE.LineDashedMaterial({ color: 0xecebe6, transparent: true, opacity: 0.35, dashSize: 0.12, gapSize: 0.1 }));
@@ -123,6 +137,12 @@ export class AtlasScene {
     for (const l of this.cableLines ?? []) {
       const arr = [];
       for (const [lon, lat] of l.userData.pts) arr.push(toX(lon), Math.min(this.elevAt(lon, lat), 0) * e + 0.03 + 0.012 * this.U.exag.value, toZ(lat));
+      l.geometry.dispose(); l.geometry = new LineGeometry(); l.geometry.setPositions(arr);
+      if (l.material.dashed) l.computeLineDistances();
+    }
+    for (const l of this.dasLines ?? []) {
+      const arr = [];
+      for (const [lon, lat] of l.userData.pts) arr.push(toX(lon), Math.min(this.elevAt(lon, lat), 0) * e + 0.05 + 0.018 * this.U.exag.value, toZ(lat));
       l.geometry.dispose(); l.geometry = new LineGeometry(); l.geometry.setPositions(arr);
       if (l.material.dashed) l.computeLineDistances();
     }

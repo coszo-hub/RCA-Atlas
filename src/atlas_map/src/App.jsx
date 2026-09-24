@@ -80,6 +80,7 @@ function Atlas({ bundle, onError }) {
       await sc.ready;   // the cable, moorings, and markers sample the final elevAt (with the AUV survey)
       if (cancelled) return;
       sc.addCable(bundle.cable);
+      sc.addDas(bundle.das);
       sc.addMoorings(bundle.sites);
       const at = ev => ({ x: ev.clientX, y: ev.clientY });
       layer = new OverlayLayer(overlayRef.current, bundle, sc, {

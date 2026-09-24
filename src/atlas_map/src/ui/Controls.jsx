@@ -58,6 +58,7 @@ export default function Controls({ scene, compact = false, deep = false, onDeep 
   const [exag, setExag] = useState(scene?.U?.exag?.value ?? 6);
   useEffect(() => { if (scene) scene.onExag = v => setExag(v); return () => { if (scene) scene.onExag = null; }; }, [scene]);
   const [detail, setDetail] = useState("16 m");   // the finest Axial summit level on screen
+  const [das, setDas] = useState(true);
   useEffect(() => { const id = setInterval(() => scene?.auv && setDetail(scene.auv.finest()), 250); return () => clearInterval(id); }, [scene]);
   if (!expanded) return <MinTab className="controls-toggle" onClick={() => setOverride(true)}>Terrain controls</MinTab>;
   return (
@@ -72,6 +73,8 @@ export default function Controls({ scene, compact = false, deep = false, onDeep 
           aria-label="Vertical exaggeration" onChange={e => { const v = +e.target.value; setExag(v); scene.flight = null; scene.setExag(v); }} />
       </div>
       {scene?.auv && <div className="ctl-row"><span className="eyebrow">Axial detail</span><span className="mono" aria-live="polite">{detail}</span></div>}
+      {scene?.dasLines?.length > 0 && <Seg label="DAS coverage" options={[["on", "On"], ["off", "Off"]]} value={das ? "on" : "off"}
+        onChange={v => { const on = v === "on"; setDas(on); scene.setDasVisible(on); }} />}
       {sub && <Seg label="Subsurface" options={[["off", "Off"], ["on", "On"]]} value={deep ? "on" : "off"}
         onChange={v => { onDeep?.(v === "on"); scene.setSubsurface(v === "on"); }} />}
       {sub && deep && <QuakeTimeline scene={scene} sub={sub} />}

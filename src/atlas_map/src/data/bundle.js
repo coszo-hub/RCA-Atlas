@@ -33,12 +33,12 @@ async function getJson(fetchImpl, url) {
 
 export async function loadBundle(fetchImpl = fetch) {
   const manifest = await getJson(fetchImpl, atlasUrl("manifest.json"));
-  const [fam, sen, sit, reg, cable, terrainMeta] = await Promise.all(
-    ["families", "sensors", "sites", "regions", "cable", "terrain/terrain"].map(n => getJson(fetchImpl, atlasUrl(`${n}.json`))));
+  const [fam, sen, sit, reg, cable, das, terrainMeta] = await Promise.all(
+    ["families", "sensors", "sites", "regions", "cable", "das", "terrain/terrain"].map(n => getJson(fetchImpl, atlasUrl(`${n}.json`))));
   return {
     manifest, families: fam.families, familyByKey: Object.fromEntries(fam.families.map(f => [f.key, f])),
     sensors: sen.sensors, sensorById: Object.fromEntries(sen.sensors.map(s => [s.id, s])), unplaced: sen.unplaced,
     sites: sit.sites, siteById: Object.fromEntries(sit.sites.map(s => [s.id, s])),
-    regions: reg.regions, overview: reg.overview, cable, terrainMeta,
+    regions: reg.regions, overview: reg.overview, cable, das, terrainMeta,
   };
 }

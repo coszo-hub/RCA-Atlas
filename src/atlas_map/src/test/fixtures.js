@@ -54,6 +54,8 @@ export const CABLE = {
             description: "Placeholder node with minimal internal electronics, available for future network expansion. No sensors connect here." }],
   hidden: 5,
 };
+export const DAS = { layers: [{ id: "multidas-north-1", kind: "multidas", cable: "north", color: "#ffbd59",
+  coords: [[-123.97, 45.2], [-127.28, 45.75]], detail: "Saved unmasked interval 0–110 km.", caveat: "Schematic." }] };
 export const MANIFEST = { builtAt: "2026-09-23T18:00:00Z", total: 7, located: 5, sites: 3, corpusSnapshot: "2026-09-19", warnings: [], errors: [] };
 
 export function bundleFixture() {
@@ -61,6 +63,6 @@ export function bundleFixture() {
   return {
     families: FAMILIES, familyByKey, sensors: SENSORS, sensorById: Object.fromEntries(SENSORS.map(x => [x.id, x])),
     sites: SITES, siteById: Object.fromEntries(SITES.map(x => [x.id, x])), unplaced: ["pi-massp"],
-    regions: REGIONS.regions, overview: REGIONS.overview, cable: CABLE, terrainMeta: null, manifest: MANIFEST,
+    regions: REGIONS.regions, overview: REGIONS.overview, cable: CABLE, das: DAS, terrainMeta: null, manifest: MANIFEST,
   };
 }

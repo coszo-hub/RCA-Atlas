@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import access, cable, families, paths, sensors, sites, status, terrain, validate
+from . import access, cable, das, families, paths, sensors, sites, status, terrain, validate
 from .corpus import load_jsonl
 
 
@@ -70,7 +70,9 @@ def build(out: Path, runtime: Path, data: Path) -> dict:
         _write(out / "sensors.json", {"sensors": records, "unplaced": [u["id"] for u in unplaced]})
         _write(out / "sites.json", {"sites": site_list})
         _write(out / "regions.json", {"overview": sites.OVERVIEW_VIEW, "regions": sites.REGIONS})
-        _write(out / "cable.json", cable.load_cable(paths.PACKAGE / "cable" / "rca_cable.geojson"))
+        cable_data = cable.load_cable(paths.PACKAGE / "cable" / "rca_cable.geojson")
+        _write(out / "cable.json", cable_data)
+        _write(out / "das.json", das.build(data, cable_data))
         for n, g in grids.items():
             (out / "terrain").mkdir(parents=True, exist_ok=True)
             terrain.write_bin(g, out / "terrain" / f"{n}.bin")
