@@ -2498,7 +2498,7 @@ export default function LiveStatus({ sensor, manifest }) {
   if (live.state === "ok") {
     const d = live.data;
     return <div className="live-status">{statusLabel(d.status)} · checked live{d.data?.checkedAt ? `, data ${d.data.code} at ${new Date(d.data.checkedAt).toUTCString().slice(17, 22)} UTC` : ""}
-      {d.evidenceMode && d.evidenceMode !== "live" ? " (Nereus snapshot fallback)" : ""}</div>;
+      {d.evidenceMode === "snapshot" ? " (Nereus snapshot fallback)" : ""}</div>;
   }
   if (live.error.kind === "unreachable") {
     return <div className="live-status degraded">Live data unavailable. Showing snapshot from {fmtDate(sensor.statusAsOf ?? manifest?.corpusSnapshot)}.</div>;
@@ -2878,17 +2878,18 @@ import { useLive } from "./useLive.js";
 export default function FileBrowser({ route }) {
   const [path, setPath] = useState("");
   const f = useLive(`files:${route.instrumentKey}:${route.endpointId}:${path}`, o => files(route.instrumentKey, route.endpointId, path, o));
-  const up = path.split("/").filter(Boolean).slice(0, -1).join("/");
+  const up = path.split("/").filter(Boolean).slice(0, -1).join("/");   // entry paths are relative to the endpoint root
   return (
     <div className="files">
       <div className="mono crumbs">{route.label} / {path || ""}{path && <button onClick={() => setPath(up ? `${up}/` : "")}>Up</button>}</div>
       {f.state === "loading" && <p className="muted">Listing files…</p>}
       {f.state === "error" && <p className="degraded">{f.error.source}: {f.error.message} <button onClick={f.retry}>Retry</button></p>}
       {f.state === "ok" && (<ul>{f.data.entries.map(e => (
-        <li key={e.name}>{e.name.endsWith("/")
-          ? <button onClick={() => setPath(`${path}${e.name}`)}>{e.name}</button>
-          : <a href={`${f.data.sourceUrl}${e.name}`} target="_blank" rel="noreferrer">{e.name}</a>}</li>))}
-        {f.data.truncated && <li className="muted">Showing the first 200 entries.</li>}</ul>)}
+        <li key={e.path}>{e.kind === "directory"
+          ? <button onClick={() => setPath(e.path)}>{e.name}/</button>
+          : <a href={e.url} target="_blank" rel="noreferrer">{e.name}</a>}</li>))}
+        {f.data.truncated && <li className="muted">Showing the newest 200 entries.</li>}
+        {f.data.message && <li className="muted">{f.data.message}</li>}</ul>)}
     </div>
   );
 }
