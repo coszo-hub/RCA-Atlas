@@ -131,7 +131,10 @@ test("events: the day's hypocentres light up beneath the glass caldera; Escape r
   let ev = await evidence(page);
   expect(ev.quakes).toBe(71);
   expect(await page.evaluate(() => window.__atlas.scene.targets.see)).toBe(1);
+  const terrain = page.locator(".hud-dock").getByRole("button", { name: "Terrain controls", exact: true });
+  await terrain.click();   // the subsurface switch is in the terrain popover
   await expect(page.getByRole("group", { name: "Subsurface" }).getByRole("button", { name: "On" })).toHaveAttribute("aria-pressed", "true");
+  await terrain.click();
   await page.screenshot({ path: "e2e/screens/ask-quakes-overview.png" });
   await page.getByRole("row", { name: /^5 02:02:21/ }).click();
   await page.waitForTimeout(1800);
