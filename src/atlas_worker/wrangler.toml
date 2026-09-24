@@ -10,6 +10,8 @@ ANSWER_MODEL = "gemini-2.5-flash"
 
 # Secrets, never committed. Configure after deployment:
 #   wrangler secret put GEMINI_API_KEY
+#   wrangler secret put GROQ_API_KEY
+#   wrangler secret put OPENAI_API_KEY
 #   wrangler secret put ATLAS_API_KEY
 #   wrangler secret put ATLAS_API_ORIGIN
 # Optional when Turnstile protection is added:
