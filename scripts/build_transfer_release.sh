@@ -23,7 +23,9 @@ make_archive() {
   echo "Building $(basename "$destination")"
   tar --exclude='.DS_Store' --exclude='__pycache__' --exclude='*.pyc' \
       --exclude='.env' --exclude='.env.*' \
-      --exclude='runtime_data/Literature/full_text_cache' -cf - "$@" |
+      --exclude='runtime_data/Literature/full_text_cache' \
+      --exclude='runtime_data/FreeLLMAPI/data' \
+      --exclude='runtime_data/**/__pycache__' -cf - "$@" |
     zstd -T0 -10 -f -o "$destination"
 }
 
