@@ -1752,3 +1752,275 @@ Expected: all tests pass, and `FullBuildTest` runs rather than skips.
 git add src/atlas_map_data/validate.py src/atlas_map_data/build_atlas_bundle.py src/atlas_map_data/README.md src/atlas_map_data/tests/test_validate.py src/atlas_map_data/tests/test_full_build.py
 git commit -m "Validate and write the atlas data bundle from the corpus"
 ```
+
+---
+
+### Task 9: Axial summit high-resolution tiles (MBARI AUV, 1 m)
+
+This task was added after plan approval. The COSZO project supplied MBARI's 1 m AUV bathymetry of the Axial summit (cruise V2506, June 2026). It is validated in the prototype (`.context/prototype/index.html` + `.context/tools/tile_auv.py`).
+
+**Files:**
+- Create: `src/atlas_map_data/auv_tiles.py`, `src/atlas_map_data/requirements-auv.txt`
+- Modify: `src/atlas_map_data/README.md` (append a section)
+- Test: `src/atlas_map_data/tests/test_auv_tiles.py`
+
+**Interfaces:**
+- Consumes: nothing from earlier tasks; it reads the sensor bundle only to find sites (`sensors.json`).
+- Produces:
+  - `auv_tiles.build(source: Path, out: Path, sites: list[tuple[float, float]], cells: int = 256, levels=((0, 16), (1, 4), (2, 1)), l2_radius_km: float = 1.2) -> dict`. It writes `out/index.json` and `out/L{level}/{ty}_{tx}.bin.gz`, and returns the index.
+  - The index keys are `source`, `credit`, `west`, `north`, `cellDeg`, `tileCells`, `zOffset`, `zScale`, `nx`, `ny` and `levels`. Each level is `{level, stride, cellDeg, tilesX, tilesY, tiles: [[ty, tx], ...]}`.
+  - `auv_tiles.decode(data: bytes, cells: int, z_offset: float, z_scale: float) -> list[list[float]]`, used by tests and as the reference for the website's decoder.
+  - CLI: `python -m atlas_map_data.auv_tiles --source <grd> --out src/atlas_map/public/atlas/auv`
+- Tile format:
+  - 257×257 samples (256 cells plus a shared edge). Row 0 is the north edge, and each sample sits at a cell center.
+  - Values are Int16 decimeters relative to −1000 m, delta-encoded along each row (first value absolute), little-endian, gzip level 9.
+  - L0 and L1 cover the whole grid. L2 covers only tiles within `l2_radius_km` of a site.
+- Ruling carried from execution: this step needs `h5py` and `numpy`, and runs separately from the stdlib-only main build. Its dependencies live in `requirements-auv.txt`. The main bundle build does not import it.
+
+- [ ] **Step 1: Dependencies**
+
+`src/atlas_map_data/requirements-auv.txt`:
+```text
+h5py>=3.10
+numpy>=1.26
+```
+Run: `uv pip install --python .venv/bin/python -r src/atlas_map_data/requirements-auv.txt`
+
+- [ ] **Step 2: Write the failing test**
+
+`src/atlas_map_data/tests/test_auv_tiles.py`:
+```python
+import gzip
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+try:
+    import h5py
+    import numpy as np
+    from atlas_map_data import auv_tiles
+    HAVE = True
+except ImportError:
+    HAVE = False
+
+
+def synthetic_grid(path: Path, nx=40, ny=30, cell=0.001):
+    lon = -130.0 + cell / 2 + np.arange(nx) * cell
+    lat = 45.9 + cell / 2 + np.arange(ny) * cell            # ascending, like the MBARI file
+    z = (-1500.0 - 10 * np.arange(nx)[None, :] + 3 * np.arange(ny)[:, None]).astype(np.float32)
+    with h5py.File(path, "w") as f:
+        f["lon"], f["lat"], f["z"] = lon, lat, z
+    return lon, lat, z
+
+
+@unittest.skipUnless(HAVE, "needs h5py + numpy (requirements-auv.txt)")
+class AuvTilesTest(unittest.TestCase):
+    def setUp(self):
+        self.d = tempfile.TemporaryDirectory()
+        self.src = Path(self.d.name) / "g.grd"
+        self.lon, self.lat, self.z = synthetic_grid(self.src)
+
+    def tearDown(self):
+        self.d.cleanup()
+
+    def build(self, sites):
+        return auv_tiles.build(self.src, Path(self.d.name) / "out", sites, cells=8, levels=((0, 4), (1, 1)), l2_radius_km=0.3)
+
+    def test_index_and_whole_extent_levels(self):
+        ix = self.build([])
+        self.assertEqual((ix["nx"], ix["ny"], ix["tileCells"]), (40, 30, 8))
+        L0, L1 = ix["levels"]
+        self.assertEqual((L0["tilesX"], L0["tilesY"]), (2, 1))        # 40/4=10 cols -> 2 tiles; 30/4=8 rows -> 1 tile
+        self.assertEqual(len(L0["tiles"]), 2)
+        self.assertEqual(L1["tiles"], [])                              # finest level only near sites
+        self.assertAlmostEqual(ix["north"], 45.93)
+        self.assertEqual(json.loads((Path(self.d.name) / "out" / "index.json").read_text())["levels"][0]["stride"], 4)
+
+    def test_finest_level_only_near_sites(self):
+        ix = self.build([(45.905, -129.995)])                          # south-west corner area
+        L1 = ix["levels"][1]
+        self.assertTrue(L1["tiles"])
+        self.assertTrue(all(ty >= 2 and tx <= 1 for ty, tx in L1["tiles"]))   # rows are north-first
+
+    def test_round_trip_north_first_and_pooled(self):
+        ix = self.build([])
+        data = (Path(self.d.name) / "out" / "L0" / "0_0.bin.gz").read_bytes()
+        rows = auv_tiles.decode(data, 8, ix["zOffset"], ix["zScale"])
+        self.assertEqual((len(rows), len(rows[0])), (9, 9))
+        north_block = self.z[::-1][:4, :4].mean()                       # first pooled cell = mean of the NW 4x4 block
+        self.assertAlmostEqual(rows[0][0], float(north_block), delta=0.05)
+        self.assertLess(rows[1][0], rows[0][0])                        # moving south, z decreases in this grid
+
+    def test_gzip_and_little_endian(self):
+        self.build([])
+        raw = gzip.decompress((Path(self.d.name) / "out" / "L0" / "0_0.bin.gz").read_bytes())
+        self.assertEqual(len(raw), 9 * 9 * 2)
+
+
+if __name__ == "__main__":
+    unittest.main()
+```
+
+- [ ] **Step 3: Run it and verify it fails**
+
+Run: `PYTHONPATH=src .venv/bin/python -m unittest atlas_map_data.tests.test_auv_tiles -v`
+Expected: ERROR `cannot import name 'auv_tiles'`. If h5py isn't installed yet, the test is skipped instead; install it in Step 1 first.
+
+- [ ] **Step 4: Implement**
+
+`src/atlas_map_data/auv_tiles.py`:
+```python
+"""MBARI AUV bathymetry → level-of-detail tiles for the atlas (needs h5py + numpy; separate from the stdlib build).
+
+  python -m atlas_map_data.auv_tiles --source <MBARI ... _AUVOverShip_Topo1mSq.grd> --out src/atlas_map/public/atlas/auv
+"""
+from __future__ import annotations
+
+import argparse
+import gzip
+import json
+import math
+from pathlib import Path
+
+import h5py
+import numpy as np
+
+CREDIT = "MBARI, Axial Seamount AUV bathymetry, cruise V2506 (1 m)"
+Z_OFFSET, Z_SCALE = -1000.0, 10.0
+KX = 111.32 * math.cos(math.radians(45.94))
+KZ = 111.13
+
+
+def _encode(block: np.ndarray) -> bytes:
+    q = np.clip(np.round((block - Z_OFFSET) * Z_SCALE), -32000, 32000).astype(np.int32)
+    d = q.copy()
+    d[:, 1:] = q[:, 1:] - q[:, :-1]
+    if np.abs(d[:, 1:]).max(initial=0) > 32000:
+        raise ValueError("delta overflow; raise Z_SCALE resolution or reduce stride")
+    return gzip.compress(d.astype("<i2").tobytes(), 9)
+
+
+def decode(data: bytes, cells: int, z_offset: float, z_scale: float) -> list[list[float]]:
+    s = cells + 1
+    d = np.frombuffer(gzip.decompress(data), dtype="<i2").reshape(s, s).astype(np.int64)
+    return (np.cumsum(d, axis=1) / z_scale + z_offset).tolist()
+
+
+def build(source: Path, out: Path, sites: list[tuple[float, float]], cells: int = 256,
+          levels=((0, 16), (1, 4), (2, 1)), l2_radius_km: float = 1.2) -> dict:
+    with h5py.File(source, "r") as f:
+        lon, lat, z = f["lon"][:], f["lat"][:], f["z"]
+        ny, nx = z.shape
+        cell = float(lon[1] - lon[0])
+        west, south = float(lon[0]) - cell / 2, float(lat[0]) - cell / 2
+        north = south + ny * cell
+        finest = max(level for level, _ in levels)
+
+        def near_site(lon0, lat0, lon1, lat1):
+            for plat, plon in sites:
+                cx, cy = min(max(plon, lon0), lon1), min(max(plat, lat0), lat1)
+                if math.hypot((cx - plon) * KX, (cy - plat) * KZ) <= l2_radius_km:
+                    return True
+            return False
+
+        index = {"source": source.name, "credit": CREDIT, "west": west, "north": north, "cellDeg": cell,
+                 "tileCells": cells, "zOffset": Z_OFFSET, "zScale": Z_SCALE, "nx": nx, "ny": ny, "levels": []}
+        for level, stride in levels:
+            lnx, lny = math.ceil(nx / stride), math.ceil(ny / stride)
+            tnx, tny = math.ceil(lnx / cells), math.ceil(lny / cells)
+            tile_deg = cells * stride * cell
+            outdir = out / f"L{level}"
+            outdir.mkdir(parents=True, exist_ok=True)
+            tiles = []
+            for ty in range(tny):
+                lat1, lat0 = north - ty * tile_deg, north - (ty + 1) * tile_deg
+                wanted = [tx for tx in range(tnx) if level != finest or
+                          near_site(west + tx * tile_deg, lat0, west + (tx + 1) * tile_deg, lat1)]
+                if not wanted:
+                    continue
+                r0 = ty * cells
+                last = min(r0 + cells, lny - 1)
+                lo, hi = max(ny - (last + 1) * stride, 0), ny - r0 * stride     # ascending-lat source rows
+                strip = z[lo:hi, :].astype(np.float32)[::-1]                      # north-first
+                if stride > 1:
+                    h, w = (strip.shape[0] // stride) * stride, (nx // stride) * stride
+                    rows_needed = last - r0 + 1
+                    if h // stride < rows_needed:                                  # ragged south edge
+                        strip = np.concatenate([strip, np.repeat(strip[-1:], rows_needed * stride - strip.shape[0], axis=0)])
+                        h = rows_needed * stride
+                    pooled = strip[:h, :w].reshape(h // stride, stride, w // stride, stride).mean(axis=(1, 3))
+                    if w < nx:
+                        pooled = np.concatenate([pooled, pooled[:, -1:]], axis=1)
+                else:
+                    pooled = strip
+                for tx in wanted:
+                    block = pooled[:cells + 1, tx * cells: tx * cells + cells + 1]
+                    if block.size == 0 or np.isnan(block).all():
+                        continue
+                    pr, pc = cells + 1 - block.shape[0], cells + 1 - block.shape[1]
+                    if pr or pc:
+                        block = np.pad(block, ((0, pr), (0, pc)), mode="edge")
+                    if np.isnan(block).any():
+                        block = np.where(np.isnan(block), np.nanmean(block), block)
+                    (outdir / f"{ty}_{tx}.bin.gz").write_bytes(_encode(block))
+                    tiles.append([ty, tx])
+            index["levels"].append({"level": level, "stride": stride, "cellDeg": cell * stride,
+                                    "tilesX": tnx, "tilesY": tny, "tiles": tiles})
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "index.json").write_text(json.dumps(index))
+    return index
+
+
+def main(argv: list[str] | None = None) -> int:
+    from . import paths
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--source", type=Path, required=True)
+    ap.add_argument("--out", type=Path, default=paths.BUNDLE / "auv")
+    ap.add_argument("--sensors", type=Path, default=paths.BUNDLE / "sensors.json")
+    args = ap.parse_args(argv)
+    sensors = json.loads(args.sensors.read_text())["sensors"]
+    sites = [(s["lat"], s["lon"]) for s in sensors if s.get("lat") is not None]
+    ix = build(args.source, args.out, sites)
+    for L in ix["levels"]:
+        print(f"L{L['level']}: stride {L['stride']}, {len(L['tiles'])} tiles")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+```
+
+Append to `src/atlas_map_data/README.md`:
+```markdown
+## Axial summit 1 m tiles (optional)
+
+These tiles are built from MBARI's AUV grid, which is supplied by the COSZO project and not stored in git. Place the `.grd` file anywhere, then run:
+
+    uv pip install --python .venv/bin/python -r src/atlas_map_data/requirements-auv.txt
+    PYTHONPATH=src .venv/bin/python -m atlas_map_data.auv_tiles --source <path>/MBARI_AxialSeamount_V2506_AUV_Summit_AUVOverShip_Topo1mSq.grd
+
+This writes `src/atlas_map/public/atlas/auv/`, about 23 MB. The levels are 16 m and 4 m over the whole summit, plus 1 m within 1.2 km of each site. Run it after the main build, since it reads `sensors.json`.
+```
+
+- [ ] **Step 5: Run the tests and verify they pass**
+
+Run: `PYTHONPATH=src .venv/bin/python -m unittest atlas_map_data.tests.test_auv_tiles -v`
+Expected: 4 tests pass.
+
+- [ ] **Step 6: Build the real tiles, if the source is available**
+
+Run: `ls /Users/yaoderek/Downloads/AUV-1-m-scale/MBARI_AxialSeamount_V2506_AUV_Summit_AUVOverShip_Topo1mSq.grd && PYTHONPATH=src .venv/bin/python -m atlas_map_data.auv_tiles --source /Users/yaoderek/Downloads/AUV-1-m-scale/MBARI_AxialSeamount_V2506_AUV_Summit_AUVOverShip_Topo1mSq.grd`
+Expected:
+- `L0: stride 16, 30 tiles`
+- `L1: stride 4, 378 tiles`
+- `L2: stride 1` with roughly 280 tiles
+
+This matches the prototype run. The output is gitignored with the bundle.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add src/atlas_map_data/auv_tiles.py src/atlas_map_data/requirements-auv.txt src/atlas_map_data/README.md src/atlas_map_data/tests/test_auv_tiles.py
+git commit -m "Tile MBARI 1 m Axial summit bathymetry into level-of-detail tiles"
+```
