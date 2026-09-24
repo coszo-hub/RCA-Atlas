@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { atlasUrl } from "../data/paths.js";
 import { toX, toZ } from "./geo.js";
 import { coverage, decode, feather, tileArrays, wanted } from "./auvTiles.js";
 
@@ -21,7 +22,7 @@ async function fetchTile(url, S, zScale, zOffset) {
 
 export class AuvLod {
   // ground(lon, lat): the terrain around the survey (GMRT), which its edge blends into.
-  static async create(scene3d, U, makeMaterial, base = "/atlas/auv/", ground = null) {
+  static async create(scene3d, U, makeMaterial, base = atlasUrl("auv/"), ground = null) {
     let index;
     try { const r = await fetch(base + "index.json"); if (!r.ok) return null; index = await r.json(); } catch { return null; }
     const lod = new AuvLod(scene3d, U, makeMaterial, base, index, ground);

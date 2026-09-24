@@ -1,3 +1,5 @@
+import { atlasUrl } from "./paths.js";
+
 export const BUILD_COMMAND = "PYTHONPATH=src .venv/bin/python -m atlas_map_data.build_atlas_bundle";
 
 export class BundleMissingError extends Error {
@@ -27,9 +29,9 @@ async function getJson(fetchImpl, url) {
 }
 
 export async function loadBundle(fetchImpl = fetch) {
-  const manifest = await getJson(fetchImpl, "/atlas/manifest.json");
+  const manifest = await getJson(fetchImpl, atlasUrl("manifest.json"));
   const [fam, sen, sit, reg, cable, terrainMeta] = await Promise.all(
-    ["families", "sensors", "sites", "regions", "cable", "terrain/terrain"].map(n => getJson(fetchImpl, `/atlas/${n}.json`)));
+    ["families", "sensors", "sites", "regions", "cable", "terrain/terrain"].map(n => getJson(fetchImpl, atlasUrl(`${n}.json`))));
   return {
     manifest, families: fam.families, familyByKey: Object.fromEntries(fam.families.map(f => [f.key, f])),
     sensors: sen.sensors, sensorById: Object.fromEntries(sen.sensors.map(s => [s.id, s])), unplaced: sen.unplaced,

@@ -1,9 +1,11 @@
+import { GATEWAY } from "../data/paths.js";
+
 const KIND = { 404: "notfound", 422: "bad", 502: "upstream", 503: "busy", 504: "timeout" };
 
 export async function api(path, { signal, method = "GET", body, fetchImpl = fetch } = {}) {
   let res;
   try {
-    res = await fetchImpl(`/api${path}`, { signal, method, headers: body ? { "Content-Type": "application/json" } : undefined,
+    res = await fetchImpl(`${GATEWAY}${path}`, { signal, method, headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined });
   } catch (err) {
     if (err?.name === "AbortError") throw err;

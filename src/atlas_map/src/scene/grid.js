@@ -1,4 +1,5 @@
 import { BUILD_COMMAND } from "../data/bundle.js";
+import { atlasUrl } from "../data/paths.js";
 import { KX, KZ, toX, toZ } from "./geo.js";
 
 export function makeGrid(meta, arrayBuffer) {
@@ -45,7 +46,7 @@ export function buildArrays(grid, smooth = 1) {
 export async function loadGrids(meta, fetchImpl = fetch) {
   const out = {};
   await Promise.all(Object.entries(meta.grids).map(async ([name, m]) => {
-    const url = `/atlas/terrain/${name}.bin`;
+    const url = atlasUrl(`terrain/${name}.bin`);
     const broken = why => new Error(`The atlas terrain is incomplete: ${url} ${why}. Rebuild it with: ${BUILD_COMMAND}`);
     const res = await fetchImpl(url);
     if (!res.ok) {

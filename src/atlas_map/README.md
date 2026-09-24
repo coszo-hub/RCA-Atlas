@@ -20,6 +20,19 @@ writes `public/atlas/subsurface.json`. With it, Controls gets a Subsurface switc
 
 Without the gateway, the map still works from the bundle, and live sections say so. Chat also needs the Graph-RAG API.
 
+## Publish to coszo.org
+
+coszo.org is GitHub Pages, served from the `coszo-hub/coszo-hub.github.io` repository. That repository holds built files only; nothing
+there builds from this one. The map lives at `rca-atlas/map/` (https://coszo.org/rca-atlas/map/).
+
+1. Build the data bundle (above), including the optional AUV tiles and subsurface, so `public/atlas/` is complete.
+2. `npm run build`. `dist/` uses relative URLs, so it runs from any folder, and it includes the bundle (~30 MB).
+3. In a checkout of `coszo-hub.github.io`: `rsync -a --delete <this repo>/src/atlas_map/dist/ rca-atlas/map/`, then commit and open a PR there.
+   Pages redeploys a minute or two after the merge.
+
+The public build has no gateway, so live data and chat say the service is not running. To use a hosted gateway, build with
+`VITE_ATLAS_GATEWAY=https://<gateway>` (it must allow the coszo.org origin).
+
 ## Test
 
     npm test          # unit and component tests

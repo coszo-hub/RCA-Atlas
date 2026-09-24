@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { atlasUrl } from "../data/paths.js";
 import { toX, toZ } from "./geo.js";
 import { countBefore, glassWindow, months, quakeArrays, surfaceArrays } from "./subsurface.js";
 
@@ -59,7 +60,7 @@ const surfFrag = `
 
 export async function loadSubsurface(fetchImpl = fetch) {
   try {
-    const res = await fetchImpl("/atlas/subsurface.json");
+    const res = await fetchImpl(atlasUrl("subsurface.json"));
     if (!res.ok || res.headers?.get("content-type")?.includes("html")) return null;
     return await res.json();
   } catch { return null; }
