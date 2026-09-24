@@ -16,8 +16,8 @@ export default function FileBrowser({ route }) {
         <li key={e.path}>{e.kind === "directory"
           ? <button onClick={() => setPath(e.path)}>{e.name}/</button>
           : <a href={e.url} target="_blank" rel="noreferrer">{e.name}</a>}</li>))}
-        {f.data.truncated && <li className="muted">Showing the newest 200 entries.</li>}
-        {f.data.message && <li className="muted">{f.data.message}</li>}</ul>)}
+        {/* An upstream message already explains the truncation; do not add a second, contradicting line. */}
+        {f.data.message ? <li className="muted">{f.data.message}</li> : f.data.truncated && <li className="muted">Showing the newest 200 entries.</li>}</ul>)}
     </div>
   );
 }

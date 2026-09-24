@@ -6,11 +6,14 @@ import Failure from "./Failure.jsx";
 import { checkCustom, preset } from "./ranges.js";
 import { useLive } from "./useLive.js";
 
+const DEFAULT_VAR = "sea_water_temperature";
+
 export default function SeriesView({ refdes }) {
   const vars = useLive(`vars:${refdes}`, o => variables(refdes, o));
   const [varName, setVar] = useState(null), [range, setRange] = useState("24h"), [custom, setCustom] = useState(null);
   const [draft, setDraft] = useState({ from: "", to: "" }), [draftErr, setDraftErr] = useState(null);
-  const chosen = varName ?? vars.data?.variables?.[0]?.name;
+  const listed = vars.data?.variables ?? [];
+  const chosen = varName ?? (listed.some(v => v.name === DEFAULT_VAR) ? DEFAULT_VAR : listed[0]?.name);
   // A preset is fixed when chosen, so re-renders do not refetch as the clock ticks.
   const presetWin = useMemo(() => (range === "custom" ? null : preset(range)), [range]);
   const win = range === "custom" ? custom : presetWin;

@@ -54,6 +54,51 @@ describe("LiveData", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(f.mock.calls.length).toBeGreaterThan(1));
   });
+  it("QA/QC plots under the series load only once the details is opened", async () => {
+    const f = routes([
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301/variables", { variables: [{ name: "t", units: "C" }], coverage: {} }],
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301?", { points: [[1, 7.3]], units: "C", rawCount: 1, downloadUrl: "x", message: null }],
+      ["/api/plots/RS03AXBS-LJ03A-12-CTDPFB301", { refdes: "RS03AXBS-LJ03A-12-CTDPFB301", plots: [] }],
+    ]);
+    vi.stubGlobal("fetch", f);
+    const base = b.sensorById["base-ctd"];
+    const sensor = { ...base, access: [...base.access, { kind: "qaqc", label: "RCA QA/QC plots", url: "https://qaqc.ooirsn.uw.edu/x", how: "" }] };
+    const plotCalls = () => f.mock.calls.filter(([u]) => String(u).startsWith("/api/plots/")).length;
+    const { container } = render(<LiveData sensor={sensor} />);
+    await waitFor(() => expect(screen.getByTestId("chart")).toBeInTheDocument());
+    expect(plotCalls()).toBe(0);
+    expect(screen.queryByText(/Loading recent plots/)).toBeNull();
+    const details = container.querySelector("details");
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    await waitFor(() => expect(screen.getByText(/no recent plots for this sensor/)).toBeInTheDocument());
+    expect(plotCalls()).toBe(1);
+  });
+  it("defaults to sea water temperature when the dataset has it", async () => {
+    const f = routes([
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301/variables", { variables: [
+        { name: "sea_water_pressure", units: "dbar", longName: "Pressure" },
+        { name: "sea_water_temperature", units: "degree_Celsius", longName: "Water Temperature" }], coverage: {} }],
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301?", { points: [[1, 7.3]], units: "degree_Celsius", rawCount: 1, downloadUrl: "x", message: null }],
+    ]);
+    vi.stubGlobal("fetch", f);
+    render(<LiveData sensor={b.sensorById["base-ctd"]} />);
+    await waitFor(() => expect(screen.getByTestId("chart")).toBeInTheDocument());
+    expect(screen.getByRole("combobox", { name: "Measurement" })).toHaveValue("sea_water_temperature");
+    const seriesUrl = f.mock.calls.map(([u]) => String(u)).find(u => u.startsWith("/api/series/RS03AXBS-LJ03A-12-CTDPFB301?"));
+    expect(seriesUrl).toContain("var=sea_water_temperature");
+  });
+  it("otherwise defaults to the first variable", async () => {
+    const f = routes([
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301/variables", { variables: [
+        { name: "sea_water_pressure", units: "dbar", longName: "Pressure" }, { name: "salinity", units: "1", longName: "Salinity" }], coverage: {} }],
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301?", { points: [[1, 7.3]], units: "dbar", rawCount: 1, downloadUrl: "x", message: null }],
+    ]);
+    vi.stubGlobal("fetch", f);
+    render(<LiveData sensor={b.sensorById["base-ctd"]} />);
+    await waitFor(() => expect(screen.getByTestId("chart")).toBeInTheDocument());
+    expect(screen.getByRole("combobox", { name: "Measurement" })).toHaveValue("sea_water_pressure");
+  });
   it("seismic sensors get a waveform", async () => {
     vi.stubGlobal("fetch", routes([["/api/waveform/OO.AXCC1", { points: [[1, 5], [2, 6], [3, 4]], rate: 200, channel: "HHZ", message: null }]]));
     render(<LiveData sensor={b.sensorById.axcc1} />);
