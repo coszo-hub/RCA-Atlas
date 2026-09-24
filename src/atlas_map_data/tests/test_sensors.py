@@ -55,6 +55,7 @@ class SensorRecordTest(unittest.TestCase):
         })
         self.assertEqual((s["family"], s["refdes"], s["status"]), ("acoustic", None, "UNKNOWN"))
         self.assertEqual([r["kind"] for r in s["access"]], ["repository", "repository"])
+        self.assertIn("acoustic transponder", s["aliases"])
 
     def test_apply_position_correction(self):
         recs = [sensors.sensor_from_row(ROW)]

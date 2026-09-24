@@ -70,6 +70,9 @@ def sensor_from_fetch_row(row: dict) -> dict:
         "refdes": None, "location": row.get("location"), "projects": row.get("projects") or [],
         "coszoRole": None, "manufacturer": None, "model": None,
         "sources": list(row.get("source_urls") or []), "arcadaId": None, "corrections": [],
+        "aliases": list(dict.fromkeys([*(row.get("instrument_type_aliases") or []), "FETCH transponder",
+                                         "acoustic transponder", "acoustic geodetic transponder",
+                                         f"FETCH {row.get('station_identifier', '')}", f"FETCH {row.get('station', '')}"])),
         "status": "UNKNOWN", "statusSource": "FETCH source snapshot", "statusAsOf": None,
         "access": [
             {"kind": "repository", "label": "FETCH raw station data", "url": FETCH_RAW_DATA_URL,

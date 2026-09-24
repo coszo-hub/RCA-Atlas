@@ -14,6 +14,12 @@ describe("searchAtlas", () => {
     expect(searchAtlas(b, "ctdpfb301").map(x => x.id)).toEqual(["base-ctd"]);
     expect(searchAtlas(b, "seismometer").map(x => x.id)).toContain("axcc1");
   });
+  it("matches FETCH transponder aliases", () => {
+    const fetch = { ...b.sensors[0], id: "FETCH-2504", name: "FETCH Northern acoustic ranging station (2504)",
+      type: "acoustic_ranging_station", aliases: ["FETCH transponder", "acoustic transponder"], site: "axial-seamount-base" };
+    const r = searchAtlas({ ...b, sensors: [...b.sensors, fetch], sensorById: { ...b.sensorById, [fetch.id]: fetch } }, "transponder");
+    expect(r).toEqual([expect.objectContaining({ id: "FETCH-2504", kind: "sensor" })]);
+  });
   it("finds sensors with no recorded position and marks them", () => {
     expect(searchAtlas(b, "tilt")).toEqual([{ kind: "sensor", id: "unlocated-bpt", title: "Axial Base bottom pressure and tilt",
       sub: "Axial Base · no recorded position", located: false }]);

@@ -13,7 +13,7 @@ export function searchAtlas(bundle, query, limit = 8) {
     if (sc) out.push({ kind: "site", id: s.id, title: s.name, sub: s.label, located: true, sc: sc + 0.5 });
   }
   for (const s of bundle.sensors) {
-    const sc = score([s.name, s.type.replaceAll("_", " "), s.refdes, s.id]);
+    const sc = score([s.name, s.type.replaceAll("_", " "), s.refdes, s.id, ...(s.aliases || [])]);
     if (!sc) continue;
     const site = bundle.siteById[s.site]?.label, located = s.lat != null;
     // Sensors with no recorded position are found too (they open their detail without a flight), just after located ones.
