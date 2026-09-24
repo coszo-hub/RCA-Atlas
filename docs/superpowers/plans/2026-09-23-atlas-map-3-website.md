@@ -1667,6 +1667,11 @@ describe("Tooltip", () => {
     expect(screen.getByText("North backbone")).toBeInTheDocument();
     expect(screen.getByText(/Charted route/)).toBeInTheDocument();
   });
+  it("cable: lists fiber-optic experiments that have no recorded position", () => {
+    const b2 = { ...b, sensors: [...b.sensors, { ...b.sensors[0], id: "das", name: "2024 DAS experiment", family: "fiber", lat: null, lon: null }] };
+    render(<Tooltip bundle={b2} hover={{ kind: "cable", item: b.cable.lines[0], x: 0, y: 0 }} />);
+    expect(screen.getByText(/2024 DAS experiment/)).toBeInTheDocument();
+  });
   it("renders nothing without hover", () => {
     const { container } = render(<Tooltip bundle={b} hover={null} />);
     expect(container).toBeEmptyDOMElement();
@@ -1770,6 +1775,9 @@ export default function Tooltip({ hover, bundle }) {
         <div className="t-name">{item.kind}</div>
         <div className="t-sub">{item.route}{item.lengthKm ? ` · ${Math.round(item.lengthKm)} km` : ""}</div>
         <div className="t-col">{CABLE_TEXT[item.accuracy]}</div>
+        {bundle.sensors.some(s => s.family === "fiber" && s.lat == null) && (
+          <div className="t-col">Fiber-optic sensing experiments on the cable (exact positions not recorded): {bundle.sensors.filter(s => s.family === "fiber" && s.lat == null).map(s => s.name).join("; ")}.</div>
+        )}
         <div className="t-more">Two backbone cables run from the Pacific City shore station: the south line to Hydrate Ridge and the Oregon shelf, the north line past the Mid-Plate node to Axial Seamount.</div>
       </>)}
     </div>
@@ -1953,7 +1961,7 @@ git commit -m "Add hover cards, family focus, legend, header stats, and search"
     - `gateway.series(refdes, {var, start, end}, opts)`
     - `gateway.plots(refdes, opts)`
     - `gateway.waveform(stationId, minutes, channel, opts)`
-    - `gateway.files(key, path, opts)`
+    - `gateway.files(key, endpoint, path, opts)` (`endpoint` is the PI route's `endpointId`; required for instruments with several endpoints)
     - `gateway.chat(question, opts)`
 
 - [ ] **Step 1: Write the failing test**
@@ -2030,7 +2038,7 @@ export const variables = (refdes, o) => api(`/series/${encodeURIComponent(refdes
 export const series = (refdes, p, o) => api(`/series/${encodeURIComponent(refdes)}?${q(p)}`, o);
 export const plots = (refdes, o) => api(`/plots/${encodeURIComponent(refdes)}`, o);
 export const waveform = (station, minutes, channel, o) => api(`/waveform/${station}?${q({ minutes, channel })}`, o);
-export const files = (key, path, o) => api(`/files/${encodeURIComponent(key)}?${q({ path })}`, o);
+export const files = (key, endpoint, path, o) => api(`/files/${encodeURIComponent(key)}?${q({ endpoint, path })}`, o);
 export const chat = (question, o) => api("/chat", { ...o, method: "POST", body: { question } });
 ```
 
@@ -2869,7 +2877,7 @@ import { useLive } from "./useLive.js";
 
 export default function FileBrowser({ route }) {
   const [path, setPath] = useState("");
-  const f = useLive(`files:${route.instrumentKey}:${path}`, o => files(route.instrumentKey, path, o));
+  const f = useLive(`files:${route.instrumentKey}:${route.endpointId}:${path}`, o => files(route.instrumentKey, route.endpointId, path, o));
   const up = path.split("/").filter(Boolean).slice(0, -1).join("/");
   return (
     <div className="files">
