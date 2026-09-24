@@ -7,6 +7,7 @@ import "./ui.css";
 const CABLE_TEXT = {
   charted: "Charted route, traced from the NOAA/BOEM Marine Cadastre cable protection zone (public domain, not for navigation).",
   approximate: "Approximate route. No public chart exists beyond the US Exclusive Economic Zone, so this is drawn straight between known points and could be off by a few km.",
+  mapped: "Mapped route from ooi_cables.csv (M. Kidiwela, CascadiaEarthquakes). It matches the NOAA/BOEM chart within metres where both exist; beyond the US EEZ its points are sparse.",
 };
 
 const SITE_ROWS = 14, NODE_SITES = 12;

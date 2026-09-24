@@ -7,14 +7,15 @@ import { KX, KZ, toX, toZ } from "./geo.js";
 import { buildArrays, stack } from "./grid.js";
 import { terrainMaterial } from "./terrainMaterial.js";
 import { AuvLod } from "./AuvLod.js";
-import { approach, centerShift, ease, fitDist, isMoveKey, motionDuration, moveStep, viewPose } from "./cameraMath.js";
+import { SubsurfaceLayer, loadSubsurface } from "./SubsurfaceLayer.js";
+import { approach, centerShift, ease, fitDist, isMoveKey, motionDuration, moveStep, rotateSpeedFor, viewPose } from "./cameraMath.js";
 
 export { loadGrids } from "./grid.js";
 
 export class AtlasScene {
   constructor(canvas, bundle, grids, { onFrame } = {}) {
     this.bundle = bundle; this.onFrame = onFrame; this.flight = null; this.held = new Set();
-    this.targets = { flat: 0, lines: 0, mode: 0, mute: 0 }; this._view = "3d";
+    this.targets = { flat: 0, lines: 0, mode: 0, mute: 0, see: 0 }; this._view = "3d";
     this.insets = [16, 16]; this.framed = false; this._shift = [0, 0]; this._shiftTo = [0, 0];
     this._motion = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
     this.elevAt = stack([grids.axial, grids.hydrate, grids.overview]);   // until `ready` adds the AUV survey
@@ -24,15 +25,25 @@ export class AtlasScene {
     this.camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.05, 6000);
     const shrink = (b, m) => new THREE.Vector4(b[0] + m, b[1] - m, b[2] + m, b[3] - m);
     this.U = { exag: { value: 6 }, flat: { value: 0 }, lines: { value: 0 }, mode: { value: 0 }, mute: { value: 0 },
+               see: { value: 0 }, glass: { value: new THREE.Vector3() },
                holeA: shrink(grids.axial.box, 0.35), holeB: shrink(grids.hydrate.box, 0.35) };
     // Terrain, including the MBARI 1 m Axial summit tiles when they are built. Await `ready` before
     // anything samples elevAt for good (cable, moorings, markers): the AUV survey changes the summit's heights.
+    this.terrainMats = [];
     this.ready = (async () => {
-      this.auv = await AuvLod.create(this.scene, this.U, terrainMaterial);
+      const sub = loadSubsurface();   // optional, like the AUV tiles: null when it is not built
+      const base = stack([grids.axial, grids.hydrate, grids.overview]);
+      this.auv = await AuvLod.create(this.scene, this.U, terrainMaterial, undefined, base);
+      if (this.auv) this.terrainMats.push(...this.auv.mats);
       this._addTerrain(grids.overview, 100, true, 1);
       this._addTerrain(grids.axial, 50, false, 3, this.auv ? { holeC: this.auv.box } : {});
       this._addTerrain(grids.hydrate, 50, false, 3);
-      const base = stack([grids.axial, grids.hydrate, grids.overview]);
+      const data = await sub;
+      if (data) {
+        this.subsurface = new SubsurfaceLayer(this.scene, this.U, data);
+        const w = this.subsurface.window;
+        this.U.glass.value.set(w.x, w.z, w.r);
+      }
       this.elevAt = (lon, lat) => this.auv?.sample(lon, lat) ?? base(lon, lat);
     })();
 
@@ -69,6 +80,7 @@ export class AtlasScene {
     g.setAttribute("grad", new THREE.BufferAttribute(a.grad, 2));
     g.setIndex(new THREE.BufferAttribute(a.index, 1));
     const m = terrainMaterial(this.U, interval, holes, extra);
+    this.terrainMats.push(m);
     if (!holes) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
     this.scene.add(new THREE.Mesh(g, m));
   }
@@ -125,7 +137,9 @@ export class AtlasScene {
     this._lastLayout = [this.U.exag.value, this.U.flat.value];
   }
 
-  _resolution() { for (const m of Object.values(this.mats ?? {})) m.resolution?.set(innerWidth, innerHeight); }
+  _resolution() {
+    for (const m of [...Object.values(this.mats ?? {}), this.subsurface?.rimMat]) m?.resolution?.set(innerWidth, innerHeight);
+  }
 
   get reducedMotion() { return !!this._motion?.matches; }
   get e() { return this.U.exag.value * 0.001 * (1 - this.U.flat.value); }
@@ -167,6 +181,21 @@ export class AtlasScene {
   setStyle(s) { this.targets.lines = s === "contours" ? 1 : 0; }
   setColor(c) { this.targets.mode = c === "mono" ? 1 : 0; }
   setMute(m) { this.targets.mute = m; }
+  // Show Axial's subsurface. From afar, fly in over the caldera (keeping the heading), aimed below the seafloor at
+  // the middle of the layers (earthquakes 1.5-3 km deep, the magma chamber at 2.6-3.7 km) so they are in frame.
+  setSubsurface(on) {
+    this.targets.see = on ? 1 : 0;
+    const w = this.subsurface?.window;
+    if (!on || !w) return;
+    this._resolution();
+    const t = this.controls.target, off = this.camera.position.clone().sub(t);
+    if (Math.hypot(t.x - w.x, t.z - w.z) < w.r && off.length() < w.r * 5) return;
+    const exag = this.U.exag.value, dist = w.r * 3.2, polar = 0.85, az = Math.atan2(off.x, off.z);
+    const target = new THREE.Vector3(w.x, -2600 * exag * 0.001, w.z);
+    const pos = target.clone().add(new THREE.Vector3().setFromSphericalCoords(dist, polar, az));
+    this._fly(pos, target, exag, 1800);
+  }
+  setQuakesThrough(i) { this.subsurface?.setThrough(i); }
   setView(v) {
     if (v === this._view) return;   // re-clicking the active view must not overwrite the saved tilt
     this._view = v;
@@ -194,11 +223,19 @@ export class AtlasScene {
     }
     const reduced = this.reducedMotion;
     this.controls.enableDamping = !reduced;   // no coasting after a drag under reduced motion
+    this.controls.rotateSpeed = rotateSpeedFor(this.camera.position.distanceTo(this.controls.target));
     this.controls.update();
     this.auv?.update(this.controls.target, this.camera.position.distanceTo(this.controls.target), now);
     for (const [key, speed] of [["flat", 5], ["lines", 6], ["mode", 8], ["mute", 8]]) {
       this.U[key].value = approach(this.U[key].value, this.targets[key], dt, speed, reduced);
     }
+    // The subsurface fades out in 2D, where everything collapses onto the seafloor plane.
+    this._see = approach(this._see ?? 0, this.targets.see, dt, 5, reduced);
+    this.U.see.value = this._see < 1e-3 ? 0 : this._see * Math.max(0, 1 - this.U.flat.value * 3);
+    // Glass needs the terrain in the transparent pass, after the subsurface beneath it.
+    const glassy = this.U.see.value > 0;
+    if (glassy !== this._glassy) { this._glassy = glassy; for (const m of this.terrainMats) m.transparent = glassy; }
+    this.subsurface?.update(this.e, this.elevAt);
     if (this._shift[0] !== this._shiftTo[0] || this._shift[1] !== this._shiftTo[1]) {
       this._shift = this._shift.map((v, i) => { const to = this._shiftTo[i]; return Math.abs(to - v) < 0.5 ? to : approach(v, to, dt, 10, reduced); });
       this._applyShift();

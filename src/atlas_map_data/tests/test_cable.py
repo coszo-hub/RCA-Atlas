@@ -18,7 +18,7 @@ class CableTest(unittest.TestCase):
 
     def test_line_kinds_are_the_four_legend_groups(self):
         kinds = {l["kind"] for l in self.c["lines"]}
-        self.assertEqual(kinds, {"North backbone", "South backbone", "Extension", "Spur"})
+        self.assertEqual(kinds, {"North backbone", "South backbone", "Extension", "Spur", "Secondary cable"})
         pn5a = [l for l in self.c["lines"] if "path A" in l["route"]]
         self.assertEqual([(l["kind"], l["route"]) for l in pn5a], [("North backbone", "near PN5A (path A)")])
 
@@ -28,10 +28,15 @@ class CableTest(unittest.TestCase):
         self.assertEqual(north[0]["accuracy"], "charted")
         self.assertIn("→", north[0]["route"])
 
-    def test_approximate_segments_reach_axial(self):
-        approx = [l for l in self.c["lines"] if l["accuracy"] == "approximate"]
-        self.assertEqual(len(approx), 2)
-        self.assertTrue(all(l["kind"] == "North backbone" for l in approx))
+    def test_mapped_route_reaches_axial_and_nothing_is_straight_lined(self):
+        self.assertEqual([l for l in self.c["lines"] if l["accuracy"] == "approximate"], [])
+        north = [l for l in self.c["lines"] if l["accuracy"] == "mapped" and l["kind"] == "North backbone"]
+        self.assertEqual([l["route"] for l in north], ["US EEZ limit → PN3A (Axial Base)", "PN3A (Axial Base) → PN3B (Axial Caldera)"])
+        self.assertGreater(len(north[0]["coords"]), 20)   # the mapped route, not a two-point straight line
+        pn3b = [n for n in self.c["nodes"] if n["code"] == "PN3B"][0]
+        self.assertLess(abs(north[1]["coords"][-1][0] - pn3b["lon"]) + abs(north[1]["coords"][-1][1] - pn3b["lat"]), 1e-4)
+        secondary = [l for l in self.c["lines"] if l["kind"] == "Secondary cable"]
+        self.assertTrue(secondary and all(l["accuracy"] == "mapped" for l in secondary))
 
     def test_primary_nodes(self):
         codes = sorted(n["code"] for n in self.c["nodes"])

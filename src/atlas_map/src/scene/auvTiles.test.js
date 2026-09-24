@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { KX, KZ, toX, toZ } from "./geo.js";
-import { coverage, decode, tileArrays, wanted } from "./auvTiles.js";
+import { coverage, decode, feather, tileArrays, wanted } from "./auvTiles.js";
 
 describe("decode", () => {
   it("cumulative sum per row, scaled and offset", () => {
@@ -70,5 +70,24 @@ describe("tileArrays gradients", () => {
       expect(a.grad[i * 2]).toBeCloseTo(10 / dx, 3);
       expect(a.grad[i * 2 + 1]).toBeCloseTo(3 / dz, 3);
     }
+  });
+});
+
+describe("feather", () => {
+  it("meets the ground at the survey edge and leaves the interior alone", () => {
+    const S = 5, cell = 0.01, h = new Float32Array(S * S).fill(-1500);
+    const survey = { west: -130, east: -130 + S * cell, north: 46, south: 46 - S * cell };
+    feather(h, S, -130, 46, cell, survey, () => -1560, 1.2);   // edge cells sit half a cell (~0.39 km) inside
+    const at = (r, c) => h[r * S + c];
+    expect(at(2, 2)).toBe(-1500);                              // 2.5 cells (~1.9 km) in: beyond the band
+    expect(at(0, 2)).toBeLessThan(-1500);                      // near the north edge: pulled toward the ground
+    expect(at(0, 2)).toBeGreaterThan(-1560);
+    expect(at(0, 0)).toBeLessThanOrEqual(at(0, 2));             // a corner is closer to two edges
+  });
+
+  it("skips vertices where the ground is unknown", () => {
+    const h = new Float32Array(4).fill(-1500);
+    feather(h, 2, -130, 46, 0.001, { west: -130, east: -129.998, north: 46, south: 45.998 }, () => null, 1);
+    expect(Array.from(h)).toEqual([-1500, -1500, -1500, -1500]);
   });
 });

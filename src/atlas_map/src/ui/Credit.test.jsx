@@ -11,4 +11,8 @@ describe("Credit", () => {
     rerender(<Credit credit="GMRT, Ryan et al. (2009), CC BY 4.0" auv />);
     expect(line).toHaveTextContent("Bathymetry: GMRT, Ryan et al. (2009), CC BY 4.0 · Axial summit: MBARI AUV survey, 1 m");
   });
+  it("adds the subsurface credit while it is shown", () => {
+    render(<Credit credit="GMRT" auv subsurface />);
+    expect(screen.getByLabelText("Map credits")).toHaveTextContent("GMRT · Axial summit: MBARI AUV survey, 1 m · Subsurface: M. Kidiwela, axial_visuals");
+  });
 });

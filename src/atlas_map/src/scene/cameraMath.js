@@ -30,6 +30,10 @@ export function moveStep(held, cam, target, dt) {
 export const isTypingTarget = el =>
   !!el && (el.isContentEditable || el.contentEditable === "true" || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 
+// Rotation slows as the camera closes in (a drag swings the whole view, which is too much up close):
+// full speed from 30 km out, the square root of the distance below that, never under a fifth.
+export const rotateSpeedFor = dist => Math.min(1, Math.max(0.2, Math.sqrt(dist / 30)));
+
 // prefers-reduced-motion: flights jump to their end and uniform transitions snap.
 export const motionDuration = (ms, reduced) => (reduced ? 0 : ms);
 export const approach = (value, target, dt, speed, reduced) =>

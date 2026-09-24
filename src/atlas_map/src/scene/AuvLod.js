@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import { toX, toZ } from "./geo.js";
-import { coverage, decode, tileArrays, wanted } from "./auvTiles.js";
+import { coverage, decode, feather, tileArrays, wanted } from "./auvTiles.js";
 
 const INTERVAL = [50, 20, 10];
 
 const RETRY_MS = 30_000;   // a failed tile is not fetched again for this long
+const FEATHER_KM = 0.5;    // the survey eases into the GMRT grid over this band inside its edge
 
 // Vite's SPA fallback answers a missing file with 200 text/html, so check the type and the size too (as grid.js does).
 async function fetchTile(url, S, zScale, zOffset) {
@@ -19,10 +20,11 @@ async function fetchTile(url, S, zScale, zOffset) {
 }
 
 export class AuvLod {
-  static async create(scene3d, U, makeMaterial, base = "/atlas/auv/") {
+  // ground(lon, lat): the terrain around the survey (GMRT), which its edge blends into.
+  static async create(scene3d, U, makeMaterial, base = "/atlas/auv/", ground = null) {
     let index;
     try { const r = await fetch(base + "index.json"); if (!r.ok) return null; index = await r.json(); } catch { return null; }
-    const lod = new AuvLod(scene3d, U, makeMaterial, base, index);
+    const lod = new AuvLod(scene3d, U, makeMaterial, base, index, ground);
     try { await lod._loadBase(); } catch (err) {
       // An optional layer: without its 16 m base the summit falls back to the GMRT grid.
       lod.dispose();
@@ -32,8 +34,8 @@ export class AuvLod {
     return lod;
   }
 
-  constructor(scene3d, U, makeMaterial, base, index) {
-    Object.assign(this, { scene3d, base, index, S: index.tileCells + 1, credit: index.credit, last: 0, pending: new Set(),
+  constructor(scene3d, U, makeMaterial, base, index, ground = null) {
+    Object.assign(this, { scene3d, base, index, ground, S: index.tileCells + 1, credit: index.credit, last: 0, pending: new Set(),
       cache: new Map(), cacheMax: 160, failed: new Map() });   // cache: finer levels only, LRU; failed: key -> retry time
     const { west, north } = index;
     this.levels = index.levels.map(l => ({ ...l, tileDeg: l.cellDeg * index.tileCells, have: new Set(l.tiles.map(([y, x]) => `${y}_${x}`)) }));
@@ -66,6 +68,8 @@ export class AuvLod {
     try {
       const L = this.levels[k], [ty, tx] = key.split("_").map(Number), o = this.origin(L, ty, tx);
       const h = await fetchTile(`${this.base}L${k}/${key}.bin.gz`, this.S, this.index.zScale, this.index.zOffset);
+      if (this.ground) feather(h, this.S, o.lon0, o.lat0, L.cellDeg,
+        { west: this.index.west, east: this.east, north: this.index.north, south: this.south }, this.ground, FEATHER_KM);
       if (k === 0) this.heights.set(key, h);
       const a = tileArrays(h, this.S, o.lon0, o.lat0, L.cellDeg);
       const g = new THREE.BufferGeometry();

@@ -45,6 +45,7 @@ function Atlas({ bundle, onError }) {
   const [unplacedOpen, setUnplacedOpen] = useState(false);   // the list of sensors with no position and no site
   const [chatOpen, setChatOpen] = useState(chatStartsOpen);   // ChatPanel owns and persists it; the top row follows it
   const [width, setWidth] = useState(innerWidth);
+  const [deep, setDeep] = useState(false);   // Axial's subsurface (earthquakes, magma chamber, faults) is shown
   useEffect(() => { const on = () => setWidth(innerWidth); addEventListener("resize", on); return () => removeEventListener("resize", on); }, []);
 
   // One right-hand panel at a time: a site (with its sensors) or the unplaced list (with theirs).
@@ -158,11 +159,12 @@ function Atlas({ bundle, onError }) {
                 unplaced={bundle.unplaced?.length ?? 0} unplacedOpen={unplacedOpen} onUnplaced={() => (unplacedOpen ? closeUnplaced() : openUnplaced())} />
             </div>
             <div className={`right-stack${wraps ? " compact" : ""}`} ref={rightRef}>
-              <Controls scene={scene} compact={wraps} />
-              <Legend credit={bundle.terrainMeta.credit} compact={panelOpen || wraps} auv={!!scene.auv} />
+              <Controls scene={scene} compact={wraps} deep={deep} onDeep={setDeep} />
+              <Legend credit={bundle.terrainMeta.credit} compact={panelOpen || wraps} auv={!!scene.auv}
+                subsurface={deep ? scene.subsurface?.credit : null} />
             </div>
           </div>
-          <Credit credit={bundle.terrainMeta.credit} auv={!!scene.auv} />
+          <Credit credit={bundle.terrainMeta.credit} auv={!!scene.auv} subsurface={deep} />
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
           <Tooltip hover={hover} bundle={bundle} />
           <ChatPanel selection={{ site, sensor }} onOpenChange={setChatOpen} />

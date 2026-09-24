@@ -57,6 +57,23 @@ export function tileArrays(h, S, lon0, lat0, cellDeg) {
   return { positions, elev, grad, drop, index: new Uint32Array(index) };
 }
 
+// Within `width` km of the survey's edge, heights ease into the surrounding terrain (`ground`, meters or null), so the
+// survey meets the GMRT grid without a step: the two disagree by up to ~60 m there, a cliff at 6x with cracks beside it.
+// Vertices sit at cell centers, as in tileArrays. Mutates and returns h.
+export function feather(h, S, lon0, lat0, cellDeg, survey, ground, width) {
+  const { west, east, north, south } = survey;
+  for (let r = 0, i = 0; r < S; r++) for (let c = 0; c < S; c++, i++) {
+    const lon = lon0 + (c + 0.5) * cellDeg, lat = lat0 - (r + 0.5) * cellDeg;
+    const d = Math.min((lon - west) * KX, (east - lon) * KX, (north - lat) * KZ, (lat - south) * KZ);
+    if (d >= width) continue;
+    const g = ground(lon, lat);
+    if (g == null) continue;
+    const t = Math.max(0, d / width), w = t * t * (3 - 2 * t);
+    h[i] = g + (h[i] - g) * w;
+  }
+  return h;
+}
+
 // [lon0, lat0, lon1, lat1] (west, north, east, south) that a level's tiles cover when drawn. Vertices sit at
 // cell centers, so this is the tile grid shifted half a cell east and south of the survey's corner.
 export function coverage(west, north, cellDeg, tileDeg, tilesX, tilesY) {

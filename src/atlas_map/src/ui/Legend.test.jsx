@@ -21,6 +21,17 @@ describe("Legend credits", () => {
   });
 });
 
+describe("Legend subsurface", () => {
+  it("explains and credits Axial's subsurface only while it is shown", () => {
+    const { rerender } = render(<Legend credit="GMRT" />);
+    expect(screen.queryByText("Beneath Axial")).toBeNull();
+    rerender(<Legend credit="GMRT" subsurface="Subsurface: M. Kidiwela, axial_visuals" />);
+    expect(screen.getByText("Beneath Axial")).toBeInTheDocument();
+    expect(screen.getByText("Magma chamber (AMC) top")).toBeInTheDocument();
+    expect(screen.getByText(/Subsurface: M\. Kidiwela, axial_visuals\./)).toBeInTheDocument();
+  });
+});
+
 describe("Legend collapse (layout ruling)", () => {
   it("is expanded when no side panel is open, and the user can collapse it", () => {
     render(<Legend credit="GMRT" compact={false} />);

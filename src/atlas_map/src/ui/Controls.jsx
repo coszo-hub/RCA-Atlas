@@ -16,7 +16,40 @@ function Seg({ label, options, value, onChange }) {
 
 // Collapsed to a small toggle while the top row wraps (it would otherwise sit over the middle of the map);
 // the user can flip it either way until the layout changes. The switches keep their state while collapsed.
-export default function Controls({ scene, compact = false }) {
+// The earthquake timeline beneath Axial: a month slider (cumulative through that month) with play/pause.
+function QuakeTimeline({ scene, sub }) {
+  const last = sub.months.length - 1;
+  const [month, setMonth] = useState(last), [playing, setPlaying] = useState(false);
+  useEffect(() => { scene.setQuakesThrough(month); }, [scene, month]);
+  useEffect(() => {
+    if (!playing) return;
+    const id = setInterval(() => setMonth(m => Math.min(last, m + 1)), 140);
+    return () => clearInterval(id);
+  }, [playing, last]);
+  useEffect(() => { if (month === last) setPlaying(false); }, [month, last]);
+  const label = sub.months[month].label, n = sub.countThrough(month).toLocaleString("en-US");
+  return (
+    <div className="timeline">
+      <div className="ctl-row"><span className="eyebrow">Earthquakes</span><span className="mono readout">to {label} · {n}</span></div>
+      <div className="ctl-row">
+        <button className="play" aria-label={playing ? "Pause" : "Play month by month"} onClick={() => {
+          if (!playing && month === last) setMonth(0);
+          setPlaying(!playing);
+        }}>
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            {playing ? <path d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor" /> : <path d="M2 1l7 4-7 4z" fill="currentColor" />}
+          </svg>
+        </button>
+        <input type="range" min="0" max={last} step="1" value={month} aria-label="Earthquakes through month"
+          aria-valuetext={`Through ${label}: ${n} earthquakes`} onChange={e => { setPlaying(false); setMonth(+e.target.value); }} />
+      </div>
+    </div>
+  );
+}
+
+// deep: whether Axial's subsurface is shown (App owns it; the legend and credits follow it).
+export default function Controls({ scene, compact = false, deep = false, onDeep }) {
+  const sub = scene?.subsurface;
   const [override, setOverride] = useState(null);
   useEffect(() => setOverride(null), [compact]);
   const expanded = override ?? !compact;
@@ -41,6 +74,9 @@ export default function Controls({ scene, compact = false }) {
           aria-label="Vertical exaggeration" onChange={e => { const v = +e.target.value; setExag(v); scene.flight = null; scene.setExag(v); }} />
       </div>
       {scene?.auv && <div className="ctl-row"><span className="eyebrow">Axial detail</span><span className="mono" aria-live="polite">{detail}</span></div>}
+      {sub && <Seg label="Subsurface" options={[["off", "Off"], ["on", "On"]]} value={deep ? "on" : "off"}
+        onChange={v => { onDeep?.(v === "on"); scene.setSubsurface(v === "on"); }} />}
+      {sub && deep && <QuakeTimeline scene={scene} sub={sub} />}
       <div className="hint">Drag to move · <kbd>Ctrl</kbd>-drag to rotate · Scroll to zoom · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> to move · Hover the cable or a node for details</div>
     </div>
   );

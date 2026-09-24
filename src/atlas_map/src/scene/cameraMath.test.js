@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { approach, centerShift, ease, fitDist, isMoveKey, isTypingTarget, motionDuration, moveStep, viewPose } from "./cameraMath.js";
+import { approach, centerShift, ease, fitDist, isMoveKey, isTypingTarget, motionDuration, moveStep, rotateSpeedFor, viewPose } from "./cameraMath.js";
 
 describe("cameraMath", () => {
   it("viewPose puts the target on the exaggerated seafloor", () => {
@@ -71,5 +71,15 @@ describe("framing between the side panels", () => {
     expect(fitDist(100, 1600, 412, 16)).toBeCloseTo(100 * 1568 / 1172, 6);
     expect(fitDist(100, 1600, 0, 0)).toBe(100);   // never closer than the designed view
     expect(fitDist(100, 500, 412, 472)).toBeCloseTo(100 * 468 / 320, 6);   // free width floors at 320 px
+  });
+});
+
+describe("rotation speed", () => {
+  it("slows with zoom: full speed far out, less up close, never below a floor", () => {
+    expect(rotateSpeedFor(650)).toBe(1);
+    expect(rotateSpeedFor(30)).toBe(1);
+    expect(rotateSpeedFor(7.5)).toBeCloseTo(0.5);
+    expect(rotateSpeedFor(2)).toBeLessThan(rotateSpeedFor(7.5));
+    expect(rotateSpeedFor(0.1)).toBe(0.2);
   });
 });

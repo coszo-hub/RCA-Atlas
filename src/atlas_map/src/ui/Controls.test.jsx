@@ -60,4 +60,31 @@ describe("Controls", () => {
     expect(screen.getByRole("button", { name: "Contours" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Collapse terrain controls" })).toBeNull();
   });
+  it("has no Subsurface switch when the subsurface layer is not built", () => {
+    render(<Controls scene={fakeScene()} />);
+    expect(screen.queryByRole("group", { name: "Subsurface" })).toBeNull();
+  });
+  it("switches Axial's subsurface on, then scrubs and plays the earthquakes month by month", () => {
+    vi.useFakeTimers();
+    try {
+      const sub = { months: [{ label: "2015-01", end: 10 }, { label: "2015-02", end: 38 }, { label: "2015-03", end: 69 }],
+                    countThrough: i => [120, 4500, 12000][i] };
+      const s = { ...fakeScene(), subsurface: sub, setSubsurface: vi.fn(), setQuakesThrough: vi.fn() };
+      const onDeep = vi.fn();
+      const { rerender } = render(<Controls scene={s} onDeep={onDeep} />);
+      expect(screen.queryByRole("slider", { name: /earthquakes/i })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "On" }));
+      expect(onDeep).toHaveBeenCalledWith(true);
+      expect(s.setSubsurface).toHaveBeenCalledWith(true);
+      rerender(<Controls scene={s} deep onDeep={onDeep} />);
+      expect(screen.getByText("to 2015-03 · 12,000")).toBeInTheDocument();   // the whole catalog to start
+      fireEvent.change(screen.getByRole("slider", { name: /earthquakes/i }), { target: { value: "0" } });
+      expect(s.setQuakesThrough).toHaveBeenLastCalledWith(0);
+      expect(screen.getByText("to 2015-01 · 120")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Play month by month" }));
+      act(() => { vi.advanceTimersByTime(300); });
+      expect(s.setQuakesThrough).toHaveBeenLastCalledWith(2);
+      expect(screen.getByRole("button", { name: "Play month by month" })).toBeInTheDocument();   // stops at the end
+    } finally { vi.useRealTimers(); }
+  });
 });

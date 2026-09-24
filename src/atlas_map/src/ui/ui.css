@@ -76,3 +76,10 @@ input[type=range]:disabled { opacity: 0.35; }
 .t-site { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; color: var(--text-secondary); }
 .t-site > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t-site .d, .t-none { color: var(--text-muted); font-size: 11px; }
+/* Earthquake timeline beneath Axial (shown with the subsurface). */
+.timeline { display: flex; flex-direction: column; gap: 6px; }
+.timeline .readout { color: var(--text-secondary); font-size: 11px; }
+.timeline input[type=range] { flex: 1; width: auto; min-width: 0; }
+.play { flex: none; display: grid; place-items: center; width: 26px; height: 22px; background: transparent; border: 1px solid var(--hairline-strong);
+  border-radius: 4px; color: var(--text-secondary); cursor: pointer; }
+.play:hover { color: var(--text-primary); }

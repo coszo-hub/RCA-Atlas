@@ -22,3 +22,13 @@ These tiles are built from MBARI's AUV grid, which is supplied by the COSZO proj
     PYTHONPATH=src .venv/bin/python -m atlas_map_data.auv_tiles --source <path>/MBARI_AxialSeamount_V2506_AUV_Summit_AUVOverShip_Topo1mSq.grd
 
 This writes `src/atlas_map/public/atlas/auv/`, about 23 MB. The levels are 16 m and 4 m over the whole summit, plus 1 m within 1.2 km of each site. Run it after the main build, since it reads `sensors.json`.
+
+## Axial subsurface (optional)
+
+Earthquakes (2015–2021), the magma chamber (AMC) top, and the west and east caldera-wall faults, from [axial_visuals](https://github.com/MaleenKidiwela/axial_visuals). The builder reproduces that notebook's geometry and writes it in lon/lat and metres below sea level, undoing the notebook's 1,500 m datum:
+
+    git clone https://github.com/MaleenKidiwela/axial_visuals <dir>
+    uv pip install --python .venv/bin/python -r src/atlas_map_data/requirements-subsurface.txt
+    PYTHONPATH=src .venv/bin/python -m atlas_map_data.subsurface --source <dir>
+
+This writes `src/atlas_map/public/atlas/subsurface.json`, about 1.3 MB.
