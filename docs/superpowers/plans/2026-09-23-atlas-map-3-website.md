@@ -3440,3 +3440,363 @@ Expected: every suite passes.
 git add .gitignore src/atlas_map/playwright.config.js src/atlas_map/e2e/mocks.js src/atlas_map/e2e/atlas.spec.js src/atlas_map/README.md src/atlas_map/src/App.jsx
 git commit -m "Add atlas end-to-end tests, screenshots, and run instructions"
 ```
+
+---
+
+### Task 12: Axial summit level-of-detail terrain (MBARI 1 m)
+
+This task was added after plan approval. It consumes the tiles from plan 1, Task 9, and is validated in the prototype (`.context/prototype/index.html`, function `createAuvLod`).
+
+- **Always shown:** the 16 m level covers the whole summit.
+- **Loaded around the view point:** 4 m tiles within 1.5–4 km of the point the camera looks at, when closer than 25 km; 1 m tiles within 0.35–1.2 km, when closer than 4 km.
+- **No double-drawing:** a coarser level discards pixels where a finer tile is showing, using a coverage mask. The GMRT Axial patch discards pixels inside the survey area.
+- **No cracks:** tile "skirts" hide gaps between levels. They drop 25 m without changing color.
+
+**Files:**
+- Create: `src/atlas_map/src/scene/auvTiles.js` (pure: decode, selection, geometry arrays), `src/atlas_map/src/scene/AuvLod.js` (Three.js integration)
+- Modify: `src/atlas_map/src/scene/terrainMaterial.js` (a `drop` attribute, a third hole, and the mask uniforms), `src/atlas_map/src/scene/AtlasScene.js` (create the LOD, extend `elevAt`, update per frame), `src/atlas_map/src/ui/Controls.jsx` (an "Axial detail" readout), `src/atlas_map/src/ui/Legend.jsx` (the MBARI credit)
+- Test: `src/atlas_map/src/scene/auvTiles.test.js`
+
+**Interfaces:**
+- Consumes: `/atlas/auv/index.json` and `/atlas/auv/L{k}/{ty}_{tx}.bin.gz` (plan 1, Task 9 format: 257² Int16 decimeters relative to −1000 m, delta-encoded by row, gzip, north-first).
+- Produces:
+  - `auvTiles.decode(int16: Int16Array, S, zScale, zOffset) -> Float32Array`, meters, row-major and north-first
+  - `auvTiles.wanted(levels, target: {x, z}, camDist, tileCenter) -> [Set, Set, Set]`, following the rules above. A 1 m tile also requires its 4 m parent `floor(ty/4)_floor(tx/4)`.
+  - `auvTiles.tileArrays(h: Float32Array, S, lon0, lat0, cellDeg) -> {positions, elev, grad, drop, index}`, with a skirt ring of `4·(S−1)` vertices where `drop = 25`
+  - `AuvLod`: `await AuvLod.create(scene3d, U, makeMaterial, base = "/atlas/auv/")` returns `null` when `index.json` is missing. Otherwise it returns an instance with `.sample(lon, lat)` (16 m, or null outside the survey), `.box` (Vector4 of the survey area in world coordinates), `.update(target, camDist, nowMs)` (throttled to 200 ms), `.finest() -> "16 m" | "4 m" | "1 m"`, `.stats() -> {L0, L1, L2}`, and `.credit`.
+  - `terrainMaterial(U, interval, holes, extra = {})`, where `extra = {holeC?: Vector4, mask?: DataTexture, maskRect?: Vector4}`
+
+- [ ] **Step 1: Write the failing tests**
+
+`src/atlas_map/src/scene/auvTiles.test.js`:
+```js
+import { describe, expect, it } from "vitest";
+import { decode, tileArrays, wanted } from "./auvTiles.js";
+
+describe("decode", () => {
+  it("cumulative sum per row, scaled and offset", () => {
+    const d = new Int16Array([-5000, 10, -20, -6000, 0, 5, -7000, 1, 1]);   // 3x3
+    const m = decode(d, 3, 10, -1000);
+    expect(Array.from(m)).toEqual([-1500, -1499, -1501, -1600, -1600, -1599.5, -1700, -1699.9, -1699.8].map(v => Math.fround(v)));
+  });
+});
+
+describe("tileArrays", () => {
+  it("grid plus a skirt ring with drop", () => {
+    const S = 3, h = new Float32Array(9).fill(-1500);
+    const a = tileArrays(h, S, -130, 46, 0.001);
+    expect(a.elev.length).toBe(9 + 4 * (S - 1));
+    expect(Array.from(a.drop.slice(0, 9)).every(v => v === 0)).toBe(true);
+    expect(Array.from(a.drop.slice(9)).every(v => v === 25)).toBe(true);
+    expect(a.index.length).toBe((S - 1) * (S - 1) * 6 + 4 * (S - 1) * 6);
+    expect(a.positions[2]).toBeLessThan(a.positions[3 * 3 + 2]);   // row 0 is north (smaller z)
+  });
+});
+
+describe("wanted", () => {
+  const levels = [
+    { have: new Set(["0_0"]) },
+    { have: new Set(["0_0", "0_5"]) },
+    { have: new Set(["0_1", "3_3"]) },
+  ];
+  const centers = { 1: { "0_0": [0, 0], "0_5": [10, 0] }, 2: { "0_1": [0.2, 0], "3_3": [0.5, 0.5] } };
+  const tileCenter = (k, key) => centers[k][key];
+  it("far away: only the 16 m level", () => {
+    const w = wanted(levels, { x: 0, z: 0 }, 60, tileCenter);
+    expect([...w[1]]).toEqual([]); expect([...w[2]]).toEqual([]);
+  });
+  it("mid range: 4 m tiles near the target", () => {
+    const w = wanted(levels, { x: 0, z: 0 }, 10, tileCenter);
+    expect([...w[1]]).toEqual(["0_0"]); expect([...w[2]]).toEqual([]);
+  });
+  it("close: 1 m tiles near the target pull in their 4 m parent", () => {
+    const w = wanted(levels, { x: 0, z: 0 }, 2, tileCenter);
+    expect([...w[2]].sort()).toEqual(["0_1"]);
+    expect(w[1].has("0_0")).toBe(true);
+  });
+});
+```
+
+- [ ] **Step 2: Run it and verify it fails**
+
+Run: `cd src/atlas_map && npx vitest run src/scene/auvTiles.test.js && cd ../..`
+Expected: FAIL on the unresolved import.
+
+- [ ] **Step 3: Implement the pure module**
+
+`src/atlas_map/src/scene/auvTiles.js`:
+```js
+import { KX, KZ, toX, toZ } from "./geo.js";
+
+export function decode(int16, S, zScale, zOffset) {
+  const m = new Float32Array(S * S);
+  for (let r = 0; r < S; r++) { let acc = 0; for (let c = 0; c < S; c++) { acc += int16[r * S + c]; m[r * S + c] = acc / zScale + zOffset; } }
+  return m;
+}
+
+export function wanted(levels, target, camDist, tileCenter) {
+  const w = [new Set(levels[0].have), new Set(), new Set()];
+  const near = (k, key, R) => { const [cx, cz] = tileCenter(k, key); return Math.hypot(cx - target.x, cz - target.z) < R; };
+  if (camDist < 4) {
+    const R2 = Math.min(1.2, Math.max(0.35, camDist * 0.35));
+    for (const key of levels[2].have) if (near(2, key, R2)) {
+      w[2].add(key);
+      const [ty, tx] = key.split("_").map(Number);
+      w[1].add(`${Math.floor(ty / 4)}_${Math.floor(tx / 4)}`);
+    }
+  }
+  if (camDist < 25) {
+    const R1 = Math.min(4, Math.max(1.5, camDist * 0.5));
+    for (const key of levels[1].have) if (near(1, key, R1)) w[1].add(key);
+  }
+  return w;
+}
+
+export function tileArrays(h, S, lon0, lat0, cellDeg) {
+  const dx = cellDeg * KX, dz = cellDeg * KZ, n = S * S, ring = 4 * (S - 1);
+  const H = (r, c) => h[Math.min(S - 1, Math.max(0, r)) * S + Math.min(S - 1, Math.max(0, c))];
+  const positions = new Float32Array((n + ring) * 3), elev = new Float32Array(n + ring),
+        grad = new Float32Array((n + ring) * 2), drop = new Float32Array(n + ring);
+  for (let r = 0, i = 0; r < S; r++) for (let c = 0; c < S; c++, i++) {
+    positions[i * 3] = toX(lon0 + (c + 0.5) * cellDeg); positions[i * 3 + 2] = toZ(lat0 - (r + 0.5) * cellDeg);
+    elev[i] = h[i];
+    grad[i * 2] = (H(r, c + 1) - H(r, c - 1)) / (2 * dx); grad[i * 2 + 1] = (H(r + 1, c) - H(r - 1, c)) / (2 * dz);
+  }
+  const index = [];
+  for (let r = 0; r < S - 1; r++) for (let c = 0; c < S - 1; c++) {
+    const a = r * S + c, b = a + 1, d = a + S, e = d + 1; index.push(a, d, b, b, d, e);
+  }
+  const edge = [];
+  for (let c = 0; c < S - 1; c++) edge.push(c);
+  for (let r = 0; r < S - 1; r++) edge.push(r * S + S - 1);
+  for (let c = S - 1; c > 0; c--) edge.push((S - 1) * S + c);
+  for (let r = S - 1; r > 0; r--) edge.push(r * S);
+  edge.forEach((v, k) => {
+    const j = n + k;
+    positions[j * 3] = positions[v * 3]; positions[j * 3 + 2] = positions[v * 3 + 2];
+    elev[j] = elev[v]; grad[j * 2] = grad[v * 2]; grad[j * 2 + 1] = grad[v * 2 + 1]; drop[j] = 25;
+  });
+  for (let k = 0; k < edge.length; k++) {
+    const a = edge[k], b = edge[(k + 1) % edge.length], a2 = n + k, b2 = n + ((k + 1) % edge.length);
+    index.push(a, a2, b, b, a2, b2);
+  }
+  return { positions, elev, grad, drop, index: new Uint32Array(index) };
+}
+```
+
+- [ ] **Step 4: Run it and verify it passes**
+
+Run: `cd src/atlas_map && npx vitest run src/scene/auvTiles.test.js && cd ../..`
+Expected: 5 tests pass.
+
+- [ ] **Step 5: Extend the terrain material**
+
+In `terrainMaterial.js`, make these changes:
+
+In the vertex shader, add `attribute float drop;` and change the height line to `vec3 p = position; p.y = (elev - drop) * s;`. Meshes without a `drop` attribute read 0.
+
+In the fragment shader, add the uniforms and discards:
+```glsl
+  uniform vec4 uHoleC; uniform float uHoleCOn;
+  uniform sampler2D uMask; uniform float uMaskOn; uniform vec4 uMaskRect;
+```
+Then, right after the existing `uHoles` discard:
+```glsl
+    if (uHoleCOn > 0.5 && inBox(uHoleC)) discard;
+    if (uMaskOn > 0.5) {
+      vec2 muv = vec2((vPos.x - uMaskRect.x) / (uMaskRect.z - uMaskRect.x), (vPos.z - uMaskRect.y) / (uMaskRect.w - uMaskRect.y));
+      if (muv.x >= 0.0 && muv.x <= 1.0 && muv.y >= 0.0 && muv.y <= 1.0 && texture2D(uMask, muv).r > 0.5) discard;
+    }
+```
+
+Change the factory to:
+```js
+const EMPTY = new THREE.DataTexture(new Uint8Array([0]), 1, 1, THREE.RedFormat); EMPTY.needsUpdate = true;
+export function terrainMaterial(U, interval, holes, extra = {}) {
+  return new THREE.ShaderMaterial({
+    vertexShader: vert, fragmentShader: frag,
+    uniforms: { uExag: U.exag, uFlat: U.flat, uLines: U.lines, uMode: U.mode, uMute: U.mute,
+      uInterval: { value: interval }, uHoles: { value: holes ? 1 : 0 }, uHoleA: { value: U.holeA }, uHoleB: { value: U.holeB },
+      uHoleC: { value: extra.holeC ?? new THREE.Vector4() }, uHoleCOn: { value: extra.holeC ? 1 : 0 },
+      uMask: { value: extra.mask ?? EMPTY }, uMaskOn: { value: extra.mask ? 1 : 0 }, uMaskRect: { value: extra.maskRect ?? new THREE.Vector4() } },
+  });
+}
+```
+
+- [ ] **Step 6: Implement `AuvLod`**
+
+`src/atlas_map/src/scene/AuvLod.js`:
+```js
+import * as THREE from "three";
+import { toX, toZ } from "./geo.js";
+import { decode, tileArrays, wanted } from "./auvTiles.js";
+
+const INTERVAL = [50, 20, 10];
+
+async function fetchTile(url, S, zScale, zOffset) {
+  const buf = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  const raw = buf[0] === 0x1f && buf[1] === 0x8b
+    ? new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer()) : buf;
+  return decode(new Int16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2), S, zScale, zOffset);
+}
+
+export class AuvLod {
+  static async create(scene3d, U, makeMaterial, base = "/atlas/auv/") {
+    let index;
+    try { const r = await fetch(base + "index.json"); if (!r.ok) return null; index = await r.json(); } catch { return null; }
+    const lod = new AuvLod(scene3d, U, makeMaterial, base, index);
+    await lod._loadBase();
+    return lod;
+  }
+
+  constructor(scene3d, U, makeMaterial, base, index) {
+    Object.assign(this, { scene3d, base, index, S: index.tileCells + 1, credit: index.credit, last: 0, pending: new Set(), cache: new Map() });
+    const { west, north } = index;
+    this.levels = index.levels.map(l => ({ ...l, tileDeg: l.cellDeg * index.tileCells, have: new Set(l.tiles.map(([y, x]) => `${y}_${x}`)) }));
+    this.masks = this.levels.map(L => {
+      const t = new THREE.DataTexture(new Uint8Array(L.tilesX * L.tilesY), L.tilesX, L.tilesY, THREE.RedFormat);
+      t.magFilter = t.minFilter = THREE.NearestFilter; t.needsUpdate = true;
+      return { t, rect: new THREE.Vector4(toX(west), toZ(north), toX(west + L.tilesX * L.tileDeg), toZ(north - L.tilesY * L.tileDeg)) };
+    });
+    this.mats = this.levels.map((L, k) => makeMaterial(U, INTERVAL[k], false, this.masks[k + 1] ? { mask: this.masks[k + 1].t, maskRect: this.masks[k + 1].rect } : {}));
+    this.shown = this.levels.map(() => new Map());
+    this.heights = new Map();
+    this.box = new THREE.Vector4(toX(west), toX(west + index.nx * index.cellDeg), toZ(north), toZ(north - index.ny * index.cellDeg));
+  }
+
+  origin(L, ty, tx) { return { lon0: this.index.west + tx * L.tileDeg, lat0: this.index.north - ty * L.tileDeg }; }
+  center = (k, key) => { const L = this.levels[k], [ty, tx] = key.split("_").map(Number), o = this.origin(L, ty, tx);
+    return [toX(o.lon0 + L.tileDeg / 2), toZ(o.lat0 - L.tileDeg / 2)]; };
+
+  async _geometry(k, key) {
+    const ck = `${k}:${key}`;
+    if (this.cache.has(ck)) { const g = this.cache.get(ck); this.cache.delete(ck); this.cache.set(ck, g); return g; }
+    if (this.pending.has(ck)) return null;
+    this.pending.add(ck);
+    try {
+      const L = this.levels[k], [ty, tx] = key.split("_").map(Number), o = this.origin(L, ty, tx);
+      const h = await fetchTile(`${this.base}L${k}/${key}.bin.gz`, this.S, this.index.zScale, this.index.zOffset);
+      if (k === 0) this.heights.set(key, h);
+      const a = tileArrays(h, this.S, o.lon0, o.lat0, L.cellDeg);
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.BufferAttribute(a.positions, 3));
+      g.setAttribute("elev", new THREE.BufferAttribute(a.elev, 1));
+      g.setAttribute("grad", new THREE.BufferAttribute(a.grad, 2));
+      g.setAttribute("drop", new THREE.BufferAttribute(a.drop, 1));
+      g.setIndex(new THREE.BufferAttribute(a.index, 1));
+      this.cache.set(ck, g);
+      while (this.cache.size > 160) {
+        const [oldKey, oldGeo] = this.cache.entries().next().value;
+        const [ok, okey] = oldKey.split(":");
+        if (this.shown[+ok].has(okey)) break;
+        this.cache.delete(oldKey); oldGeo.dispose();
+      }
+      return g;
+    } finally { this.pending.delete(ck); }
+  }
+
+  _setMask(k, key, on) {
+    const L = this.levels[k], [ty, tx] = key.split("_").map(Number);
+    this.masks[k].t.image.data[ty * L.tilesX + tx] = on ? 255 : 0; this.masks[k].t.needsUpdate = true;
+  }
+  _show(k, key, g) {
+    if (this.shown[k].has(key)) return;
+    const mesh = new THREE.Mesh(g, this.mats[k]);
+    mesh.frustumCulled = false;   // heights are applied in the shader; bounds at y=0 would cull wrongly
+    this.scene3d.add(mesh); this.shown[k].set(key, mesh); this._setMask(k, key, true);
+  }
+  _hide(k, key) {
+    const mesh = this.shown[k].get(key); if (!mesh) return;
+    this.scene3d.remove(mesh); this.shown[k].delete(key); this._setMask(k, key, false);
+  }
+  async _loadBase() { await Promise.all([...this.levels[0].have].map(async key => this._show(0, key, await this._geometry(0, key)))); }
+
+  sample(lon, lat) {
+    const L0 = this.levels[0], N = this.index.tileCells, S = this.S;
+    const fx = (lon - this.index.west) / L0.cellDeg - 0.5, fy = (this.index.north - lat) / L0.cellDeg - 0.5;
+    if (fx < 0 || fy < 0) return null;
+    const tx = Math.floor(fx / N), ty = Math.floor(fy / N), h = this.heights.get(`${ty}_${tx}`);
+    if (!h) return null;
+    const c = fx - tx * N, r = fy - ty * N, c0 = Math.floor(c), r0 = Math.floor(r), tc = c - c0, tr = r - r0;
+    const at = (rr, cc) => h[Math.min(S - 1, rr) * S + Math.min(S - 1, cc)];
+    return (at(r0, c0) * (1 - tc) + at(r0, c0 + 1) * tc) * (1 - tr) + (at(r0 + 1, c0) * (1 - tc) + at(r0 + 1, c0 + 1) * tc) * tr;
+  }
+
+  update(target, camDist, now) {
+    if (now - this.last < 200) return;
+    this.last = now;
+    const want = wanted(this.levels, target, camDist, this.center);
+    for (const k of [2, 1]) {
+      for (const key of [...this.shown[k].keys()]) if (!want[k].has(key)) this._hide(k, key);
+      const missing = [...want[k]].filter(key => !this.shown[k].has(key) && this.levels[k].have.has(key))
+        .map(key => { const [cx, cz] = this.center(k, key); return [Math.hypot(cx - target.x, cz - target.z), key]; })
+        .sort((a, b) => a[0] - b[0]).slice(0, Math.max(0, 6 - this.pending.size));
+      for (const [, key] of missing) this._geometry(k, key).then(g => {
+        if (g && wanted(this.levels, this._lastTarget ?? target, this._lastDist ?? camDist, this.center)[k].has(key)) this._show(k, key, g);
+      });
+    }
+    this._lastTarget = { x: target.x, z: target.z }; this._lastDist = camDist;
+  }
+
+  finest() { return this.shown[2].size ? "1 m" : this.shown[1].size ? "4 m" : "16 m"; }
+  stats() { return { L0: this.shown[0].size, L1: this.shown[1].size, L2: this.shown[2].size }; }
+}
+```
+
+- [ ] **Step 7: Wire it into `AtlasScene`**
+
+Replace the constructor's terrain lines, `this._addTerrain(grids.overview, …)`, `this._addTerrain(grids.axial, …)` and `this._addTerrain(grids.hydrate, …)`, with an async init that the constructor starts, and expose `ready`:
+```js
+    this.ready = (async () => {
+      this.auv = await AuvLod.create(this.scene, this.U, terrainMaterial);
+      this._addTerrain(grids.overview, 100, true, 1);
+      this._addTerrain(grids.axial, 50, false, 3, this.auv ? { holeC: this.auv.box } : {});
+      this._addTerrain(grids.hydrate, 50, false, 3);
+      const base = stack([grids.axial, grids.hydrate, grids.overview]);
+      this.elevAt = (lon, lat) => this.auv?.sample(lon, lat) ?? base(lon, lat);
+    })();
+```
+
+Then:
+- Change `_addTerrain(grid, interval, holes, smooth)` to take a fifth `extra` argument and pass it to `terrainMaterial(this.U, interval, holes, extra)`.
+- Import `AuvLod` from `./AuvLod.js`.
+- In `_tick`, after `this.controls.update()`, add `this.auv?.update(this.controls.target, this.camera.position.distanceTo(this.controls.target), now);`.
+- In `App.jsx`, `await sc.ready` before `sc.addCable(...)`, so markers and the cable sample the final `elevAt`.
+- Add `window.__atlas.lod = () => sc.auv?.stats()` for tests.
+
+In `Controls.jsx`, add a read-only row under the exaggeration slider. It updates from `scene.frame` on an interval of 250 ms:
+```jsx
+<div className="ctl-row"><span className="eyebrow">Axial detail</span><span className="mono" aria-live="polite">{detail}</span></div>
+```
+Use `const [detail, setDetail] = useState("16 m"); useEffect(() => { const id = setInterval(() => scene?.auv && setDetail(scene.auv.finest()), 250); return () => clearInterval(id); }, [scene]);`.
+
+In `Legend.jsx`, extend the attribution with: `Axial summit: MBARI AUV survey (cruise V2506), 1 m.`
+
+- [ ] **Step 8: End-to-end check**
+
+Append to `src/atlas_map/e2e/atlas.spec.js`:
+```js
+test("Axial detail sharpens as you zoom", async ({ page }) => {
+  await mockGateway(page);
+  await page.goto("/");
+  await ready(page);
+  const hasTiles = await page.evaluate(async () => (await fetch("/atlas/auv/index.json")).ok);
+  test.skip(!hasTiles, "AUV tiles not built (plan 1, Task 9)");
+  await page.evaluate(() => window.__atlas.scene.flyTo({ ll: [-130.009, 45.953], dist: 3.2, polar: 0.95, az: -0.5, exag: 2 }));
+  await page.waitForTimeout(6000);
+  const s = await page.evaluate(() => window.__atlas.lod());
+  expect(s.L2).toBeGreaterThan(0);
+  await expect(page.getByText("1 m", { exact: true })).toBeVisible();
+  await page.screenshot({ path: "e2e/screens/07-axial-1m.png" });
+});
+```
+
+Run: `cd src/atlas_map && npx vitest run && npx playwright test -g "Axial detail" && cd ../..`
+Expected: the unit tests pass, and the e2e test passes when the tiles exist. Check the screenshot: the caldera shows lava-flow texture, with no black holes and no dark seams at tile edges.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add src/atlas_map/src/scene src/atlas_map/src/ui/Controls.jsx src/atlas_map/src/ui/Legend.jsx src/atlas_map/src/App.jsx src/atlas_map/e2e/atlas.spec.js
+git commit -m "Stream MBARI 1 m Axial summit terrain with level-of-detail tiles"
+```
