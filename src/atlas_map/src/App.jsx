@@ -3,7 +3,11 @@ import { BUILD_COMMAND, BundleMissingError, loadBundle } from "./data/bundle.js"
 import { AtlasScene, loadGrids } from "./scene/AtlasScene.js";
 import { OverlayLayer } from "./overlay/OverlayLayer.js";
 import Controls from "./ui/Controls.jsx";
+import FamilyFilter from "./ui/FamilyFilter.jsx";
+import Header from "./ui/Header.jsx";
+import Legend from "./ui/Legend.jsx";
 import RegionNav from "./ui/RegionNav.jsx";
+import Tooltip from "./ui/Tooltip.jsx";
 
 export default function App() {
   const [bundle, setBundle] = useState(null);
@@ -27,11 +31,13 @@ function Atlas({ bundle, onError }) {
   const canvasRef = useRef(null), overlayRef = useRef(null), layerRef = useRef(null);
   const [scene, setScene] = useState(null);
   const [regionKey, setRegionKey] = useState("overview");
-  const [hover, setHover] = useState(null);   // {kind, item, x, y}; Task 5 renders it
-  const [siteId, setSiteId] = useState(null);
+  const [focus, setFocus] = useState(new Set());
+  const [hover, setHover] = useState(null);   // {kind, item, x, y}
+  const [siteId, setSiteId] = useState(null);   // the site panel (Task 7) opens for it
+  const [sensorId, setSensorId] = useState(null);   // the sensor detail (Task 8) opens for it
 
   const openSite = useCallback((site, sc) => {
-    setSiteId(site.id); sc.flyToPoint(site.lon, site.lat, 6); layerRef.current?.setSelected(site.id);
+    setSiteId(site.id); setSensorId(null); sc.flyToPoint(site.lon, site.lat, 6); layerRef.current?.setSelected(site.id);
   }, []);
   const selectRegion = useCallback((key, sc) => {
     setRegionKey(key); sc.flyTo(key === "overview" ? bundle.overview : bundle.regions.find(r => r.key === key).view);
@@ -61,14 +67,28 @@ function Atlas({ bundle, onError }) {
     return () => { cancelled = true; layer?.dispose(); sc?.dispose(); };
   }, [bundle, openSite, selectRegion, onError]);
 
+  useEffect(() => {
+    if (!scene) return;
+    layerRef.current?.setFocus(focus);
+    scene.setMute(focus.size ? 0.55 : 0);
+  }, [focus, scene]);
+
   return (
     <>
       <canvas ref={canvasRef} className="atlas-scene" aria-label="3D map of the seafloor off Oregon" />
       <div id="atlas-overlay" ref={overlayRef} />
       {scene && (
         <>
+          <Header bundle={bundle} onPick={r => {
+            const target = r.kind === "site" ? bundle.siteById[r.id] : bundle.siteById[bundle.sensorById[r.id].site];
+            openSite(target, scene);
+            if (r.kind === "sensor") setSensorId(r.id);
+          }} />
           <Controls scene={scene} />
           <RegionNav regions={bundle.regions} sensors={bundle.sensors} active={regionKey} onSelect={key => selectRegion(key, scene)} />
+          <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
+          <Legend credit={bundle.terrainMeta.credit} />
+          <Tooltip hover={hover} bundle={bundle} />
         </>
       )}
     </>

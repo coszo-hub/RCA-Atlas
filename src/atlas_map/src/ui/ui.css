@@ -13,3 +13,38 @@ input[type=range]:disabled { opacity: 0.35; }
 .regions button:hover { background: var(--surface-2); }
 .regions button[aria-pressed="true"] { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--text-primary); }
 .regions .n { color: var(--text-muted); font-size: 12px; }
+.header { top: 16px; left: var(--left-inset); width: 320px; padding: 14px 16px 12px; transition: left 220ms ease; }
+.header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+.header p { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
+.header .stats { display: flex; gap: 22px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+.header .stats div { display: flex; flex-direction: column; gap: 2px; }
+.header .stats b { font-size: 16px; font-weight: 500; }
+.header .stats span { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.search { position: relative; margin-top: 10px; }
+.search input { width: 100%; background: var(--surface-2); border: 1px solid var(--hairline-strong); border-radius: 4px; color: var(--text-primary); padding: 6px 8px; font: inherit; }
+.search ul { position: absolute; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--surface-1); border: 1px solid var(--hairline-strong); border-radius: 4px; z-index: 8; }
+.search li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 3px; cursor: pointer; }
+.search li[aria-selected="true"], .search li:hover { background: var(--surface-2); }
+.search .sub { color: var(--text-muted); font-size: 12px; }
+.families { left: calc((var(--left-inset) + 100vw - var(--right-inset)) / 2); transform: translateX(-50%); bottom: 16px; padding: 6px; display: flex; gap: 2px; white-space: nowrap; transition: left 220ms ease; }
+.families button { display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 7px 11px; border-radius: 4px; cursor: pointer; transition: opacity 160ms ease; }
+.families button:hover { background: var(--surface-2); }
+.families button.muted { opacity: 0.35; }
+.families .n { color: var(--text-muted); font-size: 12px; }
+.legend { right: var(--right-inset); bottom: 16px; width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; transition: right 220ms ease; }
+.legend .row { display: flex; align-items: center; gap: 9px; color: var(--text-secondary); font-size: 12px; line-height: 20px; }
+.legend .glyph { width: 18px; height: 12px; flex: none; }
+.ramp { height: 8px; border-radius: 2px; background: linear-gradient(90deg, rgb(219,219,204) 0%, rgb(158,181,176) 14.6%, rgb(97,130,135) 41.7%, rgb(54,79,89) 62.5%, rgb(31,41,48) 100%); }
+.ramp-labels { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 11px; margin-top: 4px; }
+.attribution { color: var(--text-muted); font-size: 10.5px; line-height: 1.4; border-top: 1px solid var(--hairline); padding-top: 8px; }
+.tip { position: fixed; pointer-events: none; background: rgba(18, 18, 17, 0.95); border: 1px solid var(--hairline-strong); border-radius: 5px; padding: 10px 12px; width: 380px; z-index: 10; }
+.t-name { font-weight: 500; font-size: 13px; line-height: 1.3; }
+.t-sub { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+.t-col { color: var(--text-secondary); font-size: 12px; margin-top: 6px; }
+.t-col b { color: var(--text-primary); font-weight: 500; }
+.t-list { margin-top: 8px; border-top: 1px solid var(--hairline); padding-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.t-head { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin: 6px 0 1px; }
+.t-item { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.t-item > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-item .d { color: var(--text-muted); font-size: 11px; }
+.t-more { color: var(--text-muted); font-size: 11.5px; margin-top: 4px; }
