@@ -6,7 +6,10 @@ from pathlib import Path
 from atlas_map_data import access
 
 EXT = {"erddap": {"ooi-rs03axps-pc03a-4a-ctdpfa303"}, "qaqc": {"RS03AXPS-PC03A-4A-CTDPFA303"}, "warnings": []}
-PI = {"INSTRUMENT-pi": [{"instrument_key": "PI-COVIS", "label": "COVIS raw", "url": "http://piweb.ooirsn.uw.edu/covis/data/COVIS/raw/"}]}
+PI = {"INSTRUMENT-pi": [{"instrument_key": "PI-COVIS", "endpoint_id": "PI-PORTAL-ENDPOINT-d95fe5064a76d7af06",
+                         "label": "COVIS raw", "url": "http://piweb.ooirsn.uw.edu/covis/data/COVIS/raw/"}],
+      "INSTRUMENT-offsite": [{"instrument_key": "PI-OFF", "endpoint_id": "PI-PORTAL-ENDPOINT-0ff",
+                              "label": "mirror", "url": "https://mirror.example.com/off/"}]}
 
 
 def rec(**kw):
@@ -51,11 +54,23 @@ class AccessTest(unittest.TestCase):
         routes = access.build_access(rec(instrumentId="INSTRUMENT-pi"), EXT, PI, {})
         pi = [x for x in routes if x["kind"] == "pi_portal"]
         self.assertEqual(pi[0]["instrumentKey"], "PI-COVIS")
+        self.assertEqual(pi[0]["endpointId"], "PI-PORTAL-ENDPOINT-d95fe5064a76d7af06")
         self.assertEqual(pi[0]["url"], "http://piweb.ooirsn.uw.edu/covis/data/COVIS/raw/")
 
     def test_documentation_only_sensor(self):
         routes = access.build_access(rec(sources=["https://coszo.org/x"]), EXT, PI, {})
         self.assertEqual([r["kind"] for r in routes], ["documentation"])
+        self.assertIn("No public data feed is known yet", routes[0]["how"])
+
+    def test_documentation_on_pi_directory_uses_neutral_wording(self):
+        routes = access.build_access(rec(sources=["http://piweb.ooirsn.uw.edu/das/"]), EXT, PI, {})
+        self.assertEqual([r["kind"] for r in routes], ["documentation"])
+        self.assertEqual(routes[0]["how"], "Public PI data directory; browse by date.")
+
+    def test_filtered_out_data_routes_still_get_documentation(self):
+        routes = access.build_access(rec(instrumentId="INSTRUMENT-offsite",
+                                         sources=["https://evil.example.com/x", "https://coszo.org/x"]), EXT, PI, {})
+        self.assertEqual([(r["kind"], r["url"]) for r in routes], [("documentation", "https://coszo.org/x")])
 
     def test_disallowed_hosts_are_dropped(self):
         routes = access.build_access(rec(sources=["https://evil.example.com/x", "http://10.0.0.5/x"]), EXT, PI, {})

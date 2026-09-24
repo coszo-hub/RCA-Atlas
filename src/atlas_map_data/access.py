@@ -32,9 +32,17 @@ def earthscope_station(record: dict) -> tuple[str, str] | None:
     return (m.group(1), m.group(2)) if m else None
 
 
+PI_HOST = "piweb.ooirsn.uw.edu"
+DOCUMENTATION_HOW = "No public data feed is known yet; this page documents the sensor."
+PI_DIRECTORY_HOW = "Public PI data directory; browse by date."
+
+
+def _host(url: str) -> str:
+    return urllib.parse.urlparse(url).hostname or ""
+
+
 def _allowed(url: str) -> bool:
-    host = urllib.parse.urlparse(url).hostname or ""
-    return host in ALLOWED_HOSTS
+    return _host(url) in ALLOWED_HOSTS
 
 
 def load_external(runtime: Path) -> dict:
@@ -95,10 +103,12 @@ def build_access(record: dict, external: dict, pi_endpoints: dict[str, list[dict
                        "how": "Public seismic waveforms (MiniSEED) and station metadata; no login."})
     for ep in pi_endpoints.get(record["instrumentId"], []):
         routes.append({"kind": "pi_portal", "label": f"PI data portal: {ep['label']}", "instrumentKey": ep["instrument_key"],
+                       "endpointId": ep["endpoint_id"],
                        "url": ep["url"], "how": "Public directory listing; open folders by date to find files."})
-    if not routes:
+    routes = [r for r in routes if _allowed(r["url"])]
+    if not routes:     # decided after the host filter, so filtered-out data routes still get documentation
         for url in record.get("sources", []):
             if _allowed(url):
                 routes.append({"kind": "documentation", "label": "Documentation", "url": url,
-                               "how": "No public data feed is known yet; this page documents the sensor."})
-    return [r for r in routes if _allowed(r["url"])]
+                               "how": PI_DIRECTORY_HOW if _host(url) == PI_HOST else DOCUMENTATION_HOW})
+    return routes
