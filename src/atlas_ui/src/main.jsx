@@ -67,7 +67,6 @@ function App() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("How many earthquakes occurred at Axial Seamount yesterday?");
   const [answerModel, setAnswerModel] = useState("auto");
-  const [quickMode, setQuickMode] = useState(false);
   const [askedQuestion, setAskedQuestion] = useState("");
   const graph = useMemo(() => evidenceGraph(result), [result]);
   const answer = result?.answer || "";
@@ -99,7 +98,7 @@ function App() {
       const response = await fetch(`${WORKER_URL}/v1/answer`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: question, model: answerModel, answer_mode: quickMode ? "quick" : "evidence" }),
+        body: JSON.stringify({ query: question, model: answerModel, answer_mode: "evidence" }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.answer) throw new Error(data.error || "Atlas is temporarily unavailable");
@@ -116,7 +115,7 @@ function App() {
     <main className="atlas-main">
       <form className="query-form" onSubmit={ask}>
         <BorderBeam size="md" colorVariant="colorful" strength={0.7} active={!loading}>
-          <div className="search-box"><span className="atlas-chip">Atlas</span><textarea value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question" rows="2" disabled={loading}/><div className="composer-footer"><button type="button" className={!quickMode ? "mode-button active" : "mode-button"} onClick={() => setQuickMode(false)} disabled={loading}>Evidence</button><button type="button" className={quickMode ? "mode-button active" : "mode-button"} onClick={() => setQuickMode(true)} disabled={loading}>Quick answer</button><label className="model-select"><span className="visually-hidden">Answer model</span><select value={answerModel} onChange={(event) => setAnswerModel(event.target.value)} disabled={loading || quickMode}><option value="auto">Auto · free fallback</option><optgroup label="Gemini · free"><option value="gemini-2.5-flash">Flash</option><option value="gemini-3.5-flash-lite">Flash-Lite</option></optgroup><optgroup label="Groq · free"><option value="groq-gpt-oss-120b">GPT-OSS 120B</option><option value="groq-gpt-oss-20b">GPT-OSS 20B</option><option value="groq-qwen3-8-27b">Qwen 3.8 27B</option></optgroup><option value="gpt-5.4-mini">OpenAI GPT-5.4 Mini</option><optgroup label="OpenAI · API credit required"><option value="gpt-5.6-sol" disabled>GPT-5.6 Sol</option><option value="gpt-5.5" disabled>GPT-5.5</option><option value="gpt-5.5-pro" disabled>GPT-5.5 Pro</option></optgroup></select></label><button type="submit" aria-label="Search Ask Atlas" disabled={loading}>↑</button></div></div>
+          <div className="search-box"><span className="atlas-chip">Atlas</span><textarea value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Research question" rows="2" disabled={loading}/><div className="composer-footer"><span className="composer-chip">Evidence</span><label className="model-select"><span className="visually-hidden">Answer model</span><select value={answerModel} onChange={(event) => setAnswerModel(event.target.value)} disabled={loading}><option value="auto">Auto · free fallback</option><optgroup label="Gemini · free"><option value="gemini-2.5-flash">Flash</option><option value="gemini-3.5-flash-lite">Flash-Lite</option></optgroup><optgroup label="Groq · free"><option value="groq-gpt-oss-120b">GPT-OSS 120B</option><option value="groq-gpt-oss-20b">GPT-OSS 20B</option><option value="groq-qwen3-8-27b">Qwen 3.8 27B</option></optgroup><option value="gpt-5.4-mini">OpenAI GPT-5.4 Mini</option><optgroup label="OpenAI · API credit required"><option value="gpt-5.6-sol" disabled>GPT-5.6 Sol</option><option value="gpt-5.5" disabled>GPT-5.5</option><option value="gpt-5.5-pro" disabled>GPT-5.5 Pro</option></optgroup></select></label><button type="submit" aria-label="Search Ask Atlas" disabled={loading}>↑</button></div></div>
         </BorderBeam>
       </form>
       {searched && <section className="response" aria-live="polite">
