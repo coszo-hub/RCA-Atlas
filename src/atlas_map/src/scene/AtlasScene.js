@@ -109,7 +109,9 @@ export class AtlasScene {
 
   addDas(das) {
     const common = { transparent: true, depthTest: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -70 };
+    this.dasShown = true; this.dasKinds = new Map();
     this.dasLines = (das?.layers || []).map(info => {
+      this.dasKinds.set(info.kind, true);
       const mat = new LineMaterial({ color: info.color, linewidth: info.kind === "multidas" ? 4.2 : 2.7,
         opacity: 0.95, dashed: info.kind === "optodas", dashSize: 0.7, gapSize: 0.45, ...common });
       const line = new Line2(new LineGeometry(), mat);
@@ -119,7 +121,15 @@ export class AtlasScene {
     this.updateLines();
   }
 
-  setDasVisible(on) { for (const line of this.dasLines ?? []) line.visible = on; }
+  setDasVisible(on) {
+    this.dasShown = on;
+    for (const line of this.dasLines ?? []) line.visible = on && this.dasKinds.get(line.userData.info.kind) !== false;
+  }
+
+  setDasKindVisible(kind, on) {
+    this.dasKinds.set(kind, on);
+    for (const line of this.dasLines ?? []) if (line.userData.info.kind === kind) line.visible = this.dasShown && on;
+  }
 
   addMoorings(sites) {   // call after addCable, which creates the shared materials
     this.moorings = [];

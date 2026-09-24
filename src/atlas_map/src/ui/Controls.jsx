@@ -59,6 +59,7 @@ export default function Controls({ scene, compact = false, deep = false, onDeep 
   useEffect(() => { if (scene) scene.onExag = v => setExag(v); return () => { if (scene) scene.onExag = null; }; }, [scene]);
   const [detail, setDetail] = useState("16 m");   // the finest Axial summit level on screen
   const [das, setDas] = useState(true);
+  const [dasKinds, setDasKinds] = useState({ conventional: true, multidas: true, optodas: true });
   useEffect(() => { const id = setInterval(() => scene?.auv && setDetail(scene.auv.finest()), 250); return () => clearInterval(id); }, [scene]);
   if (!expanded) return <MinTab className="controls-toggle" onClick={() => setOverride(true)}>Terrain controls</MinTab>;
   return (
@@ -75,6 +76,16 @@ export default function Controls({ scene, compact = false, deep = false, onDeep 
       {scene?.auv && <div className="ctl-row"><span className="eyebrow">Axial detail</span><span className="mono" aria-live="polite">{detail}</span></div>}
       {scene?.dasLines?.length > 0 && <Seg label="DAS coverage" options={[["on", "On"], ["off", "Off"]]} value={das ? "on" : "off"}
         onChange={v => { const on = v === "on"; setDas(on); scene.setDasVisible(on); }} />}
+      {scene?.dasLines?.length > 0 && das && (
+        <>
+          <Seg label="2021 conventional" options={[["on", "On"], ["off", "Off"]]} value={dasKinds.conventional ? "on" : "off"}
+            onChange={v => { const on = v === "on"; setDasKinds(s => ({ ...s, conventional: on })); scene.setDasKindVisible("conventional", on); }} />
+          <Seg label="2025–26 MultiDAS" options={[["on", "On"], ["off", "Off"]]} value={dasKinds.multidas ? "on" : "off"}
+            onChange={v => { const on = v === "on"; setDasKinds(s => ({ ...s, multidas: on })); scene.setDasKindVisible("multidas", on); }} />
+          <Seg label="2025–26 OptoDAS" options={[["on", "On"], ["off", "Off"]]} value={dasKinds.optodas ? "on" : "off"}
+            onChange={v => { const on = v === "on"; setDasKinds(s => ({ ...s, optodas: on })); scene.setDasKindVisible("optodas", on); }} />
+        </>
+      )}
       {sub && <Seg label="Subsurface" options={[["off", "Off"], ["on", "On"]]} value={deep ? "on" : "off"}
         onChange={v => { onDeep?.(v === "on"); scene.setSubsurface(v === "on"); }} />}
       {sub && deep && <QuakeTimeline scene={scene} sub={sub} />}

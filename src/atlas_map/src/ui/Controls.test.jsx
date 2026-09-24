@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import Controls from "./Controls.jsx";
 
@@ -43,6 +43,15 @@ describe("Controls", () => {
   it("has no Axial detail row when the AUV tiles are not built", () => {
     render(<Controls scene={fakeScene()} />);
     expect(screen.queryByText("Axial detail")).toBeNull();
+  });
+  it("can independently show or hide each DAS experiment", () => {
+    const s = { ...fakeScene(), dasLines: [{}], setDasVisible: vi.fn(), setDasKindVisible: vi.fn() };
+    render(<Controls scene={s} />);
+    fireEvent.click(within(screen.getByRole("group", { name: "2025–26 MultiDAS" })).getByRole("button", { name: "Off" }));
+    expect(s.setDasKindVisible).toHaveBeenCalledWith("multidas", false);
+    fireEvent.click(within(screen.getByRole("group", { name: "DAS coverage" })).getByRole("button", { name: "Off" }));
+    expect(s.setDasVisible).toHaveBeenCalledWith(false);
+    expect(screen.queryByRole("group", { name: "2025–26 MultiDAS" })).toBeNull();
   });
   it("collapses to a toggle while the top row wraps, keeps its switches, and the user can expand and collapse it", () => {
     const s = fakeScene();
