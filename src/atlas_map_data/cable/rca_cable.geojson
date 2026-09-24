@@ -1,0 +1,2397 @@
+{
+ "type": "FeatureCollection",
+ "name": "OOI Regional Cabled Array cable routes",
+ "description": "Centerlines derived from NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' RSN Backbone Cable corridors (public domain US Gov data; 'For coastal and ocean planning', not for navigation) plus OOI node positions. Segments beyond the US EEZ are approximate.",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "South backbone: Pacific City landfall -> PN1A (Slope Base)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 204.22,
+    "line": "south",
+    "note": "Last ~0.46 km is a short stub from the corridor junction to the corridor terminus taken as PN1A."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -123.969506,
+      45.201757
+     ],
+     [
+      -123.978382,
+      45.199741
+     ],
+     [
+      -123.98542,
+      45.19809
+     ],
+     [
+      -123.989374,
+      45.197003
+     ],
+     [
+      -124.02011,
+      45.18953
+     ],
+     [
+      -124.029572,
+      45.188458
+     ],
+     [
+      -124.052507,
+      45.187726
+     ],
+     [
+      -124.079962,
+      45.187119
+     ],
+     [
+      -124.127135,
+      45.182034
+     ],
+     [
+      -124.26603,
+      45.172919
+     ],
+     [
+      -124.290135,
+      45.172878
+     ],
+     [
+      -124.328344,
+      45.171983
+     ],
+     [
+      -124.341437,
+      45.170972
+     ],
+     [
+      -124.353762,
+      45.17008
+     ],
+     [
+      -124.365292,
+      45.169055
+     ],
+     [
+      -124.375543,
+      45.167945
+     ],
+     [
+      -124.383039,
+      45.167319
+     ],
+     [
+      -124.44469,
+      45.161881
+     ],
+     [
+      -124.470186,
+      45.156642
+     ],
+     [
+      -124.531121,
+      45.147892
+     ],
+     [
+      -124.583333,
+      45.147997
+     ],
+     [
+      -124.631836,
+      45.155955
+     ],
+     [
+      -124.653855,
+      45.163315
+     ],
+     [
+      -124.671952,
+      45.170273
+     ],
+     [
+      -124.693689,
+      45.180403
+     ],
+     [
+      -124.706856,
+      45.186213
+     ],
+     [
+      -124.724454,
+      45.190834
+     ],
+     [
+      -124.73539,
+      45.192481
+     ],
+     [
+      -124.745315,
+      45.193562
+     ],
+     [
+      -124.76395,
+      45.192419
+     ],
+     [
+      -124.7822,
+      45.187639
+     ],
+     [
+      -124.798264,
+      45.180748
+     ],
+     [
+      -124.814465,
+      45.170348
+     ],
+     [
+      -124.832656,
+      45.155712
+     ],
+     [
+      -124.860998,
+      45.140047
+     ],
+     [
+      -124.882195,
+      45.132828
+     ],
+     [
+      -124.904539,
+      45.129676
+     ],
+     [
+      -124.929797,
+      45.130617
+     ],
+     [
+      -124.94762,
+      45.134246
+     ],
+     [
+      -124.966417,
+      45.138701
+     ],
+     [
+      -125.000702,
+      45.147611
+     ],
+     [
+      -125.039813,
+      45.150874
+     ],
+     [
+      -125.040794,
+      45.15092
+     ],
+     [
+      -125.081215,
+      45.150499
+     ],
+     [
+      -125.092965,
+      45.150174
+     ],
+     [
+      -125.115705,
+      45.148711
+     ],
+     [
+      -125.243525,
+      45.140171
+     ],
+     [
+      -125.260737,
+      45.138836
+     ],
+     [
+      -125.266116,
+      45.137954
+     ],
+     [
+      -125.283216,
+      45.133506
+     ],
+     [
+      -125.323911,
+      45.121723
+     ],
+     [
+      -125.380875,
+      45.105623
+     ],
+     [
+      -125.409728,
+      45.098638
+     ],
+     [
+      -125.4213,
+      45.094518
+     ],
+     [
+      -125.427815,
+      45.091444
+     ],
+     [
+      -125.439162,
+      45.084523
+     ],
+     [
+      -125.449413,
+      45.076924
+     ],
+     [
+      -125.479209,
+      45.054098
+     ],
+     [
+      -125.512298,
+      45.031155
+     ],
+     [
+      -125.523667,
+      45.021858
+     ],
+     [
+      -125.529985,
+      45.015633
+     ],
+     [
+      -125.539077,
+      45.004543
+     ],
+     [
+      -125.550092,
+      44.98726
+     ],
+     [
+      -125.574135,
+      44.946466
+     ],
+     [
+      -125.592375,
+      44.916827
+     ],
+     [
+      -125.599705,
+      44.901698
+     ],
+     [
+      -125.602422,
+      44.89486
+     ],
+     [
+      -125.610313,
+      44.869695
+     ],
+     [
+      -125.627653,
+      44.806722
+     ],
+     [
+      -125.633042,
+      44.790218
+     ],
+     [
+      -125.638594,
+      44.770819
+     ],
+     [
+      -125.640222,
+      44.758987
+     ],
+     [
+      -125.640387,
+      44.751468
+     ],
+     [
+      -125.639301,
+      44.738134
+     ],
+     [
+      -125.626595,
+      44.669929
+     ],
+     [
+      -125.622459,
+      44.646157
+     ],
+     [
+      -125.618664,
+      44.633844
+     ],
+     [
+      -125.614345,
+      44.62439
+     ],
+     [
+      -125.607174,
+      44.612528
+     ],
+     [
+      -125.591788,
+      44.591933
+     ],
+     [
+      -125.576597,
+      44.572768
+     ],
+     [
+      -125.553357,
+      44.542191
+     ],
+     [
+      -125.544711,
+      44.533237
+     ],
+     [
+      -125.536061,
+      44.526142
+     ],
+     [
+      -125.523583,
+      44.518045
+     ],
+     [
+      -125.518635,
+      44.515263
+     ],
+     [
+      -125.494122,
+      44.503183
+     ],
+     [
+      -125.448627,
+      44.481702
+     ],
+     [
+      -125.441199,
+      44.478079
+     ],
+     [
+      -125.436904,
+      44.476599
+     ],
+     [
+      -125.433844,
+      44.476416
+     ],
+     [
+      -125.430002,
+      44.477018
+     ],
+     [
+      -125.426791,
+      44.4785
+     ],
+     [
+      -125.423917,
+      44.48057
+     ],
+     [
+      -125.420951,
+      44.482381
+     ],
+     [
+      -125.418298,
+      44.484295
+     ],
+     [
+      -125.413629,
+      44.488647
+     ],
+     [
+      -125.401265,
+      44.505424
+     ],
+     [
+      -125.401059,
+      44.50559
+     ],
+     [
+      -125.400641,
+      44.505746
+     ],
+     [
+      -125.398227,
+      44.509564
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "South backbone: PN1A (Slope Base) -> PN1B (Southern Hydrate Ridge)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 27.22,
+    "line": "south"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -125.400641,
+      44.505746
+     ],
+     [
+      -125.400529,
+      44.505418
+     ],
+     [
+      -125.40057,
+      44.505198
+     ],
+     [
+      -125.410533,
+      44.486703
+     ],
+     [
+      -125.41218,
+      44.477378
+     ],
+     [
+      -125.412467,
+      44.47253
+     ],
+     [
+      -125.412247,
+      44.469694
+     ],
+     [
+      -125.411319,
+      44.467963
+     ],
+     [
+      -125.409742,
+      44.466306
+     ],
+     [
+      -125.40732,
+      44.464846
+     ],
+     [
+      -125.402298,
+      44.463238
+     ],
+     [
+      -125.388815,
+      44.459133
+     ],
+     [
+      -125.343883,
+      44.444277
+     ],
+     [
+      -125.338878,
+      44.442797
+     ],
+     [
+      -125.33371,
+      44.442203
+     ],
+     [
+      -125.33233,
+      44.442229
+     ],
+     [
+      -125.331827,
+      44.4421
+     ],
+     [
+      -125.330686,
+      44.442408
+     ],
+     [
+      -125.330185,
+      44.442279
+     ],
+     [
+      -125.324285,
+      44.442417
+     ],
+     [
+      -125.320747,
+      44.442552
+     ],
+     [
+      -125.275982,
+      44.445685
+     ],
+     [
+      -125.233544,
+      44.448225
+     ],
+     [
+      -125.218504,
+      44.449382
+     ],
+     [
+      -125.214402,
+      44.450085
+     ],
+     [
+      -125.19695,
+      44.453882
+     ],
+     [
+      -125.169192,
+      44.460734
+     ],
+     [
+      -125.162613,
+      44.462616
+     ],
+     [
+      -125.161665,
+      44.463096
+     ],
+     [
+      -125.157228,
+      44.466895
+     ],
+     [
+      -125.155018,
+      44.469357
+     ],
+     [
+      -125.152624,
+      44.472792
+     ],
+     [
+      -125.150952,
+      44.47571
+     ],
+     [
+      -125.149774,
+      44.478048
+     ],
+     [
+      -125.149596,
+      44.478232
+     ],
+     [
+      -125.149272,
+      44.478406
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Extension: PN1B -> Southern Hydrate Ridge summit (LJ01B/MJ01B)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 10.13,
+    "line": "south",
+    "note": "Corridor terminus coincides with RS01SUM1-LJ01B / RS01SUM2-MJ01B asset-management positions (<0.2 km)."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -125.149272,
+      44.478406
+     ],
+     [
+      -125.148336,
+      44.481354
+     ],
+     [
+      -125.148299,
+      44.48161
+     ],
+     [
+      -125.15123,
+      44.512843
+     ],
+     [
+      -125.152629,
+      44.526876
+     ],
+     [
+      -125.15255,
+      44.530533
+     ],
+     [
+      -125.152635,
+      44.537092
+     ],
+     [
+      -125.152504,
+      44.542572
+     ],
+     [
+      -125.151882,
+      44.549164
+     ],
+     [
+      -125.151012,
+      44.55727
+     ],
+     [
+      -125.150229,
+      44.560983
+     ],
+     [
+      -125.149032,
+      44.565351
+     ],
+     [
+      -125.148099,
+      44.56913
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "South backbone: PN1B -> PN1C (Oregon Offshore)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 22.73,
+    "line": "south",
+    "note": "Split at the point on the corridor centerline closest to the COSZO PN01C ROV site (74 m off-line)."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -125.149272,
+      44.478406
+     ],
+     [
+      -125.149077,
+      44.478125
+     ],
+     [
+      -125.149046,
+      44.477907
+     ],
+     [
+      -125.149922,
+      44.47288
+     ],
+     [
+      -125.150438,
+      44.468785
+     ],
+     [
+      -125.150461,
+      44.465305
+     ],
+     [
+      -125.150199,
+      44.462751
+     ],
+     [
+      -125.150028,
+      44.461678
+     ],
+     [
+      -125.149766,
+      44.46077
+     ],
+     [
+      -125.14934,
+      44.459993
+     ],
+     [
+      -125.14873,
+      44.459168
+     ],
+     [
+      -125.145541,
+      44.4553
+     ],
+     [
+      -125.141987,
+      44.450863
+     ],
+     [
+      -125.138693,
+      44.446573
+     ],
+     [
+      -125.132888,
+      44.439235
+     ],
+     [
+      -125.129452,
+      44.435113
+     ],
+     [
+      -125.126761,
+      44.432084
+     ],
+     [
+      -125.12181,
+      44.426928
+     ],
+     [
+      -125.118924,
+      44.42413
+     ],
+     [
+      -125.118249,
+      44.423337
+     ],
+     [
+      -125.098813,
+      44.403383
+     ],
+     [
+      -125.08839,
+      44.395158
+     ],
+     [
+      -125.071973,
+      44.384572
+     ],
+     [
+      -125.043365,
+      44.37087
+     ],
+     [
+      -125.020019,
+      44.362538
+     ],
+     [
+      -124.996142,
+      44.358427
+     ],
+     [
+      -124.973497,
+      44.35496
+     ],
+     [
+      -124.969685,
+      44.354445
+     ],
+     [
+      -124.968321,
+      44.354362
+     ],
+     [
+      -124.967503,
+      44.35438
+     ],
+     [
+      -124.96683,
+      44.354534
+     ],
+     [
+      -124.966287,
+      44.354862
+     ],
+     [
+      -124.965436,
+      44.355811
+     ],
+     [
+      -124.964124,
+      44.35758
+     ],
+     [
+      -124.963452,
+      44.359045
+     ],
+     [
+      -124.962265,
+      44.362658
+     ],
+     [
+      -124.962122,
+      44.362858
+     ],
+     [
+      -124.96193,
+      44.363
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "South backbone: PN1C (Oregon Offshore) -> PN1D (Oregon Shelf)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 75.81,
+    "line": "south",
+    "note": "Split at the point closest to the KCE-PN1D safety box centre (40 m off-line)."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -124.96193,
+      44.363
+     ],
+     [
+      -124.961723,
+      44.362872
+     ],
+     [
+      -124.96155,
+      44.362678
+     ],
+     [
+      -124.960668,
+      44.360878
+     ],
+     [
+      -124.958725,
+      44.357815
+     ],
+     [
+      -124.957552,
+      44.356645
+     ],
+     [
+      -124.956236,
+      44.355527
+     ],
+     [
+      -124.956001,
+      44.355412
+     ],
+     [
+      -124.955518,
+      44.35528
+     ],
+     [
+      -124.954394,
+      44.355334
+     ],
+     [
+      -124.953972,
+      44.355406
+     ],
+     [
+      -124.951539,
+      44.356024
+     ],
+     [
+      -124.938125,
+      44.359763
+     ],
+     [
+      -124.937084,
+      44.359931
+     ],
+     [
+      -124.936165,
+      44.360028
+     ],
+     [
+      -124.927421,
+      44.361652
+     ],
+     [
+      -124.906185,
+      44.369195
+     ],
+     [
+      -124.887693,
+      44.379203
+     ],
+     [
+      -124.870631,
+      44.385815
+     ],
+     [
+      -124.842245,
+      44.402168
+     ],
+     [
+      -124.788256,
+      44.432162
+     ],
+     [
+      -124.779031,
+      44.438697
+     ],
+     [
+      -124.77333,
+      44.445775
+     ],
+     [
+      -124.769432,
+      44.45527
+     ],
+     [
+      -124.765695,
+      44.46969
+     ],
+     [
+      -124.759143,
+      44.485617
+     ],
+     [
+      -124.755507,
+      44.519058
+     ],
+     [
+      -124.751101,
+      44.528433
+     ],
+     [
+      -124.744566,
+      44.537316
+     ],
+     [
+      -124.734606,
+      44.545173
+     ],
+     [
+      -124.730023,
+      44.547758
+     ],
+     [
+      -124.723422,
+      44.550598
+     ],
+     [
+      -124.707154,
+      44.555978
+     ],
+     [
+      -124.690716,
+      44.563392
+     ],
+     [
+      -124.656229,
+      44.583708
+     ],
+     [
+      -124.650088,
+      44.58743
+     ],
+     [
+      -124.640544,
+      44.594896
+     ],
+     [
+      -124.633368,
+      44.603398
+     ],
+     [
+      -124.63149,
+      44.606465
+     ],
+     [
+      -124.628807,
+      44.613063
+     ],
+     [
+      -124.623886,
+      44.625548
+     ],
+     [
+      -124.620192,
+      44.639748
+     ],
+     [
+      -124.61492,
+      44.6726
+     ],
+     [
+      -124.608489,
+      44.721136
+     ],
+     [
+      -124.608587,
+      44.733915
+     ],
+     [
+      -124.606965,
+      44.742741
+     ],
+     [
+      -124.603741,
+      44.750138
+     ],
+     [
+      -124.598914,
+      44.757182
+     ],
+     [
+      -124.589276,
+      44.765522
+     ],
+     [
+      -124.576158,
+      44.772163
+     ],
+     [
+      -124.566425,
+      44.77512
+     ],
+     [
+      -124.55657,
+      44.776638
+     ],
+     [
+      -124.546102,
+      44.776886
+     ],
+     [
+      -124.532406,
+      44.774656
+     ],
+     [
+      -124.520598,
+      44.770462
+     ],
+     [
+      -124.509723,
+      44.763751
+     ],
+     [
+      -124.498664,
+      44.753737
+     ],
+     [
+      -124.491047,
+      44.744657
+     ],
+     [
+      -124.459507,
+      44.695633
+     ],
+     [
+      -124.457367,
+      44.69198
+     ],
+     [
+      -124.457203,
+      44.691805
+     ],
+     [
+      -124.457002,
+      44.69169
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Extension: PN1D -> Oregon Shelf MJ01C (80 m)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 16.98,
+    "line": "south",
+    "note": "Corridor terminus coincides with CE02SHBP-MJ01C asset-management position."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -124.457002,
+      44.69169
+     ],
+     [
+      -124.456709,
+      44.6919
+     ],
+     [
+      -124.456175,
+      44.692774
+     ],
+     [
+      -124.455868,
+      44.693143
+     ],
+     [
+      -124.455399,
+      44.693449
+     ],
+     [
+      -124.454777,
+      44.693618
+     ],
+     [
+      -124.448339,
+      44.695136
+     ],
+     [
+      -124.439692,
+      44.697083
+     ],
+     [
+      -124.391865,
+      44.708308
+     ],
+     [
+      -124.38251,
+      44.70947
+     ],
+     [
+      -124.374837,
+      44.709157
+     ],
+     [
+      -124.36759,
+      44.707879
+     ],
+     [
+      -124.361393,
+      44.705468
+     ],
+     [
+      -124.350455,
+      44.700748
+     ],
+     [
+      -124.346358,
+      44.698175
+     ],
+     [
+      -124.342706,
+      44.69503
+     ],
+     [
+      -124.308935,
+      44.642758
+     ],
+     [
+      -124.305682,
+      44.637537
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Unidentified RSN segment west of PN1A->PN1B leg (dead-end stub)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 12.5,
+    "line": "south",
+    "note": "Present in the Marine Cadastre RSN corridor but role not documented (possibly spare/abandoned cable end, repair bight, or original lay). Not a confirmed live path."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -125.461385,
+      44.453995
+     ],
+     [
+      -125.440516,
+      44.442112
+     ],
+     [
+      -125.417052,
+      44.428548
+     ],
+     [
+      -125.402097,
+      44.421658
+     ],
+     [
+      -125.391948,
+      44.418407
+     ],
+     [
+      -125.379398,
+      44.418215
+     ],
+     [
+      -125.367114,
+      44.421277
+     ],
+     [
+      -125.357461,
+      44.426847
+     ],
+     [
+      -125.332159,
+      44.441723
+     ],
+     [
+      -125.331956,
+      44.441881
+     ],
+     [
+      -125.331827,
+      44.4421
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Unidentified short stub near PN1A->PN1B junction",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 0.3,
+    "line": "south",
+    "note": "0.3 km stub; could be skeleton artefact of the corridor polygon or a short cable bight."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -125.327902,
+      44.444226
+     ],
+     [
+      -125.33042,
+      44.442746
+     ],
+     [
+      -125.330686,
+      44.442408
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "North backbone: Pacific City landfall -> PN5A area (east junction)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 267.53,
+    "line": "north"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -123.969532,
+      45.201929
+     ],
+     [
+      -123.986018,
+      45.199411
+     ],
+     [
+      -123.990108,
+      45.198683
+     ],
+     [
+      -124.010099,
+      45.19538
+     ],
+     [
+      -124.027797,
+      45.192753
+     ],
+     [
+      -124.029092,
+      45.192668
+     ],
+     [
+      -124.036657,
+      45.19305
+     ],
+     [
+      -124.047843,
+      45.195149
+     ],
+     [
+      -124.065662,
+      45.196173
+     ],
+     [
+      -124.099098,
+      45.197171
+     ],
+     [
+      -124.189881,
+      45.192701
+     ],
+     [
+      -124.220417,
+      45.194669
+     ],
+     [
+      -124.253933,
+      45.202496
+     ],
+     [
+      -124.282239,
+      45.21006
+     ],
+     [
+      -124.301469,
+      45.214296
+     ],
+     [
+      -124.331387,
+      45.218985
+     ],
+     [
+      -124.352718,
+      45.221433
+     ],
+     [
+      -124.408534,
+      45.233438
+     ],
+     [
+      -124.45228,
+      45.239947
+     ],
+     [
+      -124.612948,
+      45.273766
+     ],
+     [
+      -124.635225,
+      45.279297
+     ],
+     [
+      -124.654996,
+      45.280526
+     ],
+     [
+      -124.675268,
+      45.277992
+     ],
+     [
+      -124.694068,
+      45.27185
+     ],
+     [
+      -124.718326,
+      45.26101
+     ],
+     [
+      -124.731552,
+      45.25365
+     ],
+     [
+      -124.749829,
+      45.242954
+     ],
+     [
+      -124.750618,
+      45.242543
+     ],
+     [
+      -124.773783,
+      45.2343
+     ],
+     [
+      -124.798012,
+      45.22972
+     ],
+     [
+      -124.825467,
+      45.226618
+     ],
+     [
+      -124.85498,
+      45.226439
+     ],
+     [
+      -124.880637,
+      45.23029
+     ],
+     [
+      -124.889477,
+      45.232245
+     ],
+     [
+      -124.903065,
+      45.236611
+     ],
+     [
+      -124.919774,
+      45.242702
+     ],
+     [
+      -124.923508,
+      45.244652
+     ],
+     [
+      -124.941084,
+      45.256008
+     ],
+     [
+      -124.957332,
+      45.266412
+     ],
+     [
+      -124.972281,
+      45.27343
+     ],
+     [
+      -124.993588,
+      45.283111
+     ],
+     [
+      -125.008485,
+      45.287958
+     ],
+     [
+      -125.030899,
+      45.296677
+     ],
+     [
+      -125.037861,
+      45.298178
+     ],
+     [
+      -125.040901,
+      45.298418
+     ],
+     [
+      -125.076322,
+      45.299204
+     ],
+     [
+      -125.091218,
+      45.299599
+     ],
+     [
+      -125.101797,
+      45.29881
+     ],
+     [
+      -125.104941,
+      45.29836
+     ],
+     [
+      -125.119327,
+      45.295376
+     ],
+     [
+      -125.154164,
+      45.285717
+     ],
+     [
+      -125.165346,
+      45.283761
+     ],
+     [
+      -125.18347,
+      45.282302
+     ],
+     [
+      -125.21827,
+      45.280552
+     ],
+     [
+      -125.227682,
+      45.280668
+     ],
+     [
+      -125.254647,
+      45.282563
+     ],
+     [
+      -125.298022,
+      45.286342
+     ],
+     [
+      -125.317766,
+      45.287863
+     ],
+     [
+      -125.327137,
+      45.28932
+     ],
+     [
+      -125.347828,
+      45.294035
+     ],
+     [
+      -125.49508,
+      45.331239
+     ],
+     [
+      -125.504901,
+      45.334443
+     ],
+     [
+      -125.511655,
+      45.33704
+     ],
+     [
+      -125.532965,
+      45.346841
+     ],
+     [
+      -125.599439,
+      45.380624
+     ],
+     [
+      -125.624034,
+      45.392
+     ],
+     [
+      -125.666792,
+      45.409442
+     ],
+     [
+      -125.692695,
+      45.418867
+     ],
+     [
+      -125.701545,
+      45.421788
+     ],
+     [
+      -125.728047,
+      45.429615
+     ],
+     [
+      -125.941723,
+      45.483365
+     ],
+     [
+      -126.292398,
+      45.570738
+     ],
+     [
+      -126.396096,
+      45.596548
+     ],
+     [
+      -126.864904,
+      45.713137
+     ],
+     [
+      -126.949595,
+      45.734511
+     ],
+     [
+      -127.045958,
+      45.757783
+     ],
+     [
+      -127.117573,
+      45.775583
+     ],
+     [
+      -127.152362,
+      45.785568
+     ],
+     [
+      -127.159894,
+      45.78699
+     ],
+     [
+      -127.161518,
+      45.787215
+     ],
+     [
+      -127.16299,
+      45.787512
+     ],
+     [
+      -127.174798,
+      45.79012
+     ],
+     [
+      -127.17523,
+      45.790321
+     ],
+     [
+      -127.175836,
+      45.790245
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "North backbone near PN5A: path A",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 9.97,
+    "line": "north",
+    "note": "Corridor contains two roughly parallel cables between the east junction and the PN5A spur (in/out lay to the node or a repair re-lay); which is live is not documented."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -127.175836,
+      45.790245
+     ],
+     [
+      -127.176268,
+      45.790446
+     ],
+     [
+      -127.224923,
+      45.801195
+     ],
+     [
+      -127.231885,
+      45.80241
+     ],
+     [
+      -127.240091,
+      45.803418
+     ],
+     [
+      -127.247338,
+      45.803718
+     ],
+     [
+      -127.252701,
+      45.802784
+     ],
+     [
+      -127.259314,
+      45.800601
+     ],
+     [
+      -127.26481,
+      45.797887
+     ],
+     [
+      -127.268965,
+      45.792795
+     ],
+     [
+      -127.272257,
+      45.786159
+     ],
+     [
+      -127.275873,
+      45.777723
+     ],
+     [
+      -127.27652,
+      45.775726
+     ],
+     [
+      -127.276547,
+      45.775441
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "North backbone near PN5A: path B",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 8.21,
+    "line": "north",
+    "note": "See path A."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -127.175836,
+      45.790245
+     ],
+     [
+      -127.176142,
+      45.789951
+     ],
+     [
+      -127.186257,
+      45.784459
+     ],
+     [
+      -127.213022,
+      45.777356
+     ],
+     [
+      -127.239738,
+      45.776065
+     ],
+     [
+      -127.263272,
+      45.775096
+     ],
+     [
+      -127.276161,
+      45.775388
+     ],
+     [
+      -127.276547,
+      45.775441
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Spur: backbone -> PN5A (Mid-Plate)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 2.0,
+    "line": "north",
+    "note": "Corridor terminus matches the centre of the VAA-PN5A box on the OOI safety flyer (<0.1 km). Sub-100 m junction clutter between loop and spur omitted."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -127.277719,
+      45.773503
+     ],
+     [
+      -127.27841,
+      45.755548
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "North backbone: PN5A area -> US EEZ limit (toward PN3A)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 128.6,
+    "line": "north",
+    "note": "Marine Cadastre geometry stops at the US EEZ boundary; cable continues to Axial Base (see approximate segment)."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -127.27875,
+      45.775492
+     ],
+     [
+      -127.27875,
+      45.775776
+     ],
+     [
+      -127.281455,
+      45.787553
+     ],
+     [
+      -127.28238,
+      45.791349
+     ],
+     [
+      -127.284592,
+      45.795308
+     ],
+     [
+      -127.288873,
+      45.798828
+     ],
+     [
+      -127.292741,
+      45.800911
+     ],
+     [
+      -127.300752,
+      45.803941
+     ],
+     [
+      -127.301858,
+      45.804218
+     ],
+     [
+      -127.307976,
+      45.804852
+     ],
+     [
+      -127.365809,
+      45.804422
+     ],
+     [
+      -127.442419,
+      45.803676
+     ],
+     [
+      -128.068995,
+      45.796373
+     ],
+     [
+      -128.228767,
+      45.794516
+     ],
+     [
+      -128.406406,
+      45.792444
+     ],
+     [
+      -128.603546,
+      45.789963
+     ],
+     [
+      -128.651271,
+      45.788616
+     ],
+     [
+      -128.668488,
+      45.789257
+     ],
+     [
+      -128.677703,
+      45.79016
+     ],
+     [
+      -128.706293,
+      45.79492
+     ],
+     [
+      -128.87423,
+      45.831918
+     ],
+     [
+      -128.894926,
+      45.836376
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Unidentified stub near PN5A (west)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 4.15,
+    "line": "north",
+    "note": "Dead-end cable in the Marine Cadastre RSN corridor near PN5A; role not documented (possibly spare/abandoned end or future-expansion stub)."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -127.332083,
+      45.776386
+     ],
+     [
+      -127.291523,
+      45.775741
+     ],
+     [
+      -127.279152,
+      45.775456
+     ],
+     [
+      -127.27875,
+      45.775492
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Unidentified stub near PN5A (north-north-east)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "length_km": 8.28,
+    "line": "north",
+    "note": "Dead-end cable in the Marine Cadastre RSN corridor near PN5A; role not documented (possibly spare/abandoned end or future-expansion stub)."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -127.241686,
+      45.843762
+     ],
+     [
+      -127.256474,
+      45.825225
+     ],
+     [
+      -127.273301,
+      45.804543
+     ],
+     [
+      -127.27547,
+      45.800195
+     ],
+     [
+      -127.276676,
+      45.793945
+     ],
+     [
+      -127.27752,
+      45.77542
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "North backbone (approximate): US EEZ limit -> PN3A (Axial Base)",
+    "source": "Approximation: geodesic from the Marine Cadastre corridor end at the EEZ limit to the RS03AXBS-MJ03A position (OOI asset-management) used as PN3A proxy",
+    "source_url": "https://github.com/oceanobservatories/asset-management/blob/master/deployment/RS03AXBS_Deploy.csv",
+    "accuracy": "approximate",
+    "length_km": 65.43,
+    "line": "north",
+    "note": "No public geometry found beyond the EEZ. True lay likely deviates by up to several km."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -128.894926,
+      45.836376
+     ],
+     [
+      -128.922087,
+      45.83595
+     ],
+     [
+      -128.949248,
+      45.835519
+     ],
+     [
+      -128.976409,
+      45.83508
+     ],
+     [
+      -129.003569,
+      45.834636
+     ],
+     [
+      -129.030729,
+      45.834184
+     ],
+     [
+      -129.057888,
+      45.833727
+     ],
+     [
+      -129.085047,
+      45.833263
+     ],
+     [
+      -129.112205,
+      45.832792
+     ],
+     [
+      -129.139363,
+      45.832315
+     ],
+     [
+      -129.16652,
+      45.831832
+     ],
+     [
+      -129.193677,
+      45.831342
+     ],
+     [
+      -129.220834,
+      45.830846
+     ],
+     [
+      -129.24799,
+      45.830343
+     ],
+     [
+      -129.275145,
+      45.829834
+     ],
+     [
+      -129.302301,
+      45.829318
+     ],
+     [
+      -129.329455,
+      45.828796
+     ],
+     [
+      -129.356609,
+      45.828267
+     ],
+     [
+      -129.383763,
+      45.827732
+     ],
+     [
+      -129.410916,
+      45.82719
+     ],
+     [
+      -129.438068,
+      45.826642
+     ],
+     [
+      -129.46522,
+      45.826088
+     ],
+     [
+      -129.492371,
+      45.825527
+     ],
+     [
+      -129.519522,
+      45.82496
+     ],
+     [
+      -129.546672,
+      45.824386
+     ],
+     [
+      -129.573822,
+      45.823806
+     ],
+     [
+      -129.600971,
+      45.823219
+     ],
+     [
+      -129.62812,
+      45.822626
+     ],
+     [
+      -129.655268,
+      45.822026
+     ],
+     [
+      -129.682415,
+      45.82142
+     ],
+     [
+      -129.709562,
+      45.820808
+     ],
+     [
+      -129.736708,
+      45.820189
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "North backbone (approximate): PN3A (Axial Base) -> PN3B (Axial Caldera)",
+    "source": "Approximation: geodesic between PN3A proxy (MJ03A) and centre of VAA-PN3B box on OOI safety flyer",
+    "source_url": "https://oceanobservatories.org/for-mariners/",
+    "accuracy": "approximate",
+    "length_km": 22.54,
+    "line": "north",
+    "note": "Real cable climbs the southern/eastern flank of Axial Seamount into the caldera; route shape unknown."
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -129.736708,
+      45.820189
+     ],
+     [
+      -129.74778,
+      45.825965
+     ],
+     [
+      -129.758855,
+      45.831739
+     ],
+     [
+      -129.769932,
+      45.837513
+     ],
+     [
+      -129.781011,
+      45.843285
+     ],
+     [
+      -129.792093,
+      45.849056
+     ],
+     [
+      -129.803176,
+      45.854827
+     ],
+     [
+      -129.814262,
+      45.860596
+     ],
+     [
+      -129.825351,
+      45.866364
+     ],
+     [
+      -129.836441,
+      45.872131
+     ],
+     [
+      -129.847534,
+      45.877897
+     ],
+     [
+      -129.85863,
+      45.883661
+     ],
+     [
+      -129.869727,
+      45.889425
+     ],
+     [
+      -129.880827,
+      45.895188
+     ],
+     [
+      -129.891929,
+      45.900949
+     ],
+     [
+      -129.903034,
+      45.90671
+     ],
+     [
+      -129.91414,
+      45.912469
+     ],
+     [
+      -129.925249,
+      45.918228
+     ],
+     [
+      -129.936361,
+      45.923985
+     ],
+     [
+      -129.947474,
+      45.929741
+     ],
+     [
+      -129.95859,
+      45.935496
+     ],
+     [
+      -129.969708,
+      45.94125
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Pacific City cable landfall (both RCA lines)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506/508 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis (common landward terminus)",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "charted",
+    "kind": "landfall",
+    "note": "Beach landfall; cables run underground north from a beach manhole to the shore station."
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -123.9695,
+     45.2018
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "RCA Shore Station, Pacific City, OR (approximate)",
+    "source": "Location stated by OOI/Interactive Oceans as Pacific City, OR; no published coordinates found - placed at the cable landfall",
+    "source_url": "https://interactiveoceans.washington.edu/technology/cabled-network/",
+    "accuracy": "approximate",
+    "kind": "shore_station",
+    "note": "Building is inland/north of the landfall via conduits; exact position not published (likely within ~1 km)."
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -123.9695,
+     45.2018
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "PN1A (Slope Base)",
+    "source": "NOAA/BOEM Marine Cadastre 'Submarine Cable Areas' (SubmarineCable.gpkg, OBJECTID 506 'RSN Backbone Cable'); centerline derived from the ~61 m (200 ft) right-of-way corridor polygon by Voronoi medial axis; terminus of short stub at Slope Base corridor junction",
+    "source_url": "https://marinecadastre.gov/downloads/data/mc/SubmarineCable.zip",
+    "accuracy": "approximate",
+    "kind": "primary_node",
+    "depth_m": 2900,
+    "note": "No published node coordinates. Within ~0.6 km of RS01SLBS-MJ01A (44.50988,-125.40524) from OOI asset-management."
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -125.3982,
+     44.5096
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "PN1B (Southern Hydrate Ridge)",
+    "source": "OOI safety flyer PC01A-LV01B-S2HR-PN1B: centre of KCE-PN1B box (44\u00b028.48'-29.29'N, 125\u00b008.33'-09.47'W); corroborated by COSZO cruise plan site PN01B 44\u00b028.89'N 125\u00b008.90'W, ~1249 m, and by MC corridor junction (<0.4 km)",
+    "source_url": "https://oceanobservatories.org/wp-content/uploads/2015/09/PC01A-LV01B-S2HR-PN1B-Safety-FlyerREDUCED.pdf",
+    "accuracy": "charted",
+    "kind": "primary_node",
+    "depth_m": 1249
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -125.148375,
+     44.481417
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "PN1C (Oregon Offshore)",
+    "source": "COSZO ship-time request (repo data/coszo, datamsri p.41) ROV site PN01C 44\u00b021.82'N 124\u00b057.72'W ~620 m; lies 74 m from the MC corridor centerline and inside the KCE-PN1C/LV01C polygon on the OOI safety flyer",
+    "source_url": "https://oceanobservatories.org/wp-content/uploads/2015/09/PN1C-PN1D-MPJ01C-Safety-FlyerREDUCED.pdf",
+    "accuracy": "charted",
+    "kind": "primary_node",
+    "depth_m": 600
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -124.962,
+     44.363667
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "PN1D (Oregon Shelf)",
+    "source": "OOI safety flyer PN1C-PN1D-MPJ01C: centre of KCE-PN1D box (44\u00b041.23'-41.73'N, 124\u00b027.07'-27.77'W); corroborated by COSZO site PN01D 44\u00b041.48'N 124\u00b027.42'W ~113 m",
+    "source_url": "https://oceanobservatories.org/wp-content/uploads/2015/09/PN1C-PN1D-MPJ01C-Safety-FlyerREDUCED.pdf",
+    "accuracy": "charted",
+    "kind": "primary_node",
+    "depth_m": 113
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -124.457,
+     44.691333
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "PN5A (Mid-Plate)",
+    "source": "OOI safety flyer PN3B-PC03A-PN5A: centre of VAA-PN5A box; matches MC corridor spur terminus",
+    "source_url": "https://oceanobservatories.org/wp-content/uploads/2015/09/PN3B-PC03A-PN5A-Saftey-Flyer_v2REDUCED.pdf",
+    "accuracy": "charted",
+    "kind": "primary_node",
+    "depth_m": 2800
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -127.278417,
+     45.755625
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "PN3A (Axial Base) - proxy",
+    "source": "OOI asset-management RS03AXBS-MJ03A position used as proxy (PN3A itself has no published coordinates)",
+    "source_url": "https://github.com/oceanobservatories/asset-management/blob/master/deployment/RS03AXBS_Deploy.csv",
+    "accuracy": "approximate",
+    "kind": "primary_node",
+    "depth_m": 2600,
+    "note": "Expect PN3A within ~1-2 km of MJ03A."
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.736708,
+     45.820189
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "PN3B (Axial Caldera / ASHES) - approximate",
+    "source": "OOI safety flyer PN3B-PC03A-PN5A: centre of VAA-PN3B box (a ~2 x 2.5 nm avoidance area, not the node itself)",
+    "source_url": "https://oceanobservatories.org/wp-content/uploads/2015/09/PN3B-PC03A-PN5A-Saftey-Flyer_v2REDUCED.pdf",
+    "accuracy": "approximate",
+    "kind": "primary_node",
+    "depth_m": 1500,
+    "note": "Node lies somewhere inside the VAA box (\u00b12 km); box covers ASHES/International District/Eastern caldera."
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -129.969708,
+     45.94125
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Oregon Shelf MJ01C (south line terminus)",
+    "source": "OOI asset-management CE02SHBP-MJ01C",
+    "source_url": "https://github.com/oceanobservatories/asset-management/blob/master/deployment/CE02SHBP_Deploy.csv",
+    "accuracy": "surveyed",
+    "kind": "junction_box"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -124.305531,
+     44.637381
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "Southern Hydrate Ridge LJ01B (summit extension terminus)",
+    "source": "OOI asset-management RS01SUM1-LJ01B",
+    "source_url": "https://github.com/oceanobservatories/asset-management/blob/master/deployment/RS01SUM1_Deploy.csv",
+    "accuracy": "surveyed",
+    "kind": "junction_box"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -125.147912,
+     44.56916
+    ]
+   }
+  }
+ ]
+}
