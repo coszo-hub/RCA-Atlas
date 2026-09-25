@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "npx --yes wrangler deploy --dry-run"
+    "check": "npx --yes wrangler deploy --dry-run",
+    "test": "node --test"
   }
 }

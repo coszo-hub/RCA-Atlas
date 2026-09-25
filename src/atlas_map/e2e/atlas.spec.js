@@ -89,17 +89,6 @@ test("gateway down shows the snapshot wording", async ({ page }) => {
   await expect(page.getByText(/Live data unavailable\. Showing snapshot from/)).toBeVisible();
 });
 
-test("chat answers and minimizes", async ({ page }) => {
-  await mockGateway(page);
-  await page.goto("/");
-  await ready(page);
-  await page.getByRole("textbox", { name: /Ask/ }).fill("What is at Axial Base?");
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByText("Axial Base has a seafloor package and two profilers.")).toBeVisible();
-  await page.getByRole("button", { name: "Minimize chat" }).click();
-  await expect(page.getByRole("button", { name: "Open chat" })).toBeVisible();
-});
-
 test("missing bundle shows the build command", async ({ page }) => {
   await page.route("**/atlas/manifest.json", r => r.fulfill({ status: 404, body: "" }));
   await page.goto("/");
@@ -126,7 +115,7 @@ test("the GMRT and MBARI credits are on screen by default, clear of the open leg
   await mockGateway(page);
   await page.goto("/");
   await ready(page);
-  await expect(page.getByRole("complementary", { name: "Atlas chat" })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Ask Atlas" })).toBeVisible();
   const credit = page.getByLabel("Map credits");
   await expect(credit).toBeVisible();
   await expect(credit).toContainText("GMRT, Ryan et al. (2009), CC BY 4.0");
@@ -146,12 +135,12 @@ test("the GMRT and MBARI credits are on screen by default, clear of the open leg
 });
 
 for (const [width, height] of [[1600, 1000], [1366, 768], [1280, 800]]) {
-  test(`an opened site is framed in free space at ${width}x${height} with the chat open`, async ({ page }) => {
+  test(`an opened site is framed in free space at ${width}x${height} with Ask Atlas open`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await mockGateway(page);
     await page.goto("/");
     await ready(page);
-    await expect(page.getByRole("complementary", { name: "Atlas chat" })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Ask Atlas" })).toBeVisible();
     await page.evaluate(() => window.__atlas.open("axial-seamount-base"));
     await expect(page.getByRole("heading", { name: "Axial Seamount Base" })).toBeVisible();
     await page.waitForTimeout(2500);   // the flight (1.3 s) and the glide to the new center

@@ -29,14 +29,14 @@ const quakeVert = `
     gl_PointSize = (vAge < 0.0 || uShow < 0.01) ? 0.0 : uPx * mix(2.0, 3.4, fresh) * clamp(14.0 / -mv.z, 0.8, 2.0);
   }`;
 const quakeFrag = `
-  uniform float uShow, uGhost;
+  uniform float uShow, uGhost, uHistory;
   varying float vAge;
   void main() {
     if (vAge < 0.0) discard;
     if (length(gl_PointCoord - 0.5) > 0.5) discard;
     float fresh = 1.0 - smoothstep(0.0, 60.0, vAge);
     vec3 col = mix(vec3(0.66, 0.65, 0.61), vec3(1.0, 0.80, 0.52), fresh);
-    gl_FragColor = vec4(col, mix(0.55, 1.0, fresh) * uShow * uGhost);
+    gl_FragColor = vec4(col, mix(0.55, 1.0, fresh) * uShow * uGhost * uHistory);
   }`;
 
 const surfVert = `
@@ -75,6 +75,7 @@ export class SubsurfaceLayer {
     this.days = q.day; this.months = months(eq.day0, q.day[q.day.length - 1]);
     this.window = glassWindow(data);
     this.show = U.see; this.through = { value: this.months[this.months.length - 1].end };
+    this.history = { value: 1 };   // the relocated catalog fades back while an answer's live quakes are shown
     this.objects = [];
     const add = (o, order) => { o.renderOrder = order; o.frustumCulled = false; o.visible = false; scene3d.add(o); this.objects.push(o); };
     const passes = [[1, false], [GHOST, true]];
@@ -87,7 +88,7 @@ export class SubsurfaceLayer {
       add(new THREE.Points(g, new THREE.ShaderMaterial({
         vertexShader: quakeVert, fragmentShader: quakeFrag, transparent: true, depthWrite: !ghost,
         depthFunc: ghost ? THREE.GreaterDepth : THREE.LessEqualDepth,
-        uniforms: { uExag: U.exag, uFlat: U.flat, uThrough: this.through, uShow: U.see, uGhost: { value: alpha },
+        uniforms: { uExag: U.exag, uFlat: U.flat, uThrough: this.through, uShow: U.see, uGhost: { value: alpha }, uHistory: this.history,
                     uPx: { value: Math.min(devicePixelRatio, 2) } },
       })), ghost ? ORDER.ghost : ORDER.quakes);
     }

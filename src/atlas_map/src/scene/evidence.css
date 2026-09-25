@@ -1,0 +1,27 @@
+/* The evidence layer's DOM: spike bases, numbers, halos, and edge chips. Positioned per frame. */
+#atlas-evidence { position: fixed; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
+#atlas-evidence > div { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity 180ms ease; }
+.ev-base { width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--c); cursor: pointer;
+  box-shadow: 0 0 0 2px #121211, 0 0 10px var(--c); transition: opacity 180ms ease, width 160ms ease, height 160ms ease, margin 160ms ease; }
+.ev-base.cable { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
+.ev-base.on { width: 15px; height: 15px; margin: -7.5px 0 0 -7.5px; background: #ffcc66; box-shadow: 0 0 0 2px #121211, 0 0 18px #ffb938; }
+.ev-tag { cursor: pointer; }
+.ev-tag > span { position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 3px)); white-space: nowrap;
+  font: 600 11px/17px var(--font-mono); color: #121211; background: var(--c); padding: 0 5px; border-radius: 3px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c) 45%, transparent); transition: font-size 160ms ease, background 160ms ease; }
+.ev-tag.on > span { background: #ffcc66; font-size: 12.5px; line-height: 19px; padding: 0 6px; box-shadow: 0 0 18px rgba(255, 185, 56, 0.7); }
+.ev-hit { width: 16px; margin-left: -8px; transform-origin: 8px 0; cursor: pointer; }
+.ev-halo { width: 0; height: 0; }
+.ev-halo i { position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border-radius: 50%; border: 1.5px solid #ffcc66; opacity: 0; transform: scale(0.15); }
+.ev-halo.on i { animation: ev-ping 2.2s ease-out infinite; }
+.ev-halo.on i + i { animation-delay: 1.1s; }
+@keyframes ev-ping { 0% { transform: scale(0.15); opacity: 0.95; } 100% { transform: scale(1); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ev-halo.on i:first-child { opacity: 0.8; transform: scale(0.32); } }
+
+.ev-chip { display: none; align-items: center; gap: 6px; cursor: pointer; pointer-events: auto; white-space: nowrap;
+  font: 500 10.5px var(--font-mono); color: var(--text-primary); background: rgba(21, 21, 20, 0.92);
+  border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); border-radius: 11px; padding: 2px 9px 2px 3px; }
+.ev-chip b { background: var(--c); color: #121211; border-radius: 8px; padding: 0 5px; font-weight: 600; }
+.ev-chip i { font-style: normal; color: var(--c); display: inline-block; }
+.ev-chip:hover, .ev-chip.on { border-color: #ffcc66; }
+.ev-chip.on b { background: #ffcc66; }

@@ -76,4 +76,16 @@ describe("OverlayLayer", () => {
     layer.update();
     expect(btn.tabIndex).toBe(0);
   });
+  it("while an answer's evidence is shown, site rings it does not cite fade and lose their labels", () => {
+    const { container, layer } = setup(-9000);
+    const cited = container.querySelector('[aria-label="Axial Base, 3 sensors"]'), other = container.querySelector('[aria-label="Axial Base · AXBA1, 1 sensor"]');
+    layer.setEvidence(new Set(["axial-seamount-base"]));
+    layer.update();
+    expect(cited.style.opacity).toBe("1");
+    expect(other.style.opacity).toBe("0.2");
+    expect(other.querySelector(".name").style.opacity).toBe("0");
+    layer.setEvidence(null);
+    layer.update();
+    expect(other.style.opacity).toBe("1");
+  });
 });
