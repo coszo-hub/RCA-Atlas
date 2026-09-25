@@ -1,15 +1,18 @@
 // The answer's plain text as blocks for rendering: paragraphs, bullets (nested by indent), and section labels,
-// with inline **bold** and [n] citations. Numbers the evidence does not know stay as plain text.
+// with inline **bold** and [n] citations (a run like [1-15] is one { n, to }). Numbers the evidence does not know stay as plain text.
 
 const LIST = /^(\s*)[-*•]\s+(.*)$/;
 const CITE = /\s*\[(\d+(?:\s*[,–-]\s*\d+)*)\]/g;
 
-function nums(group) {
+// A marker's citations: single numbers, and ranges ([1-15]) as one { n, to } when they span three or more.
+function cites(group) {
   return group.split(/\s*,\s*/).flatMap(part => {
     const [a, b] = part.split(/\s*[–-]\s*/).map(Number);
-    return b && b >= a && b - a < 50 ? Array.from({ length: b - a + 1 }, (_, i) => a + i) : [a];
+    if (!(b > a && b - a < 50)) return [{ n: a }];
+    return b - a >= 2 ? [{ n: a, to: b }] : [{ n: a }, { n: b }];
   });
 }
+const numsOf = c => (c.to ? Array.from({ length: c.to - c.n + 1 }, (_, i) => c.n + i) : [c.n]);
 
 function inline(text, known) {
   const parts = [];
@@ -19,9 +22,9 @@ function inline(text, known) {
     if (i % 2) return push("b", chunk);
     let at = 0;
     for (const m of chunk.matchAll(CITE)) {
-      const ns = nums(m[1]);
+      const cs = cites(m[1]);
       push("text", chunk.slice(at, m.index));
-      if (ns.every(n => known.has(n))) for (const n of ns) parts.push({ t: "cite", n });
+      if (cs.flatMap(numsOf).every(n => known.has(n))) for (const c of cs) parts.push({ t: "cite", ...c });
       else push("text", m[0]);
       at = m.index + m[0].length;
     }

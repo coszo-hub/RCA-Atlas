@@ -71,6 +71,21 @@ describe("AskPanel", () => {
     expect(screen.getByText("4 / 5")).toBeInTheDocument();
   });
 
+  it("a cited range of three or more is one superscript; hover and click take its first number", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ok({ ...inflation2, answer: "All of them record the uplift [1-5], two agree [1-2]." })));
+    render(<Harness />);
+    await askIt("inflation?");
+    const range = await screen.findByRole("button", { name: /^Sources 1–5:/ });
+    expect(range).toHaveTextContent(/^1–5$/);
+    expect(screen.queryByRole("button", { name: /^Source 3:/ })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /^Source [12]:/ })).toHaveLength(2);
+    fireEvent.mouseEnter(range);
+    expect(state().hoverN).toBe(1);
+    fireEvent.mouseLeave(range);
+    fireEvent.click(range);
+    expect(state().activeN).toBe(1);
+  });
+
   it("← / → and the stepper tour the evidence in order; Escape clears the card, then the evidence", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ok(inflation2)));
     render(<Harness />);

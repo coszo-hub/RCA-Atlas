@@ -140,14 +140,21 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
   const live = shown;   // only the answer on the map is interactive; an earlier one shows its evidence on click
   const pos = tour.findIndex(x => x.n === activeN);
   const hover = n => live && onHover(n);
-  const cite = (n, i) => {
+  const cite = (n, i, to) => {
+    if (to) {
+      // A range ([1-15]) is one superscript that stands for its first number (the first on the map, if any is).
+      const ns = Array.from({ length: to - n + 1 }, (_, k) => n + k), lead = ns.find(k => !byN.get(k).doc) ?? n, it = byN.get(lead);
+      return <sup key={i}><button className={`cite${live && ns.includes(hl) ? " on" : ""}`} style={{ "--c": it.doc ? DOC_COLOR : it.color }}
+        aria-label={`Sources ${n}–${to}: ${it.label ?? it.title} and others`} onMouseEnter={() => hover(lead)} onMouseLeave={() => hover(null)}
+        onClick={() => live && !it.doc && onSelect(lead)}>{n}–{to}</button></sup>;
+    }
     const it = byN.get(n), on = live && hl === n;
     if (it.doc) return <sup key={i}><a className={`cite${on ? " on" : ""}`} style={{ "--c": DOC_COLOR }} href={it.url || undefined} target="_blank" rel="noreferrer"
       aria-label={`Source ${n}: ${it.title}`} onMouseEnter={() => hover(n)} onMouseLeave={() => hover(null)}>{n}</a></sup>;
     return <sup key={i}><button className={`cite${on ? " on" : ""}`} style={{ "--c": it.color }} aria-label={`Source ${n}: ${it.label}`}
       onMouseEnter={() => hover(n)} onMouseLeave={() => hover(null)} onClick={() => live && onSelect(n)}>{n}</button></sup>;
   };
-  const inline = parts => parts.map((p, i) => (p.t === "cite" ? cite(p.n, i) : p.t === "b" ? <strong key={i}>{p.v}</strong> : <Fragment key={i}>{p.v}</Fragment>));
+  const inline = parts => parts.map((p, i) => (p.t === "cite" ? cite(p.n, i, p.to) : p.t === "b" ? <strong key={i}>{p.v}</strong> : <Fragment key={i}>{p.v}</Fragment>));
   const row = (n, cells, color, extra) => {
     const on = live && hl === n, active = live && activeN === n;
     return (
