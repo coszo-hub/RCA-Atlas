@@ -4,16 +4,17 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { KX, KZ, toX, toZ } from "./geo.js";
 import { approach } from "./cameraMath.js";
-import { edgeChip, groupSpikes, hypoMeters, placeCard, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
+import { edgeChip, groupSpikes, hypoMeters, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
 import "./evidence.css";
 
 // An Ask Atlas answer's evidence in the scene. Located items rise as numbered, glowing spikes from the seafloor
 // (one per location); DAS cables glow with a pulse running along them; the Axial quake count's hypocentres light up
-// beneath the caldera in time order. DOM (numbers, bases, halos, the card, edge chips) follows the spikes each frame.
+// beneath the caldera in time order. DOM (numbers, bases, halos, edge chips) follows the spikes each frame. Selecting
+// an item (App) flies to it and opens its station in the side panel; the layer only marks it active.
 
 const SINK_MS = 300, EVENT_MS = 3000, ORDER = 30;
+const HIT_GAP = 12;   // px: a spike's hit strip starts above its base, so the site ring beneath stays clickable
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const fmtDepth = m => (m == null ? "" : `${Math.round(m).toLocaleString("en-US")} m`);
 
 const beamVert = `
   attribute vec2 corner;
@@ -100,7 +101,7 @@ function densify(coords, stepKm = 0.3) {
 }
 
 export class EvidenceLayer {
-  // handlers: onHover(n | null), onSelect(n | null), onLive(item), onSite(item)
+  // handlers: onHover(n | null), onSelect(n)
   constructor(container, scene, bundle, handlers = {}) {
     this.c = container; this.sc = scene; this.b = bundle; this.h = handlers;
     this.sets = [];            // the shown evidence set, plus any still sinking
@@ -109,16 +110,6 @@ export class EvidenceLayer {
     this._geo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(12), 3));
     this._geo.setAttribute("corner", new THREE.Float32BufferAttribute([-1, 0, 1, 0, -1, 1, 1, 1], 2));
     this._geo.setIndex([0, 1, 2, 2, 1, 3]);
-    this.card = this._el("ev-card", "");
-    this.card.style.display = "none";
-    this.card.addEventListener("click", ev => {
-      const b = ev.target.closest("[data-act]");
-      const it = this._item(this.active);
-      if (!b || !it) return;
-      if (b.dataset.act === "live") this.h.onLive?.(it);
-      else if (b.dataset.act === "site") this.h.onSite?.(it);
-      else if (b.dataset.act === "close") this.h.onSelect?.(null);
-    });
     this._last = performance.now();
   }
 
@@ -127,18 +118,13 @@ export class EvidenceLayer {
   }
 
   get current() { return this.sets.find(s => !s.sinkT0) ?? null; }
-  _item(n) {
-    const cur = this.current;
-    if (n == null || !cur) return null;
-    return cur.ev.located.find(x => x.n === n) ?? cur.ev.events?.find(x => x.n === n) ?? null;
-  }
 
   // Show an answer's evidence (null clears). The previous set sinks first, then the new one rises.
   show(ev) {
     const now = performance.now(), reduced = this.sc.reducedMotion;
     let wait = 0;
     for (const s of this.sets) if (!s.sinkT0) { s.sinkT0 = now; if (s.hasItems) wait = reduced ? 0 : SINK_MS; }
-    this.active = null; this.hover = null; this._renderCard();
+    this.active = null; this.hover = null;
     if (!ev) return;
     const set = { ev, t0: now + wait, spikes: [], cables: [], quakes: null };
     const { spikes, cables } = groupSpikes(ev.located);
@@ -150,7 +136,7 @@ export class EvidenceLayer {
   }
 
   clear() { this.show(null); }
-  setActive(n) { this.active = n; this._renderCard(); }
+  setActive(n) { this.active = n; }
   setHover(n) { this.hover = n; }
 
   _spike(g, i) {
@@ -223,26 +209,7 @@ export class EvidenceLayer {
     return { pts, mat, events, halo: this._el("ev-halo quake", "<i></i><i></i>") };
   }
 
-  _renderCard() {
-    const it = this._item(this.active);
-    if (!it) { this.card.style.display = "none"; this.card._n = null; return; }
-    const isEvent = it.time != null;
-    const title = isEvent ? `Earthquake ${it.n} · ${it.time.slice(11, 19)} UTC` : `${it.n} · ${it.label}`;
-    const meta = isEvent ? [it.mag != null && `M ${(Math.abs(it.mag) < 0.05 ? 0 : it.mag).toFixed(1)}`, it.depth_km != null && `${it.depth_km.toFixed(2)} km below datum`].filter(Boolean).join(" · ")
-      : it.kind === "cable" ? it.site : [it.refdes ?? it.site, fmtDepth(it.depth)].filter(Boolean).join(" · ");
-    const text = !isEvent && it.excerpt ? `<p class="${it.quote ? "q" : ""}">${esc(it.quote ? `“…${it.excerpt}…”` : it.excerpt)}</p>` : "";
-    const btns = [
-      it.kind === "sensor" && `<button data-act="live">Live data →</button>`,
-      (it.kind === "site" || (it.kind === "sensor" && it.siteId)) && `<button data-act="site">Site</button>`,
-      !isEvent && it.sourceUrl && `<a href="${esc(it.sourceUrl)}" target="_blank" rel="noreferrer">Source ↗</a>`,
-    ].filter(Boolean).join("");
-    this.card.innerHTML = `<button class="x" data-act="close" aria-label="Close">×</button><h4>${esc(title)}</h4><div class="m">${esc(meta)}</div>${text}${btns ? `<div class="go">${btns}</div>` : ""}`;
-    this.card.style.setProperty("--c", isEvent ? "#ffcc66" : it.color);
-    this.card.style.display = "block"; this.card._n = it.n;
-    this.card._size = null;
-  }
-
-  // The map between the side panels and above the family strip, for chips and the card. The top-row HUD only covers
+  // The map between the side panels and above the family strip, for the chips. The top-row HUD only covers
   // part of the top edge, so the whole height above the strip counts (the camera's vertical inset is stricter).
   _rect() {
     const [l, r] = this.sc.insets ?? [16, 16], b = this.sc.insetsY?.[1] ?? 16;
@@ -254,7 +221,6 @@ export class EvidenceLayer {
     this._last = now;
     const dist = sc.frame?.dist ?? 50, rect = this._rect(), hl = this.hover ?? this.active;
     const seafloor = (lon, lat) => Math.min(0, sc.elevAt(lon, lat)) * e;
-    this._anchors = new Map();
     for (const set of [...this.sets]) {
       const t = now - set.t0, sinking = set.sinkT0 != null;
       const sink = sinking ? sinkAt(now - set.sinkT0, reduced) : 1;
@@ -292,10 +258,9 @@ export class EvidenceLayer {
         d.tag.classList.toggle("on", on); d.base.classList.toggle("on", on);
         if (d.hit) {
           const len = Math.hypot(top[0] - bx, top[1] - by), ang = Math.atan2(top[1] - by, top[0] - bx) - Math.PI / 2;
-          d.hit.style.transform = `translate(${bx.toFixed(1)}px, ${by.toFixed(1)}px) rotate(${ang.toFixed(3)}rad)`;
-          d.hit.style.height = `${len.toFixed(1)}px`; d.hit.style.pointerEvents = shown ? "auto" : "none";
+          d.hit.style.transform = `translate(${bx.toFixed(1)}px, ${by.toFixed(1)}px) rotate(${ang.toFixed(3)}rad) translateY(${HIT_GAP}px)`;
+          d.hit.style.height = `${Math.max(0, len - HIT_GAP).toFixed(1)}px`; d.hit.style.pointerEvents = shown ? "auto" : "none";
         }
-        if (!sinking) this._anchors.set(s.ns[0], { base: [bx, by, bz], top, s });
         const chip = !sinking && rise > 0.5 ? edgeChip([bx, by, bz], rect) : null;
         d.chip.style.display = chip ? "flex" : "none";
         if (chip) chipsFor.push({ d: d.chip, chip, s });
@@ -326,7 +291,6 @@ export class EvidenceLayer {
       set.chipsShown = chipsFor.map(c => ({ ns: c.s.ns, x: c.chip.x, y: c.chip.y }));
       if (set.quakes) this._updateQuakes(set, t, sinking ? sink : 1, hl, reduced);
     }
-    this._placeCard(rect);
     const sub = sc.subsurface;
     if (sub?.history) sub.history.value = approach(sub.history.value, this.current?.quakes ? 0.15 : 1, dt, 4, reduced);
   }
@@ -370,35 +334,20 @@ export class EvidenceLayer {
     if (ev) {
       const p = this.sc.project(toX(ev.lon), hypoMeters(ev.depth_km, this.sc.subsurface?.data?.datumM) * this.sc.e, toZ(ev.lat));
       q.halo.style.transform = `translate(${p[0].toFixed(1)}px, ${p[1].toFixed(1)}px)`;
-      this._anchors.set(ev.n, { base: p, top: [p[0], p[1]] });
     }
     q.halo.classList.toggle("on", !!ev && alpha > 0.5);
   }
 
-  _placeCard(rect) {
-    const n = this.card._n;
-    if (n == null) return;
-    const a = this._anchors.get(n) ?? [...this._anchors.values()].find(x => x.s?.ns.includes(n));
-    const off = !a || a.base[2] > 1 || a.base[0] < rect.left - 40 || a.base[0] > rect.right + 40 || a.base[1] < rect.top - 40 || a.base[1] > rect.bottom + 40;
-    if (off) { this.card.style.visibility = "hidden"; return; }   // its chip points the way
-    this.card.style.visibility = "visible";
-    const size = (this.card._size ??= { w: this.card.offsetWidth || 280, h: this.card.offsetHeight || 130 });
-    const p = placeCard([a.top[0], a.top[1] - (a.s ? 26 : 10)], a.base, size, rect);   // above the spike's number
-    this.card.style.transform = `translate(${p.x.toFixed(0)}px, ${p.y.toFixed(0)}px)`;
-    this.card.dataset.side = p.side;
-  }
-
-  // For the browser tests: where each spike, cable tag, chip and the card are on screen.
+  // For the browser tests: where each spike, cable tag and chip is on screen.
   snapshot() {
     const cur = this.current;
-    if (!cur) return { shown: false, spikes: [], cables: [], chips: [], card: null, quakes: 0 };
+    if (!cur) return { shown: false, spikes: [], cables: [], chips: [], quakes: 0 };
     const at = el => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, visible: el.style.opacity !== "0" && el.style.display !== "none" }; };
     return {
       shown: true, active: this.active, hover: this.hover,
       spikes: cur.spikes.map(s => ({ ns: s.ns, kind: s.kind, height: s.mat.uniforms.uHeight.value, tag: at(s.dom.tag), base: at(s.dom.base) })),
       cables: cur.cables.map(s => ({ ns: s.ns, layers: s.item.layers, tag: at(s.dom.tag) })),
       chips: cur.chipsShown ?? [],
-      card: this.card.style.display === "none" ? null : { n: this.card._n, ...at(this.card), text: this.card.textContent },
       quakes: cur.quakes?.events.length ?? 0,
     };
   }

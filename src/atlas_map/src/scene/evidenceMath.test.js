@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { edgeChip, eventShown, frameView, groupSpikes, hypoMeters, placeCard, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
+import { edgeChip, eventShown, frameView, groupSpikes, hypoMeters, quakePx, riseAt, sinkAt, spikeHeight } from "./evidenceMath.js";
 
 describe("spikeHeight", () => {
   it("scales with camera distance so spikes read the same from region to close zoom, within limits", () => {
@@ -58,21 +58,6 @@ describe("edgeChip", () => {
   });
 });
 
-describe("placeCard", () => {
-  const rect = { left: 412, top: 80, right: 1584, bottom: 940 }, size = { w: 260, h: 120 };
-  it("sits above the spike's top when there is room", () => {
-    expect(placeCard([1000, 400], [1000, 700], size, rect)).toEqual({ x: 870, y: 400 - 14 - 120, side: "above" });
-  });
-  it("never outside the free area, even for an anchor below it", () => {
-    expect(placeCard([1000, 1700], [1000, 1800], size, rect).y).toBe(940 - 8 - 120);
-  });
-  it("beside the spike when its top is near the upper edge, and inside the free area", () => {
-    const p = placeCard([1500, 120], [1500, 700], size, rect);
-    expect(p.side).toBe("left");
-    expect(p.x + size.w).toBeLessThanOrEqual(1500);
-    expect(p.y).toBeGreaterThanOrEqual(80);
-  });
-});
 
 describe("groupSpikes", () => {
   it("one spike per location, numbers merged in order; cables stay separate", () => {

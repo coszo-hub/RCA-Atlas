@@ -1,4 +1,4 @@
-/* The evidence layer's DOM: spike bases, numbers, halos, edge chips, and the in-scene card. Positioned per frame. */
+/* The evidence layer's DOM: spike bases, numbers, halos, and edge chips. Positioned per frame. */
 #atlas-evidence { position: fixed; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
 #atlas-evidence > div { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity 180ms ease; }
 .ev-base { width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--c); cursor: pointer;
@@ -25,15 +25,3 @@
 .ev-chip i { font-style: normal; color: var(--c); display: inline-block; }
 .ev-chip:hover, .ev-chip.on { border-color: #ffcc66; }
 .ev-chip.on b { background: #ffcc66; }
-
-.ev-card { width: 280px; pointer-events: auto; background: #151514; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 7px;
-  padding: 10px 12px 11px; color: #a8a69d; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45); z-index: 4; }
-.ev-card h4 { margin: 0 18px 3px 0; font: 600 13px/1.35 var(--font-sans); color: var(--text-primary); }
-.ev-card .m { font: 9.5px var(--font-mono); color: var(--text-muted); margin-bottom: 6px; overflow-wrap: anywhere; }
-.ev-card p { margin: 0; padding-left: 8px; box-shadow: inset 2px 0 0 rgba(255, 204, 102, 0.55); font: 12px/1.5 var(--font-sans); color: #a8a69d; }
-.ev-card .go { display: flex; gap: 6px; margin-top: 9px; }
-.ev-card .go > * { background: none; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 4px; padding: 2px 8px; font: 500 10.5px var(--font-sans);
-  color: var(--text-primary); cursor: pointer; text-decoration: none; }
-.ev-card .go > *:hover { border-color: #ffcc66; color: #ffcc66; }
-.ev-card .x { position: absolute; right: 7px; top: 6px; background: none; border: 0; color: var(--text-muted); font-size: 15px; cursor: pointer; padding: 0 3px; }
-.ev-card .x:hover { color: var(--text-primary); }

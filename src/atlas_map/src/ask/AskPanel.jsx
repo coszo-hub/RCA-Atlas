@@ -22,6 +22,10 @@ const fmtDepth = m => (m == null ? "—" : `${Math.round(m).toLocaleString("en-U
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const utc = iso => iso.slice(11, 19);
 export const fmtMag = m => (m == null ? "—" : `M ${(Math.abs(m) < 0.05 ? 0 : m).toFixed(1)}`);   // no "M -0.0"
+const fmtKm = km => (km == null ? "—" : `${km.toFixed(2)} km`);
+// The active quake's second line: its full time, magnitude, depth, and position.
+const quakeLine = q => [`${q.time.slice(0, 10)} ${utc(q.time)} UTC`, fmtMag(q.mag), q.depth_km != null && `${fmtKm(q.depth_km)} below datum`,
+  `${q.lat.toFixed(3)}° N, ${Math.abs(q.lon).toFixed(3)}° W`].filter(Boolean).join(" · ");
 // Keys typed into a field, a select, a slider or editable text stay there.
 const ownsKeys = el => isTypingTarget(el) || !!el?.closest?.('[role="slider"], [contenteditable="true"]');
 
@@ -33,8 +37,8 @@ function stats(e) {
 
 // Ask Atlas: the left sidebar. The thread of questions and answers; the shown answer's evidence is on the map
 // (App owns which, and the active and hovered numbers, shared with the evidence layer). ← / → tour that evidence
-// once one item is active, also while a side panel is open. Escape closes the active item's card, then clears the
-// evidence; while a side panel is open it is the panel's (back from a sensor, then close).
+// once one item is active, also while a side panel is open (each step opens the next station). Escape clears the
+// active item, then the evidence; while a side panel is open it is the panel's (back from a sensor, then close).
 export default function AskPanel({ bundle, evidence, activeN, hoverN, panelOpen = false, onShow, onHover, onSelect, onOpenChange }) {
   const [open, setOpen] = useState(askStartsOpen);
   const [entries, setEntries] = useState([]), [draft, setDraft] = useState(""), [model, setModel] = useState("auto");
@@ -143,6 +147,12 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
   const live = shown;   // only the answer on the map is interactive; an earlier one shows its evidence on click
   const pos = tour.findIndex(x => x.n === activeN);
   const hover = n => live && onHover(n);
+  // Stepping keeps the active row and its details in view (the quake list scrolls on its own).
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!live || activeN == null) return;
+    for (const el of ref.current?.querySelectorAll("tr.active, tr.active + tr.ex") ?? []) el.scrollIntoView?.({ block: "nearest" });
+  }, [live, activeN]);
   const cite = (n, i, to) => {
     if (to) {
       // A range ([1-15]) is one superscript that stands for its first number (the first on the map, if any is).
@@ -180,7 +190,7 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
   );
 
   return (
-    <article className={`ask-entry${live || e.status !== "ok" ? "" : " past"}`} data-entry={e.id}
+    <article ref={ref} className={`ask-entry${live || e.status !== "ok" ? "" : " past"}`} data-entry={e.id}
       onClick={k => { if (e.status === "ok" && !live && !k.target.closest("a, button")) onShow(ev); }}>
       <h2 className="ask-q">{e.status === "ok" && !live
         ? <button className="ask-reshow" aria-label={`Show the evidence for: ${e.q}`} onClick={() => onShow(ev)}>{e.q}</button> : e.q}</h2>
@@ -210,7 +220,7 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
                 <table className="ask-table" aria-labelledby={`ev-${e.id}`}>
                   <thead><tr><th>#</th><th>Time UTC</th><th>Mag</th><th className="r">Depth</th></tr></thead>
                   <tbody>{ev.events.map(q => row(q.n, <><td>{utc(q.time)}</td><td>{fmtMag(q.mag)}</td>
-                    <td className="r">{q.depth_km == null ? "—" : `${q.depth_km.toFixed(2)} km`}</td></>, "#ffcc66"))}</tbody>
+                    <td className="r">{fmtKm(q.depth_km)}</td></>, "#ffcc66", quakeLine(q)))}</tbody>
                 </table>
               </div>
             </>

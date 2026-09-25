@@ -87,7 +87,7 @@ describe("AskPanel", () => {
     expect(state().activeN).toBe(1);
   });
 
-  it("← / → and the stepper tour the evidence in order; Escape clears the card, then the evidence", async () => {
+  it("← / → and the stepper tour the evidence in order; Escape clears the active item, then the evidence", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ok(inflation2)));
     render(<Harness />);
     await askIt("inflation?");
@@ -170,6 +170,21 @@ describe("AskPanel", () => {
     expect(JSON.parse(fetch.mock.calls[0][1].body).query).toBe("How many earthquakes at Axial today?");
     expect(screen.getByText(/^4 earthquakes · 2026-09-25 UTC · [\d.]+ s · live catalog$/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "How many earthquakes at Axial today?" })).toBeNull();
+  });
+
+  it("the active earthquake's row expands with its time, magnitude, depth and position, scrolled into view", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ok(quakes2)));
+    const scrolled = [];
+    Element.prototype.scrollIntoView = function () { scrolled.push(this); };
+    render(<Harness />);
+    await askIt("How many earthquakes at Axial yesterday?");
+    const table = await screen.findByRole("table", { name: "Earthquakes on the map" });
+    fireEvent.click(within(table).getByRole("row", { name: /^5 02:02:21/ }));
+    expect(state().activeN).toBe(5);
+    const ex = table.querySelector("tr.ex");
+    expect(ex).toHaveTextContent(/^2026-09-23 02:02:21 UTC · M \d\.\d · [\d.]+ km below datum · 45\.\d{3}° N, 1(29|30)\.\d{3}° W$/);
+    expect(scrolled).toContain(ex);
+    delete Element.prototype.scrollIntoView;
   });
 
   it("earlier answers stay in the thread; clicking one shows its evidence again", async () => {

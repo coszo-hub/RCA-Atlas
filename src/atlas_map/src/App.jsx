@@ -48,8 +48,8 @@ function Atlas({ bundle, onError }) {
   const [unplacedOpen, setUnplacedOpen] = useState(false);   // the list of sensors with no position and no site
   const [sideMin, setSideMin] = useState(false);   // the site or unplaced panel is minimized to a tab; opening one restores it
   const [chatOpen, setChatOpen] = useState(askStartsOpen);   // AskPanel owns and persists it; the top row follows it
-  // Ask Atlas, shared by the panel and the evidence layer: the answer whose evidence is on the map, the item whose
-  // card is open (click, ←/→), and the one under the pointer (a superscript, a table row, or a spike).
+  // Ask Atlas, shared by the panel and the evidence layer: the answer whose evidence is on the map, the item selected
+  // (click, ←/→; its station is in the side panel), and the one under the pointer (a superscript, a table row, or a spike).
   const [ask, setAsk] = useState({ evidence: null, activeN: null, hoverN: null });
   const [deep, setDeep] = useState(false);   // Axial's subsurface (earthquakes, magma chamber, faults) is shown
   const evidenceDeep = useRef(false);   // the subsurface was turned on to show an answer's earthquakes
@@ -62,17 +62,21 @@ function Atlas({ bundle, onError }) {
   const closeSite = useCallback(() => { setSiteId(null); setSensorId(null); layerRef.current?.setSelected(null); }, []);
   const openUnplaced = useCallback(() => { closeSite(); setUnplacedOpen(true); setSideMin(false); }, [closeSite]);
   const closeUnplaced = useCallback(() => { setUnplacedOpen(false); setSensorId(null); }, []);
-  // A located sensor flies to its site. One with no recorded position opens its detail without a flight:
-  // inside its named site's panel when it has one, else inside the unplaced list.
-  const openSensor = useCallback((id, sc) => {
+  // A sensor's detail, inside its site's panel when it has a site, else inside the unplaced list (no flight).
+  const showSensor = useCallback(id => {
     const sensor = bundle.sensorById[id], site = sensor && bundle.siteById[sensor.site];
     if (!sensor) return false;
-    if (site && sensor.lat != null) openSite(site, sc);
-    else if (site) showSite(site);
-    else openUnplaced();
+    if (site) showSite(site); else openUnplaced();
     setSensorId(id);
     return true;
-  }, [bundle, openSite, showSite, openUnplaced]);
+  }, [bundle, showSite, openUnplaced]);
+  // Opening one also flies to its site when it has a recorded position.
+  const openSensor = useCallback((id, sc) => {
+    if (!showSensor(id)) return false;
+    const sensor = bundle.sensorById[id], site = bundle.siteById[sensor.site];
+    if (site && sensor.lat != null) sc.flyToPoint(site.lon, site.lat, 6);
+    return true;
+  }, [bundle, showSensor]);
   const selectRegion = useCallback((key, sc) => {
     setRegionKey(key); sc.flyTo(sc.fit(key === "overview" ? bundle.overview : bundle.regions.find(r => r.key === key).view));
   }, [bundle]);
@@ -100,8 +104,6 @@ function Atlas({ bundle, onError }) {
       evLayer = new EvidenceLayer(evidenceRef.current, sc, bundle, {
         onHover: n => setAsk(a => ({ ...a, hoverN: n })),
         onSelect: n => askActions.current.select(n),
-        onLive: item => openSensor(item.id, sc),
-        onSite: item => item.siteId && openSite(bundle.siteById[item.siteId], sc),
       });
       evLayerRef.current = evLayer;
       sc.onFrame = () => { layer.update(); evLayer.update(); };
@@ -151,17 +153,23 @@ function Atlas({ bundle, onError }) {
   useEffect(() => { evLayerRef.current?.setActive(ask.activeN); }, [ask.activeN, scene]);
   useEffect(() => { evLayerRef.current?.setHover(ask.hoverN); }, [ask.hoverN, scene]);
 
-  // Selecting an item opens its card and flies to it (Escape or × closes it: null).
+  // Selecting an item (null clears it) flies to it and opens its station in the side panel: a sensor's detail
+  // (live data), or a site. That flight is the only one. A cable or a quake has no station, so an open panel closes
+  // rather than show the previous one.
   const askActions = useRef({});
   askActions.current = {
     evidence: ask.evidence,
     select: n => {
       setAsk(a => ({ ...a, activeN: n }));
       const it = n == null ? null : tourOf(ask.evidence).find(x => x.n === n);
+      if (!it || !scene) return;
       // A quake is framed at its hypocentre, from a wide view (a close one would sit inside the magma chamber's surface).
-      const depth = it?.time ? hypoMeters(it.depth_km, scene?.subsurface?.data?.datumM) : undefined;
-      const dist = it?.kind === "cable" ? 70 : it?.time ? Math.min(25, Math.max(12, scene?.frame.dist ?? 12)) : 7;
-      if (it && scene) scene.flyToPoint(it.lon, it.lat, dist, depth);
+      const depth = it.time ? hypoMeters(it.depth_km, scene.subsurface?.data?.datumM) : undefined;
+      const dist = it.kind === "cable" ? 70 : it.time ? Math.min(25, Math.max(12, scene.frame.dist ?? 12)) : 7;
+      scene.flyToPoint(it.lon, it.lat, dist, depth);
+      if (it.kind === "sensor" && showSensor(it.id)) return;
+      if (it.kind === "site" && bundle.siteById[it.id]) return showSite(bundle.siteById[it.id]);
+      closeSite(); setUnplacedOpen(false);
     },
   };
 

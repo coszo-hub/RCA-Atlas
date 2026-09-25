@@ -1,6 +1,6 @@
 import { KX, KZ } from "./geo.js";
 
-// The pure parts of the evidence layer: spike sizes, the rise/sink timing, off-screen chips, card placement, grouping.
+// The pure parts of the evidence layer: spike sizes, the rise/sink timing, off-screen chips, grouping.
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const easeOut = t => 1 - Math.pow(1 - t, 3);
@@ -34,15 +34,6 @@ export function edgeChip([px, py, pz], rect, margin = 18) {
   const hw = (rect.right - rect.left) / 2 - margin, hh = (rect.bottom - rect.top) / 2 - margin;
   const k = Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity);
   return { x: Math.round(cx + dx * k), y: Math.round(cy + dy * k), angle: Math.atan2(dy, dx) };
-}
-
-// The in-scene card: above the spike's top when it fits, else beside it (right, then left), inside the free area.
-export function placeCard([tx, ty], [bx, by], { w, h }, rect, gap = 14, m = 8) {
-  const fitX = x => clamp(x, rect.left + m, rect.right - w - m), fitY = y => clamp(y, rect.top + m, rect.bottom - h - m);
-  if (ty - gap - h >= rect.top + m) return { x: fitX(tx - w / 2), y: fitY(ty - gap - h), side: "above" };
-  const y = fitY(Math.min(ty, by - h));
-  if (tx + gap + w <= rect.right - m) return { x: tx + gap, y, side: "right" };
-  return { x: Math.max(rect.left + m, tx - gap - w), y, side: "left" };
 }
 
 // One spike per location: items sharing a position merge their numbers (the first item's colour leads).
