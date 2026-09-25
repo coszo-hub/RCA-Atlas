@@ -22,7 +22,11 @@ Without the gateway, the map still works from the bundle, and live sections say 
 
 Ask Atlas (the left sidebar) answers from the RCA Atlas Worker (`src/atlas_worker`). In development Vite proxies
 `/api/ask` to the deployed Worker with the `Origin` it accepts; to try unreleased Worker changes, run `npx wrangler dev
---port 8788` in `src/atlas_worker` and start the site with `VITE_ATLAS_ASK=http://127.0.0.1:8788 npm run dev`. Cited
+--port 8788` in `src/atlas_worker` and start the site with `VITE_ATLAS_ASK=http://127.0.0.1:8788 npm run dev`. The local
+Worker reads its keys from `src/atlas_worker/.dev.vars` (not committed): `GEMINI_API_KEY`, `ATLAS_API_KEY`,
+`ATLAS_API_ORIGIN` (e.g. `http://127.0.0.1:18000`) and `ATLAS_MAP_GATEWAY_ORIGIN`; if your Gemini key is out of quota,
+`OPENAI_API_KEY` plus `AUTO_FALLBACK_OPENAI_MODEL=gpt-5.4-mini` let Auto finish on OpenAI locally (the deployed Worker
+never sets it). Cited
 sensors, sites, and DAS cables rise on the map as numbered spikes; the Axial quake count shows the day's hypocentres.
 
 ## Test

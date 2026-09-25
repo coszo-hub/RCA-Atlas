@@ -350,10 +350,11 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
       lastError = error;
     }
   }
-  // Last, a paid route when one is configured, so Auto still answers when every free route is out of quota.
-  if (requestedModel === "auto" && env.OPENAI_API_KEY) {
+  // Local development only: AUTO_FALLBACK_OPENAI_MODEL (set in .dev.vars, never in wrangler.toml or as a deployed
+  // secret) lets Auto finish on an OpenAI model when every free route is out of quota. Deployed, Auto stays free.
+  if (requestedModel === "auto" && env.AUTO_FALLBACK_OPENAI_MODEL && env.OPENAI_API_KEY) {
     try {
-      return await generateOpenAIAnswer(prompt, "gpt-5.4-mini", mode, env);
+      return await generateOpenAIAnswer(prompt, env.AUTO_FALLBACK_OPENAI_MODEL, mode, env);
     } catch (error) {
       lastError = error;
     }
