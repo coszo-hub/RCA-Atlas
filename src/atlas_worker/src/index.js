@@ -2,10 +2,11 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, publicHit, sourceKey } from "./helpers.js";
+
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
 const MAX_GRAPH_HOPS = 2;
-const MAX_EVIDENCE_CHARS = 18_000;
 const AXIAL_CATALOG = "http://axial.ocean.washington.edu";
 
 function corsHeaders(env, origin) {
@@ -58,18 +59,6 @@ async function proxyLiveData(env, url, cors) {
   } catch {
     return response({ error: { source: "Atlas live data", message: "live data service is temporarily unavailable" } }, 503, cors);
   }
-}
-
-function publicHit(hit) {
-  return {
-    chunk_id: hit.chunk_id,
-    collection_id: hit.collection_id,
-    collection_label: hit.collection_label,
-    title: hit.title,
-    score: hit.score,
-    citations: hit.citations || [],
-    metadata: hit.metadata || {},
-  };
 }
 
 function citations(hits) {
@@ -231,20 +220,6 @@ function quickGraphAnswer(context, question) {
   ].join("\n");
 }
 
-function evidencePackage(hits, sourceNumbers) {
-  const sections = [];
-  let remaining = MAX_EVIDENCE_CHARS;
-  for (const hit of hits) {
-    if (remaining <= 0) break;
-    const refs = (hit.citations || []).map((c) => sourceNumbers.get(c.source_id || hit.chunk_id)).filter(Boolean);
-    const header = `${hit.title}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
-    const text = String(hit.text || "").slice(0, Math.max(0, remaining - header.length));
-    sections.push(`${header}${text}`);
-    remaining -= header.length + text.length + 2;
-  }
-  return sections.join("\n\n");
-}
-
 async function postJson(url, body, headers = {}) {
   const result = await fetch(url, {
     method: "POST",
@@ -308,8 +283,11 @@ async function generateOpenAIAnswer(prompt, requestedModel, mode, env) {
   const upstream = await postJson("https://api.openai.com/v1/responses", {
     model: requestedModel,
     input: prompt,
-    reasoning: { effort: requestedModel === "gpt-5.6-sol" ? "high" : "medium" },
-    max_output_tokens: mode === "compact" ? 400 : 4096,
+    // Reasoning tokens count against max_output_tokens: a compact answer at medium effort spent all 400 on
+    // reasoning and returned no text, so compact answers reason lightly within a larger budget (the prompt
+    // still holds the answer to 120 words).
+    reasoning: { effort: requestedModel === "gpt-5.6-sol" ? "high" : mode === "compact" ? "low" : "medium" },
+    max_output_tokens: mode === "compact" ? 1200 : 4096,
     store: false,
   }, { authorization: `Bearer ${env.OPENAI_API_KEY}` });
   const answer = upstream.output_text || upstream.output?.flatMap((item) => item.content || [])
@@ -322,7 +300,8 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   const product = namedDataProduct(question);
   const evidenceHits = selectedEvidenceHits(context, question);
   const sourceList = citations(evidenceHits);
-  const sourceNumbers = new Map(sourceList.map((source, index) => [source.id, index + 1]));
+  // Sources sharing an id (one PI portal record, several routes) are told apart by URL, as citations() dedupes them.
+  const sourceNumbers = new Map(sourceList.map((source, index) => [sourceKey(source.id, source.url), index + 1]));
   const evidence = evidencePackage(evidenceHits, sourceNumbers);
   if (!evidence) throw new Error("no retrieved evidence");
   if (product && isDownloadQuestion(question) && sourceList[0]?.url) {
@@ -331,18 +310,8 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
       model: "RCA Atlas evidence routing",
     };
   }
-  const sourceListText = sourceList.map((c) => c.title).join("; ");
   const mode = answerMode(question);
-  const namedProductInstruction = product
-    ? `The user specifically named ${product}; answer only about that named product. Do not include related products, file formats, instruments, or data types unless the evidence explicitly assigns them to ${product}.`
-    : "";
-  const compactInstruction = mode === "compact"
-    ? `This is a data-availability, download, or list question. ${namedProductInstruction} Return a direct answer followed by at most four single-sentence bullets; each bullet names one available dataset or route, with its year or coverage and file type only when established. Use no sub-bullets, section headings, capability descriptions, deployment background, calibration details, or related literature. Keep the whole answer under 120 words. The interface renders links separately.`
-    : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
-  const formatInstruction = mode === "compact"
-    ? "Use plain text, with no Markdown hashes or asterisks. Obey the 120-word, single-sentence-bullet limit exactly."
-    : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
-  const prompt = `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} State clearly what the evidence does not establish. Do not include citations, bracketed numbers, chunk IDs, source IDs, database identifiers, URLs, or any other provenance notation in the answer text. The interface renders the curated source list separately below the answer. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product });
   if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
   const model = ["gemini-2.5-flash", "gemini-3.5-flash-lite"].includes(requestedModel)
@@ -381,39 +350,45 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
       lastError = error;
     }
   }
+  // Local development only: AUTO_FALLBACK_OPENAI_MODEL (set in .dev.vars, never in wrangler.toml or as a deployed
+  // secret) lets Auto finish on an OpenAI model when every free route is out of quota. Deployed, Auto stays free.
+  if (requestedModel === "auto" && env.AUTO_FALLBACK_OPENAI_MODEL && env.OPENAI_API_KEY) {
+    try {
+      return await generateOpenAIAnswer(prompt, env.AUTO_FALLBACK_OPENAI_MODEL, mode, env);
+    } catch (error) {
+      lastError = error;
+    }
+  }
   throw lastError;
 }
 
-function axialCountDay(question) {
-  const q = question.toLowerCase();
-  if (!/axial/.test(q) || !/(how many|count|number of)/.test(q) || !/earthquake/.test(q)) return null;
-  const explicit = q.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
-  if (explicit) return explicit[1];
-  const now = new Date();
-  if (q.includes("yesterday")) now.setUTCDate(now.getUTCDate() - 1);
-  else if (!q.includes("today")) return null;
-  return now.toISOString().slice(0, 10);
-}
-
-async function liveAxialCount(question) {
-  const day = axialCountDay(question);
-  if (!day) return null;
-  const stamp = day.replaceAll("-", "");
-  const sourceUrl = `${AXIAL_CATALOG}/hypo71/hypo71_${stamp}.dat`;
-  const upstream = await fetch(sourceUrl, { signal: AbortSignal.timeout(20_000) });
-  if (!upstream.ok) throw new Error(`Axial catalog ${upstream.status}`);
-  const catalog = await upstream.text();
-  const count = catalog.split(/\r?\n/).filter((line) => {
-    const parts = line.trim().split(/\s+/);
-    return parts.length >= 18 && parts[0] === stamp;
-  }).length;
+async function liveAxialCount(question, tz) {
+  const window = axialDayWindow(question, { tz });
+  if (!window) return null;
+  const urls = window.stamps.map((stamp) => `${AXIAL_CATALOG}/hypo71/hypo71_${stamp}.dat`);
+  // A local day can reach into a UTC day the catalog has not started yet; only a day with no file at all fails.
+  const files = (await Promise.all(urls.map(async (url, i) => {
+    const upstream = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    if (upstream.status === 404 && i > 0) return null;
+    if (!upstream.ok) throw new Error(`Axial catalog ${upstream.status}`);
+    return [await upstream.text(), window.stamps[i], url];
+  }))).filter(Boolean);
+  const events = eventsInWindow(files, window), n = events.length;
+  const utc = window.tz === "UTC";
+  const answer = utc
+    ? `There ${window.today ? "have been" : "were"} ${n} Axial Seamount earthquakes in the live catalog for ${window.day} UTC${window.today ? " so far" : ""}.`
+    : window.today
+      ? `There have been ${n} Axial Seamount earthquakes so far today, ${window.label} (${window.zoneName}), in the live catalog.`
+      : `There were ${n} Axial Seamount earthquakes on ${window.label} (${window.zoneName}) in the live catalog.`;
   return {
     query: question,
-    answer: `There were ${count} Axial Seamount earthquakes in the live catalog for ${day} UTC.`,
+    answer,
     answer_model: "axial_count_events (live catalog)",
-    answer_citations: [{ id: "axial-live-catalog", title: "Axial Seamount Earthquake Catalog", url: sourceUrl }],
-    hits: [], neighbors: [],
-    tool_hints: [{ name: "axial_count_events", description: "Executed against the live daily Axial catalog", score: 1, required_arguments: ["day"], input_schema: { day } }],
+    answer_citations: files.map(([, stamp, url]) => ({ id: files.length > 1 ? `axial-live-catalog-${stamp}` : "axial-live-catalog",
+      title: files.length > 1 ? `Axial Seamount Earthquake Catalog, ${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6)} UTC` : "Axial Seamount Earthquake Catalog", url })),
+    hits: [], neighbors: [], events,
+    tool_hints: [{ name: "axial_count_events", description: "Executed against the live daily Axial catalog", score: 1, required_arguments: ["day"],
+      input_schema: { day: window.day, tz: window.tz, label: window.label, today: window.today } }],
   };
 }
 
@@ -434,7 +409,7 @@ export default {
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
-      const liveToolResult = await liveAxialCount(query);
+      const liveToolResult = await liveAxialCount(query, typeof body?.tz === "string" ? body.tz.slice(0, 64) : undefined);
       if (liveToolResult) return response(liveToolResult, 200, cors);
       if (!env.ATLAS_API_KEY || !env.ATLAS_API_ORIGIN) {
         return response({ error: "service is not configured" }, 503, cors);

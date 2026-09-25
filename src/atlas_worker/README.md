@@ -24,3 +24,8 @@ npx wrangler secret put ATLAS_API_ORIGIN
 loopback-only Graph-RAG API. `ATLAS_API_KEY` is the matching private API key.
 Configure a Cloudflare rate-limit rule for `POST /v1/answer` before enabling
 the UI endpoint in production.
+
+## Test
+
+`npm test` runs the `node --test` unit tests (no dependencies): the hypo71 event parser, hit excerpts, and the
+numbered-citation prompt.

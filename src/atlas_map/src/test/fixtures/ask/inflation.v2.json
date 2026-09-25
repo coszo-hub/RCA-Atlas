@@ -1,0 +1,151 @@
+{
+ "_fixture": "Hand-made in the new Worker shape: [n] markers and hit excerpts. Hits and excerpts are real corpus records; the answer text is written for the demo.",
+ "query": "What's been measuring Axial's inflation before the next eruption?",
+ "answer": "Axial's inflation is tracked by the cabled bottom pressure-tilt instruments in the summit caldera [1][2][3], which record the seafloor rising as magma refills the reservoir beneath it [6]. The Axial Base pressure-tilt instrument [5] sits off-axis as a reference, and caldera seismicity [4] climbs as inflation approaches the level reached before the 2015 eruption [6].\n\nThe evidence does not establish a date for the next eruption.",
+ "answer_model": "gemini-2.5-flash",
+ "answer_citations": [
+  {
+   "id": "INSTRUMENT-8e57e4c2b3d2b4c3de",
+   "title": "Axial Seamount Central Caldera Seafloor Pressure",
+   "url": ""
+  },
+  {
+   "id": "INSTRUMENT-d4dc37b9712b85ac08",
+   "title": "International District Hydrothermal Field 2 Seafloor Pressure",
+   "url": ""
+  },
+  {
+   "id": "INSTRUMENT-865c7cfe79b19d09a0",
+   "title": "Axial Seamount Eastern Caldera Seafloor Pressure",
+   "url": ""
+  },
+  {
+   "id": "INSTRUMENT-9b8f0950a685bf2038",
+   "title": "Axial Seamount Central Caldera Seismic Station AXCC1",
+   "url": "https://ds.iris.edu/mda/OO/AXCC1/"
+  },
+  {
+   "id": "INSTRUMENT-f5bbc20f6eea4403d5",
+   "title": "Axial Base bottom pressure and tilt instrument",
+   "url": ""
+  },
+  {
+   "id": "PAGE-9901dc2fdc21d8c7",
+   "title": "Eruption forecasts at Axial Seamount",
+   "url": "https://axial.ceoas.oregonstate.edu/axial_blog.html"
+  }
+ ],
+ "answer_links": [],
+ "hits": [
+  {
+   "chunk_id": "INSTRUMENT-CHUNK-8e57e4c2b3d2b4c3de",
+   "collection_id": "instruments",
+   "collection_label": null,
+   "title": "Axial Seamount Central Caldera Seafloor Pressure",
+   "score": 0.5,
+   "citations": [
+    {
+     "source_id": "INSTRUMENT-8e57e4c2b3d2b4c3de",
+     "url": ""
+    }
+   ],
+   "metadata": {
+    "node_local_id": "INSTRUMENT-CHUNK-8e57e4c2b3d2b4c3de",
+    "locator": null
+   },
+   "excerpt": "Instrument: Axial Seamount Central Caldera Seafloor Pressure Canonical identifier: RS03CCAL-MJ03F-05-BOTPTA301 Type: pressure Projects: Regional Cabled Array Location: Axial Seamount Central Caldera Status: catalogued_instance Deployment state…"
+  },
+  {
+   "chunk_id": "INSTRUMENT-CHUNK-d4dc37b9712b85ac08",
+   "collection_id": "instruments",
+   "collection_label": null,
+   "title": "International District Hydrothermal Field 2 Seafloor Pressure",
+   "score": 0.5,
+   "citations": [
+    {
+     "source_id": "INSTRUMENT-d4dc37b9712b85ac08",
+     "url": ""
+    }
+   ],
+   "metadata": {
+    "node_local_id": "INSTRUMENT-CHUNK-d4dc37b9712b85ac08",
+    "locator": null
+   },
+   "excerpt": "Instrument: International District Hydrothermal Field 2 Seafloor Pressure Canonical identifier: RS03INT2-MJ03D-06-BOTPTA303 Type: pressure Projects: Regional Cabled Array Location: Axial Seamount International District Status: catalogued_instance Deployment state…"
+  },
+  {
+   "chunk_id": "INSTRUMENT-CHUNK-865c7cfe79b19d09a0",
+   "collection_id": "instruments",
+   "collection_label": null,
+   "title": "Axial Seamount Eastern Caldera Seafloor Pressure",
+   "score": 0.5,
+   "citations": [
+    {
+     "source_id": "INSTRUMENT-865c7cfe79b19d09a0",
+     "url": ""
+    }
+   ],
+   "metadata": {
+    "node_local_id": "INSTRUMENT-CHUNK-865c7cfe79b19d09a0",
+    "locator": null
+   },
+   "excerpt": "Instrument: Axial Seamount Eastern Caldera Seafloor Pressure Canonical identifier: RS03ECAL-MJ03E-06-BOTPTA302 Type: pressure Projects: Regional Cabled Array Location: Axial Seamount Eastern Caldera Status: catalogued_instance Deployment state…"
+  },
+  {
+   "chunk_id": "INSTRUMENT-CHUNK-9b8f0950a685bf2038",
+   "collection_id": "instruments",
+   "collection_label": null,
+   "title": "Axial Seamount Central Caldera Seismic Station AXCC1",
+   "score": 0.5,
+   "citations": [
+    {
+     "source_id": "INSTRUMENT-9b8f0950a685bf2038",
+     "url": "https://ds.iris.edu/mda/OO/AXCC1/"
+    }
+   ],
+   "metadata": {
+    "node_local_id": "INSTRUMENT-CHUNK-9b8f0950a685bf2038",
+    "locator": null
+   },
+   "excerpt": "Instrument: Axial Seamount Central Caldera Seismic Station AXCC1 Canonical identifier: EARTHSCOPE-OO-AXCC1 Type: seismometer Projects: Regional Cabled Array Location: Axial Seamount Central Caldera Status: catalogued_instance Deployment state…"
+  },
+  {
+   "chunk_id": "INSTRUMENT-CHUNK-f5bbc20f6eea4403d5",
+   "collection_id": "instruments",
+   "collection_label": null,
+   "title": "Axial Base bottom pressure and tilt instrument",
+   "score": 0.5,
+   "citations": [
+    {
+     "source_id": "INSTRUMENT-f5bbc20f6eea4403d5",
+     "url": ""
+    }
+   ],
+   "metadata": {
+    "node_local_id": "INSTRUMENT-CHUNK-f5bbc20f6eea4403d5",
+    "locator": null
+   },
+   "excerpt": "Instrument: Axial Base bottom pressure and tilt instrument Canonical identifier: RS03AXBS-LJ03A-14-BOTPTA301 Type: bottom_pressure_tilt Projects: Regional Cabled Array Location: RCA (location encoded in reference designator) Status: reference_only Deployment state…"
+  },
+  {
+   "chunk_id": "PAGE-9901dc2fdc21d8c7-CHUNK-039",
+   "collection_id": "axial_monitoring",
+   "collection_label": null,
+   "title": "Eruption forecasts at Axial Seamount",
+   "score": 0.5,
+   "citations": [
+    {
+     "source_id": "PAGE-9901dc2fdc21d8c7",
+     "url": "https://axial.ceoas.oregonstate.edu/axial_blog.html"
+    }
+   ],
+   "metadata": {
+    "node_local_id": "PAGE-9901dc2fdc21d8c7-CHUNK-039",
+    "locator": null
+   },
+   "excerpt": "Axial Seamount was on R/V Revelle with ROV Jason and AUV Sentry , July 13-23, 2017 (check out our cruise blog HERE ). Our latest pressure measurements show that Axial has now re-inflated about 1.25 m since the last eruption in April 2015. That is half of the 2.5 m of deflation…"
+  }
+ ],
+ "neighbors": [],
+ "tool_hints": []
+}

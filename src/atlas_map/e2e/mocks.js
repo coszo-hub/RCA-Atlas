@@ -1,5 +1,14 @@
+import { readFileSync } from "node:fs";
+
+// Ask Atlas answers captured from the Worker (and the new-shape variants), by question: [pattern, fixture, edit?].
+export const fixture = name => JSON.parse(readFileSync(new URL(`../src/test/fixtures/ask/${name}.json`, import.meta.url), "utf8"));
+export const ASK = [
+  [/inflation/i, "inflation.v2"], [/hydrate ridge/i, "hydrate"], [/dissolved oxygen/i, "oxygen"], [/earthquakes.*today/i, "quakes.today"],
+  [/earthquakes/i, "quakes.v2"], [/\bDAS\b/, "das"], [/2015/, "eruption"],
+];
+
 // Match on the path prefix: a "**/api/**" glob would also catch Vite's own /src/api/*.js modules.
-export async function mockGateway(page, { down = false } = {}) {
+export async function mockGateway(page, { down = false, ask = ASK, askDelay = 400 } = {}) {
   await page.route(u => u.pathname.startsWith("/api/"), async route => {
     const url = new URL(route.request().url()), p = url.pathname.replace(/^\/api/, "");
     if (down) return route.abort("connectionrefused");
@@ -12,7 +21,12 @@ export async function mockGateway(page, { down = false } = {}) {
     }
     if (p.startsWith("/waveform/")) return json({ points: Array.from({ length: 2000 }, (_, i) => [Date.now() - 6e5 + i * 300, Math.sin(i / 7) * 400]), rate: 200, channel: "HHZ", message: null });
     if (p.startsWith("/plots/")) return json({ refdes: "x", plots: [] });
-    if (p === "/chat") return json({ answer: "Axial Base has a seafloor package and two profilers.", model: "m", citations: [{ id: "1", title: "OOI Axial Base", url: "https://oceanobservatories.org" }] });
+    if (p === "/ask") {
+      const q = route.request().postDataJSON()?.query ?? "", hit = ask.find(([re]) => re.test(q));
+      await new Promise(r => setTimeout(r, askDelay));
+      if (!hit) return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "answer temporarily unavailable" }) });
+      return json(hit[2] ? hit[2](fixture(hit[1])) : fixture(hit[1]));
+    }
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { source: "atlas", message: "not mocked" } }) });
   });
 }

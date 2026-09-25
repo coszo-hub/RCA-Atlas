@@ -1,0 +1,747 @@
+{
+ "_fixture": "Captured 2026-09-24 from the local Worker (wrangler dev, gpt-5.4-mini) through the dev proxy.",
+ "query": "Which instruments measure dissolved oxygen?",
+ "answer": "The retrieved evidence supports four dissolved-oxygen instrument names in the RCA scope, with Oregon Slope Base Shallow Profiler Dissolved Oxygen appearing in multiple records [1, 4, 6]. I can identify the following from the evidence, but the set is not proven exhaustive.\n\nMatched instruments\n\n- Axial Seamount Shallow Profiler Dissolved Oxygen: a dissolved_oxygen sensor measuring seawater oxygen content at Axial Seamount Profiler; OOI site RS03AXPS / node PC03A; latitude 45.9316, longitude -129.9808, depth 2607 m; data available from 2015-04-01; units μmol/L; sample rate 1 Hz [2].\n\n- Oregon Slope Base Shallow Profiler Dissolved Oxygen:\n  - Catalogued RCA instance with canonical identifier RS01SBPS-PC01A-4A-DOSTAD103 [1].\n  - OOI API record at Oregon Slope Base / RS01SBPS, node PC01A; latitude 44.5101, longitude -125.3899, depth 2895 m; data available from 2015-04-01; units μmol/L; sample rate 1 Hz [4].\n  - Another OOI API record with the same name at Oregon Slope Base / RS01SBPS, node SF01A; described as a fast-response dissolved oxygen sensor on profiler; latitude 44.5101, longitude -125.3899, depth 2895 m; data available from 2015-04-01; units μmol/L; sample rate 1 Hz [6].\n\n- Oregon Slope Base Seafloor Dissolved Oxygen: catalogued RCA instance with canonical identifier RS01SLBS-LJ01A-12-DOSTAD101 at Oregon Slope Base Seafloor [3].\n\n- Oregon Slope Base Deep Profiler Dissolved Oxygen: a dissolved_oxygen sensor at Oregon Slope Base / RS01SBPD, node DP01A; latitude 44.5101, longitude -125.3899, depth 2906 m; data available from 2015-04-01; units μmol/L; sample rate 1 Hz [5].\n\nWhat the evidence does not establish\n\n- It does not establish a complete inventory of all dissolved-oxygen instruments in the full RCA Atlas/COSZO scope; it only supports the records retrieved here.\n- For the catalogued instances, the evidence does not separately enumerate sensor components [1, 3].",
+ "answer_model": "OpenAI gpt-5.4-mini",
+ "answer_citations": [
+  {
+   "id": "INSTRUMENT-7c9436932bd2bfb48a",
+   "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "url": ""
+  },
+  {
+   "id": "ARCADA-INSTRUMENT-d5003d15168103fc725e",
+   "title": "Axial Seamount Shallow Profiler Dissolved Oxygen",
+   "url": ""
+  },
+  {
+   "id": "INSTRUMENT-4155e711bd485f7aa0",
+   "title": "Oregon Slope Base Seafloor Dissolved Oxygen",
+   "url": ""
+  },
+  {
+   "id": "ARCADA-INSTRUMENT-7c9436932bd2bfb48a73",
+   "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "url": ""
+  },
+  {
+   "id": "ARCADA-INSTRUMENT-d89a28d96c24df8bfe5d",
+   "title": "Oregon Slope Base Deep Profiler Dissolved Oxygen",
+   "url": ""
+  },
+  {
+   "id": "ARCADA-INSTRUMENT-194410be10456ad0cc5e",
+   "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "url": ""
+  }
+ ],
+ "answer_links": [],
+ "hits": [
+  {
+   "chunk_id": "PAGE-2257d2c4e67e102f-CHUNK-001",
+   "collection_id": "websites",
+   "collection_label": "websites",
+   "title": "Mass Spectrometer",
+   "score": 0.012189091998801319,
+   "citations": [
+    {
+     "source_id": "PAGE-2257d2c4e67e102f",
+     "title": "Mass Spectrometer",
+     "url": "https://interactiveoceans.washington.edu/instruments/mass-spectrometer/"
+    }
+   ],
+   "metadata": {
+    "node_local_id": "PAGE-2257d2c4e67e102f-CHUNK-001",
+    "locator": null
+   },
+   "excerpt": "## Mass Spectrometer Measurements of dissolved gas concentrations such as carbon dioxide, methane, and hydrogen sulfide are critical to understanding volcanic, chemical, and biological processes in submarine environments. Carbon dioxide in magma chambers helps drive seafloor…"
+  },
+  {
+   "chunk_id": "PAGE-3625c967a2666d44-CHUNK-001",
+   "collection_id": "websites",
+   "collection_label": "websites",
+   "title": "DO2",
+   "score": 0.009016393442622951,
+   "citations": [
+    {
+     "source_id": "PAGE-3625c967a2666d44",
+     "title": "DO2",
+     "url": "https://oceanobservatories.org/instrument-class/do2/"
+    }
+   ],
+   "metadata": {
+    "node_local_id": "PAGE-3625c967a2666d44-CHUNK-001",
+    "locator": null
+   },
+   "excerpt": "## DO2 A Dissolved Oxygen sensor measures the concentration of oxygen molecules that have been dissolved, or mixed, into seawater (Dissolved Oxygen Concentration). There are a variety of Dissolved Oxygen sensors within the OOI program with unique capabilities. Some Dissolved…"
+  },
+  {
+   "chunk_id": "ARCADA-CHUNK-7c9436932bd2bfb48a73",
+   "collection_id": "arcada",
+   "collection_label": "RCA Information",
+   "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "score": 0.008870967741935484,
+   "citations": [
+    {
+     "source_id": "ARCADA-INSTRUMENT-7c9436932bd2bfb48a73",
+     "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "ARCADA-CHUNK-7c9436932bd2bfb48a73",
+    "locator": null
+   },
+   "excerpt": "Name: Oregon Slope Base Shallow Profiler Dissolved Oxygen Type: dissolved_oxygen Location: Oregon Slope Base Source: ooi_api Description: Dissolved oxygen concentration sensor measuring seawater oxygen content Keywords: dissolved oxygen, do, oxygen, respiration, hypoxia, oregon…"
+  },
+  {
+   "chunk_id": "ARCADA-CHUNK-d89a28d96c24df8bfe5d",
+   "collection_id": "arcada",
+   "collection_label": "RCA Information",
+   "title": "Oregon Slope Base Deep Profiler Dissolved Oxygen",
+   "score": 0.00873015873015873,
+   "citations": [
+    {
+     "source_id": "ARCADA-INSTRUMENT-d89a28d96c24df8bfe5d",
+     "title": "Oregon Slope Base Deep Profiler Dissolved Oxygen",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "ARCADA-CHUNK-d89a28d96c24df8bfe5d",
+    "locator": null
+   },
+   "excerpt": "Name: Oregon Slope Base Deep Profiler Dissolved Oxygen Type: dissolved_oxygen Location: Oregon Slope Base Source: ooi_api Description: Dissolved oxygen concentration sensor measuring seawater oxygen content Keywords: dissolved oxygen, do, oxygen, respiration, hypoxia, oregon…"
+  },
+  {
+   "chunk_id": "ARCADA-CHUNK-194410be10456ad0cc5e",
+   "collection_id": "arcada",
+   "collection_label": "RCA Information",
+   "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "score": 0.00859375,
+   "citations": [
+    {
+     "source_id": "ARCADA-INSTRUMENT-194410be10456ad0cc5e",
+     "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "ARCADA-CHUNK-194410be10456ad0cc5e",
+    "locator": null
+   },
+   "excerpt": "Name: Oregon Slope Base Shallow Profiler Dissolved Oxygen Type: dissolved_oxygen Location: Oregon Slope Base Source: ooi_api Description: Fast-response dissolved oxygen sensor on profiler Keywords: dissolved oxygen, do, oxygen, profiler, oregon slope base Latitude: 44.5101…"
+  },
+  {
+   "chunk_id": "ARCADA-CHUNK-8c1d7693df47caefa25a",
+   "collection_id": "arcada",
+   "collection_label": "RCA Information",
+   "title": "Axial Seamount Shallow Profiler pCO2 Sensor (description)",
+   "score": 0.008461538461538463,
+   "citations": [
+    {
+     "source_id": "ARCADA-INSTRUMENT-bf8b313d306d711c7001",
+     "title": "Axial Seamount Shallow Profiler pCO2 Sensor",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "ARCADA-CHUNK-8c1d7693df47caefa25a",
+    "locator": null
+   },
+   "excerpt": "Seafloor pCO2 sensor measuring dissolved CO2 concentration related to methane oxidation, seeps, and ocean acidification"
+  },
+  {
+   "chunk_id": "ARCADA-CHUNK-6d0d371c217610faccc0",
+   "collection_id": "arcada",
+   "collection_label": "RCA Information",
+   "title": "Oregon Slope Base Shallow Profiler pCO2 Sensor (description)",
+   "score": 0.008333333333333335,
+   "citations": [
+    {
+     "source_id": "ARCADA-INSTRUMENT-4eac408d7acdc3355c84",
+     "title": "Oregon Slope Base Shallow Profiler pCO2 Sensor",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "ARCADA-CHUNK-6d0d371c217610faccc0",
+    "locator": null
+   },
+   "excerpt": "Seafloor pCO2 sensor measuring dissolved CO2 concentration related to methane oxidation, seeps, and ocean acidification"
+  },
+  {
+   "chunk_id": "INSTRUMENT-CHUNK-7c9436932bd2bfb48a",
+   "collection_id": "instruments",
+   "collection_label": "instruments",
+   "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "score": 0.008208955223880597,
+   "citations": [
+    {
+     "source_id": "INSTRUMENT-7c9436932bd2bfb48a",
+     "title": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "INSTRUMENT-CHUNK-7c9436932bd2bfb48a",
+    "locator": null
+   },
+   "excerpt": "Instrument: Oregon Slope Base Shallow Profiler Dissolved Oxygen Canonical identifier: RS01SBPS-PC01A-4A-DOSTAD103 Type: dissolved_oxygen Projects: Regional Cabled Array Location: Oregon Slope Base Status: catalogued_instance Deployment state…"
+  },
+  {
+   "chunk_id": "ARCADA-CHUNK-d5003d15168103fc725e",
+   "collection_id": "arcada",
+   "collection_label": "RCA Information",
+   "title": "Axial Seamount Shallow Profiler Dissolved Oxygen",
+   "score": 0.008088235294117648,
+   "citations": [
+    {
+     "source_id": "ARCADA-INSTRUMENT-d5003d15168103fc725e",
+     "title": "Axial Seamount Shallow Profiler Dissolved Oxygen",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "ARCADA-CHUNK-d5003d15168103fc725e",
+    "locator": null
+   },
+   "excerpt": "Name: Axial Seamount Shallow Profiler Dissolved Oxygen Type: dissolved_oxygen Location: Axial Seamount Profiler Source: ooi_api Description: Dissolved oxygen concentration sensor measuring seawater oxygen content Keywords: dissolved oxygen, do, oxygen, respiration, hypoxia…"
+  },
+  {
+   "chunk_id": "INSTRUMENT-CHUNK-4155e711bd485f7aa0",
+   "collection_id": "instruments",
+   "collection_label": "instruments",
+   "title": "Oregon Slope Base Seafloor Dissolved Oxygen",
+   "score": 0.007971014492753625,
+   "citations": [
+    {
+     "source_id": "INSTRUMENT-4155e711bd485f7aa0",
+     "title": "Oregon Slope Base Seafloor Dissolved Oxygen",
+     "url": null
+    }
+   ],
+   "metadata": {
+    "node_local_id": "INSTRUMENT-CHUNK-4155e711bd485f7aa0",
+    "locator": null
+   },
+   "excerpt": "Instrument: Oregon Slope Base Seafloor Dissolved Oxygen Canonical identifier: RS01SLBS-LJ01A-12-DOSTAD101 Type: dissolved_oxygen Projects: Regional Cabled Array Location: Oregon Slope Base Seafloor Status: catalogued_instance Deployment state…"
+  }
+ ],
+ "neighbors": [
+  {
+   "collection_id": "websites",
+   "local_id": "PAGE-2257d2c4e67e102f",
+   "name": "Mass Spectrometer",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": "https://interactiveoceans.washington.edu/instruments/mass-spectrometer/"
+  },
+  {
+   "collection_id": "websites",
+   "local_id": "ENTITY-72270d295400c13b",
+   "name": "Southern Hydrate Ridge",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "websites",
+   "local_id": "ENTITY-ef4071be4a479e64",
+   "name": "Axial Seamount",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "websites",
+   "local_id": "PAGE-3625c967a2666d44",
+   "name": "DO2",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": "https://oceanobservatories.org/instrument-class/do2/"
+  },
+  {
+   "collection_id": "websites",
+   "local_id": "PAGE-e50a8eebb0650e76",
+   "name": "Instruments",
+   "depth": 2,
+   "direction": "in",
+   "predicate": "LINKS_TO",
+   "source_url": "https://oceanobservatories.org/instruments/"
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-7c9436932bd2bfb48a73",
+   "name": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-2ab2099434f01015",
+   "name": "ooi_api",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "FROM_SOURCE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-461a2ba50376bd25",
+   "name": "dissolved_oxygen",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "SOURCE-45fbb1bd748edc0d",
+   "name": "mhemmett/arcada RAG corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "DERIVED_FROM",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-d89a28d96c24df8bfe5d",
+   "name": "Oregon Slope Base Deep Profiler Dissolved Oxygen",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-2ab2099434f01015",
+   "name": "ooi_api",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "FROM_SOURCE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-461a2ba50376bd25",
+   "name": "dissolved_oxygen",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "SOURCE-45fbb1bd748edc0d",
+   "name": "mhemmett/arcada RAG corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "DERIVED_FROM",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-194410be10456ad0cc5e",
+   "name": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-2ab2099434f01015",
+   "name": "ooi_api",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "FROM_SOURCE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-461a2ba50376bd25",
+   "name": "dissolved_oxygen",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "SOURCE-45fbb1bd748edc0d",
+   "name": "mhemmett/arcada RAG corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "DERIVED_FROM",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-CHUNK-bf8b313d306d711c7001",
+   "name": "Axial Seamount Shallow Profiler pCO2 Sensor",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "NEXT_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-bf8b313d306d711c7001",
+   "name": "Axial Seamount Shallow Profiler pCO2 Sensor",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-CHUNK-bf8b313d306d711c7001",
+   "name": "Axial Seamount Shallow Profiler pCO2 Sensor",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-bf8b313d306d711c7001",
+   "name": "Axial Seamount Shallow Profiler pCO2 Sensor",
+   "depth": 2,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-2ab2099434f01015",
+   "name": "ooi_api",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "FROM_SOURCE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-5256b8fcef5b527d",
+   "name": "pco2",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-940f6d8aa622d7c7",
+   "name": "Axial Seamount Profiler",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-ef4071be4a479e64",
+   "name": "Axial Seamount",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "SOURCE-45fbb1bd748edc0d",
+   "name": "mhemmett/arcada RAG corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "DERIVED_FROM",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-CHUNK-4eac408d7acdc3355c84",
+   "name": "Oregon Slope Base Shallow Profiler pCO2 Sensor",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "NEXT_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-4eac408d7acdc3355c84",
+   "name": "Oregon Slope Base Shallow Profiler pCO2 Sensor",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-CHUNK-4eac408d7acdc3355c84",
+   "name": "Oregon Slope Base Shallow Profiler pCO2 Sensor",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-4eac408d7acdc3355c84",
+   "name": "Oregon Slope Base Shallow Profiler pCO2 Sensor",
+   "depth": 2,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-2ab2099434f01015",
+   "name": "ooi_api",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "FROM_SOURCE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-5256b8fcef5b527d",
+   "name": "pco2",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "SOURCE-45fbb1bd748edc0d",
+   "name": "mhemmett/arcada RAG corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "DERIVED_FROM",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "INSTRUMENT-7c9436932bd2bfb48a",
+   "name": "Oregon Slope Base Shallow Profiler Dissolved Oxygen",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "ENTITY-461a2ba50376bd25",
+   "name": "dissolved_oxygen",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "ENTITY-7b20fdc48eca4ee8",
+   "name": "Regional Cabled Array",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "PART_OF",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "ENTITY-89195eb2518e747b",
+   "name": "Oregon Slope Base",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "SOURCE-ARCADA-GRAPH",
+   "name": "Arcada Graph-RAG instrument corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "SUPPORTED_BY",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ARCADA-INSTRUMENT-d5003d15168103fc725e",
+   "name": "Axial Seamount Shallow Profiler Dissolved Oxygen",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-2ab2099434f01015",
+   "name": "ooi_api",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "FROM_SOURCE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-461a2ba50376bd25",
+   "name": "dissolved_oxygen",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-940f6d8aa622d7c7",
+   "name": "Axial Seamount Profiler",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "ENTITY-ef4071be4a479e64",
+   "name": "Axial Seamount",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "MENTIONS",
+   "source_url": null
+  },
+  {
+   "collection_id": "arcada",
+   "local_id": "SOURCE-45fbb1bd748edc0d",
+   "name": "mhemmett/arcada RAG corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "DERIVED_FROM",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "INSTRUMENT-4155e711bd485f7aa0",
+   "name": "Oregon Slope Base Seafloor Dissolved Oxygen",
+   "depth": 1,
+   "direction": "in",
+   "predicate": "HAS_CHUNK",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "ENTITY-461a2ba50376bd25",
+   "name": "dissolved_oxygen",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "HAS_TYPE",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "ENTITY-7b20fdc48eca4ee8",
+   "name": "Regional Cabled Array",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "PART_OF",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "ENTITY-c07337c5170a2a99",
+   "name": "Oregon Slope Base Seafloor",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "LOCATED_AT",
+   "source_url": null
+  },
+  {
+   "collection_id": "instruments",
+   "local_id": "SOURCE-ARCADA-GRAPH",
+   "name": "Arcada Graph-RAG instrument corpus",
+   "depth": 2,
+   "direction": "out",
+   "predicate": "SUPPORTED_BY",
+   "source_url": "https://github.com/mhemmett/arcada/"
+  }
+ ],
+ "tool_hints": []
+}
