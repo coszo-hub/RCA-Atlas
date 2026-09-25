@@ -15,14 +15,18 @@ Search/retrieval is not rebuilt. The answer backend stays the RCA Atlas Cloudfla
 (`src/atlas_worker`, deployed at `https://rca-atlas.quakehunt.workers.dev`, `POST /v1/answer`), which
 fetches Graph-RAG `/v1/context` and asks an LLM.
 
-## Demo questions (all four must work well)
+## Demo questions (all must work well)
 
-1. Instrument: "What's been measuring Axial's inflation before the next eruption?" / "What instruments are
-   on Southern Hydrate Ridge?"
-2. Events: "How many earthquakes at Axial yesterday?" (Worker's live hypo71 catalog route)
-3. Data access: "How do I get the DAS data?" / "Where can I download the BPR record?"
-4. Broad science: "What's known about the 2015 Axial eruption?" (mostly documents; highlight whatever
-   sensors/sites the evidence links to)
+The demo script, in this order, is the empty state's four suggestions:
+
+1. "What instruments are on Southern Hydrate Ridge?" (a site's inventory)
+2. "Which instruments measure dissolved oxygen?" (one measurement across the array)
+3. "How do I get the DAS data?" (data access; the DAS routes glow as cables)
+4. "How many earthquakes at Axial today?" (the Worker's live hypo71 catalog route)
+
+Also expected to work: "What's been measuring Axial's inflation before the next eruption?", "Where can I
+download the BPR record?", and broad science such as "What's known about the 2015 Axial eruption?" (mostly
+documents; highlight whatever sensors/sites the evidence links to).
 
 ## Look (approved)
 
@@ -36,15 +40,21 @@ source `/Users/yaoderek/conductor/workspaces/rca-atlas/surabaya/.superpowers/bra
 - The question renders as a headline (Plex Sans 500, ~15 px) with a hairline beneath, and a
   monospace stats line under it: `4 on the map · 1 paper · 1.9 s · gemini-2.5-flash`.
 - The answer is Plex Sans (~13 px, line-height 1.6). Citations are superscript monospace numbers
-  in the evidence's family colour; the active one is inverted (dark text on `#ffcc66`).
+  in the evidence's family colour; the active one is inverted (dark text on `#ffcc66`). A cited range of
+  three or more (`[1-15]`) is one superscript reading "1–15" that stands for its first number (the first on
+  the map, if the range starts with a document): hovering highlights it, clicking selects it. Ranges of two
+  and lists (`[1, 2, 3]`) stay individual numbers.
 - "EVIDENCE ON THE MAP" label with `← n / N →` stepper, then a table: `# | INSTRUMENT | SITE | DEPTH`,
   monospace cells, hairline rows, number in family colour. The active row is highlighted and expands a
-  second line with the excerpt (Plex Sans, secondary colour, thin accent rule on its left).
+  second line with the excerpt (Plex Sans, secondary colour, thin accent rule on its left), kept in view while
+  touring. Prose excerpts drop their URLs (bracketed or bare) and wrap anywhere, so they never overflow the row.
 - "FURTHER READING": non-located sources as links with ↗.
 - Composer at the bottom: hairline top rule, "Ask a follow-up…", a small model picker ("Auto ▾") and ↵.
   Models: the list the Worker accepts (`auto`, `gemini-2.5-flash`, `gemini-3.5-flash-lite`,
   `groq-gpt-oss-120b`, `groq-gpt-oss-20b`, `groq-qwen3-8-27b`, `gpt-5.4-mini`).
-- Empty state: the four demo questions as one-click suggestions.
+- Empty state: the four demo-script questions (above) as one-click suggestions.
+- The page is dark from its first paint: `index.html` sets `color-scheme: dark` and an inline `#121211`
+  (`--surface-0`) background on `html, body`, so nothing flashes white before the app's CSS arrives.
 - The sidebar minimizes to a tab like today's chat panel (keep `localStorage["atlas.chat.open"]` and the
   `--left-inset` / camera inset plumbing).
 
@@ -59,14 +69,23 @@ Reveal sequence:
    the free area between the panels (reuse `fit` / `fitDist` / insets).
 3. Hovering a superscript, a table row, or a spike sets the active item: its spike grows (~1.8× height),
    brightens, and gets a pulsing halo ring at its base; the others dim slightly.
-4. Clicking any of those flies to the item (`flyToPoint`) and opens an in-scene card anchored above the
-   spike: title ("2 · Bottom pressure tilt, International District"), monospace refdes · depth, the
-   excerpt, and buttons "Live data →" (opens the existing sensor panel via `openSensor`) and
-   "Site" (opens the site panel). ← / → (and the stepper) step through evidence in order with the same
-   fly-to. That is the "tour".
+4. Clicking any of those (or a spike's edge chip) selects the item: it becomes active, the camera flies to it
+   (`flyToPoint`; that is the only flight), and the existing right-hand side panel opens on its station.
+   There is no card on the map.
+   - `sensor`: that sensor's detail (live data chart, get this data) inside its site's panel, as `openSensor`
+     shows it but without `openSite`'s own flight (`showSensor`: `showSite(site)` + `setSensorId(id)`).
+   - `site`: that site's panel.
+   - `cable` and quake events: no station, so any open side panel closes rather than show a stale one. A
+     quake's details (date and time, magnitude, depth below datum, position) are in its expanded table row.
+   ← / → (and the stepper) step through the evidence in order with the same selection, also while the side
+   panel is open (each step opens the next station), except while focus is in a text field, select, slider
+   (range input or `role=slider`) or editable text. That is the "tour". Clicking a site ring on the map
+   still opens that site as usual; a spike's hit strip starts above its base so the ring stays clickable.
 5. Located evidence outside the viewport gets an edge chip (number + short label + arrow) clamped to the
    free-area edge in its direction; clicking it flies there.
-6. Escape: first clears the active item/card; second clears all evidence and restores terrain/rings.
+6. Escape: while a side panel is open, Escape is the panel's (back from a sensor to the site's list, then
+   close); Ask Atlas ignores it. With no side panel open, the first Escape clears the active item and the
+   second clears all evidence and restores terrain/rings.
 7. A new question: old spikes sink (~300 ms) before the new rise. Earlier Q&A stay in the thread;
    clicking an earlier answer re-shows its evidence.
 
@@ -97,17 +116,19 @@ Frontend (`src/atlas_map/src`):
   `EARTHSCOPE-OO-AXCC1`; entity/location names matching `site.name`/`site.label`/`sensor.location` ⇒ site;
   DAS / PI-portal DAS routes ⇒ `cable`; otherwise `document`. Deduplicate: one number per citation, one
   spike per location (merge numbers sharing a location).
-- `scene/EvidenceLayer.js`: three.js spikes, halos, cable pulse, event points; DOM edge chips and in-scene
-  card via `scene.project`. API roughly `show(items)`, `setActive(n)`, `clear()`, `update()` per frame.
-- `App.jsx`: owns `ask` state `{ evidence, activeN }` shared by the panel and the layer; wire hover/click/
-  keys; keep `window.__atlas` test hook and add `__atlas.evidence` for e2e.
+- `scene/EvidenceLayer.js`: three.js spikes, halos, cable pulse, event points; DOM numbers and edge chips via
+  `scene.project`. API roughly `show(items)`, `setActive(n)`, `setHover(n)`, `clear()`, `update()` per frame;
+  handlers `onHover(n)` and `onSelect(n)`.
+- `App.jsx`: owns `ask` state `{ evidence, activeN, hoverN }` shared by the panel and the layer; selecting
+  flies and opens the station's side panel (above); passes `panelOpen` to `AskPanel` for the keys; keeps the
+  `window.__atlas` test hook and adds `__atlas.evidence` for e2e (spikes, cables, chips, active, hover).
 
 Citation numbers: `n` is the 1-based index into the response's `answer_citations` (the Worker already
 numbers sources in that order when it builds the prompt; see `generateAnswer`/`evidencePackage`). Map a
 citation to its hit(s) via `hits[].citations[].source_id` (or `chunk_id`). If the answer text has no `[n]`
 markers (route answers, quick answers, a model that ignores the instruction), everything still works; the
-text just has no superscripts. Render `[n]`/`[n, m]` markers in the text as superscripts; unknown numbers
-render as plain text.
+text just has no superscripts. Render `[n]`/`[n, m]` markers in the text as superscripts (and `[a-b]` ranges
+of three or more as one, above); unknown numbers render as plain text.
 
 Worker (`src/atlas_worker/src/index.js`): additive, backward compatible (the published `src/atlas_ui` must
 keep working):
@@ -140,12 +161,17 @@ path (`/api/...` in dev, Worker `/v1/live` in prod) is unchanged.
 - `evidence/resolve.test.js` against fixtures in `src/atlas_map/src/test/fixtures/ask/`: capture real
   responses for the four demo questions from the deployed Worker (`curl -H 'Origin: https://coszo.org'`),
   plus hand-made variants with `[n]` markers, `excerpt` and `events` for the new Worker shape.
-- `ask/AskPanel.test.jsx`: asking, rendering superscripts, hover/click/←/→/Escape set/clear the active
-  item, error + retry, empty-state suggestions, minimize.
+- `ask/AskPanel.test.jsx`: asking, rendering superscripts and ranges, hover/click/←/→/Escape set/clear the
+  active item (also with a side panel open, and not from fields or sliders), the quake row's details, error +
+  retry, empty-state suggestions in order, minimize.
 - EvidenceLayer: unit-test the pure math (spike height vs distance, edge-chip clamping, stagger timing).
+- `evidence/resolve.test.js` also covers excerpts dropping their URLs.
 - Worker: `node --test` as above.
-- e2e (`e2e/atlas.spec.js` + `e2e/mocks.js`): the four demo questions with fixture responses; assert spikes
-  and edge chips exist via `__atlas.evidence`, click-to-fly, and save screenshots to `e2e/screens/`.
+- e2e (`e2e/ask.spec.js` + `e2e/mocks.js`): the demo questions with fixture responses (the dissolved-oxygen
+  and "today" quake answers captured from the local Worker); assert spikes and edge chips exist via
+  `__atlas.evidence`, that selecting flies and opens the station's panel (with its live data chart), that ←/→
+  step with the panel open and Escape goes to the panel first, that a site ring still opens its site, that a
+  range is one superscript, and save screenshots to `e2e/screens/`.
 - `npm test`, `npm run build`, and `npm run e2e` pass in `src/atlas_map`.
 
 ## Out of scope
