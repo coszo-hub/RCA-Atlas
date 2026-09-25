@@ -13,12 +13,12 @@ const ok = body => ({ ok: true, status: 200, json: async () => body });
 const calls = { select: [], shown: [] };
 
 // App's side of the shared ask state: the evidence on the map and the active (selected) and hovered numbers.
-function Harness({ blocked = false, onOpenChange }) {
+function Harness({ panelOpen = false, onOpenChange }) {
   const [ask, setAsk] = useState({ evidence: null, activeN: null, hoverN: null });
   return (
     <>
       <output data-testid="state">{JSON.stringify({ shown: ask.evidence?.id ?? null, n: ask.evidence?.located.length ?? null, activeN: ask.activeN, hoverN: ask.hoverN })}</output>
-      <AskPanel bundle={bundle} evidence={ask.evidence} activeN={ask.activeN} hoverN={ask.hoverN} keysBlocked={blocked} onOpenChange={onOpenChange}
+      <AskPanel bundle={bundle} evidence={ask.evidence} activeN={ask.activeN} hoverN={ask.hoverN} panelOpen={panelOpen} onOpenChange={onOpenChange}
         onShow={ev => { calls.shown.push(ev); setAsk({ evidence: ev, activeN: null, hoverN: null }); }}
         onHover={n => setAsk(a => ({ ...a, hoverN: n }))}
         onSelect={n => { calls.select.push(n); setAsk(a => ({ ...a, activeN: n })); }} />
@@ -106,7 +106,7 @@ describe("AskPanel", () => {
     expect(state().shown).toBeNull();
   });
 
-  it("arrows pan the map unless a tour is on; keys are left alone while a side panel is open or while typing in a field", async () => {
+  it("arrows pan the map unless a tour is on; with a side panel open they still tour, and Escape is left to the panel", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ok(inflation2)));
     const { rerender } = render(<Harness />);
     await askIt("inflation?");
@@ -114,10 +114,32 @@ describe("AskPanel", () => {
     fireEvent.keyDown(window, { key: "ArrowRight" });
     expect(state().activeN).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Next evidence" }));
-    rerender(<Harness blocked />);
+    rerender(<Harness panelOpen />);
     fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(state().activeN).toBe(2);
     fireEvent.keyDown(window, { key: "Escape" });
+    expect(state()).toMatchObject({ activeN: 2, n: 5 });
+  });
+
+  it("keys are left alone while typing in a field, a select, a slider, or editable text", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ok(inflation2)));
+    render(<Harness panelOpen />);
+    await askIt("inflation?");
+    await screen.findByRole("table", { name: "Evidence on the map" });
+    fireEvent.click(screen.getByRole("button", { name: "Next evidence" }));
+    const range = document.createElement("input"); range.type = "range";
+    const slider = document.createElement("div"); slider.setAttribute("role", "slider"); slider.tabIndex = 0;
+    const edit = document.createElement("div"); edit.contentEditable = "true";
+    const search = document.createElement("input");
+    document.body.append(range, slider, edit, search);
+    for (const el of [range, slider, edit, search, screen.getByRole("combobox", { name: "Answer model" })]) {
+      fireEvent.keyDown(el, { key: "ArrowRight" });
+      fireEvent.keyDown(el, { key: "ArrowLeft" });
+    }
     expect(state().activeN).toBe(1);
+    fireEvent.keyDown(screen.getByRole("button", { name: "Next evidence" }), { key: "ArrowRight" });   // a button is not a field
+    expect(state().activeN).toBe(2);
+    for (const el of [range, slider, edit, search]) el.remove();
   });
 
   it("the Worker being down is one line with Retry, and the map is untouched", async () => {

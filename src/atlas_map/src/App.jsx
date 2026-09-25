@@ -220,7 +220,7 @@ function Atlas({ bundle, onError }) {
           <Credit credit={bundle.terrainMeta.credit} auv={!!scene.auv} subsurface={deep} />
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
           <Tooltip hover={hover} bundle={bundle} />
-          <AskPanel bundle={bundle} evidence={ask.evidence} activeN={ask.activeN} hoverN={ask.hoverN} keysBlocked={panelOpen}
+          <AskPanel bundle={bundle} evidence={ask.evidence} activeN={ask.activeN} hoverN={ask.hoverN} panelOpen={panelOpen}
             onShow={ev => setAsk({ evidence: ev, activeN: null, hoverN: null })} onHover={n => setAsk(a => ({ ...a, hoverN: n }))}
             onSelect={n => askActions.current.select(n)} onOpenChange={setChatOpen} />
           {site && (

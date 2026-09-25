@@ -22,6 +22,8 @@ const fmtDepth = m => (m == null ? "—" : `${Math.round(m).toLocaleString("en-U
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const utc = iso => iso.slice(11, 19);
 export const fmtMag = m => (m == null ? "—" : `M ${(Math.abs(m) < 0.05 ? 0 : m).toFixed(1)}`);   // no "M -0.0"
+// Keys typed into a field, a select, a slider or editable text stay there.
+const ownsKeys = el => isTypingTarget(el) || !!el?.closest?.('[role="slider"], [contenteditable="true"]');
 
 function stats(e) {
   const { ev, data, ms } = e, secs = `${(ms / 1000).toFixed(1)} s`, model = modelLabel(data.answer_model);
@@ -31,8 +33,9 @@ function stats(e) {
 
 // Ask Atlas: the left sidebar. The thread of questions and answers; the shown answer's evidence is on the map
 // (App owns which, and the active and hovered numbers, shared with the evidence layer). ← / → tour that evidence
-// once one item is active; Escape closes the active item's card, then clears the evidence.
-export default function AskPanel({ bundle, evidence, activeN, hoverN, keysBlocked = false, onShow, onHover, onSelect, onOpenChange }) {
+// once one item is active, also while a side panel is open. Escape closes the active item's card, then clears the
+// evidence; while a side panel is open it is the panel's (back from a sensor, then close).
+export default function AskPanel({ bundle, evidence, activeN, hoverN, panelOpen = false, onShow, onHover, onSelect, onOpenChange }) {
   const [open, setOpen] = useState(askStartsOpen);
   const [entries, setEntries] = useState([]), [draft, setDraft] = useState(""), [model, setModel] = useState("auto");
   const busy = entries.some(e => e.status === "pending");
@@ -82,15 +85,15 @@ export default function AskPanel({ bundle, evidence, activeN, hoverN, keysBlocke
     onSelect(tour[i < 0 ? (d > 0 ? 0 : tour.length - 1) : (i + d + tour.length) % tour.length].n);
   };
   const keys = useRef();
-  keys.current = { evidence, activeN, keysBlocked, step, onSelect, onShow };
+  keys.current = { evidence, activeN, panelOpen, step, onSelect, onShow };
   useEffect(() => {
     // Capture, so a tour step does not also pan the map (the scene listens for arrows on window, after this).
     const onKey = e => {
       const k = keys.current;
-      if (k.keysBlocked || !k.evidence || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (!k.evidence || e.metaKey || e.ctrlKey || e.altKey) return;
       const composerEmpty = e.target?.dataset?.askComposer != null && !e.target.value;
-      if (isTypingTarget(e.target) && !composerEmpty) return;
-      if (e.key === "Escape") { if (k.activeN != null) k.onSelect(null); else k.onShow(null); return; }
+      if (ownsKeys(e.target) && !composerEmpty) return;
+      if (e.key === "Escape") { if (k.panelOpen) return; if (k.activeN != null) k.onSelect(null); else k.onShow(null); return; }
       if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && k.activeN != null) {
         e.preventDefault(); e.stopPropagation();
         k.step(e.key === "ArrowRight" ? 1 : -1);
