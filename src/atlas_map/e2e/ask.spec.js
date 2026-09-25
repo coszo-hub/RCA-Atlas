@@ -125,7 +125,7 @@ test("data access: DAS routes glow as cables; the sited instrument is a spike", 
 
 test("events: the day's hypocentres light up beneath the glass caldera; Escape restores the terrain", async ({ page }) => {
   await open(page);
-  await page.getByRole("button", { name: "How many earthquakes at Axial yesterday?" }).click();
+  await ask(page, "How many earthquakes at Axial yesterday?");
   await expect(page.getByRole("table", { name: "Earthquakes on the map" })).toBeVisible();
   await page.waitForTimeout(3600);
   let ev = await evidence(page);
@@ -152,7 +152,7 @@ test("broad science: documents only; the map is not dimmed and says so", async (
   await open(page);
   await page.waitForTimeout(800);
   const before = await target(page);
-  await page.getByRole("button", { name: "What's known about the 2015 Axial eruption?" }).click();
+  await ask(page, "What's known about the 2015 Axial eruption?");
   await expect(page.getByText("No mapped instruments in this answer.")).toBeVisible();
   await page.waitForTimeout(600);
   expect((await evidence(page)).spikes).toEqual([]);

@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 
-// Ask Atlas answers captured from the Worker (and the new-shape variants), by question.
-const fixture = name => JSON.parse(readFileSync(new URL(`../src/test/fixtures/ask/${name}.json`, import.meta.url), "utf8"));
+// Ask Atlas answers captured from the Worker (and the new-shape variants), by question: [pattern, fixture, edit?].
+export const fixture = name => JSON.parse(readFileSync(new URL(`../src/test/fixtures/ask/${name}.json`, import.meta.url), "utf8"));
 export const ASK = [
-  [/inflation/i, "inflation.v2"], [/hydrate ridge/i, "hydrate"], [/earthquakes/i, "quakes.v2"], [/\bDAS\b/, "das"], [/2015/, "eruption"],
+  [/inflation/i, "inflation.v2"], [/hydrate ridge/i, "hydrate"], [/dissolved oxygen/i, "oxygen"], [/earthquakes.*today/i, "quakes.today"],
+  [/earthquakes/i, "quakes.v2"], [/\bDAS\b/, "das"], [/2015/, "eruption"],
 ];
 
 // Match on the path prefix: a "**/api/**" glob would also catch Vite's own /src/api/*.js modules.
@@ -24,7 +25,7 @@ export async function mockGateway(page, { down = false, ask = ASK, askDelay = 40
       const q = route.request().postDataJSON()?.query ?? "", hit = ask.find(([re]) => re.test(q));
       await new Promise(r => setTimeout(r, askDelay));
       if (!hit) return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "answer temporarily unavailable" }) });
-      return json(fixture(hit[1]));
+      return json(hit[2] ? hit[2](fixture(hit[1])) : fixture(hit[1]));
     }
     return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: { source: "atlas", message: "not mocked" } }) });
   });

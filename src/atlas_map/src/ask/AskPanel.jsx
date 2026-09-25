@@ -9,12 +9,12 @@ import "./ask.css";
 const KEY = "atlas.chat.open";
 export const askStartsOpen = () => localStorage.getItem(KEY) !== "false";
 
-// The demo questions: an instrument inventory, the live quake count, data access, and broad science.
+// The demo script: a site's instruments, a measurement across the array, data access, and the live quake count.
 export const SUGGESTIONS = [
   "What instruments are on Southern Hydrate Ridge?",
-  "How many earthquakes at Axial yesterday?",
+  "Which instruments measure dissolved oxygen?",
   "How do I get the DAS data?",
-  "What's known about the 2015 Axial eruption?",
+  "How many earthquakes at Axial today?",
 ];
 
 const DOC_COLOR = "#8d8b84";

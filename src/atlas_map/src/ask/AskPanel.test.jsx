@@ -5,6 +5,7 @@ import { askBundle } from "../test/fixtures/ask/bundle.js";
 import eruption from "../test/fixtures/ask/eruption.json";
 import inflation2 from "../test/fixtures/ask/inflation.v2.json";
 import quakes2 from "../test/fixtures/ask/quakes.v2.json";
+import quakesToday from "../test/fixtures/ask/quakes.today.json";
 import AskPanel, { SUGGESTIONS } from "./AskPanel.jsx";
 
 const bundle = askBundle();
@@ -132,15 +133,21 @@ describe("AskPanel", () => {
     expect(screen.getAllByRole("link", { name: /↗$/ })).toHaveLength(6);
   });
 
-  it("the empty state offers the demo questions; one click asks", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ok(quakes2)));
+  it("the empty state offers the demo questions in order; one click asks", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ok(quakesToday)));
     render(<Harness />);
-    expect(SUGGESTIONS).toHaveLength(4);
-    fireEvent.click(screen.getByRole("button", { name: "How many earthquakes at Axial yesterday?" }));
+    expect(SUGGESTIONS).toEqual([
+      "What instruments are on Southern Hydrate Ridge?",
+      "Which instruments measure dissolved oxygen?",
+      "How do I get the DAS data?",
+      "How many earthquakes at Axial today?",
+    ]);
+    expect(screen.getAllByRole("button", { name: /\?$/ }).map(b => b.textContent)).toEqual(SUGGESTIONS);
+    fireEvent.click(screen.getByRole("button", { name: "How many earthquakes at Axial today?" }));
     await screen.findByRole("table", { name: "Earthquakes on the map" });
-    expect(JSON.parse(fetch.mock.calls[0][1].body).query).toBe("How many earthquakes at Axial yesterday?");
-    expect(screen.getByText(/^71 earthquakes · 2026-09-23 UTC · [\d.]+ s · live catalog$/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "How many earthquakes at Axial yesterday?" })).toBeNull();
+    expect(JSON.parse(fetch.mock.calls[0][1].body).query).toBe("How many earthquakes at Axial today?");
+    expect(screen.getByText(/^4 earthquakes · 2026-09-25 UTC · [\d.]+ s · live catalog$/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "How many earthquakes at Axial today?" })).toBeNull();
   });
 
   it("earlier answers stay in the thread; clicking one shows its evidence again", async () => {

@@ -1,0 +1,58 @@
+{
+ "_fixture": "Captured 2026-09-24 from the local Worker's live hypo71 route (the UTC day was 2026-09-25).",
+ "query": "How many earthquakes at Axial today?",
+ "answer": "There were 4 Axial Seamount earthquakes in the live catalog for 2026-09-25 UTC.",
+ "answer_model": "axial_count_events (live catalog)",
+ "answer_citations": [
+  {
+   "id": "axial-live-catalog",
+   "title": "Axial Seamount Earthquake Catalog",
+   "url": "http://axial.ocean.washington.edu/hypo71/hypo71_20260925.dat"
+  }
+ ],
+ "hits": [],
+ "neighbors": [],
+ "events": [
+  {
+   "time": "2026-09-25T00:09:33.390Z",
+   "lat": 45.928667,
+   "lon": -129.982333,
+   "depth_km": 1.05,
+   "mag": 0.05
+  },
+  {
+   "time": "2026-09-25T00:41:19.230Z",
+   "lat": 45.932333,
+   "lon": -130.030667,
+   "depth_km": 1,
+   "mag": 0.32
+  },
+  {
+   "time": "2026-09-25T00:42:10.770Z",
+   "lat": 45.945833,
+   "lon": -130.002167,
+   "depth_km": 0,
+   "mag": 0.01
+  },
+  {
+   "time": "2026-09-25T00:43:41.080Z",
+   "lat": 45.9455,
+   "lon": -130.007667,
+   "depth_km": 0.19,
+   "mag": 0.09
+  }
+ ],
+ "tool_hints": [
+  {
+   "name": "axial_count_events",
+   "description": "Executed against the live daily Axial catalog",
+   "score": 1,
+   "required_arguments": [
+    "day"
+   ],
+   "input_schema": {
+    "day": "2026-09-25"
+   }
+  }
+ ]
+}
