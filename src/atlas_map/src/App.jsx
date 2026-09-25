@@ -123,8 +123,11 @@ function Atlas({ bundle, onError }) {
     return () => { cancelled = true; evLayer?.dispose(); layer?.dispose(); sc?.dispose(); };
   }, [bundle, openSite, openSensor, selectRegion, onError]);
 
+  // The answer's evidence is on the map only while Ask Atlas is open: closing it clears the map, reopening restores it.
+  const onMap = chatOpen ? ask.evidence : null;
+  const framed = useRef(null);   // the answer the camera last framed, so reopening Ask Atlas does not fly again
   // Located evidence (or an answer's earthquakes) mutes the terrain, as a family focus does.
-  const evidenceShown = !!(ask.evidence?.located.length || ask.evidence?.events);
+  const evidenceShown = !!(onMap?.located.length || onMap?.events);
   useEffect(() => {
     if (!scene) return;
     layerRef.current?.setFocus(focus);
@@ -135,7 +138,7 @@ function Atlas({ bundle, onError }) {
   // evidence in the free area. Earthquakes turn the terrain to glass over the caldera (the subsurface view).
   useEffect(() => {
     if (!scene) return;
-    const ev = ask.evidence;
+    const ev = onMap;
     evLayerRef.current?.show(ev);
     layerRef.current?.setEvidence(ev?.located.length ? new Set(ev.located.map(x => x.siteId).filter(Boolean)) : null);
     if (ev?.events && scene.subsurface) {
@@ -144,12 +147,13 @@ function Atlas({ bundle, onError }) {
     } else if (evidenceDeep.current) {
       evidenceDeep.current = false; setDeep(false); scene.setSubsurface(false);
     }
-    if (ev?.located.length) {
+    if (ev?.located.length && framed.current !== ev) {
+      framed.current = ev;
       const off = scene.camera.position.clone().sub(scene.controls.target), flat = scene.U.flat.value > 0.5;
       const polar = flat ? 0.001 : Math.min(0.95, Math.max(0.6, Math.acos(off.y / off.length())));
       scene.flyTo(scene.fit(frameView(ev.located.map(x => [x.lon, x.lat]), { az: Math.atan2(off.x, off.z), exag: scene.U.exag.value, polar })));
     }
-  }, [ask.evidence, scene]);   // deep is read here, not followed
+  }, [onMap, scene]);   // deep is read here, not followed
   useEffect(() => { evLayerRef.current?.setActive(ask.activeN); }, [ask.activeN, scene]);
   useEffect(() => { evLayerRef.current?.setHover(ask.hoverN); }, [ask.hoverN, scene]);
 
@@ -228,7 +232,7 @@ function Atlas({ bundle, onError }) {
           <Credit credit={bundle.terrainMeta.credit} auv={!!scene.auv} subsurface={deep} />
           <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
           <Tooltip hover={hover} bundle={bundle} />
-          <AskPanel bundle={bundle} evidence={ask.evidence} activeN={ask.activeN} hoverN={ask.hoverN} panelOpen={panelOpen}
+          <AskPanel bundle={bundle} evidence={onMap} activeN={ask.activeN} hoverN={ask.hoverN} panelOpen={panelOpen}
             onShow={ev => setAsk({ evidence: ev, activeN: null, hoverN: null })} onHover={n => setAsk(a => ({ ...a, hoverN: n }))}
             onSelect={n => askActions.current.select(n)} onOpenChange={setChatOpen} />
           {site && (

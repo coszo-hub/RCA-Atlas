@@ -196,16 +196,16 @@ test("events: the day's hypocentres light up beneath the glass caldera; Escape r
   await expect(page.getByRole("table", { name: "Earthquakes on the map" })).toBeVisible();
   await page.waitForTimeout(3600);
   let ev = await evidence(page);
-  expect(ev.quakes).toBe(4);
+  expect(ev.quakes).toBe(65);   // the Seattle day so far, from two UTC catalog files
   expect(await page.evaluate(() => window.__atlas.scene.targets.see)).toBe(1);
   const terrain = page.locator(".hud-dock").getByRole("button", { name: "Terrain controls", exact: true });
   await terrain.click();   // the subsurface switch is in the terrain popover
   await expect(page.getByRole("group", { name: "Subsurface" }).getByRole("button", { name: "On" })).toHaveAttribute("aria-pressed", "true");
   await terrain.click();
   await page.screenshot({ path: "e2e/screens/ask-quakes-overview.png" });
-  await page.getByRole("row", { name: /^2 00:41:19/ }).click();
+  await page.getByRole("row", { name: /^2 01:01:05/ }).click();
   await expect(page.locator(".side-panel")).toHaveCount(0);
-  await expect(page.locator(".ask-table tr.ex")).toHaveText("2026-09-25 00:41:19 UTC · M 0.3 · 1.00 km below datum · 45.932° N, 130.031° W");
+  await expect(page.locator(".ask-table tr.ex")).toHaveText("2026-09-24 01:01:05 PDT · M 0.7 · 1.07 km below datum · 45.945° N, 130.021° W");
   await page.waitForTimeout(1800);
   ev = await evidence(page);
   expect(ev.active).toBe(2);
@@ -259,4 +259,25 @@ test("reduced motion: spikes stand at full height at once", async ({ browser }) 
   const ev = await evidence(page);
   expect(ev.spikes.every(s => s.height > 0)).toBe(true);
   await context.close();
+});
+
+test("closing Ask Atlas clears its evidence from the map; reopening shows it again without another flight", async ({ page }) => {
+  await open(page);
+  await ask(page, "What's been measuring Axial's inflation before the next eruption?");
+  await risen(page);
+  await page.waitForTimeout(1600);   // the framing flight
+  expect(await mute(page)).toBe(0.55);
+  const framedAt = await target(page);
+  await page.getByRole("button", { name: "Minimize Ask Atlas" }).click();
+  await page.waitForTimeout(600);   // the spikes sink
+  let ev = await evidence(page);
+  expect(ev.shown).toBe(false);
+  expect(await mute(page)).toBe(0);
+  await page.getByRole("button", { name: "Open Ask Atlas" }).click();
+  await risen(page);
+  ev = await evidence(page);
+  expect(ev.spikes.length).toBe(5);
+  expect(await mute(page)).toBe(0.55);
+  await page.waitForTimeout(800);
+  expect(await target(page)).toEqual(framedAt);   // not framed again
 });

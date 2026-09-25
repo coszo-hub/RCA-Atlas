@@ -104,6 +104,14 @@ Spikes must stay legible from region zoom to close zoom (scale height with camer
 above terrain with additive glow, and not break the existing occlusion/overlay code. Under
 `prefers-reduced-motion`: no rise/sink animation or halo pulse, and flights jump (existing `motionDuration`).
 
+Ask Atlas owns the map's evidence: minimizing the sidebar clears it (spikes sink, terrain and site rings restore, the
+quake view closes); reopening shows the same answer's evidence again without re-framing the camera.
+
+Earthquake counts use the asker's calendar day. The client sends its IANA time zone (`tz`); the Worker reads
+"today", "yesterday" and explicit dates as that zone's day, fetches the one or two UTC catalog files it spans, keeps
+the events inside it, and says so ("so far today, Thursday, September 24 (Pacific Daylight Time)"). Without `tz`
+(the published RCA Atlas page) the day stays UTC. Quake times in the sidebar read in the same zone.
+
 ## Architecture
 
 Frontend (`src/atlas_map/src`):
