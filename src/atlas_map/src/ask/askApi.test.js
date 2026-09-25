@@ -7,10 +7,10 @@ describe("askAtlas", () => {
   it("posts the question and model to the dev proxy and times the answer", async () => {
     const fetchImpl = respond(200, { answer: "A.", answer_citations: [] });
     let t = 1000;
-    const r = await askAtlas("What is at Axial?", { model: "gemini-2.5-flash", fetchImpl, now: () => (t += 900) });
+    const r = await askAtlas("What is at Axial?", { model: "gemini-2.5-flash", tz: "America/Los_Angeles", fetchImpl, now: () => (t += 900) });
     expect(ASK_URL).toBe("/api/ask");
     expect(fetchImpl.mock.calls[0][0]).toBe("/api/ask");
-    expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual({ query: "What is at Axial?", answer_mode: "evidence", model: "gemini-2.5-flash" });
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual({ query: "What is at Axial?", answer_mode: "evidence", model: "gemini-2.5-flash", tz: "America/Los_Angeles" });
     expect(r).toEqual({ ok: true, data: { answer: "A.", answer_citations: [] }, ms: 900 });
   });
   it("the Worker's error is stated plainly", async () => {

@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, evidencePackage, hypo71Rows, parseHypo71Events, publicHit, sourceKey } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, publicHit, sourceKey } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -361,34 +361,33 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   throw lastError;
 }
 
-function axialCountDay(question) {
-  const q = question.toLowerCase();
-  if (!/axial/.test(q) || !/(how many|count|number of)/.test(q) || !/earthquake/.test(q)) return null;
-  const explicit = q.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
-  if (explicit) return explicit[1];
-  const now = new Date();
-  if (q.includes("yesterday")) now.setUTCDate(now.getUTCDate() - 1);
-  else if (!q.includes("today")) return null;
-  return now.toISOString().slice(0, 10);
-}
-
-async function liveAxialCount(question) {
-  const day = axialCountDay(question);
-  if (!day) return null;
-  const stamp = day.replaceAll("-", "");
-  const sourceUrl = `${AXIAL_CATALOG}/hypo71/hypo71_${stamp}.dat`;
-  const upstream = await fetch(sourceUrl, { signal: AbortSignal.timeout(20_000) });
-  if (!upstream.ok) throw new Error(`Axial catalog ${upstream.status}`);
-  const catalog = await upstream.text();
-  const count = hypo71Rows(catalog, stamp).length;
-  const events = parseHypo71Events(catalog, stamp);
+async function liveAxialCount(question, tz) {
+  const window = axialDayWindow(question, { tz });
+  if (!window) return null;
+  const urls = window.stamps.map((stamp) => `${AXIAL_CATALOG}/hypo71/hypo71_${stamp}.dat`);
+  // A local day can reach into a UTC day the catalog has not started yet; only a day with no file at all fails.
+  const files = (await Promise.all(urls.map(async (url, i) => {
+    const upstream = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    if (upstream.status === 404 && i > 0) return null;
+    if (!upstream.ok) throw new Error(`Axial catalog ${upstream.status}`);
+    return [await upstream.text(), window.stamps[i], url];
+  }))).filter(Boolean);
+  const events = eventsInWindow(files, window), n = events.length;
+  const utc = window.tz === "UTC";
+  const answer = utc
+    ? `There ${window.today ? "have been" : "were"} ${n} Axial Seamount earthquakes in the live catalog for ${window.day} UTC${window.today ? " so far" : ""}.`
+    : window.today
+      ? `There have been ${n} Axial Seamount earthquakes so far today, ${window.label} (${window.zoneName}), in the live catalog.`
+      : `There were ${n} Axial Seamount earthquakes on ${window.label} (${window.zoneName}) in the live catalog.`;
   return {
     query: question,
-    answer: `There were ${count} Axial Seamount earthquakes in the live catalog for ${day} UTC.`,
+    answer,
     answer_model: "axial_count_events (live catalog)",
-    answer_citations: [{ id: "axial-live-catalog", title: "Axial Seamount Earthquake Catalog", url: sourceUrl }],
+    answer_citations: files.map(([, stamp, url]) => ({ id: files.length > 1 ? `axial-live-catalog-${stamp}` : "axial-live-catalog",
+      title: files.length > 1 ? `Axial Seamount Earthquake Catalog, ${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6)} UTC` : "Axial Seamount Earthquake Catalog", url })),
     hits: [], neighbors: [], events,
-    tool_hints: [{ name: "axial_count_events", description: "Executed against the live daily Axial catalog", score: 1, required_arguments: ["day"], input_schema: { day } }],
+    tool_hints: [{ name: "axial_count_events", description: "Executed against the live daily Axial catalog", score: 1, required_arguments: ["day"],
+      input_schema: { day: window.day, tz: window.tz, label: window.label, today: window.today } }],
   };
 }
 
@@ -409,7 +408,7 @@ export default {
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
-      const liveToolResult = await liveAxialCount(query);
+      const liveToolResult = await liveAxialCount(query, typeof body?.tz === "string" ? body.tz.slice(0, 64) : undefined);
       if (liveToolResult) return response(liveToolResult, 200, cors);
       if (!env.ATLAS_API_KEY || !env.ATLAS_API_ORIGIN) {
         return response({ error: "service is not configured" }, 503, cors);

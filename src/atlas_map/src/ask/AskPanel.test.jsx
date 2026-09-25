@@ -170,7 +170,11 @@ describe("AskPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "How many earthquakes at Axial today?" }));
     await screen.findByRole("table", { name: "Earthquakes on the map" });
     expect(JSON.parse(fetch.mock.calls[0][1].body).query).toBe("How many earthquakes at Axial today?");
-    expect(screen.getByText(/^4 earthquakes · 2026-09-25 UTC · [\d.]+ s · live catalog$/)).toBeInTheDocument();
+    // "today" is the asker's day: the capture was asked from Seattle at 7 pm, two UTC files into Thursday.
+    expect(screen.getByText(/^65 earthquakes so far · 2026-09-24 PDT · [\d.]+ s · live catalog$/)).toBeInTheDocument();
+    const table = screen.getByRole("table", { name: "Earthquakes on the map" });
+    expect(within(table).getAllByRole("columnheader")[1]).toHaveTextContent("Time PDT");
+    expect(within(table).getByRole("row", { name: /^1 00:22:07 / })).toBeInTheDocument();   // 07:22:07 UTC, the day's first
     expect(screen.queryByRole("button", { name: "How many earthquakes at Axial today?" })).toBeNull();
   });
 

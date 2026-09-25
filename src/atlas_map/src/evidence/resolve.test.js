@@ -59,8 +59,14 @@ describe("resolveEvidence: captured answers from the deployed Worker", () => {
     const ev = resolveEvidence(quakes, bundle);
     expect(ev.located).toEqual([]);
     expect(ev.events).toBeNull();
-    expect(ev.count).toEqual({ day: "2026-09-23", n: 71 });
+    expect(ev.count).toEqual({ day: "2026-09-23", tz: "UTC", today: false, n: 71 });
     expect(ev.documents[0]).toMatchObject({ n: 1, title: "Axial Seamount Earthquake Catalog" });
+  });
+
+  it("a count of the asker's day so far carries its zone, from the answer when there are no events", () => {
+    const ev = resolveEvidence({ ...quakes, answer: "There have been 65 Axial Seamount earthquakes so far today, Thursday, September 24 (Pacific Daylight Time), in the live catalog.",
+      tool_hints: [{ name: "axial_count_events", input_schema: { day: "2026-09-24", tz: "America/Los_Angeles", today: true } }] }, bundle);
+    expect(ev.count).toEqual({ day: "2026-09-24", tz: "America/Los_Angeles", today: true, n: 65 });
   });
 });
 

@@ -20,18 +20,25 @@ export const SUGGESTIONS = [
 const DOC_COLOR = "#8d8b84";
 const fmtDepth = m => (m == null ? "—" : `${Math.round(m).toLocaleString("en-US")} m`);
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const utc = iso => iso.slice(11, 19);
+// Quake times read in the zone the Worker counted the day in (the asker's; UTC for older answers).
+const clock = (iso, tz = "UTC") => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(new Date(iso));
+const localDay = (iso, tz = "UTC") => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+export const zoneAbbr = (tz = "UTC", at = new Date()) => (tz === "UTC" ? "UTC"
+  : new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "short" }).formatToParts(at).find(p => p.type === "timeZoneName")?.value ?? tz);
 export const fmtMag = m => (m == null ? "—" : `M ${(Math.abs(m) < 0.05 ? 0 : m).toFixed(1)}`);   // no "M -0.0"
 const fmtKm = km => (km == null ? "—" : `${km.toFixed(2)} km`);
 // The active quake's second line: its full time, magnitude, depth, and position.
-const quakeLine = q => [`${q.time.slice(0, 10)} ${utc(q.time)} UTC`, fmtMag(q.mag), q.depth_km != null && `${fmtKm(q.depth_km)} below datum`,
+const quakeLine = (q, tz) => [`${localDay(q.time, tz)} ${clock(q.time, tz)} ${zoneAbbr(tz, new Date(q.time))}`, fmtMag(q.mag), q.depth_km != null && `${fmtKm(q.depth_km)} below datum`,
   `${q.lat.toFixed(3)}° N, ${Math.abs(q.lon).toFixed(3)}° W`].filter(Boolean).join(" · ");
 // Keys typed into a field, a select, a slider or editable text stay there.
 const ownsKeys = el => isTypingTarget(el) || !!el?.closest?.('[role="slider"], [contenteditable="true"]');
 
 function stats(e) {
   const { ev, data, ms } = e, secs = `${(ms / 1000).toFixed(1)} s`, model = modelLabel(data.answer_model);
-  if (ev.count) return [ev.count.n != null && plural(ev.count.n, "earthquake"), ev.count.day && `${ev.count.day} UTC`, secs, model].filter(Boolean).join(" · ");
+  if (ev.count) {
+    const { n, day, tz, today } = ev.count;
+    return [n != null && `${plural(n, "earthquake")}${today ? " so far" : ""}`, day && `${day} ${zoneAbbr(tz, new Date(`${day}T12:00:00Z`))}`, secs, model].filter(Boolean).join(" · ");
+  }
   return [`${ev.located.length} on the map`, plural(ev.documents.length, "document"), secs, model].filter(Boolean).join(" · ");
 }
 
@@ -224,9 +231,9 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
               <div className="ask-label"><span id={`ev-${e.id}`}>Earthquakes on the map</span>{stepper}</div>
               <div className="ask-scroll">
                 <table className="ask-table" aria-labelledby={`ev-${e.id}`}>
-                  <thead><tr><th>#</th><th>Time UTC</th><th>Mag</th><th className="r">Depth</th></tr></thead>
-                  <tbody>{ev.events.map(q => row(q.n, <><td>{utc(q.time)}</td><td>{fmtMag(q.mag)}</td>
-                    <td className="r">{fmtKm(q.depth_km)}</td></>, "#ffcc66", quakeLine(q)))}</tbody>
+                  <thead><tr><th>#</th><th>Time {zoneAbbr(ev.count?.tz, new Date(ev.events[0]?.time ?? Date.now()))}</th><th>Mag</th><th className="r">Depth</th></tr></thead>
+                  <tbody>{ev.events.map(q => row(q.n, <><td>{clock(q.time, ev.count?.tz)}</td><td>{fmtMag(q.mag)}</td>
+                    <td className="r">{fmtKm(q.depth_km)}</td></>, "#ffcc66", quakeLine(q, ev.count?.tz)))}</tbody>
                 </table>
               </div>
             </>

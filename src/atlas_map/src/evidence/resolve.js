@@ -188,8 +188,8 @@ function events(list) {
 function countOf(response, ev) {
   const hint = (response.tool_hints ?? []).find(t => t.name === "axial_count_events");
   if (!hint) return null;
-  const m = /There were ([\d,]+) /.exec(response.answer ?? "");
-  return { day: hint.input_schema?.day ?? null, n: ev ? ev.length : m ? +m[1].replaceAll(",", "") : null };
+  const m = /There (?:were|have been) ([\d,]+) /.exec(response.answer ?? ""), s = hint.input_schema ?? {};
+  return { day: s.day ?? null, tz: s.tz ?? "UTC", today: !!s.today, n: ev ? ev.length : m ? +m[1].replaceAll(",", "") : null };
 }
 
 export function resolveEvidence(response, bundle) {

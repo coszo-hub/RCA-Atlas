@@ -63,6 +63,55 @@ export function parseHypo71Events(text, stamp) {
   });
 }
 
+// The catalog is one file per UTC day, but "today" means the asker's day: in Seattle at 7 pm that is already
+// tomorrow in UTC. With the asker's IANA time zone the window is their calendar day (today, yesterday, or an explicit
+// YYYY-MM-DD), which spans one or two UTC files; without one (the published RCA Atlas page) it stays the UTC day.
+const DAY_MS = 86_400_000;
+function validZone(tz) {
+  try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return tz; } catch { return "UTC"; }
+}
+const ymd = (date, tz) => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+function zoneOffset(tz, ms) {   // local wall time minus UTC, in ms, at the instant ms
+  const f = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit",
+    day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(new Date(ms)).map((p) => [p.type, p.value]));
+  return Date.UTC(+f.year, +f.month - 1, +f.day, +f.hour, +f.minute, +f.second) - Math.floor(ms / 1000) * 1000;
+}
+function localMidnight(day, tz) {
+  const wall = Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10));
+  const guess = wall - zoneOffset(tz, wall);
+  return wall - zoneOffset(tz, guess);   // again at the guess, in case a DST change falls between
+}
+
+export function axialDayWindow(question, { tz, now = new Date() } = {}) {
+  const q = String(question || "").toLowerCase();
+  if (!/axial/.test(q) || !/(how many|count|number of)/.test(q) || !/earthquake/.test(q)) return null;
+  const zone = tz ? validZone(tz) : "UTC", today = ymd(now, zone);
+  const explicit = q.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  let day;
+  if (explicit) day = explicit[1];
+  else if (q.includes("yesterday")) day = ymd(new Date(localMidnight(today, zone) - DAY_MS / 2), zone);
+  else if (q.includes("today")) day = today;
+  else return null;
+  const start = localMidnight(day, zone), next = new Date(start + DAY_MS * 1.5);
+  const end = localMidnight(ymd(next, zone), zone);
+  const stamps = [];
+  for (let t = Date.UTC(new Date(start).getUTCFullYear(), new Date(start).getUTCMonth(), new Date(start).getUTCDate()); t < end; t += DAY_MS) {
+    stamps.push(new Date(t).toISOString().slice(0, 10).replaceAll("-", ""));
+  }
+  const label = new Intl.DateTimeFormat("en-US", { timeZone: zone, weekday: "long", month: "long", day: "numeric" }).format(new Date(start));
+  const zoneName = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "long" }).formatToParts(new Date(start))
+    .find((p) => p.type === "timeZoneName")?.value ?? zone;
+  return { day, tz: zone, today: day === today, start: new Date(start), end: new Date(end), stamps, label, zoneName };
+}
+
+// Every event from the fetched files ([text, stamp] pairs) that falls inside the window, in time order.
+export function eventsInWindow(files, window) {
+  const from = window.start.toISOString(), to = window.end.toISOString();
+  return files.flatMap(([text, stamp]) => parseHypo71Events(text, stamp))
+    .filter((e) => e.time >= from && e.time < to)
+    .sort((a, b) => (a.time < b.time ? -1 : 1));
+}
+
 // The synthesis prompt. Sources are numbered in answer_citations order; the evidence headers carry the same
 // numbers, and the model cites them as [n] so the interface can link each claim to its source (and its place).
 export function answerPrompt({ question, evidence, sources, mode, product = null }) {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, evidencePackage, excerpt, parseHypo71Events, publicHit, sourceKey } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, parseHypo71Events, publicHit, sourceKey } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -88,4 +88,42 @@ test("evidence headers number sources that share an id by their URL", () => {
     { chunk_id: "C-3", title: "Guide", text: "c", citations: [{ url: null }] },
   ], numbers);
   assert.equal(text, "DAS25 | sources: [1]\na\n\nDAS24 | sources: [2]\nb\n\nGuide | sources: [3]\nc");
+});
+
+const day24 = await readFile(new URL("./fixtures/hypo71_20260924.dat", import.meta.url), "utf8");
+const day25 = await readFile(new URL("./fixtures/hypo71_20260925.dat", import.meta.url), "utf8");
+const evening = new Date("2026-09-25T02:18:00Z");   // 7:18 pm on Thursday 24 September in Seattle
+
+test("today is the asker's calendar day: in Seattle that evening it spans two UTC catalog files", () => {
+  const w = axialDayWindow("How many earthquakes at Axial today?", { tz: "America/Los_Angeles", now: evening });
+  assert.equal(w.day, "2026-09-24");
+  assert.equal(w.today, true);
+  assert.equal(w.start.toISOString(), "2026-09-24T07:00:00.000Z");
+  assert.equal(w.end.toISOString(), "2026-09-25T07:00:00.000Z");
+  assert.deepEqual(w.stamps, ["20260924", "20260925"]);
+  assert.equal(w.label, "Thursday, September 24");
+});
+
+test("without a time zone the day stays the UTC day, as the published page expects", () => {
+  const w = axialDayWindow("How many earthquakes at Axial today?", { now: evening });
+  assert.equal(w.day, "2026-09-25");
+  assert.equal(w.tz, "UTC");
+  assert.deepEqual(w.stamps, ["20260925"]);
+  assert.equal(axialDayWindow("How many earthquakes at Axial today?", { tz: "Not/AZone", now: evening }).tz, "UTC");
+});
+
+test("yesterday and explicit dates are the asker's days too; other questions are not catalog counts", () => {
+  assert.equal(axialDayWindow("How many earthquakes at Axial yesterday?", { tz: "America/Los_Angeles", now: evening }).day, "2026-09-23");
+  const d = axialDayWindow("Count earthquakes at Axial on 2026-09-20", { tz: "America/Los_Angeles", now: evening });
+  assert.equal(d.day, "2026-09-20");
+  assert.equal(d.today, false);
+  assert.equal(axialDayWindow("What instruments are at Axial?", { now: evening }), null);
+});
+
+test("events in the window: the Seattle day so far counts rows from both files and no others", () => {
+  const w = axialDayWindow("How many earthquakes at Axial today?", { tz: "America/Los_Angeles", now: evening });
+  const events = eventsInWindow([[day24, "20260924"], [day25, "20260925"]], w);
+  assert.equal(events.length, 65);
+  assert.ok(events.every(e => e.time >= "2026-09-24T07:00:00Z" && e.time < "2026-09-25T07:00:00Z"));
+  assert.ok(events[0].time < events[events.length - 1].time);
 });

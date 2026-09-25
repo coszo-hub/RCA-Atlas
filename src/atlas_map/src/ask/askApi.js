@@ -14,12 +14,14 @@ const LABELS = { "axial_count_events (live catalog)": "live catalog", "RCA Atlas
   "RCA Atlas graph evidence (no LLM)": "no LLM", "RCA Atlas evidence routing": "evidence route" };
 export const modelLabel = model => LABELS[model] ?? model ?? "";
 
-export async function askAtlas(question, { model = "auto", signal, fetchImpl = fetch, now = () => performance.now() } = {}) {
+// tz: the asker's IANA zone, so "today" and "yesterday" in a catalog question are their days, not UTC's.
+const localZone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined; } catch { return undefined; } };
+export async function askAtlas(question, { model = "auto", tz = localZone(), signal, fetchImpl = fetch, now = () => performance.now() } = {}) {
   const t0 = now();
   let res;
   try {
     res = await fetchImpl(ASK_URL, { method: "POST", signal, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: question, answer_mode: "evidence", model }) });
+      body: JSON.stringify({ query: question, answer_mode: "evidence", model, tz }) });
   } catch (err) {
     if (err?.name === "AbortError") throw err;
     return { ok: false, message: "The Atlas answer service could not be reached." };
