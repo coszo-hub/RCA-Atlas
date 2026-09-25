@@ -39,6 +39,7 @@
 .ask-answer .li.l1 { margin-left: 14px; font-size: 12.5px; } .ask-answer .li.l2 { margin-left: 28px; font-size: 12px; }
 .ask-answer strong { font-weight: 600; color: var(--text-primary); }
 .ask sup { line-height: 0; vertical-align: super; }
+.ask .cites { white-space: nowrap; }
 .cite { all: unset; cursor: pointer; font: 600 9.5px var(--font-mono); color: var(--c); padding: 0 1px; margin-left: 1px; border-radius: 2px; transition: background 120ms, color 120ms; }
 .cite.on { color: #121211; background: #ffcc66; }
 .cite:focus-visible { outline: 1px solid var(--c); }

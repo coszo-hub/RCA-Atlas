@@ -79,7 +79,9 @@ describe("AskPanel", () => {
     const range = await screen.findByRole("button", { name: /^Sources 1–5:/ });
     expect(range).toHaveTextContent(/^1–5$/);
     expect(screen.queryByRole("button", { name: /^Source 3:/ })).toBeNull();
-    expect(screen.getAllByRole("button", { name: /^Source [12]:/ })).toHaveLength(2);
+    const pair = screen.getAllByRole("button", { name: /^Source [12]:/ });
+    expect(pair).toHaveLength(2);
+    expect(pair[0].closest(".cites")).toBe(pair[1].closest(".cites"));   // a run of citations stays on one line
     fireEvent.mouseEnter(range);
     expect(state().hoverN).toBe(1);
     fireEvent.mouseLeave(range);

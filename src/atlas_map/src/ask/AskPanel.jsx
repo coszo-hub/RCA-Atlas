@@ -167,7 +167,13 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
     return <sup key={i}><button className={`cite${on ? " on" : ""}`} style={{ "--c": it.color }} aria-label={`Source ${n}: ${it.label}`}
       onMouseEnter={() => hover(n)} onMouseLeave={() => hover(null)} onClick={() => live && onSelect(n)}>{n}</button></sup>;
   };
-  const inline = parts => parts.map((p, i) => (p.t === "cite" ? cite(p.n, i, p.to) : p.t === "b" ? <strong key={i}>{p.v}</strong> : <Fragment key={i}>{p.v}</Fragment>));
+  // A run of citations stays on one line (buttons are atomic inlines, so the line could break between them).
+  const inline = parts => {
+    const runs = [];
+    parts.forEach((p, i) => (p.t === "cite" && parts[i - 1]?.t === "cite" ? runs[runs.length - 1].cites.push({ ...p, i }) : runs.push(p.t === "cite" ? { cites: [{ ...p, i }], i } : { ...p, i })));
+    return runs.map(r => (r.cites ? <span key={r.i} className="cites">{r.cites.map(c => cite(c.n, c.i, c.to))}</span>
+      : r.t === "b" ? <strong key={r.i}>{r.v}</strong> : <Fragment key={r.i}>{r.v}</Fragment>));
+  };
   const row = (n, cells, color, extra) => {
     const on = live && hl === n, active = live && activeN === n;
     return (
