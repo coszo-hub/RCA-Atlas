@@ -125,11 +125,17 @@ export function shortSite(label = "") {
   return s;
 }
 
-// Prose is quoted; an instrument record ("Instrument: … Type: … Manufacturer: …") reads as a short description.
+// URLs read badly in a quote and overflow the row: drop them, bracketed "(http://…)" or bare (keeping the sentence's
+// own trailing punctuation), then close up the spaces left before punctuation.
+const dropUrls = t => t.replace(/\s*[([]\s*(?:https?:\/\/|www\.)[^\s)\]]*\s*[)\]]/gi, "")
+  .replace(/(?:https?:\/\/|www\.)\S*[^\s.,;:!?)\]]/gi, "")
+  .replace(/\s+([,.;:!?…])/g, "$1").replace(/\s{2,}/g, " ").replace(/^[\s,.;:]+/, "").trim();
+
+// Prose is quoted (without its URLs); an instrument record ("Instrument: … Type: … Manufacturer: …") reads as a short description.
 export function readableExcerpt(text) {
   const t = String(text ?? "").trim();
   if (!t) return { excerpt: "", quote: false };
-  if (!/^Instrument: /.test(t)) return { excerpt: t, quote: true };
+  if (!/^Instrument: /.test(t)) { const prose = dropUrls(t); return { excerpt: prose, quote: !!prose }; }
   const re = new RegExp(`(${RECORD_KEYS.map(escape).join("|")}): `, "g"), f = {};
   const marks = [...t.matchAll(re)];
   marks.forEach((m, i) => { f[m[1]] = t.slice(m.index + m[0].length, marks[i + 1]?.index ?? t.length).replace(/[…\s]+$/, "").trim(); });

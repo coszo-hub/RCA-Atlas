@@ -62,7 +62,7 @@
 .ask-table tbody tr.active td { border-bottom: none; }
 .ask-table tbody tr.on td.i, .ask-table tbody tr.active td.i { color: #121211; background: #ffcc66; border-radius: 2px; }
 .ask-table tbody tr:focus-visible { outline: 1px solid rgba(255, 204, 102, 0.6); outline-offset: -1px; }
-.ask-table tr.ex td { white-space: normal; font: 11.5px/1.5 var(--font-sans); color: #a8a69d;
+.ask-table tr.ex td { white-space: normal; overflow-wrap: anywhere; font: 11.5px/1.5 var(--font-sans); color: #a8a69d;
   background: rgba(255, 204, 102, 0.07); padding-top: 0; }
 .ask-table tr.ex td:last-child { box-shadow: inset 2px 0 0 rgba(255, 204, 102, 0.55); padding-left: 9px; }
 .ask-table q { quotes: "“…" "…”"; }

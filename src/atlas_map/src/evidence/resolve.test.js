@@ -125,4 +125,14 @@ describe("helpers", () => {
       .toEqual({ excerpt: "seismometer", quote: false });
     expect(readableExcerpt("")).toEqual({ excerpt: "", quote: false });
   });
+  it("readableExcerpt drops URLs from prose, in brackets or bare, and tidies what is left", () => {
+    expect(readableExcerpt("Data for 2025–2026 RCA Distributed Acoustic Sensing experiment are available to download from DAS25 MultiDAS (http://piweb.ooirsn.uw.edu/das25/data/MultiDAS/); DAS25 OptoDAS (http://piweb.ooirsn.uw.edu/das25/data/OptoDAS/). Physical site: RCA north and south backbone cables…").excerpt)
+      .toBe("Data for 2025–2026 RCA Distributed Acoustic Sensing experiment are available to download from DAS25 MultiDAS; DAS25 OptoDAS. Physical site: RCA north and south backbone cables…");
+    expect(readableExcerpt("Pressure records are in the SCPR data (http://piweb.ooirsn.uw.edu/scpr/data/SCPR_Data/) , by year.").excerpt)
+      .toBe("Pressure records are in the SCPR data, by year.");
+    expect(readableExcerpt("https://academic.oup.com/gji/article/236/2/1026/7453669 by University of Washington user on 20 May 2026 DAS-N2N: denoising").excerpt)
+      .toBe("by University of Washington user on 20 May 2026 DAS-N2N: denoising");
+    expect(readableExcerpt("See www.example.org/a_very/long/path, then [https://x.org/y] and the rest.").excerpt).toBe("See, then and the rest.");
+    expect(readableExcerpt("http://piweb.ooirsn.uw.edu/das/")).toEqual({ excerpt: "", quote: false });
+  });
 });
