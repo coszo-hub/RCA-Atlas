@@ -46,7 +46,10 @@ src/atlas_ui/dist/
 *.pem
 *.key
 # Atlas map: generated from private corpus data
-/src/atlas_map/public/atlas/
+# The bundle is rebuilt from the repo, except the 1 m Axial summit terrain: its MBARI source grid is not in the repo,
+# so the tiles built from it are committed.
+/src/atlas_map/public/atlas/*
+!/src/atlas_map/public/atlas/auv/
 /src/atlas_map/dist/
 /src/atlas_map/test-results/
 /src/atlas_map/playwright-report/

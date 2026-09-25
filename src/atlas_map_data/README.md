@@ -21,7 +21,7 @@ These tiles are built from MBARI's AUV grid, which is supplied by the COSZO proj
     uv pip install --python .venv/bin/python -r src/atlas_map_data/requirements-auv.txt
     PYTHONPATH=src .venv/bin/python -m atlas_map_data.auv_tiles --source <path>/MBARI_AxialSeamount_V2506_AUV_Summit_AUVOverShip_Topo1mSq.grd
 
-This writes `src/atlas_map/public/atlas/auv/`, about 23 MB. The levels are 16 m and 4 m over the whole summit, plus 1 m within 1.2 km of each site. Run it after the main build, since it reads `sensors.json`.
+This writes `src/atlas_map/public/atlas/auv/`, about 23 MB, which is committed (the rest of the bundle is not), since the source grid is not in the repo. The levels are 16 m and 4 m over the whole summit, plus 1 m within 1.2 km of each site. Run it after the main build, since it reads `sensors.json`.
 
 ## Axial subsurface (optional)
 

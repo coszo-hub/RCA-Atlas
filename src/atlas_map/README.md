@@ -12,7 +12,7 @@
 
 Optional, the 1 m Axial summit terrain (MBARI AUV survey; needs h5py and numpy from `src/atlas_map_data/requirements-auv.txt`):
 `PYTHONPATH=src .venv/bin/python -m atlas_map_data.auv_tiles --source <MBARI_AxialSeamount_V2506_AUV_Summit_AUVOverShip_Topo1mSq.grd>`
-writes `public/atlas/auv/`. Without it the summit uses the GMRT grid.
+writes `public/atlas/auv/`, which is committed (about 23 MB), so the map has the 1 m summit without the source grid. Rebuild it only when the survey or tiling changes. Without it the summit uses the GMRT grid.
 
 Optional, Axial's subsurface (earthquakes 2015–2021, the magma chamber top, the caldera-wall faults; needs numpy and scipy from `src/atlas_map_data/requirements-subsurface.txt`):
 `git clone https://github.com/MaleenKidiwela/axial_visuals <dir>` then `PYTHONPATH=src .venv/bin/python -m atlas_map_data.subsurface --source <dir>`
