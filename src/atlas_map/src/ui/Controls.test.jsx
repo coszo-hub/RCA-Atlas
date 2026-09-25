@@ -23,10 +23,10 @@ describe("Controls", () => {
     fireEvent.click(screen.getByRole("button", { name: "2D" }));
     expect(slider).toBeDisabled();
   });
-  it("shows the navigation hint", () => {
+  it("is only the switches: the dock opens and closes it, and the navigation hint is under Help", () => {
     render(<Controls scene={fakeScene()} />);
-    expect(screen.getByText(/Ctrl/)).toBeInTheDocument();
-    expect(screen.getByText(/Drag to move/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Minimize/ })).toBeNull();
+    expect(screen.queryByText(/Drag to move/)).toBeNull();
   });
   it("reads out the finest Axial summit level on screen", () => {
     vi.useFakeTimers();
@@ -55,29 +55,6 @@ describe("Controls", () => {
     fireEvent.click(within(screen.getByRole("group", { name: "DAS coverage" })).getByRole("button", { name: "Off" }));
     expect(s.setDasVisible).toHaveBeenCalledWith(false);
     expect(screen.queryByRole("group", { name: "2025–26 MultiDAS" })).toBeNull();
-  });
-  it("collapses to a toggle while the top row wraps, keeps its switches, and the user can expand and collapse it", () => {
-    const s = fakeScene();
-    const { rerender } = render(<Controls scene={s} />);
-    fireEvent.click(screen.getByRole("button", { name: "Contours" }));
-    rerender(<Controls scene={s} compact />);
-    expect(screen.queryByRole("button", { name: "Contours" })).toBeNull();
-    const toggle = screen.getByRole("button", { name: "Terrain controls" });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    fireEvent.click(toggle);
-    expect(screen.getByRole("button", { name: "Contours" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Minimize terrain controls" }));
-    expect(screen.getByRole("button", { name: "Terrain controls" })).toBeInTheDocument();
-    rerender(<Controls scene={s} compact={false} />);
-    expect(screen.getByRole("button", { name: "Contours" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Minimize terrain controls" })).toBeInTheDocument();
-  });
-  it("can be minimized when the top row has room, and restored from its tab", () => {
-    render(<Controls scene={fakeScene()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Minimize terrain controls" }));
-    expect(screen.queryByRole("button", { name: "Contours" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Terrain controls" }));
-    expect(screen.getByRole("button", { name: "Contours" })).toBeInTheDocument();
   });
   it("has no Subsurface switch when the subsurface layer is not built", () => {
     render(<Controls scene={fakeScene()} />);

@@ -2,16 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { BUILD_COMMAND, BundleMissingError, loadBundle } from "./data/bundle.js";
 import { AtlasScene, loadGrids } from "./scene/AtlasScene.js";
 import { OverlayLayer } from "./overlay/OverlayLayer.js";
-import Controls from "./ui/Controls.jsx";
 import FamilyFilter from "./ui/FamilyFilter.jsx";
 import Header from "./ui/Header.jsx";
-import Legend from "./ui/Legend.jsx";
+import HudDock from "./ui/HudDock.jsx";
 import RegionNav from "./ui/RegionNav.jsx";
 import Credit from "./ui/Credit.jsx";
 import SensorDetail from "./panels/SensorDetail.jsx";
 import SitePanel from "./panels/SitePanel.jsx";
 import UnplacedPanel from "./panels/UnplacedPanel.jsx";
-import { INSET as inset, hudBottom, hudWraps } from "./ui/layout.js";
+import { INSET as inset, hudBottom } from "./ui/layout.js";
 import Tooltip from "./ui/Tooltip.jsx";
 import ChatPanel, { chatStartsOpen } from "./chat/ChatPanel.jsx";
 
@@ -45,9 +44,7 @@ function Atlas({ bundle, onError }) {
   const [unplacedOpen, setUnplacedOpen] = useState(false);   // the list of sensors with no position and no site
   const [sideMin, setSideMin] = useState(false);   // the site or unplaced panel is minimized to a tab; opening one restores it
   const [chatOpen, setChatOpen] = useState(chatStartsOpen);   // ChatPanel owns and persists it; the top row follows it
-  const [width, setWidth] = useState(innerWidth);
   const [deep, setDeep] = useState(false);   // Axial's subsurface (earthquakes, magma chamber, faults) is shown
-  useEffect(() => { const on = () => setWidth(innerWidth); addEventListener("resize", on); return () => removeEventListener("resize", on); }, []);
 
   // One right-hand panel at a time: a site (with its sensors) or the unplaced list (with theirs).
   const showSite = useCallback(site => {
@@ -116,9 +113,6 @@ function Atlas({ bundle, onError }) {
 
   // A minimized side panel is a tab at the bottom right, so the map and top row take its width back.
   const panelOpen = (!!siteId || unplacedOpen) && !sideMin;
-  // The top row wraps when the map between the panels is too narrow for header and controls side by side;
-  // then the controls and legend collapse to toggles so they do not sit over the middle of the map.
-  const wraps = hudWraps(width, chatOpen, panelOpen);
   useLayoutEffect(() => {
     const root = document.documentElement.style;
     root.setProperty("--right-inset", `${panelOpen ? inset.side : inset.none}px`);
@@ -126,7 +120,7 @@ function Atlas({ bundle, onError }) {
   }, [panelOpen, sideMin]);
 
   // The map centers on the area the panels leave free: between the chat and side panels, below the top-row
-  // HUD (header and regions, plus the controls when they wrap under them), and above the family strip.
+  // HUD (header and regions, or the dock if it is lower), and above the family strip.
   // Layout effects, so the first framing (the overview, fitted to that area) is in place before the first paint.
   useLayoutEffect(() => {
     const head = hudRef.current, right = rightRef.current;
@@ -155,17 +149,16 @@ function Atlas({ bundle, onError }) {
       <div id="atlas-overlay" ref={overlayRef} />
       {scene && (
         <>
-          {/* The top row spans the map between the side panels and wraps when it is narrow:
-              header and regions on the left, view controls and legend on the right. */}
+          {/* The top row spans the map between the side panels: header and regions on the left, and on the
+              right the dock whose buttons open the terrain controls, the legend and help. */}
           <div className="hud-top">
             <div className="left-stack" ref={hudRef}>
               <Header bundle={bundle} onPick={r => (r.kind === "site" ? openSite(bundle.siteById[r.id], scene) : openSensor(r.id, scene))} />
               <RegionNav regions={bundle.regions} sensors={bundle.sensors} active={regionKey} onSelect={key => selectRegion(key, scene)}
                 unplaced={bundle.unplaced?.length ?? 0} unplacedOpen={unplacedOpen} onUnplaced={() => (unplacedOpen ? closeUnplaced() : openUnplaced())} />
             </div>
-            <div className={`right-stack${wraps ? " compact" : ""}`} ref={rightRef}>
-              <Controls scene={scene} compact={wraps} deep={deep} onDeep={setDeep} />
-              <Legend credit={bundle.terrainMeta.credit} compact={panelOpen || wraps} auv={!!scene.auv}
+            <div className="right-stack" ref={rightRef}>
+              <HudDock scene={scene} deep={deep} onDeep={setDeep} credit={bundle.terrainMeta.credit} auv={!!scene.auv}
                 subsurface={deep ? scene.subsurface?.credit : null} />
             </div>
           </div>

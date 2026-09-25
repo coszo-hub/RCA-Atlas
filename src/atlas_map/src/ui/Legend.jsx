@@ -1,19 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MinButton, MinTab } from "./Minimize.jsx";
+import { useLayoutEffect, useRef } from "react";
 import "./ui.css";
 
-// Collapsed to a small toggle while the right-hand panel is open or the top row wraps, expanded otherwise
-// (the chat alone does not collapse it); the user can flip it either way until that changes. The map
-// credits stay visible either way (Credit.jsx).
+// The legend popover in the HUD dock, mounted while it is open. The map credits stay visible either way (Credit.jsx).
 // subsurface: its credit while Axial's subsurface is shown, else null.
-export default function Legend({ credit, compact = false, auv = false, subsurface = null }) {
-  const [override, setOverride] = useState(null);
-  useEffect(() => setOverride(null), [compact]);
-  const expanded = override ?? !compact;
+export default function Legend({ credit, auv = false, subsurface = null }) {
   const ref = useRef(null);
-  // The legend is taller than a short window: it ends 16 px above the bottom edge, or 8 px above the family strip when
-  // the strip reaches under it, and scrolls. Its top moves when the terrain controls open or close or the top row
-  // wraps, and the strip changes width with the panels, so refit whenever any of them changes size.
+  // The legend is taller than a short window: measured from its top under the dock, it ends 16 px above the bottom
+  // edge, or 8 px above the family strip when the strip reaches under it, and scrolls. The strip changes width with
+  // the panels, so refit when it changes size, when a panel stacked above it in the dock opens or closes, and once
+  // the popover's entrance ends (it starts 4 px higher).
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -23,16 +18,15 @@ export default function Legend({ credit, compact = false, auv = false, subsurfac
       el.style.maxHeight = `${Math.max(120, (under ? strip.top - 8 : innerHeight - 16) - box.top)}px`;
     };
     fit();
-    addEventListener("resize", fit);
-    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null;
-    const row = el.closest(".hud-top") ?? el.parentElement, strip = document.querySelector(".families");
-    if (ro) for (const c of [row, ...(row?.children ?? []), strip].filter(Boolean)) ro.observe(c);
-    return () => { removeEventListener("resize", fit); ro?.disconnect(); };
-  }, [expanded]);
-  if (!expanded) return <MinTab className="legend-toggle" onClick={() => setOverride(true)}>Legend</MinTab>;
+    addEventListener("resize", fit); addEventListener("animationend", fit);
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : null, strip = document.querySelector(".families");
+    const stacked = [...(el.closest(".dock-pops")?.children ?? [])].filter(c => !c.contains(el));
+    if (ro) for (const c of [strip, ...stacked].filter(Boolean)) ro.observe(c);
+    return () => { removeEventListener("resize", fit); removeEventListener("animationend", fit); ro?.disconnect(); };
+  }, []);
   return (
     <div className="panel legend" ref={ref}>
-      <div className="panel-head"><span className="eyebrow">Legend</span><MinButton label="legend" onClick={() => setOverride(false)} /></div>
+      <div className="panel-head"><span className="eyebrow">Legend</span></div>
       <div><div className="eyebrow">Site marker</div>
         <div className="row">One segment per sensor, colored by family</div>
         <div className="row"><svg className="glyph"><path d="M1 6h10" style={{ stroke: "var(--text-secondary)" }} strokeWidth="3" /></svg>Operating</div>
