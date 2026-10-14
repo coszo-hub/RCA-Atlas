@@ -1,0 +1,532 @@
+{
+  "version": "2026-10-08",
+  "note": "Per-task priority routing. A task matches when every 'all' group has a hit and no 'none' pattern does; the highest priority wins, ties go to more matched 'boost' patterns. Patterns are case-insensitive regular expressions shared by the Python router and, later, the Worker.",
+  "default": "general_research",
+  "tasks": [
+    {
+      "task": "earthquake_histogram",
+      "priority": 96,
+      "all": [
+        [
+          "earthquake",
+          "quake",
+          "seismic",
+          "event"
+        ],
+        [
+          "histogram",
+          "distribution",
+          "per (day|hour|week)",
+          "by (day|hour)",
+          "daily counts?",
+          "counts? per",
+          "bin(ned)?\\b",
+          "chart",
+          "plot",
+          "panel",
+          "day by day",
+          "rates? changed",
+          "most (axial )?earthquakes",
+          "with daily counts"
+        ]
+      ],
+      "none": [
+        "focal",
+        "map\\b",
+        "dv/?v",
+        "velocity"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "atlas_quake_histogram"
+        ],
+        "answer": "numeric"
+      },
+      "collections": [
+        "AxialEarthquakes"
+      ]
+    },
+    {
+      "task": "earthquake_count",
+      "priority": 95,
+      "all": [
+        [
+          "how many",
+          "count",
+          "number of",
+          "total",
+          "more than \\d+"
+        ],
+        [
+          "earthquake",
+          "quake",
+          "events?\\b"
+        ],
+        [
+          "axial",
+          "caldera",
+          "hypo71"
+        ]
+      ],
+      "none": [
+        "instrument",
+        "sensor",
+        "histogram",
+        "per (day|week)",
+        "plot",
+        "chart"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "axial_count_events",
+          "atlas_quake_histogram"
+        ],
+        "answer": "numeric"
+      },
+      "collections": [
+        "AxialEarthquakes"
+      ]
+    },
+    {
+      "task": "earthquake_search",
+      "priority": 90,
+      "all": [
+        [
+          "earthquake",
+          "quake",
+          "\\bevents?\\b",
+          "focal mechanism",
+          "arrival picks?",
+          "faulting"
+        ],
+        [
+          "axial",
+          "caldera",
+          "\\bid\\b",
+          "event \\d+"
+        ]
+      ],
+      "none": [
+        "dv/?v",
+        "velocity change",
+        "publication",
+        "paper"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "axial_search_events",
+          "axial_get_event",
+          "axial_focal_mechanisms",
+          "axial_plot_events",
+          "axial_get_figure",
+          "axial_arrivals"
+        ],
+        "answer": "list"
+      },
+      "collections": [
+        "AxialEarthquakes"
+      ]
+    },
+    {
+      "task": "dvv_monitoring",
+      "priority": 92,
+      "all": [
+        [
+          "dv/?v",
+          "velocity changes?",
+          "relative velocity",
+          "stretching",
+          "\\bmwcs\\b",
+          "dynamic time warping",
+          "\\bdtw\\b",
+          "coda",
+          "seismic velocity",
+          "medium changes"
+        ]
+      ],
+      "none": [
+        "velocity meter",
+        "current"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "atlas_dvv"
+        ],
+        "answer": "numeric"
+      },
+      "collections": [
+        "Literature",
+        "COSZOHub"
+      ]
+    },
+    {
+      "task": "timing_correction",
+      "priority": 91,
+      "all": [
+        [
+          "clock",
+          "timing",
+          "cross[- ]?correlat",
+          "peak lags?",
+          "chronos",
+          "chronfix",
+          "timestamps? (seem )?shifted",
+          "keeping accurate time",
+          "true utc",
+          "apparent .* timestamp"
+        ]
+      ],
+      "none": [
+        "dv/?v",
+        "duplicates?",
+        "backwards",
+        "data gap"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "atlas_clock_track",
+          "coszo_hys14_correct_times",
+          "coszo_chronfix_model"
+        ],
+        "answer": "numeric"
+      },
+      "collections": [
+        "COSZOHub"
+      ]
+    },
+    {
+      "task": "pressure_calibration",
+      "priority": 89,
+      "all": [
+        [
+          "a-?0-?a",
+          "ambient[- ]zero",
+          "scpr",
+          "self[- ]calibrating",
+          "piston[- ]gauge",
+          "deadweight",
+          "zero[- ]pressure check",
+          "calibration sequences?"
+        ]
+      ],
+      "none": [
+        "non[- ]self",
+        "download",
+        "where are",
+        "papers?",
+        "studies",
+        "publications?",
+        "rate from"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "atlas_pressure_calibrate"
+        ],
+        "answer": "numeric"
+      },
+      "collections": [
+        "PIPortal",
+        "COSZOHub",
+        "Literature"
+      ]
+    },
+    {
+      "task": "drift_correction",
+      "priority": 88,
+      "all": [
+        [
+          "drift",
+          "detrend",
+          "slow trend",
+          "uplift or"
+        ],
+        [
+          "pressure",
+          "prest",
+          "botpt",
+          "gauge",
+          "sensor"
+        ]
+      ],
+      "none": [
+        "clock",
+        "timing"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "atlas_pressure_drift"
+        ],
+        "answer": "numeric"
+      },
+      "collections": [
+        "COSZOHub",
+        "Instruments"
+      ]
+    },
+    {
+      "task": "gap_diagnosis",
+      "priority": 87,
+      "all": [
+        [
+          "gaps?\\b",
+          "missing samples?",
+          "samples are missing",
+          "jitter",
+          "duplicates?",
+          "backwards",
+          "type of error",
+          "flat ?lines?",
+          "holes",
+          "zeros in",
+          "data gap",
+          "what is wrong with the data",
+          "timing error\\?"
+        ]
+      ],
+      "none": [
+        "download",
+        "where can"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "atlas_diagnose_series",
+          "coszo_pressure_detect_gaps",
+          "coszo_metric_summary"
+        ],
+        "answer": "findings"
+      },
+      "collections": [
+        "COSZOHub"
+      ]
+    },
+    {
+      "task": "qaqc",
+      "priority": 80,
+      "all": [
+        [
+          "qa/?qc",
+          "qartod",
+          "quality",
+          "gross range",
+          "climatology",
+          "stuck[- ]value",
+          "human[- ]in[- ]the[- ]loop",
+          "hitl",
+          "flagged",
+          "dashboard plot"
+        ]
+      ],
+      "none": [],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "qaqc_search_plots",
+          "qaqc_question_context",
+          "qaqc_hitl_notes",
+          "qaqc_pipeline_plan"
+        ],
+        "answer": "evidence"
+      },
+      "collections": [
+        "QAQC"
+      ]
+    },
+    {
+      "task": "operational_status",
+      "priority": 78,
+      "all": [
+        [
+          "status",
+          "online",
+          "right now",
+          "currently",
+          "nereus",
+          "power",
+          "alerts?",
+          "operational",
+          "telemetry",
+          "broken",
+          "erupted yet",
+          "recording"
+        ]
+      ],
+      "none": [
+        "histogram",
+        "papers?",
+        "quality"
+      ],
+      "handler": {
+        "kind": "tool",
+        "tools": [
+          "nereus_instrument_status",
+          "nereus_node_status",
+          "nereus_power_history",
+          "nereus_operational_notes",
+          "axial_monitoring_current_status",
+          "earthscope_query_availability"
+        ],
+        "answer": "live"
+      },
+      "collections": [
+        "Nereus"
+      ]
+    },
+    {
+      "task": "data_download",
+      "priority": 70,
+      "all": [
+        [
+          "download",
+          "obtain",
+          "\\bget\\b",
+          "access",
+          "\\bpull\\b",
+          "need the",
+          "where are .* files",
+          "files from",
+          "m2m",
+          "erddap",
+          "datasets?\\b",
+          "data (can|are) (be )?(obtained|available)",
+          "can be obtained"
+        ]
+      ],
+      "none": [
+        "qa/?qc"
+      ],
+      "handler": {
+        "kind": "route",
+        "tools": [
+          "pi_portal_find_files",
+          "ooi_m2m_plan_request",
+          "earthscope_plan_waveform",
+          "earthscope_download_waveform"
+        ],
+        "answer": "compact"
+      },
+      "collections": [
+        "PIPortal",
+        "COSZOHub",
+        "Instruments"
+      ]
+    },
+    {
+      "task": "literature",
+      "priority": 65,
+      "all": [
+        [
+          "papers?\\b",
+          "publications?",
+          "studies",
+          "literature",
+          "\\bdoi\\b",
+          "published",
+          "research on",
+          "et al",
+          "cite"
+        ]
+      ],
+      "none": [],
+      "handler": {
+        "kind": "corpus",
+        "tools": [
+          "literature_full_text_evidence"
+        ],
+        "answer": "research"
+      },
+      "collections": [
+        "Literature"
+      ]
+    },
+    {
+      "task": "instrument_inventory",
+      "priority": 60,
+      "all": [
+        [
+          "instruments",
+          "sensors",
+          "equipment",
+          "seismometers",
+          "deployed at",
+          "what can i measure",
+          "what is deployed"
+        ],
+        [
+          "at\\b",
+          "on\\b",
+          "site",
+          "located",
+          "deployed",
+          "sits",
+          "associated with",
+          "measure"
+        ]
+      ],
+      "none": [
+        "capabilities does"
+      ],
+      "handler": {
+        "kind": "corpus",
+        "tools": [],
+        "answer": "inventory"
+      },
+      "collections": [
+        "Instruments",
+        "Websites",
+        "Arcada"
+      ]
+    },
+    {
+      "task": "instrument_info",
+      "priority": 55,
+      "all": [
+        [
+          "what is",
+          "what does",
+          "describe",
+          "tell me about",
+          "capabilities",
+          "how does",
+          "sample rate",
+          "where is"
+        ],
+        [
+          "instrument",
+          "prest",
+          "covis",
+          "hys\\d+",
+          "ctd",
+          "botpt",
+          "hydrophone",
+          "gauge",
+          "seismometer",
+          "velocity meter",
+          "[a-z0-9]{2}\\d{2}[a-z0-9]{4}-",
+          "ctdpf"
+        ]
+      ],
+      "none": [
+        "regional cabled array\\?",
+        "coszo\\?"
+      ],
+      "handler": {
+        "kind": "corpus",
+        "tools": [],
+        "answer": "research"
+      },
+      "collections": [
+        "Instruments",
+        "PIPortal",
+        "Websites"
+      ]
+    }
+  ]
+}
