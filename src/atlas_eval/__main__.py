@@ -6,7 +6,8 @@
     python -m atlas_eval run --suites retrieval answers --pace 6
     python -m atlas_eval run --suites agent --agent claude --agent-model haiku
     python -m atlas_eval judge results/<run>         # LLM judge for the answers suite
-    python -m atlas_eval report results/<run>        # report.md, figures, summary.json
+    python -m atlas_eval report results/<run>        # report.md, figures, summary.json, catalog.html
+    python -m atlas_eval site results/<run>          # just the HTML catalog of every task, output, and result
 """
 
 from __future__ import annotations
@@ -45,6 +46,9 @@ def main() -> int:
     j.add_argument("--model", default="haiku")
     rep = sub.add_parser("report")
     rep.add_argument("run_dir", type=Path)
+    st = sub.add_parser("site", help="write a self-contained HTML catalog of a run")
+    st.add_argument("run_dir", type=Path)
+    st.add_argument("--out", type=Path)
     args = p.parse_args()
 
     if args.cmd == "list":
@@ -77,7 +81,13 @@ def main() -> int:
         return 0
     if args.cmd == "report":
         from .report import write_report
+        from .site import build_site
         print(write_report(args.run_dir))
+        print(build_site(args.run_dir))
+        return 0
+    if args.cmd == "site":
+        from .site import build_site
+        print(build_site(args.run_dir, args.out))
         return 0
     return 1
 

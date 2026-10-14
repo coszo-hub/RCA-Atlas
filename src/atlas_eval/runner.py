@@ -23,6 +23,27 @@ def git_state() -> dict:
             "dirty": bool(run("status", "--porcelain"))}
 
 
+def environment() -> dict:
+    """What the run executed on: interpreter, libraries, and the external CLIs the suites call."""
+    import importlib.metadata as md
+    import shutil
+
+    def version(cmd: list[str]) -> str | None:
+        if not shutil.which(cmd[0]):
+            return None
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+        return (out.stdout or out.stderr).strip().splitlines()[0] if (out.stdout or out.stderr).strip() else None
+
+    packages = {}
+    for name in ("numpy", "scipy", "matplotlib"):
+        try:
+            packages[name] = md.version(name)
+        except md.PackageNotFoundError:
+            packages[name] = None
+    return {"python": platform.python_version(), "platform": platform.platform(), "machine": platform.machine(),
+            "packages": packages, "node": version(["node", "--version"]), "claude_cli": version(["claude", "--version"])}
+
+
 def build_datasets(names: list[str] | None = None) -> dict[str, int]:
     written = {}
     for name, suite in SUITES.items():
@@ -75,13 +96,16 @@ def run(names: list[str], out: Path, ctx: dict, limit: int | None = None, log=pr
     header = out / "run.json"
     if not header.exists():
         header.write_text(json.dumps({"run_id": out.name, "created_utc": datetime.now(timezone.utc).isoformat(),
-                                      "git": git_state(), "python": platform.python_version()}, indent=2) + "\n")
+                                      "git": git_state(), "python": platform.python_version(),
+                                      "environment": environment()}, indent=2) + "\n")
+    env = environment()
     for name in names:
         suite = SUITES[name]
         records = run_suite(name, ctx, out, limit, log)
         prov = {"suite": name, "title": suite.title, "dataset": suite.dataset, "dataset_sha256": suite.dataset_sha256(),
                 "n_cases": len(records), "n_errors": sum("error" in r for r in records),
-                "ran_utc": datetime.now(timezone.utc).isoformat(), "git": git_state(), "context": ctx}
+                "ran_utc": datetime.now(timezone.utc).isoformat(), "git": git_state(), "context": ctx,
+                "environment": env}
         (out / "provenance").mkdir(exist_ok=True)
         (out / "provenance" / f"{name}.json").write_text(json.dumps(prov, indent=2) + "\n")
     return out

@@ -276,8 +276,12 @@ cd src
 ../.venv/bin/python -m atlas_eval retry atlas_eval/results/<run> answers   # re-ask 503s, slower
 ../.venv/bin/python -m atlas_eval judge atlas_eval/results/<run>           # needs the claude CLI
 ../.venv/bin/python -m atlas_eval run --suites agent_llm --agent-model haiku --out atlas_eval/results/<run>
-../.venv/bin/python -m atlas_eval report atlas_eval/results/<run>
+../.venv/bin/python -m atlas_eval report atlas_eval/results/<run>   # report.md + catalog.html
 ```
+
+`catalog.html` is the place to review a run: open it in a browser to see every
+task, its expected truth, what the system returned, how it scored, the figures,
+and the environment the run executed in.
 
 To add a case, append a line to the suite's dataset (or extend
 `build_cases`), and bump the file to `_v2` if `v1` has been reported. To add a
