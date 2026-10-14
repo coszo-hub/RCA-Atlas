@@ -1,0 +1,21 @@
+{
+  "suite": "pressure",
+  "title": "Pressure calibration (A-0-A, SCPR) and linear drift",
+  "dataset": "pressure_v1.jsonl",
+  "dataset_sha256": "b17883559365b4df9d3c59493ac14e514b9d01d0f13bf1a2169c300ac9c6c80b",
+  "n_cases": 72,
+  "n_errors": 0,
+  "ran_utc": "2026-10-08T22:36:43.397126+00:00",
+  "git": {
+    "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+    "branch": "rca-atlas-eval-suite",
+    "dirty": true
+  },
+  "context": {
+    "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+    "model": null,
+    "pace_s": 6.0,
+    "agent": "oracle",
+    "agent_model": "haiku"
+  }
+}

@@ -1,0 +1,2697 @@
+{
+  "routing": {
+    "headline": {
+      "name": "Accuracy, new router, held-out test",
+      "value": 0.958904109589041,
+      "low": 0.8859990837370165,
+      "high": 0.9859260596460794,
+      "n": 73,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "Accuracy, new router, held-out test",
+        "value": 0.958904109589041,
+        "low": 0.8859990837370165,
+        "high": 0.9859260596460794,
+        "n": 73,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "Accuracy, deployed Worker, held-out test",
+        "value": 0.1643835616438356,
+        "low": 0.0966129669185153,
+        "high": 0.2657104356819069,
+        "n": 73,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Accuracy, new router, dev (rules tuned here)",
+        "value": 1.0,
+        "low": 0.9557646903580262,
+        "high": 1.0,
+        "n": 83,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Accuracy, deployed Worker, dev (rules tuned here)",
+        "value": 0.1566265060240964,
+        "low": 0.09388012275121072,
+        "high": 0.24975135495472317,
+        "n": 83,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Macro-F1 over 15 tasks, new router, test",
+        "value": 0.9467436267436269,
+        "low": 0.8680941558441558,
+        "high": 1.0,
+        "n": 73,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Macro-F1 over 15 tasks, deployed Worker, test",
+        "value": 0.12930309127492226,
+        "low": 0.05579078455790785,
+        "high": 0.18123537161900327,
+        "n": 73,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Accuracy on paraphrased (hard) test questions, new router",
+        "value": 0.96875,
+        "low": 0.8425573617998744,
+        "high": 0.9944621398359969,
+        "n": 32,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "per_task": [
+        {
+          "task": "earthquake_histogram",
+          "n": 6,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "earthquake_count",
+          "n": 7,
+          "router_recall": 1.0,
+          "worker_recall": 0.5714285714285714
+        },
+        {
+          "task": "earthquake_search",
+          "n": 6,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "dvv_monitoring",
+          "n": 3,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "timing_correction",
+          "n": 5,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "pressure_calibration",
+          "n": 4,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "drift_correction",
+          "n": 4,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "gap_diagnosis",
+          "n": 3,
+          "router_recall": 0.6666666666666666,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "qaqc",
+          "n": 5,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "operational_status",
+          "n": 3,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "data_download",
+          "n": 5,
+          "router_recall": 0.8,
+          "worker_recall": 0.4
+        },
+        {
+          "task": "literature",
+          "n": 6,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "instrument_inventory",
+          "n": 3,
+          "router_recall": 1.0,
+          "worker_recall": 0.3333333333333333
+        },
+        {
+          "task": "instrument_info",
+          "n": 8,
+          "router_recall": 1.0,
+          "worker_recall": 0.0
+        },
+        {
+          "task": "general_research",
+          "n": 5,
+          "router_recall": 0.8,
+          "worker_recall": 1.0
+        }
+      ],
+      "confusion": [
+        {
+          "true": "earthquake_histogram",
+          "earthquake_histogram": 6,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "earthquake_count",
+          "earthquake_histogram": 0,
+          "earthquake_count": 7,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "earthquake_search",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 6,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "dvv_monitoring",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 3,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "timing_correction",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 5,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "pressure_calibration",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 4,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "drift_correction",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 4,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "gap_diagnosis",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 1,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 2,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "qaqc",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 5,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "operational_status",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 3,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "data_download",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 1,
+          "data_download": 4,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "literature",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 6,
+          "instrument_inventory": 0,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "instrument_inventory",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 3,
+          "instrument_info": 0,
+          "general_research": 0
+        },
+        {
+          "true": "instrument_info",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 0,
+          "instrument_info": 8,
+          "general_research": 0
+        },
+        {
+          "true": "general_research",
+          "earthquake_histogram": 0,
+          "earthquake_count": 0,
+          "earthquake_search": 0,
+          "dvv_monitoring": 0,
+          "timing_correction": 0,
+          "pressure_calibration": 0,
+          "drift_correction": 0,
+          "gap_diagnosis": 0,
+          "qaqc": 0,
+          "operational_status": 0,
+          "data_download": 0,
+          "literature": 0,
+          "instrument_inventory": 1,
+          "instrument_info": 0,
+          "general_research": 4
+        }
+      ],
+      "router_misses": [
+        {
+          "question": "Find missing samples and timing jitter in the VEL3D record.",
+          "gold": "gap_diagnosis",
+          "router": "timing_correction"
+        },
+        {
+          "question": "Can I access multi-span DAS recordings?",
+          "gold": "data_download",
+          "router": "operational_status"
+        },
+        {
+          "question": "How are RCA sites, nodes, and instruments connected?",
+          "gold": "general_research",
+          "router": "instrument_inventory"
+        }
+      ]
+    },
+    "notes": [
+      "McNemar, new router vs deployed Worker on the test split: router-only correct 59, Worker-only correct 1, p = 1.1e-16.",
+      "The Worker has no route for 11 of the 15 tasks, so its ceiling on this set is the share of questions in its four classes; the comparison shows coverage, not a tuned competitor."
+    ],
+    "provenance": {
+      "suite": "routing",
+      "title": "Per-task routing",
+      "dataset": "routing_v1.jsonl",
+      "dataset_sha256": "8bd5764c024b763a9fbf789bca596295052857153379a54e0d86a233fc6a16f4",
+      "n_cases": 156,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T21:59:28.943355+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "quake_questions": {
+    "headline": {
+      "name": "Correct date range and magnitude, new parser",
+      "value": 1.0,
+      "low": 0.8712710781407846,
+      "high": 1.0,
+      "n": 26,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "Correct date range and magnitude, new parser",
+        "value": 1.0,
+        "low": 0.8712710781407846,
+        "high": 1.0,
+        "n": 26,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "Correct date range and magnitude, deployed Worker",
+        "value": 0.3076923076923077,
+        "low": 0.16501315595463767,
+        "high": 0.4998825832219837,
+        "n": 26,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Range or magnitude questions, deployed Worker",
+        "value": 0.0,
+        "low": 2.7755575615628914e-17,
+        "high": 0.24249400665524085,
+        "n": 12,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "disagreements": [
+        {
+          "question": "How many earthquakes at Axial between 2026-09-23 and 2026-09-24?",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-23"
+          },
+          "worker": {
+            "end": "2026-09-23",
+            "min_mag": null,
+            "start": "2026-09-23"
+          },
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-23"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes from 2026-09-20 to 2026-09-24?",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-20"
+          },
+          "worker": {
+            "end": "2026-09-20",
+            "min_mag": null,
+            "start": "2026-09-20"
+          },
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-20"
+          }
+        },
+        {
+          "question": "How many earthquakes at Axial since 2026-09-20?",
+          "expected": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-20"
+          },
+          "worker": {
+            "end": "2026-09-20",
+            "min_mag": null,
+            "start": "2026-09-20"
+          },
+          "parser": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-20"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes in the last 7 days?",
+          "expected": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-19"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-19"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes in the past 3 days?",
+          "expected": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-23"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-23"
+          }
+        },
+        {
+          "question": "How many earthquakes did Axial have last week?",
+          "expected": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-19"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-19"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes on 2026-09-24 above magnitude 1?",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": 1.0,
+            "start": "2026-09-24"
+          },
+          "worker": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          },
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": 1.0,
+            "start": "2026-09-24"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes yesterday with magnitude greater than 0.5?",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": 0.5,
+            "start": "2026-09-24"
+          },
+          "worker": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          },
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": 0.5,
+            "start": "2026-09-24"
+          }
+        },
+        {
+          "question": "How many M>1.5 Axial earthquakes since 2026-09-01?",
+          "expected": {
+            "end": "2026-09-25",
+            "min_mag": 1.5,
+            "start": "2026-09-01"
+          },
+          "worker": {
+            "end": "2026-09-01",
+            "min_mag": null,
+            "start": "2026-09-01"
+          },
+          "parser": {
+            "end": "2026-09-25",
+            "min_mag": 1.5,
+            "start": "2026-09-01"
+          }
+        },
+        {
+          "question": "How many quakes at Axial yesterday?",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          }
+        },
+        {
+          "question": "How many Axial events were located yesterday?",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          }
+        },
+        {
+          "question": "Number of Axial Seamount earthquakes on September 24, 2026",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes on Sept 23?",
+          "expected": {
+            "end": "2026-09-23",
+            "min_mag": null,
+            "start": "2026-09-23"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-23",
+            "min_mag": null,
+            "start": "2026-09-23"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes on 9/24/2026?",
+          "expected": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          }
+        },
+        {
+          "question": "How many earthquakes happened at Axial the day before yesterday?",
+          "expected": {
+            "end": "2026-09-23",
+            "min_mag": null,
+            "start": "2026-09-23"
+          },
+          "worker": {
+            "end": "2026-09-24",
+            "min_mag": null,
+            "start": "2026-09-24"
+          },
+          "parser": {
+            "end": "2026-09-23",
+            "min_mag": null,
+            "start": "2026-09-23"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes in September 2026?",
+          "expected": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-01"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-01"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes this month?",
+          "expected": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-01"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-09-25",
+            "min_mag": null,
+            "start": "2026-09-01"
+          }
+        },
+        {
+          "question": "How many Axial earthquakes last month?",
+          "expected": {
+            "end": "2026-08-31",
+            "min_mag": null,
+            "start": "2026-08-01"
+          },
+          "worker": null,
+          "parser": {
+            "end": "2026-08-31",
+            "min_mag": null,
+            "start": "2026-08-01"
+          }
+        }
+      ]
+    },
+    "notes": [
+      "McNemar new vs Worker: new-only 18, Worker-only 0, p = 7.6e-06."
+    ],
+    "provenance": {
+      "suite": "quake_questions",
+      "title": "Earthquake question understanding (dates, ranges, magnitudes)",
+      "dataset": "quake_questions_v1.jsonl",
+      "dataset_sha256": "09aee219a721b627422f50b0d1377fd67ab5a26b9ca589048850a1ad97452cc0",
+      "n_cases": 26,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T21:59:29.103804+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "retrieval": {
+    "headline": {
+      "name": "Gold evidence in top 10 (any required chunk)",
+      "value": 0.96,
+      "low": 0.8653990931249297,
+      "high": 0.9889611156723802,
+      "n": 50,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.8,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "Gold evidence in top 10 (any required chunk)",
+        "value": 0.96,
+        "low": 0.8653990931249297,
+        "high": 0.9889611156723802,
+        "n": 50,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.8,
+        "note": ""
+      },
+      {
+        "name": "Recall@5 of required chunks",
+        "value": 0.91,
+        "low": 0.83,
+        "high": 0.9702499999999986,
+        "n": 50,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Recall@10 of required chunks",
+        "value": 0.93,
+        "low": 0.86,
+        "high": 0.98,
+        "n": 50,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "MRR of first required chunk",
+        "value": 0.9002222222222221,
+        "low": 0.8242111111111112,
+        "high": 0.9635777777777776,
+        "n": 50,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Expected collection in top 10",
+        "value": 0.8135593220338984,
+        "low": 0.6962104955303725,
+        "high": 0.8925727805799468,
+        "n": 59,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Tool router suggests the needed tool",
+        "value": 0.0,
+        "low": 0.0,
+        "high": 0.1936076805344365,
+        "n": 16,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Tool router suggests any tool when one is needed",
+        "value": 0.0,
+        "low": 0.0,
+        "high": 0.1936076805344365,
+        "n": 16,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Latency p50 (quick mode)",
+        "value": 0.7573036249959841,
+        "low": null,
+        "high": null,
+        "n": 59,
+        "unit": "s",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Latency p95 (quick mode)",
+        "value": 1.083593088120686,
+        "low": null,
+        "high": null,
+        "n": 59,
+        "unit": "s",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Request success rate",
+        "value": 0.9833333333333333,
+        "low": 0.9114487027240993,
+        "high": 0.9970518402052136,
+        "n": 60,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "per_category": [
+        {
+          "category": "chronfix",
+          "n": 5,
+          "hit_at_10": 1.0,
+          "recall_at_10": 0.8,
+          "mrr": 1.0
+        },
+        {
+          "category": "concepts",
+          "n": 5,
+          "hit_at_10": 1.0,
+          "recall_at_10": 0.9,
+          "mrr": 1.0
+        },
+        {
+          "category": "data_availability",
+          "n": 5,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 1.0
+        },
+        {
+          "category": "earthquakes",
+          "n": 2,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 1.0
+        },
+        {
+          "category": "graph_edges",
+          "n": 5,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 1.0
+        },
+        {
+          "category": "instrument_identity",
+          "n": 5,
+          "hit_at_10": 0.6,
+          "recall_at_10": 0.6,
+          "mrr": 0.5133333333333334
+        },
+        {
+          "category": "instrument_location",
+          "n": 5,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 0.6888888888888889
+        },
+        {
+          "category": "literature",
+          "n": 4,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 0.875
+        },
+        {
+          "category": "operational_status",
+          "n": 1,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 1.0
+        },
+        {
+          "category": "qaqc",
+          "n": 4,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 0.875
+        },
+        {
+          "category": "tool_avoidance",
+          "n": 1,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 1.0
+        },
+        {
+          "category": "tool_selection",
+          "n": 3,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 1.0
+        },
+        {
+          "category": "visual",
+          "n": 5,
+          "hit_at_10": 1.0,
+          "recall_at_10": 1.0,
+          "mrr": 1.0
+        }
+      ]
+    },
+    "notes": [
+      "v1 expected tools with no implementation at all: nereus_file_status, nereus_ping_status."
+    ],
+    "provenance": {
+      "suite": "retrieval",
+      "title": "Evidence retrieval (Graph-RAG hits)",
+      "dataset": "../../model_eval/datasets/rca_eval_v1.jsonl",
+      "dataset_sha256": "e21437c05912dcee3b355b0cf644adc74de947078cd6fa503a0107cdb5e90476",
+      "n_cases": 60,
+      "n_errors": 1,
+      "ran_utc": "2026-10-08T22:37:41.143749+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "answers": {
+    "headline": {
+      "name": "Judge: correct against the reference answer",
+      "value": 0.7884615384615384,
+      "low": 0.6596789537149542,
+      "high": 0.8775562946751251,
+      "n": 52,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.8,
+      "note": "score \u2265 1 of 2 (partially or fully correct)"
+    },
+    "metrics": [
+      {
+        "name": "Served on the first attempt",
+        "value": 0.6527777777777778,
+        "low": 0.5376130384560558,
+        "high": 0.7524657699172488,
+        "n": 72,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.98,
+        "note": ""
+      },
+      {
+        "name": "Judge: correct against the reference answer",
+        "value": 0.7884615384615384,
+        "low": 0.6596789537149542,
+        "high": 0.8775562946751251,
+        "n": 52,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.8,
+        "note": "score \u2265 1 of 2 (partially or fully correct)"
+      },
+      {
+        "name": "Judge: fully correct",
+        "value": 0.19230769230769232,
+        "low": 0.10796046024733509,
+        "high": 0.3189886081365802,
+        "n": 52,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Judge: every claim supported by the public excerpts (lower bound)",
+        "value": 0.4838709677419355,
+        "low": 0.36409859838245745,
+        "high": 0.6055254039433933,
+        "n": 62,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": "the judge sees 280-character excerpts; the answering model saw full chunks"
+      },
+      {
+        "name": "Judge: says it cannot compute instead of inventing a value (tool questions)",
+        "value": 0.6296296296296297,
+        "low": 0.4422923441210239,
+        "high": 0.784674870390344,
+        "n": 27,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Served after one slower retry",
+        "value": 0.9166666666666666,
+        "low": 0.8298764477932348,
+        "high": 0.9612475750430503,
+        "n": 72,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Every citation points at a listed source (answers that cite)",
+        "value": 1.0,
+        "low": 0.9425288004111484,
+        "high": 1.0,
+        "n": 63,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 1.0,
+        "note": ""
+      },
+      {
+        "name": "Empty answers",
+        "value": 0.0,
+        "low": 0.0,
+        "high": 0.05500255701354129,
+        "n": 66,
+        "unit": "",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Corpus answers carry at least one citation",
+        "value": 1.0,
+        "low": 0.9143324298155681,
+        "high": 0.9999999999999999,
+        "n": 41,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Plain-text format the prompt requires",
+        "value": 0.5454545454545454,
+        "low": 0.42615011343389175,
+        "high": 0.6597587450194226,
+        "n": 66,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Gold entities named in the answer",
+        "value": 1.0,
+        "low": 1.0,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Gold sources among the answer's citations",
+        "value": 0.9444444444444444,
+        "low": 0.8611111111111112,
+        "high": 1.0,
+        "n": 18,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Computation questions with no numeric claim at all (regex; also flags quoted literature values)",
+        "value": 0.6,
+        "low": 0.31267376973365824,
+        "high": 0.8318196702937638,
+        "n": 10,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Latency p50",
+        "value": 3.6124349790043198,
+        "low": null,
+        "high": null,
+        "n": 66,
+        "unit": "s",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Latency p95",
+        "value": 17.022547500033397,
+        "low": null,
+        "high": null,
+        "n": 66,
+        "unit": "s",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "per_category": [
+        {
+          "category": "chronfix",
+          "n": 4,
+          "format_ok": 0.0,
+          "citations_valid": 1.0,
+          "judge_correct": 1.0
+        },
+        {
+          "category": "concepts",
+          "n": 5,
+          "format_ok": 0.6,
+          "citations_valid": 1.0,
+          "judge_correct": 1.0
+        },
+        {
+          "category": "data_availability",
+          "n": 5,
+          "format_ok": 0.8,
+          "citations_valid": 1.0,
+          "judge_correct": 0.6
+        },
+        {
+          "category": "earthquakes",
+          "n": 4,
+          "format_ok": 0.75,
+          "citations_valid": 1.0,
+          "judge_correct": 0.5
+        },
+        {
+          "category": "full_text",
+          "n": 1,
+          "format_ok": 1.0,
+          "citations_valid": 1.0,
+          "judge_correct": 0.0
+        },
+        {
+          "category": "graph_edges",
+          "n": 5,
+          "format_ok": 0.4,
+          "citations_valid": 1.0,
+          "judge_correct": 1.0
+        },
+        {
+          "category": "instrument_identity",
+          "n": 5,
+          "format_ok": 1.0,
+          "citations_valid": 1.0,
+          "judge_correct": 1.0
+        },
+        {
+          "category": "instrument_location",
+          "n": 5,
+          "format_ok": 1.0,
+          "citations_valid": 1.0,
+          "judge_correct": 1.0
+        },
+        {
+          "category": "literature",
+          "n": 4,
+          "format_ok": 0.25,
+          "citations_valid": 1.0,
+          "judge_correct": 0.75
+        },
+        {
+          "category": "notes_task",
+          "n": 10,
+          "format_ok": 0.4,
+          "citations_valid": 1.0,
+          "judge_correct": null
+        },
+        {
+          "category": "operational_status",
+          "n": 4,
+          "format_ok": 0.5,
+          "citations_valid": 1.0,
+          "judge_correct": 0.5
+        },
+        {
+          "category": "qaqc",
+          "n": 5,
+          "format_ok": 0.4,
+          "citations_valid": 1.0,
+          "judge_correct": 0.8
+        },
+        {
+          "category": "tool_avoidance",
+          "n": 1,
+          "format_ok": 1.0,
+          "citations_valid": 1.0,
+          "judge_correct": 1.0
+        },
+        {
+          "category": "tool_selection",
+          "n": 3,
+          "format_ok": 0.3333333333333333,
+          "citations_valid": 1.0,
+          "judge_correct": 1.0
+        },
+        {
+          "category": "visual",
+          "n": 5,
+          "format_ok": 0.4,
+          "citations_valid": 1.0,
+          "judge_correct": 0.6
+        }
+      ],
+      "answer_models": [
+        {
+          "model": "gemini-2.5-flash",
+          "n": 21
+        },
+        {
+          "model": "Groq GPT-OSS 120B",
+          "n": 45
+        }
+      ],
+      "invented_numbers": [
+        {
+          "question": "Estimate the seismic velocity change at the Axial summit using MWCS for 2026.",
+          "answer": "**Direct answer**  \nThe available evidence does not provide a measurable seismic\u2011velocity change at the Axial summit for 2026 using moving\u2011window cross\u2011spectral (MWCS) analysis, so an estimate cannot be derived from the current data.\n\n**Comparison of the evidence with the question**  \n- The Nankai subduction\u2011zone study demonstrates that ambient\u2011noise cross\u2011correlation can detect coseismic velocity"
+        },
+        {
+          "question": "Apply the A0A calibration to the Central Caldera pressure record and report the drift rate in kPa per year.",
+          "answer": "**Direct answer**  \nThe retrieved evidence does not contain a quantified drift rate (in\u202fkPa\u202fyr\u207b\u00b9) for the A\u20110\u2011A calibrated pressure instrument (A0A) at the Central Caldera site. Consequently, a specific drift\u2011rate value cannot be reported from the available sources.\n\n**Evidence comparison**  \n- The A\u20110\u2011A instrument description explains that drift is removed by periodically switching the pressure t"
+        },
+        {
+          "question": "What drift correction does the SCPR calibration give for the Central Caldera?",
+          "answer": "**Direct answer**  \nThe Self\u2011Calibrating Pressure Recorder (SCPR) at the Axial Seamount Central Caldera removes instrument drift by applying an in\u2011situ piston\u2011gauge reference. For the 2018\u20112021 deployment the calibration yields linear drift rates of\u202f0.45\u202f\u00b1\u202f0.12\u202fkPa\u202fyr\u207b\u00b9 and\u202f0.36\u202f\u00b1\u202f0.08\u202fkPa\u202fyr\u207b\u00b9 (\u2248\u202f4.5\u20135.5\u202fcm\u202fyr\u207b\u00b9), with the full drift model (linear\u202f+\u202fdecaying exponential) reducing residual noise t"
+        },
+        {
+          "question": "What is the linear drift of the Axial Base PREST pressure sensor in kPa per year?",
+          "answer": "**Answer:**  \nThe retrieved evidence does not provide a specific linear drift value for the Axial Base\u202fPREST pressure sensor. The only drift figures reported are for generic Paroscientific pressure gauges (\u2248\u202f\u20130.88\u202fkPa\u202fyr\u207b\u00b9) and for drift\u2011correction procedures applied to other bottom pressure recorders, but none are identified as the Axial Base\u202fPREST instrument.\n\n**Evidence comparison**  \n- The stu"
+        }
+      ]
+    },
+    "notes": [],
+    "provenance": {
+      "suite": "answers",
+      "title": "End-to-end answers (Ask Atlas)",
+      "dataset": "answers_extra_v1.jsonl",
+      "dataset_sha256": "405663a49ba172671376ce8b0770bcb054bb4c6cb2aa33e89c7b09b9e329ee4f",
+      "n_cases": 72,
+      "n_errors": 25,
+      "ran_utc": "2026-10-08T22:51:56.083977+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "quakes": {
+    "headline": {
+      "name": "Count and histogram exactly right",
+      "value": 1.0,
+      "low": 0.9010990076755959,
+      "high": 0.9999999999999999,
+      "n": 35,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 1.0,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "Count and histogram exactly right",
+        "value": 1.0,
+        "low": 0.9010990076755959,
+        "high": 0.9999999999999999,
+        "n": 35,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 1.0,
+        "note": ""
+      },
+      {
+        "name": "Count exactly right (with missing days reported)",
+        "value": 1.0,
+        "low": 0.9010990076755959,
+        "high": 0.9999999999999999,
+        "n": 35,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Histogram exactly right",
+        "value": 1.0,
+        "low": 0.9010990076755959,
+        "high": 0.9999999999999999,
+        "n": 35,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Unfiltered day count agrees with the catalog rule: atlas_tasks",
+        "value": 1.0,
+        "low": 0.9010990076755959,
+        "high": 0.9999999999999999,
+        "n": 35,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Unfiltered day count agrees with the catalog rule: axial_agent_tools",
+        "value": 0.9142857142857143,
+        "low": 0.7762072603410349,
+        "high": 0.9704176317330301,
+        "n": 35,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Unfiltered day count agrees with the catalog rule: worker_js",
+        "value": 0.9142857142857143,
+        "low": 0.7762072603410349,
+        "high": 0.9704176317330301,
+        "n": 35,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "implementations": [
+        {
+          "implementation": "atlas_tasks",
+          "agreement": 1.0,
+          "disagrees_on": []
+        },
+        {
+          "implementation": "axial_agent_tools",
+          "agreement": 0.9142857142857143,
+          "disagrees_on": [
+            "bad_number"
+          ]
+        },
+        {
+          "implementation": "worker_js",
+          "agreement": 0.9142857142857143,
+          "disagrees_on": [
+            "bad_number"
+          ]
+        }
+      ]
+    },
+    "notes": [],
+    "provenance": {
+      "suite": "quakes",
+      "title": "Earthquake catalog: counts, filters, histograms",
+      "dataset": "quakes_v1.jsonl",
+      "dataset_sha256": "bdf6508449f959cfb77283654d8ad933fa0da3ce2fbe256f1458d72148646ed3",
+      "n_cases": 35,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T21:59:31.027064+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "gaps": {
+    "headline": {
+      "name": "Fault detection F1 (all kinds, micro)",
+      "value": 0.9980879541108987,
+      "low": 0.9938650306748467,
+      "high": 1.0,
+      "n": 120,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "Fault detection F1 (all kinds, micro)",
+        "value": 0.9980879541108987,
+        "low": 0.9938650306748467,
+        "high": 1.0,
+        "n": 120,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "Error-type verdict accuracy (gap / timing / both / clean)",
+        "value": 1.0,
+        "low": 0.9689808335812966,
+        "high": 1.0,
+        "n": 120,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "Cases diagnosed exactly (no miss, no false alarm)",
+        "value": 0.9916666666666667,
+        "low": 0.9543037087549505,
+        "high": 0.998527444266658,
+        "n": 120,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Gap F1: new diagnose_series",
+        "value": 1.0,
+        "low": 1.0,
+        "high": 1.0,
+        "n": 120,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Gap F1: existing coszo_pressure_detect_gaps",
+        "value": 1.0,
+        "low": 1.0,
+        "high": 1.0,
+        "n": 120,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": "0 case(s) rejected by the baseline"
+      }
+    ],
+    "tables": {
+      "per_kind": [
+        {
+          "kind": "gap",
+          "family": "data_gap",
+          "truth": 37,
+          "found": 37,
+          "tp": 37,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "f1_low": 1.0,
+          "f1_high": 1.0
+        },
+        {
+          "kind": "zero_fill",
+          "family": "data_gap",
+          "truth": 46,
+          "found": 46,
+          "tp": 46,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "f1_low": 1.0,
+          "f1_high": 1.0
+        },
+        {
+          "kind": "nan_fill",
+          "family": "data_gap",
+          "truth": 40,
+          "found": 40,
+          "tp": 40,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "f1_low": 1.0,
+          "f1_high": 1.0
+        },
+        {
+          "kind": "flatline",
+          "family": "data_gap",
+          "truth": 25,
+          "found": 25,
+          "tp": 25,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "f1_low": 1.0,
+          "f1_high": 1.0
+        },
+        {
+          "kind": "spike",
+          "family": "data_gap",
+          "truth": 37,
+          "found": 37,
+          "tp": 37,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "f1_low": 1.0,
+          "f1_high": 1.0
+        },
+        {
+          "kind": "duplicate",
+          "family": "timing_error",
+          "truth": 41,
+          "found": 41,
+          "tp": 41,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "f1_low": 1.0,
+          "f1_high": 1.0
+        },
+        {
+          "kind": "backstep",
+          "family": "timing_error",
+          "truth": 36,
+          "found": 35,
+          "tp": 35,
+          "precision": 1.0,
+          "recall": 0.9722222222222222,
+          "f1": 0.9859154929577465,
+          "f1_low": 0.9538461538461539,
+          "f1_high": 1.0
+        }
+      ]
+    },
+    "notes": [
+      "McNemar on per-case exact gap detection, new vs existing: new-only 0, existing-only 0, p = 1."
+    ],
+    "provenance": {
+      "suite": "gaps",
+      "title": "Data-fault diagnosis (gaps vs timing errors)",
+      "dataset": "gaps_v1.jsonl",
+      "dataset_sha256": "d882bde3a4f4baf325775d857080589c06641fd72aa0bd531127e0a631bfce78",
+      "n_cases": 120,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T21:59:32.701939+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "timing": {
+    "headline": {
+      "name": "Case pass rate (diagnosis right, jump found, \u226595% of estimated hours within 1 sample)",
+      "value": 0.6,
+      "low": 0.4736605349204075,
+      "high": 0.7143050946511744,
+      "n": 60,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "Case pass rate (diagnosis right, jump found, \u226595% of estimated hours within 1 sample)",
+        "value": 0.6,
+        "low": 0.4736605349204075,
+        "high": 0.7143050946511744,
+        "n": 60,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "Hours with an estimate (coverage)",
+        "value": 0.5891273915072328,
+        "low": 0.49040632596741757,
+        "high": 0.679388681119623,
+        "n": 4286,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Estimated hours within one sample (0.125 s)",
+        "value": 0.9932673267326733,
+        "low": 0.9860484521731618,
+        "high": 0.9986352760639305,
+        "n": 2525,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.95,
+        "note": ""
+      },
+      {
+        "name": "Estimated hours confidently wrong (> 0.5 s)",
+        "value": 0.00039603960396039607,
+        "low": 0.0,
+        "high": 0.0013393156357717347,
+        "n": 2525,
+        "unit": "",
+        "higher_is_better": false,
+        "target": 0.02,
+        "note": ""
+      },
+      {
+        "name": "Error-kind classification accuracy",
+        "value": 0.6666666666666666,
+        "low": 0.5405686645211968,
+        "high": 0.7727073847647731,
+        "n": 60,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "Cases declined as too noisy to pick",
+        "value": 0.3,
+        "low": 0.19898166138769108,
+        "high": 0.42508707946914487,
+        "n": 60,
+        "unit": "",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Clock-jump detection F1 (\u00b12 h or one bin)",
+        "value": 0.72,
+        "low": 0.5405405405405406,
+        "high": 0.8571428571428571,
+        "n": 60,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Jump size absolute error",
+        "value": 0.09884202309503727,
+        "low": 0.05533562035725932,
+        "high": 0.14957630027087312,
+        "n": 18,
+        "unit": "s",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Drift rate absolute error",
+        "value": 0.013694586387549855,
+        "low": 0.004904274020055036,
+        "high": 0.026636239728896116,
+        "n": 19,
+        "unit": "s/day",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "by_snr": [
+        {
+          "snr": 0.08,
+          "n": 12,
+          "pass": 0.0,
+          "pass_low": 2.7755575615628914e-17,
+          "pass_high": 0.24249400665524085,
+          "hourly_acc": 1.0,
+          "hourly_low": 1.0,
+          "hourly_high": 1.0,
+          "coverage": 0.015151515151515152,
+          "stack_hours": 1.0,
+          "kind_acc": 0.0
+        },
+        {
+          "snr": 0.12,
+          "n": 12,
+          "pass": 0.3333333333333333,
+          "pass_low": 0.13812009109121315,
+          "pass_high": 0.6093779111272004,
+          "hourly_acc": 0.9972602739726028,
+          "hourly_low": 0.9909476376362902,
+          "hourly_high": 1.0,
+          "coverage": 0.4254079254079254,
+          "stack_hours": 24.0,
+          "kind_acc": 0.3333333333333333
+        },
+        {
+          "snr": 0.18,
+          "n": 12,
+          "pass": 0.8333333333333334,
+          "pass_low": 0.5519691377470266,
+          "pass_high": 0.9530348578161463,
+          "hourly_acc": 0.9826086956521739,
+          "hourly_low": 0.9554896142433235,
+          "hourly_high": 1.0,
+          "coverage": 0.8098591549295775,
+          "stack_hours": 6.0,
+          "kind_acc": 1.0
+        },
+        {
+          "snr": 0.25,
+          "n": 12,
+          "pass": 0.8333333333333334,
+          "pass_low": 0.5519691377470266,
+          "pass_high": 0.9530348578161463,
+          "hourly_acc": 0.996661101836394,
+          "hourly_low": 0.9914379890269979,
+          "hourly_high": 1.0,
+          "coverage": 0.6965116279069767,
+          "stack_hours": 1.0,
+          "kind_acc": 1.0
+        },
+        {
+          "snr": 0.35,
+          "n": 12,
+          "pass": 1.0,
+          "pass_low": 0.7575059933447592,
+          "pass_high": 1.0,
+          "hourly_acc": 0.9976689976689976,
+          "hourly_low": 0.9941860465116279,
+          "hourly_high": 1.0,
+          "coverage": 1.0,
+          "stack_hours": 1.0,
+          "kind_acc": 1.0
+        }
+      ],
+      "confusion": [
+        {
+          "true": "none",
+          "none": 12,
+          "jump": 0,
+          "drift": 0,
+          "jump+drift": 0,
+          "insufficient_snr": 3
+        },
+        {
+          "true": "jump",
+          "none": 1,
+          "jump": 10,
+          "drift": 0,
+          "jump+drift": 0,
+          "insufficient_snr": 4
+        },
+        {
+          "true": "drift",
+          "none": 0,
+          "jump": 0,
+          "drift": 9,
+          "jump+drift": 0,
+          "insufficient_snr": 6
+        },
+        {
+          "true": "jump+drift",
+          "none": 0,
+          "jump": 1,
+          "drift": 0,
+          "jump+drift": 9,
+          "insufficient_snr": 5
+        }
+      ]
+    },
+    "notes": [
+      "Accuracy is over the hours that received an estimate; coverage says how many did. A bin whose pick quality is below the noise-only 99th percentile is left empty instead of guessed."
+    ],
+    "provenance": {
+      "suite": "timing",
+      "title": "Clock-error recovery (CCF, peak lag, \u0394t)",
+      "dataset": "timing_v1.jsonl",
+      "dataset_sha256": "0a7e3efec628c92696b1974eb65157f18f8f5dfbe5bf6a3447d444876d547ece",
+      "n_cases": 60,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T22:01:50.269026+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "dvv": {
+    "headline": {
+      "name": "stretching: pass rate",
+      "value": 0.8472222222222222,
+      "low": 0.7467771063249946,
+      "high": 0.912492912705243,
+      "n": 72,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "stretching: pass rate",
+        "value": 0.8472222222222222,
+        "low": 0.7467771063249946,
+        "high": 0.912492912705243,
+        "n": 72,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "stretching: mean |error|",
+        "value": 0.009486111111111133,
+        "low": 0.006180381944444467,
+        "high": 0.013570138888888887,
+        "n": 72,
+        "unit": "% dv/v",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "mwcs: pass rate",
+        "value": 0.9305555555555556,
+        "low": 0.8475202051632649,
+        "high": 0.9699746184342299,
+        "n": 72,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "mwcs: mean |error|",
+        "value": 0.01134022017692005,
+        "low": 0.00865875306836258,
+        "high": 0.014412532925004728,
+        "n": 72,
+        "unit": "% dv/v",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "dtw: pass rate",
+        "value": 0.625,
+        "low": 0.5095289902692696,
+        "high": 0.7278082165816159,
+        "n": 72,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "dtw: mean |error|",
+        "value": 0.031518791964411465,
+        "low": 0.022100541043838372,
+        "high": 0.04296799181507251,
+        "n": 72,
+        "unit": "% dv/v",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "by_method": [
+        {
+          "method": "stretching",
+          "pass": 0.8472222222222222,
+          "pass_low": 0.7467771063249946,
+          "pass_high": 0.912492912705243,
+          "mae_pct": 0.009486111111111133,
+          "bias_pct": -0.00031944444444436716,
+          "bias_low": -0.004139583333333244,
+          "bias_high": 0.004265625000000054,
+          "coverage_2sigma": 0.9861111111111112,
+          "coverage_low": 0.9254339785252386,
+          "coverage_high": 0.9975440481170943
+        },
+        {
+          "method": "mwcs",
+          "pass": 0.9305555555555556,
+          "pass_low": 0.8475202051632649,
+          "pass_high": 0.9699746184342299,
+          "mae_pct": 0.01134022017692005,
+          "bias_pct": 0.00015560029664019961,
+          "bias_low": -0.003218022397005127,
+          "bias_high": 0.004114607280539559,
+          "coverage_2sigma": 0.6388888888888888,
+          "coverage_low": 0.5235248046738358,
+          "coverage_high": 0.7401832029382592
+        },
+        {
+          "method": "dtw",
+          "pass": 0.625,
+          "pass_low": 0.5095289902692696,
+          "pass_high": 0.7278082165816159,
+          "mae_pct": 0.031518791964411465,
+          "bias_pct": -0.003981129666974198,
+          "bias_low": -0.016436104796020656,
+          "bias_high": 0.009712601124383187,
+          "coverage_2sigma": 1.0,
+          "coverage_low": 0.9493488274035422,
+          "coverage_high": 1.0
+        }
+      ],
+      "by_snr": [
+        {
+          "snr": 2,
+          "stretching": 0.027999999999999962,
+          "stretching_pass": 0.5555555555555556,
+          "mwcs": 0.014679816054054821,
+          "mwcs_pass": 0.7222222222222222,
+          "dtw": 0.04881564952266436,
+          "dtw_pass": 0.2777777777777778
+        },
+        {
+          "snr": 5,
+          "stretching": 0.004999999999999926,
+          "stretching_pass": 0.8333333333333334,
+          "mwcs": 0.010825253965943703,
+          "mwcs_pass": 1.0,
+          "dtw": 0.021700047477953816,
+          "dtw_pass": 0.5555555555555556
+        },
+        {
+          "snr": 10,
+          "stretching": 0.0014999999999999551,
+          "stretching_pass": 1.0,
+          "mwcs": 0.006489482856721368,
+          "mwcs_pass": 1.0,
+          "dtw": 0.013784262836208401,
+          "dtw_pass": 0.6666666666666666
+        },
+        {
+          "snr": 30,
+          "stretching": 0.0007499999999999884,
+          "stretching_pass": 1.0,
+          "mwcs": 0.0054607095386826855,
+          "mwcs_pass": 1.0,
+          "dtw": 0.004006145548604071,
+          "dtw_pass": 1.0
+        }
+      ]
+    },
+    "notes": [
+      "Coverage near 95 % means the reported \u03c3 is honest; far below means it is overconfident."
+    ],
+    "provenance": {
+      "suite": "dvv",
+      "title": "Relative velocity change (stretching, MWCS, DTW)",
+      "dataset": "dvv_v1.jsonl",
+      "dataset_sha256": "bbc7572f314906de2b8f024dd68f06111cb80790aea0848a0114b1e84fa33e9c",
+      "n_cases": 72,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T21:59:37.763158+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "pressure": {
+    "headline": {
+      "name": "Pass rate, all calibration and drift cases (excl. uplift confound)",
+      "value": 0.9848484848484849,
+      "low": 0.9190407973793359,
+      "high": 0.9973203594560177,
+      "n": 66,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": ""
+    },
+    "metrics": [
+      {
+        "name": "Pass rate, all calibration and drift cases (excl. uplift confound)",
+        "value": 0.9848484848484849,
+        "low": 0.9190407973793359,
+        "high": 0.9973203594560177,
+        "n": 66,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": ""
+      },
+      {
+        "name": "A-0-A: corrected within 1 cm RMS",
+        "value": 1.0,
+        "low": 0.8620237953250198,
+        "high": 1.0,
+        "n": 24,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "SCPR, schedule given: corrected within 1 cm RMS",
+        "value": 0.9,
+        "low": 0.5958499732047615,
+        "high": 0.9821237869049271,
+        "n": 10,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "SCPR, detected, reference outside tides: corrected within 1 cm RMS",
+        "value": 1.0,
+        "low": 0.6456695649333126,
+        "high": 1.0,
+        "n": 7,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "SCPR, detected, reference inside tides: corrected within 1 cm RMS",
+        "value": 1.0,
+        "low": 0.6456695649333126,
+        "high": 1.0,
+        "n": 7,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Linear drift, linear sensor: rate within 0.1 kPa/yr",
+        "value": 1.0,
+        "low": 0.7411670330319684,
+        "high": 1.0,
+        "n": 11,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Linear drift, linear sensor: error within the reported 2\u03c3",
+        "value": 1.0,
+        "low": 0.7411670330319684,
+        "high": 1.0,
+        "n": 11,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Linear drift, sensor with exponential settling: rate within 0.1 kPa/yr",
+        "value": 1.0,
+        "low": 0.6456695649333126,
+        "high": 1.0,
+        "n": 7,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Linear drift, sensor with exponential settling: error within the reported 2\u03c3",
+        "value": 0.42857142857142855,
+        "low": 0.15821985525146975,
+        "high": 0.7495416354723428,
+        "n": 7,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Linear drift with real uplift (confound): rate within 0.1 kPa/yr",
+        "value": 0.0,
+        "low": 2.7755575615628914e-17,
+        "high": 0.3903342879021653,
+        "n": 6,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Linear drift with real uplift (confound): error within the reported 2\u03c3",
+        "value": 0.0,
+        "low": 2.7755575615628914e-17,
+        "high": 0.3903342879021653,
+        "n": 6,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": "expected to fail: \u03c3 cannot know about real deformation"
+      }
+    ],
+    "tables": {
+      "subsets": [
+        {
+          "subset": "A-0-A",
+          "n": 24,
+          "pass": 1.0,
+          "pass_ci": [
+            0.8620237953250198,
+            1.0
+          ],
+          "detection_f1": 1.0,
+          "median_residual_kpa": 0.020257739386558567,
+          "offset_mae_kpa": 0.004859926699089958
+        },
+        {
+          "subset": "SCPR, schedule given",
+          "n": 10,
+          "pass": 0.9,
+          "pass_ci": [
+            0.5958499732047615,
+            0.9821237869049271
+          ],
+          "detection_f1": 1.0,
+          "median_residual_kpa": 0.010304120178760694,
+          "offset_mae_kpa": 0.003208900203731826
+        },
+        {
+          "subset": "SCPR, detected, reference outside tides",
+          "n": 7,
+          "pass": 1.0,
+          "pass_ci": [
+            0.6456695649333126,
+            1.0
+          ],
+          "detection_f1": 1.0,
+          "median_residual_kpa": 0.010053321769308258,
+          "offset_mae_kpa": 0.005105149057328349
+        },
+        {
+          "subset": "SCPR, detected, reference inside tides",
+          "n": 7,
+          "pass": 1.0,
+          "pass_ci": [
+            0.6456695649333126,
+            1.0
+          ],
+          "detection_f1": 0.9402390438247012,
+          "median_residual_kpa": 0.030221400371218395,
+          "offset_mae_kpa": 0.006694297026309671
+        },
+        {
+          "subset": "Linear drift, linear sensor",
+          "n": 11,
+          "pass": 1.0,
+          "pass_ci": [
+            0.7411670330319684,
+            1.0
+          ],
+          "median_rate_err_kpa_per_yr": 0.00013739801844492305
+        },
+        {
+          "subset": "Linear drift, sensor with exponential settling",
+          "n": 7,
+          "pass": 1.0,
+          "pass_ci": [
+            0.6456695649333126,
+            1.0
+          ],
+          "median_rate_err_kpa_per_yr": 0.00040251702005744683
+        },
+        {
+          "subset": "Linear drift with real uplift (confound)",
+          "n": 6,
+          "pass": 0.0,
+          "pass_ci": [
+            2.7755575615628914e-17,
+            0.3903342879021653
+          ],
+          "median_rate_err_kpa_per_yr": 3.464935658509834
+        }
+      ]
+    },
+    "notes": [
+      "A trend fitted to one non-calibrating gauge absorbs real uplift; the confound subset is expected to fail and is excluded from the headline."
+    ],
+    "provenance": {
+      "suite": "pressure",
+      "title": "Pressure calibration (A-0-A, SCPR) and linear drift",
+      "dataset": "pressure_v1.jsonl",
+      "dataset_sha256": "b17883559365b4df9d3c59493ac14e514b9d01d0f13bf1a2169c300ac9c6c80b",
+      "n_cases": 72,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T21:59:49.886787+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "agent": {
+    "headline": {
+      "name": "Task success (oracle)",
+      "value": 1.0,
+      "low": 0.8453609810751531,
+      "high": 1.0,
+      "n": 21,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": "errors count as failures"
+    },
+    "metrics": [
+      {
+        "name": "Task success (oracle)",
+        "value": 1.0,
+        "low": 0.8453609810751531,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": "errors count as failures"
+      },
+      {
+        "name": "Intended tool called",
+        "value": 1.0,
+        "low": 0.8453609810751531,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Intended tool called first",
+        "value": 1.0,
+        "low": 0.8453609810751531,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Final answer in the required JSON form",
+        "value": 1.0,
+        "low": 0.8453609810751531,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Tool calls per task",
+        "value": 1.0,
+        "low": 1.0,
+        "high": 1.0,
+        "n": 21,
+        "unit": "calls",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "by_type": [
+        {
+          "type": "diagnose",
+          "n": 3,
+          "success": 1.0
+        },
+        {
+          "type": "clock",
+          "n": 3,
+          "success": 1.0
+        },
+        {
+          "type": "dvv",
+          "n": 3,
+          "success": 1.0
+        },
+        {
+          "type": "rate",
+          "n": 6,
+          "success": 1.0
+        },
+        {
+          "type": "count",
+          "n": 3,
+          "success": 1.0
+        },
+        {
+          "type": "busiest",
+          "n": 3,
+          "success": 1.0
+        }
+      ],
+      "failures": []
+    },
+    "notes": [],
+    "provenance": {
+      "suite": "agent",
+      "title": "Agentic sandbox tasks (scripted oracle)",
+      "dataset": "agent_tasks_v1.jsonl",
+      "dataset_sha256": "b4be9abc5ea84439704c4820c40aca62d03dc491c7c3f99b3aed049153361cc7",
+      "n_cases": 21,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T21:59:56.529301+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  },
+  "agent_llm": {
+    "headline": {
+      "name": "Task success (claude:haiku)",
+      "value": 0.9523809523809523,
+      "low": 0.7733063992587743,
+      "high": 0.9915440121901737,
+      "n": 21,
+      "unit": "",
+      "higher_is_better": true,
+      "target": 0.9,
+      "note": "errors count as failures"
+    },
+    "metrics": [
+      {
+        "name": "Task success (claude:haiku)",
+        "value": 0.9523809523809523,
+        "low": 0.7733063992587743,
+        "high": 0.9915440121901737,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": 0.9,
+        "note": "errors count as failures"
+      },
+      {
+        "name": "Intended tool called",
+        "value": 1.0,
+        "low": 0.8453609810751531,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Intended tool called first",
+        "value": 1.0,
+        "low": 0.8453609810751531,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Final answer in the required JSON form",
+        "value": 1.0,
+        "low": 0.8453609810751531,
+        "high": 1.0,
+        "n": 21,
+        "unit": "",
+        "higher_is_better": true,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Tool calls per task",
+        "value": 1.0,
+        "low": 1.0,
+        "high": 1.0,
+        "n": 21,
+        "unit": "calls",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      },
+      {
+        "name": "Cost per task",
+        "value": 0.03269665238095239,
+        "low": 0.029837231428571438,
+        "high": 0.036974621309523815,
+        "n": 21,
+        "unit": "USD",
+        "higher_is_better": false,
+        "target": null,
+        "note": ""
+      }
+    ],
+    "tables": {
+      "by_type": [
+        {
+          "type": "diagnose",
+          "n": 3,
+          "success": 0.6666666666666666
+        },
+        {
+          "type": "clock",
+          "n": 3,
+          "success": 1.0
+        },
+        {
+          "type": "dvv",
+          "n": 3,
+          "success": 1.0
+        },
+        {
+          "type": "rate",
+          "n": 6,
+          "success": 1.0
+        },
+        {
+          "type": "count",
+          "n": 3,
+          "success": 1.0
+        },
+        {
+          "type": "busiest",
+          "n": 3,
+          "success": 1.0
+        }
+      ],
+      "failures": [
+        {
+          "id": "agent-diagnose-1",
+          "expected": [
+            "gap",
+            "spike"
+          ],
+          "answer": [
+            "data_gap"
+          ],
+          "tools": [
+            "atlas_diagnose_series"
+          ]
+        }
+      ]
+    },
+    "notes": [],
+    "provenance": {
+      "suite": "agent_llm",
+      "title": "Agentic sandbox tasks (LLM agent)",
+      "dataset": "agent_tasks_v1.jsonl",
+      "dataset_sha256": "b4be9abc5ea84439704c4820c40aca62d03dc491c7c3f99b3aed049153361cc7",
+      "n_cases": 21,
+      "n_errors": 0,
+      "ran_utc": "2026-10-14T22:04:52.086683+00:00",
+      "git": {
+        "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+        "branch": "rca-atlas-eval-suite",
+        "dirty": true
+      },
+      "context": {
+        "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+        "model": null,
+        "pace_s": 6.0,
+        "agent": "oracle",
+        "agent_model": "haiku"
+      }
+    }
+  }
+}

@@ -1,0 +1,333 @@
+case_id,question,reference_answer,answer,human_correct_0_1_2,human_supported_true_false
+status-005,Check Nereus ping status for a selected RCA endpoint.,Ping status is a current instrument-status field. The agent must use `nereus_instrument_status` and report the ping-status observation returned by that tool rather than claim a static result.,"The retrieved RCA Atlas records show that every listed Nereus instrument has a recent ping check reporting a **GOOD** status.
+
+Ping Status Summary  
+- All six instruments in the evidence have a ping status of GOOD at the most recent check time (2026‑09‑19 07:30:06 UTC)【1,2,3,4,5,6】.
+
+Instruments and Ping Details  
+- RS03ASHS‑PN03B‑06‑CAMHDA301 (site RS03ASHS) – PingStatus code GOOD, checked 2026‑09‑19T07:30:06.0818+00:00【1】  
+- RS03INT1‑MJ03C‑05‑CAMDSB303 (site RS03INT1) – PingStatus code GOOD, checked 2026‑09‑19T07:30:06.081863+00:00【2】  
+- RS03INT1‑MJ03C‑07‑PPSDNA301 (site RS03INT1) – PingStatus code GOOD, checked 2026‑09‑19T07:30:06.0819+00:00【3】  
+- RS03AXPS‑PC03A‑07‑CAMDSC302 (site RS03AXPS) – PingStatus code GOOD, checked 2026‑09‑19T07:30:06.081607+00:00【4】  
+- RS01SUM2‑MJ01B‑05‑CAMDSB103 (site RS01SUM2) – PingStatus code GOOD, checked 2026‑09‑19T07:30:06.082371+00:00【5】  
+- RS03INT1‑MJ03C‑07‑RASFLA301 (site RS03INT1) – PingStatus code GOOD, checked 2026‑09‑19T07:30:06.081888+00:00【6】
+
+What the evidence does not establish  
+- The data do not include any instruments outside the six listed above, nor do they provide historical ping trends or any failures. The snapshot is limited to the most recent ping check for each instrument.",,
+concept-005,What role do science junction boxes play in RCA?,Science junction boxes are cabled-infrastructure interfaces that distribute power and communications and provide instrument connections at RCA sites. Answers should cite the junction-box infrastructure source rather than describe them as sensors.,"**Brief answer**  
+Science junction boxes are the secondary‑node “bridge” that distributes high‑voltage power and high‑bandwidth communications from the Primary Nodes to the individual seafloor instruments, while also providing timing, health‑monitoring, fault‑protection, and expansion capability across the Regional Cabled Array (RCA) [1, 2, 4, 5].
+
+**Role overview**  
+- Act as the interface between the 375 V DC / 1 GbE primary‑node feeds and the native power (12‑48 V) and data links (10/100 BASE‑T Ethernet, RS‑232/RS‑485) required by each instrument [1, 2, 4].  
+- Convert the primary‑node voltage (10 kV DC) down to 375 V DC and then to the instrument‑specific voltages, supplying up to 50 W or 200 W per port depending on the node type [1].  
+- Provide up to eight configurable instrument ports per box, each capable of Ethernet, serial, or fiber‑optic connections, and support daisy‑chaining via expansion ports for long‑distance “subnet” extensions [1, 2, 4].  
+
+**Key functions**  
+
+- **Power distribution** – Deliver regulated 12‑48 V DC to sensors and moorings; medium‑power boxes can supply 50 W or 200 W per port [1].  
+- **Data communications** – Offer 10/100 Mbps Ethernet, RS‑232, RS‑485, and 1 GbE fiber links; enable full‑duplex or half‑duplex serial traffic and high‑speed Ethernet to shore [1, 2, 4].  
+- **Timing services** – Provide GPS‑derived timing; Ethernet instruments receive NTP (~10 ms) and PTP (~sub‑10 µs), while PPS/TOD signals give ~10 µs accuracy [1].  
+- **Health monitoring & fault detection** – Continuously telemetry voltage, current, temperature, humidity, and pressure; include Ground Fault Detection circuitry to detect inadvertent seawater connections [1].  
+- **Expandability & redundancy** – Expansion ports deliver 375 V DC and 1 GbE fiber for “daisy‑chain” linking of additional junction boxes, allowing the system to grow and to isolate faults [1, 2, 5].  
+
+**Integration with primary infrastructure**  
+- Junction boxes (secondary nodes) are linked to the seven Primary Nodes via ~33 km of extension cables; they receive the primary‑node 375 V DC and 1 GbE feed and then distribute it locally to instrument clusters [5].  
+- Low‑power boxes connect through low‑voltage nodes (48 V DC, 10/100 BASE‑T) while medium‑power boxes connect directly to the Primary Nodes [5].  
+
+**Support for new instrument deployments**  
+- The RCA staff uses the configurable ports and expansion capability of junction boxes to accommodate additional NSF‑funded instruments, coordinating power and communication settings in advance of deployment [6].  
+
+**What the evidence does not establish**  
+The provided sources describe the design, capabilities, and operational role of science junction boxes but do not give quantitative performance metrics (e.g., exact latency for each protocol) or a complete inventory of all instruments currently attached to each box.",,
+tool-005,What is the definition of a hydrophone?,A hydrophone definition is stable corpus knowledge. The answer should use the instrument-class source and must not invoke a live tool.,"A hydrophone is a passive acoustic sensor (an underwater microphone) that converts sound energy in the water to electrical signals, typically output as a digital binary stream [1].
+
+Evidence from the records  
+Broadband Hydrophone – definition  
+- The broadband hydrophone is described as “a digital hydrophone … that converts sound energy to electrical energy, with a binary stream output” [1].
+
+Low‑frequency hydrophone examples (do not provide a definition)  
+- Southern Hydrate Ridge Flank Low‑Frequency Hydrophone records eruption‑related T‑waves, whale vocalizations, and ambient ocean sound [2].  
+- Axial Seamount Eastern Caldera Low‑Frequency Hydrophone records eruption‑related T‑waves, whale vocalizations, and ambient ocean sound [3].  
+- Axial Seamount Central Caldera Low‑Frequency Hydrophone records eruption‑related T‑waves, whale vocalizations, and ambient ocean sound [4].  
+- Axial Seamount Base Seafloor Low‑Frequency Hydrophone records eruption‑related T‑waves, whale vocalizations, and ambient ocean sound [5].  
+- Oregon Slope Base Seafloor Low‑Frequency Hydrophone records eruption‑related T‑waves, whale vocalizations, and ambient ocean sound [6].
+
+The retrieved evidence defines a hydrophone only in the broadband hydrophone record; the low‑frequency hydrophone records illustrate the instrument’s use but do not add to the definition.",,
+notes-11,Make a histogram of Axial earthquakes per day for September 2026.,,"**Direct answer**  
+The retrieved evidence reports that the Axial catalog contains 947 earthquake rows for September 2026, but it does not provide the individual event dates needed to construct a per‑day histogram. Therefore a daily histogram cannot be generated from the available data.
+
+**Evidence assessment**  
+- The September 2026 record states the total number of rows (947) and the magnitude range, but no breakdown by day is included in the summary ([1]).
+
+**What the evidence does not establish**  
+- Daily counts of earthquakes for September 2026.  
+- Any histogram or time‑series distribution of those events.  
+
+To create the requested histogram, the detailed event list (e.g., from the referenced events.sqlite or events.jsonl.gz files) would need to be accessed and processed. The current summary evidence is insufficient for that task.",,
+instrument-004,What is CTDPFA110?,CTDPFA110 is the MARUM CTD-DO instrument. The corpus identifies its PI-operated data location and the OOI instrument page; an answer should identify it as CTD and dissolved-oxygen instrumentation and cite the data route.,"CTDPFA110 is the canonical identifier for the MARUM CTD-DO instrument, which is a ctd type instrument deployed as part of the Regional Cabled Array project [1, 5].
+
+Identity
+- CTDPFA110 is the canonical identifier for the MARUM CTD-DO instrument [1, 5].
+- It is a ctd type instrument [1].
+- Aliases include MARUM CTD and CTD-DO [1, 5].
+- The manufacturer is MARUM Center for Marine Environmental Sciences, and the model is CTD-DO [1, 5].
+- Its status is confirmed_PI_instrument [1].
+
+Location
+- The instrument is located at the Southern Hydrate Ridge Summit [1, 5].
+- The OOI site is RS01SUM2, node MJ01B [5].
+
+Capabilities and Measurements
+- The MARUM CTD-DO instrument measures pressure, temperature, conductivity, and dissolved oxygen [1, 5].
+- It measures once per minute [1].
+
+Data Availability
+- Data for the MARUM CTD-DO Instrument are available to download from http://piweb.ooirsn.uw.edu/marum/data/CTDPFA110/ [5].
+- The public PI archive stores daily raw .dat files, with a deployment state indicating it contains data from 2018 to 2023 [1].
+- The directory layout consists of year/month directories containing daily .dat files, following the pattern {YYYY}/{MM}/{YYYY-MM-DD}.dat [5].
+- These daily PI .dat files are distinct from OOI M2M-delivered core instrument products [5].
+- The official OOI context for this instrument is available at https://oceanobservatories.org/pi-instrument/marum-ctd-do-instrument-ctdpfa110/ [5].
+
+What the evidence does not establish
+- The evidence does not establish the specific hardware or internal components of the MARUM CTD-DO instrument beyond its sensor components [1, 5].",,
+instrument-005,Which RCA instruments measure seafloor pressure?,"The answer must enumerate only instruments explicitly represented as seafloor-pressure instruments in the corpus, identify PREST/SFLPRES where supported, and cite each instrument record.","The RCA Atlas evidence identifies several instruments that measure seafloor pressure. These include Sea-Bird SBE 54 seafloor pressure sensors, HPIES instruments, Bottom Pressure and Tilt instruments, the A-0-A sensor, the Self-Calibrating Pressure Recorder (SCPR), Paroscientific Series 8000 Submersible Depth Sensors, Geodetic and Seismic Sensor Modules (GSSM), and Cabled Self-Calibrating Pressure Recorders (CSCPR) [1, 2, 3, 4, 6, 7, 8].
+
+Seafloor Pressure Instruments
+
+Sea-Bird SBE 54 Seafloor Pressure Sensors
+- These sensors record absolute seafloor pressure in real time, sensitive to lunar tides, storms, and currents, and can measure passing tsunamis [1, 7].
+- They are installed at Axial Base (MJ03A), Slope Base (MJ01A), and the Southern Hydrate Ridge Summit (LJ01B) [1, 7].
+- Specific instances include:
+  - Southern Hydrate Ridge Flank Seafloor Pressure (Tidal Pressure Gauge) (Canonical identifier: RS01SUM1-LJ01B-09-PRESTB102) at Southern Hydrate Ridge, measuring absolute bottom pressure and ocean tides [2].
+  - Axial Seamount Base Seafloor Pressure Sensor (Tidal Pressure Gauge) (Canonical identifier: RS03AXBS-MJ03A-06-PRESTA301) at Axial Seamount Base, measuring absolute bottom pressure and ocean tides [3].
+  - Oregon Slope Base Seafloor Pressure Sensor (Tidal Pressure Gauge) (Canonical identifier: RS01SLBS-MJ01A-06-PRESTA101) at Oregon Slope Base Seafloor, measuring absolute bottom pressure and ocean tides [4].
+
+HPIES Instruments
+- These instruments measure pressure very near the seafloor [1].
+- They are located at Slope Base and Axial Base [1].
+
+Bottom Pressure and Tilt Instruments
+- These instruments measure subsidence or uplift of the seafloor, an indicator of activity at Axial Seamount [1, 6].
+- They are located at the summit of Axial Caldera [1].
+
+A-0-A Sensor
+- This instrument compares ocean pressure to atmospheric pressure, calculated by an internal barometer, to determine and correct for drift [6].
+- It is equipped with two redundant pressure sensors and a valve that switches between measuring external seafloor pressure and internal instrument pressure for calibration [6].
+- Early results show agreement within a few millimeters per year in 1500 meters of water [6].
+- It is deployed within Axial’s Caldera at the Central Caldera site [6].
+
+Self-Calibrating Pressure Recorder (SCPR)
+- Conceived and built by Drs. Glen Sasagawa and Mark Zumberge, this instrument corrects for long-period instrumental drift that can obscure tectonic deformation signals [6, 8].
+- The SCPR installed at Axial Seamount in 2018 is a sophisticated version with mechanical elements including a deadweight tester [6].
+- It includes two redundant Paroscientific quartz pressure gauges (Model 42 K) that switch between ocean pressure and a stable reference pressure generated by an onboard piston gauge [8].
+- It is installed at Axial Seamount [6].
+
+Paroscientific Series 8000 Submersible Depth Sensor (Absolute Pressure Gauge)
+- These absolute seafloor pressure sensors record the tidal band and have a paired temperature channel [8].
+- They feed the Absolute Seafloor Pressure data product for tsunami detection and long-period seafloor deformation monitoring [8].
+- The pressure range of each instrument is calibrated to its deployment depth [8].
+- Sites: Outer Shelf (115 m depth, 0–130 mH2O range), Oregon Offshore (619 m depth, 0–700 mH2O range), Mid Slope (1,241 m depth, 0–1,400 mH2O range) [8].
+
+Geodetic and Seismic Sensor Module (GSSM)
+- Designed and built by UW Applied Physics Laboratory, this module combines calibrated pressure and strong-motion platforms [8].
+- Its calibrated pressure time series can measure secular vertical strain and detect slow slip events [8].
+- Each GSSM uses a Paroscientific Seismic Oceanographic Sensor module (Model 7116-2K-2 or 7116-1K-2) with two Paroscientific Digiquartz pressure transducers (Model 44.4K-302) and a Digiquartz nano-resolution barometer (Model 6000-16B) [8].
+- It employs the A-0-A method for calibration, periodically switching transducers between external water pressure and internal housing pressure [8].
+- Sites: Outer Shelf, Oregon Offshore, Mid Slope [8].
+
+The evidence does not establish the specific models or manufacturers for the HPIES instruments or the Bottom Pressure and Tilt instruments.",,
+graph-002,"Connect a publication to its authors, topic, and source collection.","A publication graph answer must traverse the work to structured authors, mentioned topics, and its source/listing collection, and must cite the specific work rather than invent coauthor or topic edges.","**Answer**  
+The evidence links two OOI‑related publications to their topics and source collections, but does not list their authors.
+
+**Publications and their metadata**
+
+- RAPID: Distributed Acoustic Sensing on the OOI’s Regional Cabled Array  
+  - **Authors:** not identified in the retrieved evidence.  
+  - **Topic:** description of a distributed acoustic sensing (DAS) dataset collected on the OOI Regional Cabled Array, including data volume (~26 TB) and access instructions.  
+  - **Source collection:** OOI Regional Cabled Array data archive [6].
+
+- How to connect to the Regional Cabled Array?  
+  - **Authors:** not identified in the retrieved evidence.  
+  - **Topic:** procedural guide for investigators to determine interface requirements, obtain feasibility/cost letters, and arrange data‑storage integration for new instruments on the OOI Regional Cabled Array.  
+  - **Source collection:** OOI Regional Cabled Array operations documentation [1].
+
+**What the evidence does not establish**  
+- No author names are provided for either document.  
+- No additional publications from the COSZO workshop are linked to specific authors, topics, or collections in the supplied excerpts.",,
+earthquake-002,List Axial earthquakes on 2026-09-18.,This is a date-specific live event request. The agent must call `axial_search_events` with the requested UTC date and return the bounded event records plus source provenance.,"**Direct answer**  
+The provided evidence does not contain any Axial earthquake records for 2026‑09‑18, so specific events on that date cannot be listed.
+
+**Evidence comparison**  
+- The evidence includes monthly summaries for Axial activity in February, April, and August 2026, but no entry for September 2026 [1].  
+- Therefore, there is no record in the retrieved data that identifies earthquakes on 2026‑09‑18.
+
+**What the evidence does not establish**  
+- The absence of September 2026 data in the evidence means we cannot confirm whether earthquakes occurred on 2026‑09‑18, nor can we provide details such as event IDs, magnitudes, or timestamps for that day. Additional data sources would be needed to answer the question definitively.",,
+location-002,At what physical site is CTDPFA110 located?,"CTDPFA110 location must be stated from the MARUM CTD-DO instrument record, with the PI Portal endpoint kept separate from its physical site.","CTDPFA110 is located at the Southern Hydrate Ridge Summit [1, 2].",,
+literature-004,Which authors have published about RCA cabled observations?,"An author list must be derived from structured literature author records and associated cabled-observation works, not from unnormalized citation strings.","**Answer**  
+The retrieved evidence shows that the following individuals have authored publications describing observations from the OOI Regional Cabled Array (RCA):
+
+- William Wilcock [1, 2]  
+- Brad Lipovsky [1, 2]  
+- Marine Denolle [1, 2]  
+- Shima Abadi [1, 2]  
+- Mikael Mazur [1, 2]  
+- Nicolas Fontaine [1, 2]  
+- Deborah Kelley [4]  
+
+**What the evidence does not establish**  
+The available sources do not identify any additional authors of RCA‑cabled observation papers beyond those listed above. Other names mentioned in the broader RCA context (e.g., Katie Bigham, J. Nelson, Andrew Paley) are not explicitly credited as authors of the cited observation publications.",,
+earthquake-005,Show a map of yesterday's Axial earthquakes.,"A map of yesterday's earthquakes is a current visual request. The agent must use `axial_get_figure` or `axial_plot_events`, identify the UTC date and source, and return the resulting figure provenance.","Yesterday’s Axial earthquake map can be obtained from the 1‑day rolling map that the Axial Atlas provides. The map shows each event’s latitude‑longitude, colors depth, and scales symbol size by moment magnitude. A dated map for any UTC archive date—including yesterday—is available for download.
+
+Comparison of evidence to the question  
+- The Axial map encoding description states that rolling maps cover caldera and regional views over 1, 7, and 30 days and that dated maps are retrievable for each UTC archive date [1].  
+- The earthquake‑catalog summaries give monthly row counts and magnitude ranges but do not list individual events for a specific day [2].  
+
+Answer – how to view yesterday’s map  
+- Locate the Axial Atlas “1‑day rolling map” page (the default view for the OOI Regional Cabled Array and COSZO).  
+- Select the date corresponding to yesterday’s UTC date; the system will generate a map with all events recorded in the previous 24 hours.  
+- The map will display latitude/longitude points, depth‑color coding, and magnitude‑scaled symbols, matching the encoding described in the evidence.  
+
+What the evidence does not establish  
+- The retrieved evidence does not contain the actual image or the list of individual events for yesterday, only the existence of the map‑generation capability and monthly summary statistics.",,
+notes-06,What drift correction does the SCPR calibration give for the Central Caldera?,,"**Direct answer**  
+The Self‑Calibrating Pressure Recorder (SCPR) at the Axial Seamount Central Caldera removes instrument drift by applying an in‑situ piston‑gauge reference. For the 2018‑2021 deployment the calibration yields linear drift rates of 0.45 ± 0.12 kPa yr⁻¹ and 0.36 ± 0.08 kPa yr⁻¹ (≈ 4.5–5.5 cm yr⁻¹), with the full drift model (linear + decaying exponential) reducing residual noise to ≈ 0.06 kPa (≈ 6 mm depth equivalent) and a long‑term linear trend < 1 mm yr⁻¹ [3].  
+
+The earlier 2013‑2014 deployment reported typical uncorrected drift of 20–30 cm yr⁻¹, which the piston‑gauge calibration eliminated to reveal a net uplift of ~60 cm over 17 months [2,5].
+
+---
+
+**Comparison of the individual records**
+
+- **Axial Central Caldera Self‑Calibrating Pressure Recorder (SCPRAAA301)** – instrument description, two quartz gauges, piston‑gauge calibrator, installed 2018, deployment extended to 2024 [1].
+
+- **2013‑2014 drift‑corrected study** – documents that ambient seawater pressure gauges at Axial experience drift rates of 20–30 cm yr⁻¹; the SCPR’s piston‑gauge reference was used to correct this drift, producing a drift‑free time series that showed 60 cm of summit uplift over 17 months [2,5].
+
+- **2018‑2021 drift‑corrected study** – provides quantitative drift‑correction results for the SCPR:
+  - Linear drift rates: 0.45 ± 0.12 kPa yr⁻¹ and 0.36 ± 0.08 kPa yr⁻¹ for the two gauges.
+  - Drift model includes a decaying exponential term.
+  - Residual standard deviation ≈ 0.06 kPa (≈ 6 mm depth equivalent).
+  - After correction, the two gauge time series differ by only ±6 mm (90 % confidence) and show a linear trend < 1 mm yr⁻¹ [3].
+
+- **Self‑Calibrating Pressure Recorder overview** – reiterates the calibration concept (periodic piston‑gauge reference, motor‑driven valve switching) and notes the instrument’s role in real‑time monitoring of inflation/deflation at Axial [4].
+
+---
+
+**What the evidence does not establish**
+
+- No single “absolute” drift‑correction value is given for the entire Central Caldera site; the correction is gauge‑specific and modeled as a combination of linear and exponential terms.
+- The 2013‑2014 study reports only the magnitude of uncorrected drift (20–30 cm yr⁻¹) and the resulting uplift after correction, not the exact numerical correction applied.
+- The evidence does not provide drift‑correction details for any other OOI Regional Cabled Array sites beyond Central Caldera.",,
+chronfix-003,Locate the latest Chronfix correction file and report its provenance.,"The latest correction-file request requires the live Chronfix model lookup. The result must report the resolved correction bundle, file fingerprint, and provenance.","**Answer:**  
+The most recent Chronfix correction file is the newest file present in the live correction directory after a refresh of the public HYS14 Chronfix bundle. Its provenance is recorded automatically by the Chronfix system as the file’s modification timestamp together with the Git commit identifier (hash) that introduced the file.
+
+**How to locate the latest file**  
+- Run the `coszo_refresh_hys14_correction` tool (default `force:false`) to fast‑forward‑pull the public Chronfix checkout or confirm that the live correction directory is being read directly [2].  
+- After the refresh, invoke `coszo_chronfix_model` (with default `force_refresh:false` and no specific query times) to inspect the current HYS14 Chronfix correction bundle; the tool returns the bundle’s file fingerprint, which corresponds to the latest correction file [1].
+
+**Provenance recorded for the file**  
+- The Chronfix package monitors its output directory as a “growing live source” and, at query time, logs each file’s modification time and the commit provenance (Git commit hash) that created or updated the file [4].
+
+**What the evidence does not establish**  
+- The exact filename, fingerprint value, modification timestamp, or commit hash cannot be provided here because the tools have not been executed in this session.  
+- Any additional metadata beyond the timestamp and Git commit (e.g., author name, detailed change log) is not described in the available evidence.",,
+download-004,Which RCA waveform data can be obtained from EarthScope?,EarthScope-accessible RCA waveform answers must cite the StationXML or EarthScope/FDSN evidence for the named station and use a tool only when the user asks to retrieve a waveform.,"RCA waveform data available from EarthScope includes seismic, hydrophone, pressure, and tilt data [1, 2, 3].
+
+Seismic Data
+- Seismometer stations: AXAS1, AXAS2 (Axial), AXCC1, AXEC1, AXEC2, AXEC3 (Axial Seamount Eastern Caldera), HYSB1 (Hydrate Ridge), and others [1, 4, 5, 6].
+- Seismic channels: BH* (broadband, 40 Hz), HH* (high-gain, 100 Hz), EH* (short-period) [1].
+- Data are available as MiniSEED (.mseed), SAC, or NumPy arrays [1].
+
+Hydrophone Data
+- Hydrophone channels: HDH (200 Hz) and LDH (1 Hz decimated) [1].
+- Data are available as MiniSEED (.mseed), SAC, or NumPy arrays [1].
+
+Pressure and Tilt Data
+- Core OOI pressure sensor and tiltmeter instruments [3].
+- Novel instruments: self-calibrating pressure recorder (SCPR), flipping tilt meter, and A-0-A pressure sensor [3].
+- The flipping tilt meter is a three-component accelerometer [3].
+- Data from SCPR and VEL3D (which measures velocity, likely related to tilt or acceleration) are streamed as raw data to EarthScope, including MSEED format [2, 3].
+- The A-0-A sensor is deployed within Axial's Caldera at the Central Caldera site [3].
+
+The evidence does not establish the specific sampling rates for all pressure and tilt instruments, nor does it provide a complete list of all ""other"" seismometer stations or the full range of ""others"" for pressure and tilt instruments.",,
+instrument-003,Describe the HYS14 ocean-bottom seismometer.,HYS14 is the Southern Hydrate Ridge Summit RCA seismic station. Its answer must cite StationXML and identify only the channel epochs and sensor metadata that the station record supports.,"The HYS14 is an ocean-bottom seismometer instrument located at Hydrate Ridge [2]. Its clock error is represented by the bundled Chronfix model, and this same instrument clock drives all of its channels [2].
+
+The evidence does not establish whether the HYS14 is a broadband or short-period seismometer, nor does it provide details on its specific measurements, manufacturer, or where its data are available.",,
+location-001,Where is PREST deployed and which site and node are related to it?,"A valid PREST location answer must give the instrument deployment, physical site, and infrastructure node as separate graph facts, with `LOCATED_AT` provenance.","PREST is deployed for RCA HYSB1, HYS14, and AXBA1 [4].
+
+Related Sites and Nodes
+- HYSB1 [4]
+- HYS14 [4]
+- AXBA1 [4]
+
+The evidence does not establish a more general physical deployment location beyond these specific RCA identifiers, nor does it provide details on the type or operational status of these related sites and nodes.",,
+qaqc-003,Find current QA/QC plots for PREST.,This is a live-current request. The agent must select `qaqc_search_plots` and use the corpus routing policy; it must not claim that cached corpus material is a current plot.,"**Answer:**  
+The provided evidence does not contain any existing QA/QC plot listings for the PREST instrument.
+
+**Findings**  
+- The only references to plot‑search capabilities are the tool descriptions for `qaqc_search_plots` (source [1]) and `qaqc_catalog_summary` (source [5]). Neither source includes actual plot URLs or titles for PREST.  
+- No specific PREST plot entries appear in the QARTOD flag statistics (source [2]) or the general quality‑control tables (source [3]).
+
+**Evidence Gaps**  
+- There is no concrete record of current QA/QC plots for PREST in the supplied documents.  
+- The evidence set is incomplete regarding PREST‑specific visualizations.
+
+**Next Steps**  
+- To obtain the desired plots, invoke the `qaqc_search_plots` tool with `reference_designator` (or instrument name) set to “PREST” and appropriate filters (e.g., site, variable, time span).  
+- Alternatively, use `qaqc_catalog_summary` to list all available RCA QA/QC plots and then locate any PREST entries.  
+
+These actions will retrieve live URLs and dates for any existing PREST QA/QC visualizations.",,
+qaqc-002,Do existing public plots prove that an instrument passed QA/QC?,"No. Existing public QA/QC plots are evidence to inspect, not proof by themselves that an instrument passed QA/QC. The answer should distinguish a plot from validated QA/QC status and use the QAQC routing policy for current or human-in-the-loop evidence.","**Direct answer**  
+The available evidence does not show that publicly posted plots themselves constitute proof that an instrument has passed QA/QC. The documentation describes the QA/QC processes (inspection, requirements verification, flagging, etc.) and notes that plots can be generated, but no specific plot is presented as verification of a passed test.
+
+**Evidence review**  
+- The RSN test plan outlines the formal acceptance workflow: physical inspection, document review, DOORS requirements verification, and a Physical Configuration Audit before an instrument is accepted for integration [1]. These steps are internal verification activities, not public plot displays.  
+- OOI’s QA/QC framework explains that data are flagged (1 = pass, 4 = fail, etc.) and that automated QARTOD tests are run on data streams [3]. While the results are provided in QC flag files, the documentation does not state that a public plot automatically confirms a passed QA/QC status.  
+- The “qaqc_search_plots” tool can retrieve dashboard plots for instruments, sites, variables, etc. [2]. However, the evidence does not include any actual plot output or an interpretation linking a specific plot to a successful QA/QC outcome.
+
+**Conclusion**  
+The records confirm that QA/QC is performed through inspections, requirements verification, and automated flagging, and that plots can be generated for data visualization. However, the existence of public plots alone is not presented as definitive evidence that an instrument has passed QA/QC. Additional documentation—such as QC flag files, test reports, or certification statements—would be needed to prove a passed QA/QC status.",,
+notes-05,Apply the A0A calibration to the Central Caldera pressure record and report the drift rate in kPa per year.,,"**Direct answer**  
+The retrieved evidence does not contain a quantified drift rate (in kPa yr⁻¹) for the A‑0‑A calibrated pressure instrument (A0A) at the Central Caldera site. Consequently, a specific drift‑rate value cannot be reported from the available sources.
+
+**Evidence comparison**  
+- The A‑0‑A instrument description explains that drift is removed by periodically switching the pressure transducers to an internal barometer reference, but it does not give a measured drift magnitude for the Central Caldera deployment [2, 3].  
+- Drift magnitudes are reported for other pressure gauges:  
+  – The self‑calibrating pressure recorder (SCPR) experiences drift of 10–20 cm yr⁻¹ (≈0.10–0.20 kPa yr⁻¹) [1].  
+  – Ambient seawater pressure gauges can show drift of 20–30 cm yr⁻¹ (≈0.20–0.30 kPa yr⁻¹) [4].  
+  – A separate study reports an uncorrected trend of –0.38 kPa yr⁻¹ that becomes +0.25 kPa yr⁻¹ after drift correction, illustrating the magnitude of drift that can be present in similar seafloor pressure records [5].  
+- None of these drift values are tied to the A‑0‑A instrument at Central Caldera; they pertain to other sensors or sites.
+
+**Findings**  
+- The A‑0‑A calibrated pressure instrument (A0ABPA301) is installed at Central Caldera (OOI site RS03CCAL, node MJ03F) and records seafloor deformation using two Paroscientific pressure transducers, an internal barometer, and a thermistor [2, 3].  
+- Its calibration method (periodic 5‑minute switches to the internal barometer) is designed to remove drift, but the evidence does not quantify the residual drift after calibration for this specific deployment.  
+
+**Limitations**  
+- The provided sources do not include a measured drift rate for the A‑0‑A record at Central Caldera, nor do they present processed time‑series results from which such a rate could be derived.  
+- Any drift rate for this instrument would need to be calculated from the actual pressure time series (e.g., using the A0A processed NetCDF files) or from a dedicated calibration analysis not present in the current evidence.  
+
+**Conclusion**  
+Based on the available RCA Atlas evidence, the drift rate for the Central Caldera A‑0‑A pressure record cannot be reported; additional data analysis would be required to determine it.",,
+concept-001,What is the Regional Cabled Array?,"The Regional Cabled Array is the OOI cabled observatory serving the northeast Pacific and Juan de Fuca Plate. It connects seafloor infrastructure, instruments, power, and communications for sustained observations.","The Regional Cabled Array (RCA) is a U.S. ocean observatory, operated by the University of Washington for NSF's Ocean Observatories Initiative (OOI), that provides unprecedented power, bandwidth, and two-way communication to scientific sensor arrays on the seafloor and throughout the water column [2, 4, 6]. It became operational in 2014, streaming real-time data to shore from a diverse array of over 140 to 150 instruments [1, 2, 5]. The RCA is the first U.S. ocean observatory to span a tectonic plate, specifically the Juan de Fuca plate [2, 4].
+
+Structure and Capabilities
+- The RCA consists of a network of approximately 900 km of modified telecommunications cables, made from fiber-optics and copper, that provide high power and bandwidth [1, 2, 4].
+- A shore station in Pacific City, Oregon, serves as the landing point for two backbone cables [2, 4].
+- One backbone cable extends approximately 480 km due west to Axial Seamount, and the second extends 208 km southward along the base of the Cascadia Subduction Zone, then 147 km east to offshore Newport, Oregon [2].
+- These backbone cables connect to seven Primary Nodes (PN1A, PN1B, PN1C, PN1D, PN3A, PN3B, PN5A), which act as distribution centers for extension cables that provide direct access to specific scientific sites [1, 2, 4].
+- The system offers two-way 24/7/365 communication with direct connection to the Internet, providing power up to 8 kW (10 kV) and bandwidth up to 240 Gb/s (10 GbE) [2, 4].
+- It has significant expansion capabilities and an operational life of at least 25-30 years, providing sustained, high-quality, coregistered, multidisciplinary data at rates up to 250 kilisamples/second and spatial resolutions from centimeters to kilometers [1, 2].
+
+Scientific Investigations and Arrays
+The RCA powers and supports three main arrays conducting different scientific investigations [1, 6]:
+- The Cabled Continental Margin Array, which includes sites like Slope Base, Southern Hydrate Ridge, and the Endurance Array Oregon Line sites [1, 4, 6]. This coastal array is located within highly productive coastal waters impacted by the California Current, upwelling, ocean acidification, and hypoxia events [2].
+- The Cabled Axial Seamount Array, consisting of Axial Caldera and Axial Base sites [1, 4, 6]. This is the most advanced underwater volcanic observatory in the world's oceans, focusing on understanding connections between volcanism, seismicity, and life in extreme environments [2, 4]. Axial Seamount is the largest and most active volcano on the Juan de Fuca Ridge, having erupted in 1998, 2011, and 2015, and is continuously monitored for impending eruptions [2, 4, 5].
+- The Cabled Endurance Array [1, 6].
+
+Specific Sites and Instrumentation
+- Axial Seamount: Hosts numerous active hydrothermal fields and a diverse array of geophysical, chemical, and biological sensors, an HD video camera, and a digital still camera, providing real-time information on linkages between seismic activity, fluid flow, and biological activity [2, 4].
+- Southern Hydrate Ridge: Located at 800 m water depth, this site provides insight into actively venting methane hydrate systems, monitoring seismicity, biogeochemical processes, and fluxes in actively forming gas hydrate systems [2, 4].
+- Juan de Fuca Plate and adjacent margin: A seismometer array provides real-time monitoring of earthquakes within the Cascadia Subduction Zone [2].
+- Water Column Moorings: The RCA includes six state-of-the-art instrumented, full water column moorings (up to 2900 m water depth) hosting instrumented wire crawlers, winched science pods, and platforms to study linkages among physical, biological, and chemical processes [2, 4]. These enable interdisciplinary observations of water-column processes spanning over 300 miles offshore of the continental margin to across the shelf [4].
+
+The evidence does not establish the exact number of instruments currently deployed, as sources provide slightly different figures (140, 150, over 140) [1, 2, 5].",,
