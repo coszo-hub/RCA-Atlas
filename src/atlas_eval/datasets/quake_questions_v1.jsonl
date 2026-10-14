@@ -1,0 +1,26 @@
+{"id": "qparse-01", "question": "How many Axial earthquakes on 2026-09-24?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-02", "question": "How many Axial earthquakes occurred yesterday?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-03", "question": "How many Axial earthquakes today?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-25", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-04", "question": "Number of Axial Seamount earthquakes on 2026-09-23", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-23", "end": "2026-09-23", "min_mag": null}}
+{"id": "qparse-05", "question": "Count the Axial earthquakes for 2026-09-23.", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-23", "end": "2026-09-23", "min_mag": null}}
+{"id": "qparse-06", "question": "How many earthquakes at Axial between 2026-09-23 and 2026-09-24?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-23", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-07", "question": "How many Axial earthquakes from 2026-09-20 to 2026-09-24?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-20", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-08", "question": "How many earthquakes at Axial since 2026-09-20?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-20", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-09", "question": "How many Axial earthquakes in the last 7 days?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-19", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-10", "question": "How many Axial earthquakes in the past 3 days?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-23", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-11", "question": "How many earthquakes did Axial have last week?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-19", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-12", "question": "How many Axial earthquakes on 2026-09-24 above magnitude 1?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": 1.0}}
+{"id": "qparse-13", "question": "How many Axial earthquakes yesterday with magnitude greater than 0.5?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": 0.5}}
+{"id": "qparse-14", "question": "How many M>1.5 Axial earthquakes since 2026-09-01?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-01", "end": "2026-09-25", "min_mag": 1.5}}
+{"id": "qparse-15", "question": "How many quakes at Axial yesterday?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-16", "question": "How many Axial events were located yesterday?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-17", "question": "Number of Axial Seamount earthquakes on September 24, 2026", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-18", "question": "How many Axial earthquakes on Sept 23?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-23", "end": "2026-09-23", "min_mag": null}}
+{"id": "qparse-19", "question": "How many Axial earthquakes on 9/24/2026?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-24", "end": "2026-09-24", "min_mag": null}}
+{"id": "qparse-20", "question": "How many earthquakes happened at Axial the day before yesterday?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-23", "end": "2026-09-23", "min_mag": null}}
+{"id": "qparse-21", "question": "How many Axial earthquakes in September 2026?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-01", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-22", "question": "How many Axial earthquakes this month?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-01", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-23", "question": "How many Axial earthquakes last month?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-08-01", "end": "2026-08-31", "min_mag": null}}
+{"id": "qparse-24", "question": "What was the number of earthquakes at Axial Seamount today so far?", "now_utc": "2026-09-25T12:00:00Z", "expected": {"start": "2026-09-25", "end": "2026-09-25", "min_mag": null}}
+{"id": "qparse-25", "question": "How many earthquakes has Axial had?", "now_utc": "2026-09-25T12:00:00Z", "expected": null}
+{"id": "qparse-26", "question": "How many earthquakes are there at Axial typically per day?", "now_utc": "2026-09-25T12:00:00Z", "expected": null}

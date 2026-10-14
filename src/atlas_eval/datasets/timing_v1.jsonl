@@ -1,0 +1,60 @@
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [33, 45], "id": "timing-001", "jump_hour": 25, "jump_s": 0.0, "kind": "none", "seed": 2000, "snr": 0.08, "travel_s": 5.238}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-002", "jump_hour": 26, "jump_s": 0.0, "kind": "none", "seed": 2001, "snr": 0.08, "travel_s": 4.254}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-003", "jump_hour": 23, "jump_s": 0.0, "kind": "none", "seed": 2002, "snr": 0.08, "travel_s": 7.277}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-004", "jump_hour": 52, "jump_s": 0.0, "kind": "none", "seed": 2003, "snr": 0.12, "travel_s": 3.415}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-005", "jump_hour": 35, "jump_s": 0.0, "kind": "none", "seed": 2004, "snr": 0.12, "travel_s": 5.661}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-006", "jump_hour": 38, "jump_s": 0.0, "kind": "none", "seed": 2005, "snr": 0.12, "travel_s": 6.165}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-007", "jump_hour": 40, "jump_s": 0.0, "kind": "none", "seed": 2006, "snr": 0.18, "travel_s": 7.168}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [34, 58], "id": "timing-008", "jump_hour": 18, "jump_s": 0.0, "kind": "none", "seed": 2007, "snr": 0.18, "travel_s": 6.439}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-009", "jump_hour": 45, "jump_s": 0.0, "kind": "none", "seed": 2008, "snr": 0.18, "travel_s": 7.319}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-010", "jump_hour": 31, "jump_s": 0.0, "kind": "none", "seed": 2009, "snr": 0.25, "travel_s": 2.878}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-011", "jump_hour": 45, "jump_s": 0.0, "kind": "none", "seed": 2010, "snr": 0.25, "travel_s": 3.083}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-012", "jump_hour": 40, "jump_s": 0.0, "kind": "none", "seed": 2011, "snr": 0.25, "travel_s": 6.359}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-013", "jump_hour": 34, "jump_s": 0.0, "kind": "none", "seed": 2012, "snr": 0.35, "travel_s": 3.046}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [19, 38], "id": "timing-014", "jump_hour": 40, "jump_s": 0.0, "kind": "none", "seed": 2013, "snr": 0.35, "travel_s": 3.262}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [33, 49], "id": "timing-015", "jump_hour": 44, "jump_s": 0.0, "kind": "none", "seed": 2014, "snr": 0.35, "travel_s": 7.471}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-016", "jump_hour": 45, "jump_s": -2.501, "kind": "jump", "seed": 2015, "snr": 0.08, "travel_s": 4.776}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-017", "jump_hour": 27, "jump_s": 3.029, "kind": "jump", "seed": 2016, "snr": 0.08, "travel_s": 7.787}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-018", "jump_hour": 47, "jump_s": -3.906, "kind": "jump", "seed": 2017, "snr": 0.08, "travel_s": 7.623}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-019", "jump_hour": 50, "jump_s": -2.307, "kind": "jump", "seed": 2018, "snr": 0.12, "travel_s": 4.668}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-020", "jump_hour": 30, "jump_s": 3.49, "kind": "jump", "seed": 2019, "snr": 0.12, "travel_s": 2.441}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-021", "jump_hour": 49, "jump_s": 3.815, "kind": "jump", "seed": 2020, "snr": 0.12, "travel_s": 4.544}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-022", "jump_hour": 39, "jump_s": 5.736, "kind": "jump", "seed": 2021, "snr": 0.18, "travel_s": 6.42}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [6, 46], "id": "timing-023", "jump_hour": 40, "jump_s": -1.918, "kind": "jump", "seed": 2022, "snr": 0.18, "travel_s": 3.108}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-024", "jump_hour": 22, "jump_s": -2.492, "kind": "jump", "seed": 2023, "snr": 0.18, "travel_s": 2.072}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-025", "jump_hour": 29, "jump_s": -2.464, "kind": "jump", "seed": 2024, "snr": 0.25, "travel_s": 5.893}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-026", "jump_hour": 47, "jump_s": 3.219, "kind": "jump", "seed": 2025, "snr": 0.25, "travel_s": 7.964}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-027", "jump_hour": 34, "jump_s": -4.38, "kind": "jump", "seed": 2026, "snr": 0.25, "travel_s": 2.663}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-028", "jump_hour": 20, "jump_s": -3.236, "kind": "jump", "seed": 2027, "snr": 0.35, "travel_s": 1.552}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-029", "jump_hour": 44, "jump_s": -4.167, "kind": "jump", "seed": 2028, "snr": 0.35, "travel_s": 4.014}
+{"days": 3, "drift_s_per_day": 0.0, "fs": 8.0, "gap_hours": [], "id": "timing-030", "jump_hour": 32, "jump_s": -1.673, "kind": "jump", "seed": 2029, "snr": 0.35, "travel_s": 6.694}
+{"days": 3, "drift_s_per_day": -0.422, "fs": 8.0, "gap_hours": [], "id": "timing-031", "jump_hour": 48, "jump_s": 0.0, "kind": "drift", "seed": 2030, "snr": 0.08, "travel_s": 4.076}
+{"days": 3, "drift_s_per_day": 0.312, "fs": 8.0, "gap_hours": [], "id": "timing-032", "jump_hour": 51, "jump_s": 0.0, "kind": "drift", "seed": 2031, "snr": 0.08, "travel_s": 4.006}
+{"days": 3, "drift_s_per_day": -0.345, "fs": 8.0, "gap_hours": [], "id": "timing-033", "jump_hour": 32, "jump_s": 0.0, "kind": "drift", "seed": 2032, "snr": 0.08, "travel_s": 4.859}
+{"days": 3, "drift_s_per_day": -0.372, "fs": 8.0, "gap_hours": [], "id": "timing-034", "jump_hour": 40, "jump_s": 0.0, "kind": "drift", "seed": 2033, "snr": 0.12, "travel_s": 2.058}
+{"days": 3, "drift_s_per_day": 0.416, "fs": 8.0, "gap_hours": [6, 31], "id": "timing-035", "jump_hour": 46, "jump_s": 0.0, "kind": "drift", "seed": 2034, "snr": 0.12, "travel_s": 1.85}
+{"days": 3, "drift_s_per_day": 0.425, "fs": 8.0, "gap_hours": [44, 48], "id": "timing-036", "jump_hour": 43, "jump_s": 0.0, "kind": "drift", "seed": 2035, "snr": 0.12, "travel_s": 2.606}
+{"days": 3, "drift_s_per_day": -0.261, "fs": 8.0, "gap_hours": [21, 34], "id": "timing-037", "jump_hour": 36, "jump_s": 0.0, "kind": "drift", "seed": 2036, "snr": 0.18, "travel_s": 7.827}
+{"days": 3, "drift_s_per_day": -0.224, "fs": 8.0, "gap_hours": [38, 49], "id": "timing-038", "jump_hour": 51, "jump_s": 0.0, "kind": "drift", "seed": 2037, "snr": 0.18, "travel_s": 7.346}
+{"days": 3, "drift_s_per_day": 0.494, "fs": 8.0, "gap_hours": [61, 68], "id": "timing-039", "jump_hour": 26, "jump_s": 0.0, "kind": "drift", "seed": 2038, "snr": 0.18, "travel_s": 5.782}
+{"days": 3, "drift_s_per_day": -0.465, "fs": 8.0, "gap_hours": [], "id": "timing-040", "jump_hour": 48, "jump_s": 0.0, "kind": "drift", "seed": 2039, "snr": 0.25, "travel_s": 5.517}
+{"days": 3, "drift_s_per_day": 0.366, "fs": 8.0, "gap_hours": [4, 68], "id": "timing-041", "jump_hour": 19, "jump_s": 0.0, "kind": "drift", "seed": 2040, "snr": 0.25, "travel_s": 5.972}
+{"days": 3, "drift_s_per_day": -0.438, "fs": 8.0, "gap_hours": [], "id": "timing-042", "jump_hour": 21, "jump_s": 0.0, "kind": "drift", "seed": 2041, "snr": 0.25, "travel_s": 5.27}
+{"days": 3, "drift_s_per_day": 0.217, "fs": 8.0, "gap_hours": [15, 19], "id": "timing-043", "jump_hour": 46, "jump_s": 0.0, "kind": "drift", "seed": 2042, "snr": 0.35, "travel_s": 4.968}
+{"days": 3, "drift_s_per_day": 0.259, "fs": 8.0, "gap_hours": [], "id": "timing-044", "jump_hour": 29, "jump_s": 0.0, "kind": "drift", "seed": 2043, "snr": 0.35, "travel_s": 6.95}
+{"days": 3, "drift_s_per_day": 0.451, "fs": 8.0, "gap_hours": [], "id": "timing-045", "jump_hour": 24, "jump_s": 0.0, "kind": "drift", "seed": 2044, "snr": 0.35, "travel_s": 4.451}
+{"days": 3, "drift_s_per_day": 0.343, "fs": 8.0, "gap_hours": [52, 64], "id": "timing-046", "jump_hour": 36, "jump_s": 3.678, "kind": "jump+drift", "seed": 2045, "snr": 0.08, "travel_s": 7.455}
+{"days": 3, "drift_s_per_day": 0.452, "fs": 8.0, "gap_hours": [29, 67], "id": "timing-047", "jump_hour": 25, "jump_s": -1.663, "kind": "jump+drift", "seed": 2046, "snr": 0.08, "travel_s": 4.249}
+{"days": 3, "drift_s_per_day": 0.212, "fs": 8.0, "gap_hours": [], "id": "timing-048", "jump_hour": 22, "jump_s": 3.899, "kind": "jump+drift", "seed": 2047, "snr": 0.08, "travel_s": 4.665}
+{"days": 3, "drift_s_per_day": 0.486, "fs": 8.0, "gap_hours": [6, 67], "id": "timing-049", "jump_hour": 43, "jump_s": -5.477, "kind": "jump+drift", "seed": 2048, "snr": 0.12, "travel_s": 6.56}
+{"days": 3, "drift_s_per_day": -0.108, "fs": 8.0, "gap_hours": [], "id": "timing-050", "jump_hour": 45, "jump_s": -3.472, "kind": "jump+drift", "seed": 2049, "snr": 0.12, "travel_s": 3.792}
+{"days": 3, "drift_s_per_day": -0.113, "fs": 8.0, "gap_hours": [], "id": "timing-051", "jump_hour": 32, "jump_s": -5.697, "kind": "jump+drift", "seed": 2050, "snr": 0.12, "travel_s": 7.003}
+{"days": 3, "drift_s_per_day": -0.204, "fs": 8.0, "gap_hours": [], "id": "timing-052", "jump_hour": 22, "jump_s": -2.796, "kind": "jump+drift", "seed": 2051, "snr": 0.18, "travel_s": 5.183}
+{"days": 3, "drift_s_per_day": -0.256, "fs": 8.0, "gap_hours": [55, 62], "id": "timing-053", "jump_hour": 48, "jump_s": 4.624, "kind": "jump+drift", "seed": 2052, "snr": 0.18, "travel_s": 3.94}
+{"days": 3, "drift_s_per_day": 0.446, "fs": 8.0, "gap_hours": [], "id": "timing-054", "jump_hour": 22, "jump_s": -4.632, "kind": "jump+drift", "seed": 2053, "snr": 0.18, "travel_s": 6.475}
+{"days": 3, "drift_s_per_day": -0.429, "fs": 8.0, "gap_hours": [], "id": "timing-055", "jump_hour": 23, "jump_s": 3.665, "kind": "jump+drift", "seed": 2054, "snr": 0.25, "travel_s": 4.772}
+{"days": 3, "drift_s_per_day": -0.419, "fs": 8.0, "gap_hours": [], "id": "timing-056", "jump_hour": 50, "jump_s": 5.978, "kind": "jump+drift", "seed": 2055, "snr": 0.25, "travel_s": 6.368}
+{"days": 3, "drift_s_per_day": -0.223, "fs": 8.0, "gap_hours": [26, 35], "id": "timing-057", "jump_hour": 47, "jump_s": -3.74, "kind": "jump+drift", "seed": 2056, "snr": 0.25, "travel_s": 6.994}
+{"days": 3, "drift_s_per_day": -0.286, "fs": 8.0, "gap_hours": [], "id": "timing-058", "jump_hour": 49, "jump_s": -2.963, "kind": "jump+drift", "seed": 2057, "snr": 0.35, "travel_s": 7.706}
+{"days": 3, "drift_s_per_day": -0.228, "fs": 8.0, "gap_hours": [], "id": "timing-059", "jump_hour": 51, "jump_s": -2.757, "kind": "jump+drift", "seed": 2058, "snr": 0.35, "travel_s": 5.346}
+{"days": 3, "drift_s_per_day": -0.46, "fs": 8.0, "gap_hours": [], "id": "timing-060", "jump_hour": 53, "jump_s": -5.48, "kind": "jump+drift", "seed": 2059, "snr": 0.35, "travel_s": 3.316}
