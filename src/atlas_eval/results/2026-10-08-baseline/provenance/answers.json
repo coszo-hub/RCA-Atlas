@@ -1,0 +1,21 @@
+{
+  "suite": "answers",
+  "title": "End-to-end answers (Ask Atlas)",
+  "dataset": "answers_extra_v1.jsonl",
+  "dataset_sha256": "405663a49ba172671376ce8b0770bcb054bb4c6cb2aa33e89c7b09b9e329ee4f",
+  "n_cases": 72,
+  "n_errors": 25,
+  "ran_utc": "2026-10-08T22:51:56.083977+00:00",
+  "git": {
+    "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+    "branch": "rca-atlas-eval-suite",
+    "dirty": true
+  },
+  "context": {
+    "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+    "model": null,
+    "pace_s": 6.0,
+    "agent": "oracle",
+    "agent_model": "haiku"
+  }
+}

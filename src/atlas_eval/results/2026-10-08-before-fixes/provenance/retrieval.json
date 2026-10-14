@@ -1,0 +1,21 @@
+{
+  "suite": "retrieval",
+  "title": "Evidence retrieval (Graph-RAG hits)",
+  "dataset": "../../model_eval/datasets/rca_eval_v1.jsonl",
+  "dataset_sha256": "e21437c05912dcee3b355b0cf644adc74de947078cd6fa503a0107cdb5e90476",
+  "n_cases": 60,
+  "n_errors": 1,
+  "ran_utc": "2026-10-08T22:37:41.143749+00:00",
+  "git": {
+    "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+    "branch": "rca-atlas-eval-suite",
+    "dirty": true
+  },
+  "context": {
+    "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+    "model": null,
+    "pace_s": 6.0,
+    "agent": "oracle",
+    "agent_model": "haiku"
+  }
+}

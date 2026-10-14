@@ -1,0 +1,21 @@
+{
+  "suite": "agent",
+  "title": "Agentic sandbox tasks (scripted oracle)",
+  "dataset": "agent_tasks_v1.jsonl",
+  "dataset_sha256": "b4be9abc5ea84439704c4820c40aca62d03dc491c7c3f99b3aed049153361cc7",
+  "n_cases": 21,
+  "n_errors": 0,
+  "ran_utc": "2026-10-14T21:59:56.529301+00:00",
+  "git": {
+    "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+    "branch": "rca-atlas-eval-suite",
+    "dirty": true
+  },
+  "context": {
+    "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+    "model": null,
+    "pace_s": 6.0,
+    "agent": "oracle",
+    "agent_model": "haiku"
+  }
+}

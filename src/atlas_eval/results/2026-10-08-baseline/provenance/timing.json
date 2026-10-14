@@ -1,0 +1,21 @@
+{
+  "suite": "timing",
+  "title": "Clock-error recovery (CCF, peak lag, \u0394t)",
+  "dataset": "timing_v1.jsonl",
+  "dataset_sha256": "0a7e3efec628c92696b1974eb65157f18f8f5dfbe5bf6a3447d444876d547ece",
+  "n_cases": 60,
+  "n_errors": 0,
+  "ran_utc": "2026-10-14T22:01:50.269026+00:00",
+  "git": {
+    "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+    "branch": "rca-atlas-eval-suite",
+    "dirty": true
+  },
+  "context": {
+    "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+    "model": null,
+    "pace_s": 6.0,
+    "agent": "oracle",
+    "agent_model": "haiku"
+  }
+}

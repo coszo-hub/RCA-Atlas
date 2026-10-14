@@ -1,0 +1,21 @@
+{
+  "suite": "quakes",
+  "title": "Earthquake catalog: counts, filters, histograms",
+  "dataset": "quakes_v1.jsonl",
+  "dataset_sha256": "bdf6508449f959cfb77283654d8ad933fa0da3ce2fbe256f1458d72148646ed3",
+  "n_cases": 35,
+  "n_errors": 0,
+  "ran_utc": "2026-10-08T22:36:36.299689+00:00",
+  "git": {
+    "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+    "branch": "rca-atlas-eval-suite",
+    "dirty": true
+  },
+  "context": {
+    "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+    "model": null,
+    "pace_s": 6.0,
+    "agent": "oracle",
+    "agent_model": "haiku"
+  }
+}

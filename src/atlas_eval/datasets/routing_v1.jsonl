@@ -1,0 +1,156 @@
+{"id": "route-001", "question": "How many Axial earthquakes occurred yesterday?", "task": "earthquake_count", "difficulty": "easy", "split": "dev"}
+{"id": "route-002", "question": "How many earthquakes were there at Axial Seamount on 2026-09-24?", "task": "earthquake_count", "difficulty": "easy", "split": "test"}
+{"id": "route-003", "question": "Number of Axial earthquakes today", "task": "earthquake_count", "difficulty": "easy", "split": "test"}
+{"id": "route-004", "question": "Count the Axial Seamount earthquakes for 2026-09-23.", "task": "earthquake_count", "difficulty": "easy", "split": "test"}
+{"id": "route-005", "question": "How seismically active was Axial yesterday \u2014 how many events?", "task": "earthquake_count", "difficulty": "hard", "split": "dev"}
+{"id": "route-006", "question": "What was the event total in the Axial hypo71 catalog on September 23, 2026?", "task": "earthquake_count", "difficulty": "hard", "split": "dev"}
+{"id": "route-007", "question": "How many quakes did the caldera have today so far?", "task": "earthquake_count", "difficulty": "hard", "split": "dev"}
+{"id": "route-008", "question": "How many earthquakes at Axial between 2026-09-01 and 2026-09-07?", "task": "earthquake_count", "difficulty": "easy", "split": "dev"}
+{"id": "route-009", "question": "Total number of located events at Axial last week?", "task": "earthquake_count", "difficulty": "hard", "split": "test"}
+{"id": "route-010", "question": "How many Axial earthquakes above magnitude 1 happened on 2026-09-24?", "task": "earthquake_count", "difficulty": "easy", "split": "test"}
+{"id": "route-011", "question": "Give me the count of M>0.5 Axial events since September 20.", "task": "earthquake_count", "difficulty": "hard", "split": "test"}
+{"id": "route-012", "question": "Did Axial have more than 100 earthquakes yesterday?", "task": "earthquake_count", "difficulty": "hard", "split": "test"}
+{"id": "route-013", "question": "Make a histogram of Axial earthquakes per day for September 2026.", "task": "earthquake_histogram", "difficulty": "easy", "split": "dev"}
+{"id": "route-014", "question": "Create a histogram of Axial event magnitudes for 2026-09-20 to 2026-09-25.", "task": "earthquake_histogram", "difficulty": "easy", "split": "dev"}
+{"id": "route-015", "question": "Plot daily earthquake counts at Axial for the last two weeks.", "task": "earthquake_histogram", "difficulty": "easy", "split": "test"}
+{"id": "route-016", "question": "Show me how Axial seismicity rates changed day by day over the past month.", "task": "earthquake_histogram", "difficulty": "hard", "split": "test"}
+{"id": "route-017", "question": "What is the magnitude distribution of Axial earthquakes in September?", "task": "earthquake_histogram", "difficulty": "easy", "split": "test"}
+{"id": "route-018", "question": "Bin the Axial events by hour for 2026-09-24.", "task": "earthquake_histogram", "difficulty": "hard", "split": "dev"}
+{"id": "route-019", "question": "Which day in the last 10 days had the most Axial earthquakes?", "task": "earthquake_histogram", "difficulty": "hard", "split": "dev"}
+{"id": "route-020", "question": "Give me a panel of earthquake counts per day between 2026-09-01 and 2026-09-30.", "task": "earthquake_histogram", "difficulty": "easy", "split": "test"}
+{"id": "route-021", "question": "Summarize Axial seismic activity from Sept 15 to Sept 25 with daily counts.", "task": "earthquake_histogram", "difficulty": "hard", "split": "test"}
+{"id": "route-022", "question": "Chart the number of quakes per week at Axial Seamount this year.", "task": "earthquake_histogram", "difficulty": "hard", "split": "test"}
+{"id": "route-023", "question": "List Axial earthquakes on 2026-09-18.", "task": "earthquake_search", "difficulty": "easy", "split": "dev"}
+{"id": "route-024", "question": "Show a map of yesterday's Axial earthquakes.", "task": "earthquake_search", "difficulty": "easy", "split": "test"}
+{"id": "route-025", "question": "What was the largest Axial earthquake on 2026-09-24?", "task": "earthquake_search", "difficulty": "easy", "split": "test"}
+{"id": "route-026", "question": "Find focal mechanisms for Axial earthquakes in March 2026.", "task": "earthquake_search", "difficulty": "easy", "split": "dev"}
+{"id": "route-027", "question": "Where were the deepest events under the caldera last week located?", "task": "earthquake_search", "difficulty": "hard", "split": "test"}
+{"id": "route-028", "question": "Give me the P and S arrival picks for Axial event 573507.", "task": "earthquake_search", "difficulty": "hard", "split": "test"}
+{"id": "route-029", "question": "Show the details of Axial earthquake ID 573835.", "task": "earthquake_search", "difficulty": "easy", "split": "dev"}
+{"id": "route-030", "question": "Which Axial events yesterday were above M1.5 and where?", "task": "earthquake_search", "difficulty": "hard", "split": "test"}
+{"id": "route-031", "question": "Retrieve the current Axial caldera earthquake map.", "task": "earthquake_search", "difficulty": "easy", "split": "dev"}
+{"id": "route-032", "question": "Were there any normal-faulting events at Axial this month?", "task": "earthquake_search", "difficulty": "hard", "split": "test"}
+{"id": "route-033", "question": "Does HYS14 have a clock error, and how big is it?", "task": "timing_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-034", "question": "Compute cross-correlations between HYS12 and HYS14 to check timing.", "task": "timing_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-035", "question": "Compute peak lags for the HYS12-HYS14 pair to correct timing errors.", "task": "timing_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-036", "question": "Apply the clock correction to HYS14 BHZ data.", "task": "timing_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-037", "question": "What clock correction applies to HYS14?", "task": "timing_correction", "difficulty": "easy", "split": "test"}
+{"id": "route-038", "question": "The OBS timestamps seem shifted by a few seconds relative to its neighbour; how do I fix that?", "task": "timing_correction", "difficulty": "hard", "split": "test"}
+{"id": "route-039", "question": "Detect timing jumps in the ambient-noise peak-lag track for HYS14.", "task": "timing_correction", "difficulty": "hard", "split": "test"}
+{"id": "route-040", "question": "Is the seismometer at Hydrate Ridge keeping accurate time?", "task": "timing_correction", "difficulty": "hard", "split": "dev"}
+{"id": "route-041", "question": "Run the chronos pipeline on HYS11 and HYS14.", "task": "timing_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-042", "question": "Convert an apparent HYS14 timestamp to true UTC.", "task": "timing_correction", "difficulty": "hard", "split": "test"}
+{"id": "route-043", "question": "Estimate the drift of the station clock from noise correlations.", "task": "timing_correction", "difficulty": "hard", "split": "dev"}
+{"id": "route-044", "question": "Perform cross correlation of ambient noise between two OBS stations.", "task": "timing_correction", "difficulty": "easy", "split": "test"}
+{"id": "route-045", "question": "Compute dv/v at Axial from ambient-noise cross-correlations.", "task": "dvv_monitoring", "difficulty": "easy", "split": "dev"}
+{"id": "route-046", "question": "Measure seismic velocity changes with the stretching method.", "task": "dvv_monitoring", "difficulty": "easy", "split": "dev"}
+{"id": "route-047", "question": "Use MWCS to estimate dv/v between the reference and daily CCFs.", "task": "dvv_monitoring", "difficulty": "easy", "split": "dev"}
+{"id": "route-048", "question": "Run dynamic time warping to get velocity changes for AXCC1-AXEC2.", "task": "dvv_monitoring", "difficulty": "easy", "split": "dev"}
+{"id": "route-049", "question": "Has the crust under the caldera weakened before the next eruption? Track relative velocity.", "task": "dvv_monitoring", "difficulty": "hard", "split": "test"}
+{"id": "route-050", "question": "How much did seismic velocity drop after the 2015 eruption?", "task": "dvv_monitoring", "difficulty": "hard", "split": "test"}
+{"id": "route-051", "question": "Compare stretching and DTW velocity change estimates for September.", "task": "dvv_monitoring", "difficulty": "hard", "split": "dev"}
+{"id": "route-052", "question": "What is the dv/v time series for the Axial summit stations?", "task": "dvv_monitoring", "difficulty": "easy", "split": "test"}
+{"id": "route-053", "question": "Monitor medium changes using coda-wave interferometry at Axial.", "task": "dvv_monitoring", "difficulty": "hard", "split": "dev"}
+{"id": "route-054", "question": "Estimate the relative velocity change of the coda between two months.", "task": "dvv_monitoring", "difficulty": "hard", "split": "dev"}
+{"id": "route-055", "question": "Find the A0A calibration sequences in the Axial pressure record and apply calibration.", "task": "pressure_calibration", "difficulty": "easy", "split": "test"}
+{"id": "route-056", "question": "Apply the SCPR calibration to the Central Caldera pressure data.", "task": "pressure_calibration", "difficulty": "easy", "split": "test"}
+{"id": "route-057", "question": "How does the ambient-zero-ambient calibration work?", "task": "pressure_calibration", "difficulty": "easy", "split": "test"}
+{"id": "route-058", "question": "Compute the A-0-A offsets and fit the drift.", "task": "pressure_calibration", "difficulty": "easy", "split": "test"}
+{"id": "route-059", "question": "Correct the self-calibrating pressure recorder for drift using its piston-gauge references.", "task": "pressure_calibration", "difficulty": "hard", "split": "dev"}
+{"id": "route-060", "question": "When were the zero-pressure checks done on the BOTPT A0A gauge?", "task": "pressure_calibration", "difficulty": "hard", "split": "dev"}
+{"id": "route-061", "question": "Use the calibration sequences to remove sensor drift from the self-calibrating gauge.", "task": "pressure_calibration", "difficulty": "hard", "split": "dev"}
+{"id": "route-062", "question": "Where can I find A0A calibration results?", "task": "pressure_calibration", "difficulty": "easy", "split": "dev"}
+{"id": "route-063", "question": "What is the drift rate measured by the A-0-A at Axial?", "task": "pressure_calibration", "difficulty": "hard", "split": "dev"}
+{"id": "route-064", "question": "Calibrate the SCPR record against its deadweight tester.", "task": "pressure_calibration", "difficulty": "hard", "split": "dev"}
+{"id": "route-065", "question": "Calculate the linear drift of the PREST pressure sensor.", "task": "drift_correction", "difficulty": "easy", "split": "test"}
+{"id": "route-066", "question": "Apply the known drift values to the non self-calibrating pressure sensor.", "task": "drift_correction", "difficulty": "easy", "split": "test"}
+{"id": "route-067", "question": "Apply a drift correction of 2 kPa per year to the bottom pressure record.", "task": "drift_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-068", "question": "The pressure gauge at Southern Hydrate Ridge has a slow trend; remove it.", "task": "drift_correction", "difficulty": "hard", "split": "test"}
+{"id": "route-069", "question": "Detrend the BOTPT pressure record after removing tides.", "task": "drift_correction", "difficulty": "hard", "split": "dev"}
+{"id": "route-070", "question": "How fast is the uncalibrated pressure sensor drifting?", "task": "drift_correction", "difficulty": "hard", "split": "dev"}
+{"id": "route-071", "question": "Estimate and remove linear sensor drift from the seafloor pressure data.", "task": "drift_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-072", "question": "Correct the Axial Base pressure for instrument drift using the rate from the A0A sensor.", "task": "drift_correction", "difficulty": "hard", "split": "dev"}
+{"id": "route-073", "question": "Is the pressure trend at Axial Base real uplift or sensor drift?", "task": "drift_correction", "difficulty": "hard", "split": "test"}
+{"id": "route-074", "question": "Remove the linear drift from the tidal pressure gauge data.", "task": "drift_correction", "difficulty": "easy", "split": "dev"}
+{"id": "route-075", "question": "Are there data gaps in the PREST record for September?", "task": "gap_diagnosis", "difficulty": "easy", "split": "test"}
+{"id": "route-076", "question": "Diagnose the type of error in this pressure time series.", "task": "gap_diagnosis", "difficulty": "easy", "split": "dev"}
+{"id": "route-077", "question": "Detect gaps in the HYS14 MHZ data for 2026-09-24.", "task": "gap_diagnosis", "difficulty": "easy", "split": "dev"}
+{"id": "route-078", "question": "Find missing samples and timing jitter in the VEL3D record.", "task": "gap_diagnosis", "difficulty": "easy", "split": "test"}
+{"id": "route-079", "question": "The plot has flat lines and holes; what is wrong with the data?", "task": "gap_diagnosis", "difficulty": "hard", "split": "test"}
+{"id": "route-080", "question": "Why are there zeros in the merged MiniSEED day file?", "task": "gap_diagnosis", "difficulty": "hard", "split": "dev"}
+{"id": "route-081", "question": "Check the timestamps of this record for duplicates or backwards steps.", "task": "gap_diagnosis", "difficulty": "hard", "split": "dev"}
+{"id": "route-082", "question": "How many samples are missing from the pressure record?", "task": "gap_diagnosis", "difficulty": "easy", "split": "dev"}
+{"id": "route-083", "question": "Is this a data gap or a timing error?", "task": "gap_diagnosis", "difficulty": "hard", "split": "dev"}
+{"id": "route-084", "question": "Fill the gaps in the bottom pressure series with NaN on a regular grid.", "task": "gap_diagnosis", "difficulty": "easy", "split": "dev"}
+{"id": "route-085", "question": "What QA/QC capabilities are available for RCA data?", "task": "qaqc", "difficulty": "easy", "split": "dev"}
+{"id": "route-086", "question": "Find current QA/QC plots for PREST.", "task": "qaqc", "difficulty": "easy", "split": "test"}
+{"id": "route-087", "question": "Generate a missing QA/QC plot for an RCA stream.", "task": "qaqc", "difficulty": "easy", "split": "test"}
+{"id": "route-088", "question": "Run QARTOD gross range tests on the CTD.", "task": "qaqc", "difficulty": "easy", "split": "dev"}
+{"id": "route-089", "question": "Do existing public plots prove that an instrument passed QA/QC?", "task": "qaqc", "difficulty": "hard", "split": "dev"}
+{"id": "route-090", "question": "Summarize human-in-the-loop notes for the Oregon Offshore CTD.", "task": "qaqc", "difficulty": "hard", "split": "dev"}
+{"id": "route-091", "question": "Show the QA/QC dashboard plot of dissolved oxygen at Axial Base.", "task": "qaqc", "difficulty": "easy", "split": "test"}
+{"id": "route-092", "question": "Which stuck-value or climatology flags were raised for pH at Slope Base?", "task": "qaqc", "difficulty": "hard", "split": "test"}
+{"id": "route-093", "question": "Plan a QA/QC pipeline run for the Axial Base site.", "task": "qaqc", "difficulty": "easy", "split": "dev"}
+{"id": "route-094", "question": "Has a data quality reviewer flagged the Hydrate Ridge ADCP?", "task": "qaqc", "difficulty": "hard", "split": "test"}
+{"id": "route-095", "question": "What is the current operational status of the Axial Base node?", "task": "operational_status", "difficulty": "easy", "split": "dev"}
+{"id": "route-096", "question": "Is the COVIS instrument online right now?", "task": "operational_status", "difficulty": "easy", "split": "dev"}
+{"id": "route-097", "question": "Show Nereus power history for the Southern Hydrate Ridge node.", "task": "operational_status", "difficulty": "easy", "split": "dev"}
+{"id": "route-098", "question": "Is anything broken on the cabled array today?", "task": "operational_status", "difficulty": "hard", "split": "dev"}
+{"id": "route-099", "question": "Retrieve current Nereus alerts and operational notes for an RCA node.", "task": "operational_status", "difficulty": "easy", "split": "dev"}
+{"id": "route-100", "question": "When did the Slope Base junction box last lose power?", "task": "operational_status", "difficulty": "hard", "split": "dev"}
+{"id": "route-101", "question": "Is the HYS14 seismometer currently recording?", "task": "operational_status", "difficulty": "easy", "split": "dev"}
+{"id": "route-102", "question": "What engineering telemetry is available for the primary node at Axial?", "task": "operational_status", "difficulty": "hard", "split": "test"}
+{"id": "route-103", "question": "Has Axial Seamount erupted yet?", "task": "operational_status", "difficulty": "hard", "split": "test"}
+{"id": "route-104", "question": "Check the status of the BOTPT at the Central Caldera.", "task": "operational_status", "difficulty": "easy", "split": "test"}
+{"id": "route-105", "question": "Where can I download MARUM CTD-DO data?", "task": "data_download", "difficulty": "easy", "split": "test"}
+{"id": "route-106", "question": "How do I download MultiDAS data?", "task": "data_download", "difficulty": "easy", "split": "dev"}
+{"id": "route-107", "question": "Where can I obtain PREST data?", "task": "data_download", "difficulty": "easy", "split": "dev"}
+{"id": "route-108", "question": "Download one EarthScope MiniSEED waveform for HYS14 for one hour.", "task": "data_download", "difficulty": "easy", "split": "test"}
+{"id": "route-109", "question": "Which RCA waveform data can be obtained from EarthScope?", "task": "data_download", "difficulty": "easy", "split": "dev"}
+{"id": "route-110", "question": "I need the OptoDAS HDF5 files from 2025.", "task": "data_download", "difficulty": "hard", "split": "dev"}
+{"id": "route-111", "question": "Plan an OOI M2M request for a known RCA reference designator.", "task": "data_download", "difficulty": "easy", "split": "dev"}
+{"id": "route-112", "question": "Get me the raw COVIS imaging files from the PI portal.", "task": "data_download", "difficulty": "hard", "split": "dev"}
+{"id": "route-113", "question": "List available datasets for Axial Base.", "task": "data_download", "difficulty": "easy", "split": "test"}
+{"id": "route-114", "question": "Can I access multi-span DAS recordings?", "task": "data_download", "difficulty": "hard", "split": "test"}
+{"id": "route-115", "question": "Where are the A0A processed NetCDF files?", "task": "data_download", "difficulty": "easy", "split": "test"}
+{"id": "route-116", "question": "Pull a week of bottom pressure from ERDDAP.", "task": "data_download", "difficulty": "hard", "split": "dev"}
+{"id": "route-117", "question": "What instruments are on Southern Hydrate Ridge?", "task": "instrument_inventory", "difficulty": "easy", "split": "dev"}
+{"id": "route-118", "question": "Which sensors are deployed at Axial Base?", "task": "instrument_inventory", "difficulty": "easy", "split": "dev"}
+{"id": "route-119", "question": "List the instruments at the Central Caldera.", "task": "instrument_inventory", "difficulty": "easy", "split": "test"}
+{"id": "route-120", "question": "What equipment sits on the seafloor at Slope Base?", "task": "instrument_inventory", "difficulty": "hard", "split": "test"}
+{"id": "route-121", "question": "Which instruments are associated with Hydrate Ridge?", "task": "instrument_inventory", "difficulty": "easy", "split": "dev"}
+{"id": "route-122", "question": "What is deployed at the ASHES vent field?", "task": "instrument_inventory", "difficulty": "hard", "split": "dev"}
+{"id": "route-123", "question": "What can I measure at the Oregon Offshore site?", "task": "instrument_inventory", "difficulty": "hard", "split": "dev"}
+{"id": "route-124", "question": "Which RCA instruments measure seafloor pressure?", "task": "instrument_inventory", "difficulty": "easy", "split": "dev"}
+{"id": "route-125", "question": "What seismometers are on the Axial summit?", "task": "instrument_inventory", "difficulty": "hard", "split": "test"}
+{"id": "route-126", "question": "What sensors are located at the Eastern Caldera?", "task": "instrument_inventory", "difficulty": "easy", "split": "dev"}
+{"id": "route-127", "question": "What is the PREST instrument and what does it measure?", "task": "instrument_info", "difficulty": "easy", "split": "test"}
+{"id": "route-128", "question": "What capabilities does the COVIS instrument provide?", "task": "instrument_info", "difficulty": "easy", "split": "test"}
+{"id": "route-129", "question": "Describe the HYS14 ocean-bottom seismometer.", "task": "instrument_info", "difficulty": "easy", "split": "dev"}
+{"id": "route-130", "question": "What is CTDPFA110?", "task": "instrument_info", "difficulty": "easy", "split": "test"}
+{"id": "route-131", "question": "What does a BOTPT do?", "task": "instrument_info", "difficulty": "hard", "split": "test"}
+{"id": "route-132", "question": "What is the sample rate of the broadband hydrophone?", "task": "instrument_info", "difficulty": "easy", "split": "test"}
+{"id": "route-133", "question": "Tell me about the tidal pressure gauge at Axial Base.", "task": "instrument_info", "difficulty": "hard", "split": "dev"}
+{"id": "route-134", "question": "What is RS03AXBS-MJ03A-06-PRESTA301?", "task": "instrument_info", "difficulty": "easy", "split": "test"}
+{"id": "route-135", "question": "How does the 3-D single-point velocity meter work?", "task": "instrument_info", "difficulty": "hard", "split": "test"}
+{"id": "route-136", "question": "Where is PREST deployed and which site and node are related to it?", "task": "instrument_info", "difficulty": "easy", "split": "test"}
+{"id": "route-137", "question": "What papers describe the 2015 Axial Seamount eruption?", "task": "literature", "difficulty": "easy", "split": "test"}
+{"id": "route-138", "question": "Find publications that used COVIS data.", "task": "literature", "difficulty": "easy", "split": "test"}
+{"id": "route-139", "question": "Which studies used the A-0-A pressure method at Axial?", "task": "literature", "difficulty": "easy", "split": "test"}
+{"id": "route-140", "question": "What did Wilcock et al. find about Axial's inflation?", "task": "literature", "difficulty": "hard", "split": "dev"}
+{"id": "route-141", "question": "What exact methods did the selected Axial paper use when its abstract does not say?", "task": "literature", "difficulty": "hard", "split": "test"}
+{"id": "route-142", "question": "List literature on ambient noise monitoring at Axial Seamount.", "task": "literature", "difficulty": "easy", "split": "test"}
+{"id": "route-143", "question": "Who has published on methane seeps at Hydrate Ridge using cabled data?", "task": "literature", "difficulty": "hard", "split": "test"}
+{"id": "route-144", "question": "Find the DOI of the paper on the Axial 2015 eruption forecast.", "task": "literature", "difficulty": "easy", "split": "dev"}
+{"id": "route-145", "question": "Summarize recent research on DAS at the Regional Cabled Array.", "task": "literature", "difficulty": "hard", "split": "dev"}
+{"id": "route-146", "question": "Which papers cite the OOI Regional Cabled Array as a data source for hydrothermal plumes?", "task": "literature", "difficulty": "hard", "split": "dev"}
+{"id": "route-147", "question": "How are RCA sites, nodes, and instruments connected?", "task": "general_research", "difficulty": "easy", "split": "test"}
+{"id": "route-148", "question": "What causes the inflation at Axial Seamount?", "task": "general_research", "difficulty": "easy", "split": "dev"}
+{"id": "route-149", "question": "Why does seafloor pressure change before an eruption?", "task": "general_research", "difficulty": "hard", "split": "dev"}
+{"id": "route-150", "question": "What is the Regional Cabled Array?", "task": "general_research", "difficulty": "easy", "split": "dev"}
+{"id": "route-151", "question": "What is the difference between PRESWAT and SFLPRES?", "task": "general_research", "difficulty": "hard", "split": "test"}
+{"id": "route-152", "question": "What is COSZO?", "task": "general_research", "difficulty": "easy", "split": "test"}
+{"id": "route-153", "question": "How do tides affect bottom pressure measurements?", "task": "general_research", "difficulty": "hard", "split": "dev"}
+{"id": "route-154", "question": "What is known about the magma reservoir under Axial?", "task": "general_research", "difficulty": "hard", "split": "test"}
+{"id": "route-155", "question": "Explain what hydrothermal vents are and where they are on the RCA.", "task": "general_research", "difficulty": "easy", "split": "dev"}
+{"id": "route-156", "question": "When is Axial Seamount expected to erupt next?", "task": "general_research", "difficulty": "hard", "split": "test"}

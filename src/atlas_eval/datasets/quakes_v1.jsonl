@@ -1,0 +1,35 @@
+{"by": "day", "end": "2026-09-23", "id": "quakes-real-01", "source": "fixture", "start": "2026-09-23"}
+{"by": "day", "end": "2026-09-24", "id": "quakes-real-02", "source": "fixture", "start": "2026-09-24"}
+{"by": "day", "end": "2026-09-25", "id": "quakes-real-03", "source": "fixture", "start": "2026-09-25"}
+{"by": "day", "end": "2026-09-25", "id": "quakes-real-04", "source": "fixture", "start": "2026-09-23"}
+{"by": "day", "end": "2026-09-25", "id": "quakes-real-05", "source": "fixture", "start": "2026-09-22"}
+{"by": "day", "end": "2026-09-24", "filter": {"min_mag": 0.5}, "id": "quakes-real-06", "source": "fixture", "start": "2026-09-24"}
+{"by": "day", "end": "2026-09-24", "filter": {"min_mag": 1.0}, "id": "quakes-real-07", "source": "fixture", "start": "2026-09-23"}
+{"by": "day", "end": "2026-09-25", "filter": {"max_depth_km": 1.5}, "id": "quakes-real-08", "source": "fixture", "start": "2026-09-23"}
+{"by": "day", "end": "2026-09-24", "filter": {"max_mag": 0.5, "min_mag": 0.0}, "id": "quakes-real-09", "source": "fixture", "start": "2026-09-23"}
+{"by": "magnitude", "end": "2026-09-25", "id": "quakes-real-10", "source": "fixture", "start": "2026-09-23"}
+{"by": "hour", "end": "2026-09-24", "id": "quakes-real-11", "source": "fixture", "start": "2026-09-24"}
+{"by": "day", "edge": "none", "end": "2026-08-01", "id": "quakes-synth-01", "seed": 5000, "source": "synthetic", "start": "2026-08-01"}
+{"by": "day", "edge": "rollover", "end": "2026-08-02", "id": "quakes-synth-02", "seed": 5001, "source": "synthetic", "start": "2026-08-02"}
+{"by": "day", "edge": "negative", "end": "2026-08-03", "id": "quakes-synth-03", "seed": 5002, "source": "synthetic", "start": "2026-08-03"}
+{"by": "day", "edge": "short_rows", "end": "2026-08-04", "id": "quakes-synth-04", "seed": 5003, "source": "synthetic", "start": "2026-08-04"}
+{"by": "day", "edge": "other_day", "end": "2026-08-05", "id": "quakes-synth-05", "seed": 5004, "source": "synthetic", "start": "2026-08-05"}
+{"by": "day", "edge": "bad_number", "end": "2026-08-06", "id": "quakes-synth-06", "seed": 5005, "source": "synthetic", "start": "2026-08-06"}
+{"by": "day", "edge": "crlf", "end": "2026-08-07", "id": "quakes-synth-07", "seed": 5006, "source": "synthetic", "start": "2026-08-07"}
+{"by": "day", "edge": "blank_lines", "end": "2026-08-08", "id": "quakes-synth-08", "seed": 5007, "source": "synthetic", "start": "2026-08-08"}
+{"by": "day", "edge": "none", "end": "2026-08-09", "id": "quakes-synth-09", "seed": 5008, "source": "synthetic", "start": "2026-08-09"}
+{"by": "day", "edge": "rollover", "end": "2026-08-10", "id": "quakes-synth-10", "seed": 5009, "source": "synthetic", "start": "2026-08-10"}
+{"by": "day", "edge": "negative", "end": "2026-08-11", "id": "quakes-synth-11", "seed": 5010, "source": "synthetic", "start": "2026-08-11"}
+{"by": "day", "edge": "short_rows", "end": "2026-08-12", "id": "quakes-synth-12", "seed": 5011, "source": "synthetic", "start": "2026-08-12"}
+{"by": "day", "edge": "other_day", "end": "2026-08-13", "id": "quakes-synth-13", "seed": 5012, "source": "synthetic", "start": "2026-08-13"}
+{"by": "day", "edge": "bad_number", "end": "2026-08-14", "id": "quakes-synth-14", "seed": 5013, "source": "synthetic", "start": "2026-08-14"}
+{"by": "day", "edge": "crlf", "end": "2026-08-15", "id": "quakes-synth-15", "seed": 5014, "source": "synthetic", "start": "2026-08-15"}
+{"by": "day", "edge": "blank_lines", "end": "2026-08-16", "id": "quakes-synth-16", "seed": 5015, "source": "synthetic", "start": "2026-08-16"}
+{"by": "day", "edge": "none", "end": "2026-08-17", "id": "quakes-synth-17", "seed": 5016, "source": "synthetic", "start": "2026-08-17"}
+{"by": "day", "edge": "rollover", "end": "2026-08-18", "id": "quakes-synth-18", "seed": 5017, "source": "synthetic", "start": "2026-08-18"}
+{"by": "day", "edge": "negative", "end": "2026-08-19", "id": "quakes-synth-19", "seed": 5018, "source": "synthetic", "start": "2026-08-19"}
+{"by": "day", "edge": "short_rows", "end": "2026-08-20", "id": "quakes-synth-20", "seed": 5019, "source": "synthetic", "start": "2026-08-20"}
+{"by": "day", "edge": "other_day", "end": "2026-08-21", "id": "quakes-synth-21", "seed": 5020, "source": "synthetic", "start": "2026-08-21"}
+{"by": "day", "edge": "bad_number", "end": "2026-08-22", "id": "quakes-synth-22", "seed": 5021, "source": "synthetic", "start": "2026-08-22"}
+{"by": "day", "edge": "crlf", "end": "2026-08-23", "id": "quakes-synth-23", "seed": 5022, "source": "synthetic", "start": "2026-08-23"}
+{"by": "day", "edge": "blank_lines", "end": "2026-08-24", "id": "quakes-synth-24", "seed": 5023, "source": "synthetic", "start": "2026-08-24"}

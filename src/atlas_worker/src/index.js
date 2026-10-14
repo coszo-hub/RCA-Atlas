@@ -89,7 +89,7 @@ function cleanAnswer(answer) {
   return String(answer || "").replace(/^\s*[*•]\s+/gm, "- ").trim();
 }
 
-function isInstrumentInventoryQuestion(question) {
+export function isInstrumentInventoryQuestion(question) {
   const q = String(question || "").toLowerCase();
   return /\b(sensor|sensors|instrument|instruments|equipment)\b/.test(q) &&
     /\b(site|location|located|deployed|seafloor|southern hydrate ridge|hydrate ridge)\b/.test(q);
@@ -109,7 +109,7 @@ function prioritizedHits(context, question, limit = 6) {
   }).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, limit).map(({ hit }) => hit);
 }
 
-function answerMode(question) {
+export function answerMode(question) {
   const q = String(question || "").toLowerCase();
   // These questions need an inventory or a route to data, not a narrative
   // research synthesis. Keep the classifier deliberately narrow so broad
@@ -122,7 +122,7 @@ function answerMode(question) {
   return "research";
 }
 
-function namedDataProduct(question) {
+export function namedDataProduct(question) {
   const q = String(question || "").toLowerCase();
   for (const product of ["multidas", "optodas", "das25", "das24", "rapid"]) {
     if (q.includes(product)) return product;
@@ -130,11 +130,11 @@ function namedDataProduct(question) {
   return null;
 }
 
-function isDownloadQuestion(question) {
+export function isDownloadQuestion(question) {
   return /\b(download|get|access)\b/.test(String(question || "").toLowerCase());
 }
 
-function isMultiSpanQuestion(question) {
+export function isMultiSpanQuestion(question) {
   return /\bmulti[\s-]?span\b/.test(String(question || "").toLowerCase());
 }
 

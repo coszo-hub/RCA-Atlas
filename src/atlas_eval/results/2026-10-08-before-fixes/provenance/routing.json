@@ -1,0 +1,21 @@
+{
+  "suite": "routing",
+  "title": "Per-task routing",
+  "dataset": "routing_v1.jsonl",
+  "dataset_sha256": "8bd5764c024b763a9fbf789bca596295052857153379a54e0d86a233fc6a16f4",
+  "n_cases": 156,
+  "n_errors": 0,
+  "ran_utc": "2026-10-08T22:36:35.270633+00:00",
+  "git": {
+    "commit": "6ec3432b227532a331e2886536d07a1e85308c3e",
+    "branch": "rca-atlas-eval-suite",
+    "dirty": true
+  },
+  "context": {
+    "endpoint": "https://rca-atlas.quakehunt.workers.dev",
+    "model": null,
+    "pace_s": 6.0,
+    "agent": "oracle",
+    "agent_model": "haiku"
+  }
+}
