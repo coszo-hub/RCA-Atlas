@@ -2,12 +2,13 @@
 // with inline **bold** and [n] citations (a run like [1-15] is one { n, to }). Numbers the evidence does not know stay as plain text.
 
 const LIST = /^(\s*)[-*•]\s+(.*)$/;
-const CITE = /\s*\[(\d+(?:\s*[,–-]\s*\d+)*)\]/g;
+// Ranges take any hyphen: Groq's GPT-OSS writes [1‑6] with U+2011, a non-breaking hyphen.
+const CITE = /\s*\[(\d+(?:\s*[,–\u2010-\u2012-]\s*\d+)*)\]/g;
 
 // A marker's citations: single numbers, and ranges ([1-15]) as one { n, to } when they span three or more.
 function cites(group) {
   return group.split(/\s*,\s*/).flatMap(part => {
-    const [a, b] = part.split(/\s*[–-]\s*/).map(Number);
+    const [a, b] = part.split(/\s*[–\u2010-\u2012-]\s*/).map(Number);
     if (!(b > a && b - a < 50)) return [{ n: a }];
     return b - a >= 2 ? [{ n: a, to: b }] : [{ n: a }, { n: b }];
   });

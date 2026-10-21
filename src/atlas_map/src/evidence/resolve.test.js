@@ -7,7 +7,7 @@ import inflation from "../test/fixtures/ask/inflation.json";
 import inflation2 from "../test/fixtures/ask/inflation.v2.json";
 import quakes from "../test/fixtures/ask/quakes.json";
 import quakes2 from "../test/fixtures/ask/quakes.v2.json";
-import { readableExcerpt, resolveEvidence, shortSite } from "./resolve.js";
+import { readableExcerpt, resolveEvidence, shortSite, tourOf } from "./resolve.js";
 
 const bundle = askBundle();
 const byN = (ev, n) => ev.located.find(x => x.n === n);
@@ -103,6 +103,30 @@ describe("resolveEvidence: resolution rules", () => {
     expect(ev.located.map(x => [x.n, x.id])).toEqual([[1, "RS03INT2-MJ03D-06-BOTPTA303"], [2, "EARTHSCOPE-OO-AXCC1"], [3, "EARTHSCOPE-OO-AXCC1"]]);
   });
 
+  it("each route of a multi-route DAS record goes on its own cable, not its record's first route", () => {
+    const base = "http://piweb.ooirsn.uw.edu/das/data/";
+    const routes = [["OptaSense north cable receive fiber", "Optasense/NorthCable/ReceiveFiber/"], ["OptaSense south cable transmit fiber", "Optasense/SouthCable/TransmitFiber/"],
+      ["Silixa DTS", "Silixa/DTS/"]];
+    const record = { chunk_id: "PI-PORTAL-CHUNK-2021", title: "2021 RCA DAS experiment data availability and routing", metadata: {},
+      citations: routes.map(([title, path]) => ({ source_id: "PI-SRC", title, url: base + path })) };
+    const ev = resolveEvidence({ answer_citations: routes.map(([title, path]) => cite("PI-SRC", title, base + path)), hits: [record] }, bundle);
+    expect(ev.located.map(x => [x.n, x.id, x.site])).toEqual([[1, "das21-north", "North cable"], [2, "das21-south", "South cable"], [3, "das21", "North & south"]]);
+  });
+
+  it("sources on one cable are one place: a lead with all their numbers, one tour stop, and every route to download", () => {
+    const base = "http://piweb.ooirsn.uw.edu/das/data/Optasense/";
+    const urls = ["NorthCable/ReceiveFiber/", "NorthCable/TransmitFiber/", "SouthCable/ReceiveFiber/"].map(p => base + p);
+    const record = { chunk_id: "R", title: "2021 routing", metadata: {}, citations: urls.map(url => ({ source_id: "PI", url })) };
+    const response = { answer: "2021 [1, 2, 3]\n- north receive [1]\n- north transmit [2]\n- south receive [3]",
+      answer_citations: [...["North receive", "North transmit", "South receive"].map((t, i) => cite("PI", t, urls[i])), cite("D", "A paper", "https://doi.org/x")],
+      hits: [record, hit("D", "A paper")] };
+    const ev = resolveEvidence(response, bundle);
+    expect(ev.located.map(x => [x.n, x.lead])).toEqual([[1, 1], [2, 1], [3, 3]]);
+    expect(ev.located[0].ns).toEqual([1, 2]);
+    expect(tourOf(ev).map(x => x.n)).toEqual([1, 3]);
+    expect(ev.downloads.map(d => [d.n, d.title])).toEqual([[1, "North receive"], [2, "North transmit"], [3, "South receive"]]);
+  });
+
   it("several sensors at one site make a site; a site named in the excerpt is found; unknown ids are documents", () => {
     const ev = resolveEvidence({ answer_citations: [cite("A", "Two at the summit"), cite("B", "Cruise report"), cite("C", "Nothing")],
       hits: [hit("A", "Two at the summit", { excerpt: "RS01SUM2-MJ01B-12-ADCPSK101 and RS01SUM2-MJ01B-00-FLOBNC101 were recovered." }),
@@ -112,7 +136,7 @@ describe("resolveEvidence: resolution rules", () => {
   });
 
   it("a malformed response resolves to nothing", () => {
-    expect(resolveEvidence({}, bundle)).toEqual({ located: [], documents: [], events: null, count: null });
+    expect(resolveEvidence({}, bundle)).toEqual({ located: [], documents: [], downloads: [], events: null, count: null });
     expect(resolveEvidence(null, bundle).located).toEqual([]);
   });
 });

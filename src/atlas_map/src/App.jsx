@@ -165,8 +165,9 @@ function Atlas({ bundle, onError }) {
   askActions.current = {
     evidence: ask.evidence,
     select: n => {
-      setAsk(a => ({ ...a, activeN: n }));
-      const it = n == null ? null : tourOf(ask.evidence).find(x => x.n === n);
+      // Any source on a cable or sensor selects that place: its lead source, where the tour stops.
+      const it = n == null ? null : (ask.evidence?.located?.find(x => x.n === n) ?? tourOf(ask.evidence).find(x => x.n === n));
+      setAsk(a => ({ ...a, activeN: it?.lead ?? n }));
       if (!it || !scene) return;
       // A quake is framed at its hypocentre, from a wide view (a close one would sit inside the magma chamber's surface).
       const depth = it.time ? hypoMeters(it.depth_km, scene.subsurface?.data?.datumM) : undefined;

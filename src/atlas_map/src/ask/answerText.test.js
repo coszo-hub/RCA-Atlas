@@ -19,6 +19,8 @@ describe("parseAnswer", () => {
       { t: "text", v: "Two" }, { t: "cite", n: 1 }, { t: "cite", n: 2 }, { t: "text", v: ", a list" }, { t: "cite", n: 1 }, { t: "cite", n: 2 }, { t: "cite", n: 3 },
       { t: "text", v: ", mixed" }, { t: "cite", n: 1 }, { t: "cite", n: 3, to: 5 }, { t: "text", v: "." }]);
     expect(parseAnswer("Past the end [3-6].", known)[0].parts).toEqual([{ t: "text", v: "Past the end [3-6]." }]);
+    // Groq's GPT-OSS writes ranges with U+2011, a non-breaking hyphen.
+    expect(parseAnswer("Layout [1\u20114].", known)[0].parts).toEqual([{ t: "text", v: "Layout" }, { t: "cite", n: 1, to: 4 }, { t: "text", v: "." }]);
   });
   it("paragraphs, bullets (nested), section labels and bold", () => {
     const blocks = parseAnswer("A direct answer.\n\nInstruments and Measurements\n- Bottom pressure [1]\n    - Identity: continuous\n**Seismic record**\nMore **text** here.\n---\nEnd.", known);

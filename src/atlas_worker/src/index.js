@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, publicHit, sourceKey, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, namedDas, publicHit, sourceKey, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -86,7 +86,8 @@ function citations(hits) {
 function cleanAnswer(answer) {
   // The interface uses plain text. Normalize occasional model-emitted Markdown
   // bullets so compact replies retain the same minimal visual language.
-  return String(answer || "").replace(/^\s*[*•]\s+/gm, "- ").trim();
+  // Groq's GPT-OSS writes its bullets with U+2011 (non-breaking hyphen) or an en dash, which the panel would not read as bullets.
+  return String(answer || "").replace(/^\s*[*•\u2010\u2011\u2012\u2013]\s+/gm, "- ").trim();
 }
 
 // Short words that say nothing about the record wanted; three-letter terms such as "das" or "ctd" still count.
@@ -98,6 +99,9 @@ function prioritizedHits(context, question, limit = 6) {
   // A download or availability question wants the PI portal's routing records, which name every download route;
   // ranked only by title words, papers about the same instrument used to push them past the evidence cut.
   const routing = answerMode(question) === "compact" || isDownloadQuestion(question);
+  // A named DAS experiment (DAS21) never appears in its records' words, which name it by year; its records rank
+  // first by what identifies them.
+  const named = namedDas(question);
   const scored = [...(context.hits || [])].map((hit, index) => {
     const title = String(hit.title || "").toLowerCase();
     const text = String(hit.text || "").toLowerCase();
@@ -110,8 +114,10 @@ function prioritizedHits(context, question, limit = 6) {
     const rcaScope = /(regional cabled array|cabled array|coszo|axial|hydrate ridge|oregon shelf|oregon offshore)/.test(`${title}\n${text}`) ? 10 : 0;
     const primaryCorpus = /^(instruments|websites|arcada|coszo)/.test(collection) ? 4 : 0;
     const isRouting = /available to download from/.test(text);
-    const route = routing && isRouting && relevance > 0 ? 40 : 0;
-    return { hit, index, isRouting, relevance, score: relevance + rcaScope + primaryCorpus + route };
+    const ofNamed = named ? named.record.test(`${title}\n${text}`) : false;
+    const relevant = relevance > 0 || ofNamed;
+    const route = routing && isRouting && relevant ? 40 : 0;
+    return { hit, index, isRouting, relevance: relevant ? Math.max(relevance, 1) : 0, score: relevance + rcaScope + primaryCorpus + route + (ofNamed ? 30 : 0) };
   });
   // Once a routing record matches the question, routing records for other instruments (COVIS for a DAS
   // question) are off topic: they would list another instrument's downloads beside the answer.
@@ -134,11 +140,7 @@ function answerMode(question) {
 }
 
 function namedDataProduct(question) {
-  const q = String(question || "").toLowerCase();
-  for (const product of ["multidas", "optodas", "das25", "das24", "rapid"]) {
-    if (q.includes(product)) return product;
-  }
-  return null;
+  return namedDas(question)?.key ?? null;
 }
 
 function isDownloadQuestion(question) {
@@ -174,6 +176,12 @@ function namedDatasetDownloadAnswer(product) {
       coverage: "the south cable's first span",
       layout: "year/month/day/cable directories",
     },
+    das24: {
+      label: "DAS24 (the 2024 RAPID experiment)",
+      format: "ten-second HDF5 (dphi) files",
+      coverage: "the south cable, from shore to the first repeater",
+      layout: "one YYYYMMDD/dphi directory per day, each holding thousands of files, so download specific days",
+    },
   }[product];
   if (!details) return `You can download the requested ${product} data through the direct link below.`;
   return `You can download the requested ${details.label} data through the direct link below.\n- Format: ${details.format}.\n- Coverage: ${details.coverage}.\n- Layout: ${details.layout}.`;
@@ -198,9 +206,8 @@ function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
   if (product) {
-    const productHits = hits.filter((hit) =>
-      `${hit.title || ""}\n${hit.text || ""}`.toLowerCase().includes(product),
-    );
+    const record = namedDas(question).record;
+    const productHits = hits.filter((hit) => record.test(`${hit.title || ""}\n${hit.text || ""}`));
     if (productHits.length) hits = productHits;
   }
   return hits;
@@ -269,7 +276,10 @@ async function generateGroqAnswer(prompt, mode, env, selected = GROQ_MODELS["gro
     model: selected.id,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
-    max_tokens: mode === "compact" ? 1000 : 4096,
+    // GPT-OSS reasons before it answers, and its reasoning counts against max_tokens: a 1,000-token list answer
+    // came back empty. Low effort and room to finish keep the answer.
+    ...(selected.id.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : {}),
+    max_tokens: mode === "compact" ? 3000 : 6000,
   }, { authorization: `Bearer ${env.GROQ_API_KEY}` });
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("Groq model returned no answer");
@@ -282,7 +292,7 @@ async function generateOpenRouterAnswer(prompt, mode, env, selectedModel = env.O
     model: selectedModel,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
-    max_tokens: mode === "compact" ? 1000 : 4096,
+    max_tokens: mode === "compact" ? 3000 : 6000,   // free models often reason first, as GPT-OSS does
   }, { authorization: `Bearer ${env.OPENROUTER_API_KEY}` });
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("OpenRouter model returned no answer");
@@ -315,14 +325,10 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   const sourceNumbers = new Map(sourceList.map((source, index) => [sourceKey(source.id, source.url), index + 1]));
   const evidence = evidencePackage(evidenceHits, sourceNumbers);
   if (!evidence) throw new Error("no retrieved evidence");
-  if (product && isDownloadQuestion(question) && sourceList[0]?.url) {
-    return {
-      answer: `You can download the requested ${product} data through the direct source link below.`,
-      model: "RCA Atlas evidence routing",
-    };
-  }
+  // A single-route product (MultiDAS, OptoDAS, DAS24) was answered from its route before this; DAS21 and DAS25
+  // have several routes, which the model lists.
   const mode = answerMode(question);
-  const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product });
+  const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product: product && namedDas(question).about });
   if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
   const model = ["gemini-2.5-flash", "gemini-3.5-flash-lite"].includes(requestedModel)
@@ -351,12 +357,20 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
       if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 750));
     }
   }
+  console.warn("gemini answer failed; trying fallbacks", lastError instanceof Error ? lastError.message : "unknown");
   // Auto stays Gemini-first for its native evidence handling. Each free route
   // is attempted independently: a temporary quota or capacity failure moves to
   // the next provider rather than ending the answer request.
   if (requestedModel === "auto" && env.GROQ_API_KEY) {
     try {
       return await generateGroqAnswer(prompt, mode, env);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (requestedModel === "auto" && env.OPENROUTER_API_KEY) {
+    try {
+      return await generateOpenRouterAnswer(prompt, mode, env);
     } catch (error) {
       lastError = error;
     }
@@ -426,7 +440,9 @@ export default {
         return response({ error: "service is not configured" }, 503, cors);
       }
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
-        query, limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS,
+        // A DAS name such as DAS21 never appears in the corpus, which names the experiments by year.
+        query: namedDas(query) ? `${query} ${namedDas(query).search}` : query,
+        limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS,
         graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
       context.hits = (context.hits || []).map(withRouteCitations);

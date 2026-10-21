@@ -39,7 +39,7 @@ function stats(e) {
     const { n, day, tz, today } = ev.count;
     return [n != null && `${plural(n, "earthquake")}${today ? " so far" : ""}`, day && `${day} ${zoneAbbr(tz, new Date(`${day}T12:00:00Z`))}`, secs, model].filter(Boolean).join(" · ");
   }
-  return [`${ev.located.length} on the map`, plural(ev.documents.length, "document"), secs, model].filter(Boolean).join(" · ");
+  return [`${ev.located.filter(x => (x.lead ?? x.n) === x.n).length} on the map`, plural(ev.documents.length, "document"), secs, model].filter(Boolean).join(" · ");
 }
 
 // Ask Atlas: the left sidebar. The thread of questions and answers; the shown answer's evidence is on the map
@@ -147,6 +147,9 @@ export default function AskPanel({ bundle, evidence, activeN, hoverN, panelOpen 
   );
 }
 
+// A row's source numbers: "4", "1–6", or "1, 3, 7".
+const numbers = ns => (ns.length > 2 && ns.every((v, i) => !i || v === ns[i - 1] + 1) ? `${ns[0]}–${ns.at(-1)}` : ns.join(", "));
+
 function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep, onRetry }) {
   const ev = e.ev;
   const byN = useMemo(() => new Map([...(ev?.located ?? []).map(x => [x.n, x]), ...(ev?.documents ?? []).map(d => [d.n, { ...d, doc: true }])]), [ev]);
@@ -181,14 +184,15 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
     return runs.map(r => (r.cites ? <span key={r.i} className="cites">{r.cites.map(c => cite(c.n, c.i, c.to))}</span>
       : r.t === "b" ? <strong key={r.i}>{r.v}</strong> : <Fragment key={r.i}>{r.v}</Fragment>));
   };
-  const row = (n, cells, color, extra) => {
-    const on = live && hl === n, active = live && activeN === n;
+  // ns: the sources one row stands for (a cable cited by six routes is one row); the first is the one it selects.
+  const row = (n, cells, color, extra, ns = [n]) => {
+    const on = live && ns.includes(hl), active = live && ns.includes(activeN);
     return (
       <Fragment key={n}>
         <tr className={`${on ? "on" : ""}${active ? " active" : ""}`} style={{ "--c": color }} tabIndex={live ? 0 : -1}
           onMouseEnter={() => hover(n)} onMouseLeave={() => hover(null)} onClick={() => live && onSelect(n)}
           onKeyDown={k => { if (live && (k.key === "Enter" || k.key === " ")) { k.preventDefault(); onSelect(n); } }}>
-          <td className="i">{n}</td>{cells}
+          <td className="i">{numbers(ns)}</td>{cells}
         </tr>
         {active && extra && <tr className="ex"><td /><td colSpan={3}>{extra}</td></tr>}
       </Fragment>
@@ -216,13 +220,26 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
             {blocks.map((b, i) => (b.type === "h" ? <h3 key={i}>{inline(b.parts)}</h3>
               : b.type === "li" ? <p key={i} className={`li l${b.level}`}>{inline(b.parts)}</p> : <p key={i}>{inline(b.parts)}</p>))}
           </div>
+          {ev.downloads?.length > 0 && (
+            <>
+              <div className="ask-label"><span>Where to download</span></div>
+              <ul className="ask-reading ask-downloads">
+                {ev.downloads.map(d => (
+                  <li key={d.url} className={live && hl === d.n ? "on" : ""} onMouseEnter={() => hover(d.n)} onMouseLeave={() => hover(null)}>
+                    <span className="mono">{d.n}</span>
+                    <span><a href={d.url} target="_blank" rel="noreferrer">{d.title} ↗</a><span className="url mono">{d.url.replace(/^https?:\/\//, "")}</span></span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
           {ev.located.length > 0 && (
             <>
               <div className="ask-label"><span id={`ev-${e.id}`}>Evidence on the map</span>{stepper}</div>
               <table className="ask-table" aria-labelledby={`ev-${e.id}`}>
                 <thead><tr><th>#</th><th>Instrument</th><th>Site</th><th className="r">Depth</th></tr></thead>
-                <tbody>{ev.located.map(x => row(x.n, <><td className={x.kind === "site" ? "k-site" : undefined}>{x.kind === "site" ? "site" : x.code}</td><td>{x.site}</td><td className="r">{fmtDepth(x.depth)}</td></>, x.color,
-                  x.excerpt && (x.quote ? <q>{x.excerpt}</q> : x.excerpt)))}</tbody>
+                <tbody>{ev.located.filter(x => (x.lead ?? x.n) === x.n).map(x => row(x.n, <><td className={x.kind === "site" ? "k-site" : undefined}>{x.kind === "site" ? "site" : x.code}</td><td>{x.site}</td><td className="r">{fmtDepth(x.depth)}</td></>, x.color,
+                  x.excerpt && (x.quote ? <q>{x.excerpt}</q> : x.excerpt), x.ns ?? [x.n]))}</tbody>
               </table>
             </>
           )}

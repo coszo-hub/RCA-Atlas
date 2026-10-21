@@ -157,8 +157,9 @@ function locate(cite, hits, idx, bundle) {
   // 2. A refdes, canonical id, or EarthScope station in the titles, metadata, excerpts or URL.
   const named = oneOf(sensorsIn([...texts, ...urls].join("\n"), idx), bundle);
   if (named) return named;
-  // 3. A DAS experiment's portal route.
-  const route = dasRoute(urls, titles);
+  // 3. A DAS experiment's portal route: the cited route's own URL first. Its record also cites its other routes, and
+  // matching those first put every 2021 route (south cable, Silixa) on the north cable.
+  const route = (cite.url && dasRoute([cite.url], [])) ?? dasRoute(urls, titles);
   if (route) return cableItem(route, bundle);
   // 4. A URL that is a sensor's own data or documentation page.
   for (const u of urls) {
@@ -193,7 +194,7 @@ function countOf(response, ev) {
 }
 
 export function resolveEvidence(response, bundle) {
-  if (!response || typeof response !== "object") return { located: [], documents: [], events: null, count: null };
+  if (!response || typeof response !== "object") return { located: [], documents: [], downloads: [], events: null, count: null };
   const idx = indexOf(bundle), hits = Array.isArray(response.hits) ? response.hits : [];
   const located = [], documents = [];
   (response.answer_citations ?? []).forEach((cite, i) => {
@@ -206,9 +207,36 @@ export function resolveEvidence(response, bundle) {
     if (item) located.push({ n, ...item, title, excerpt, quote, sourceUrl: cite.url || null });
     else documents.push({ n, title, url: cite.url || null, excerpt, quote });
   });
+  // Several sources on one cable or sensor (the six 2021 DAS routes) are one place on the map: each item names
+  // the first of them, its lead, and the lead carries all their numbers.
+  const first = new Map();
+  for (const x of located) {
+    const key = `${x.kind}:${x.id}`;
+    if (!first.has(key)) first.set(key, { ...x, ns: [] });
+    x.lead = first.get(key).n; first.get(key).ns.push(x.n);
+  }
+  for (const x of located) if (x.n === x.lead) x.ns = first.get(`${x.kind}:${x.id}`).ns;
   const ev = events(response.events);
-  return { located, documents, events: ev?.length ? ev : null, count: countOf(response, ev) };
+  return { located, documents, downloads: downloadsOf(response), events: ev?.length ? ev : null, count: countOf(response, ev) };
 }
 
-// The evidence the ← / → tour steps through: the located items, or the quake events.
-export const tourOf = ev => (ev?.located?.length ? ev.located : ev?.events ?? []);
+// Download routes the answer cites (the PI data portal's directories), each once, in source order. Every route
+// listed when the answer cites none of them, so an answer without citations still says where to download.
+const PORTAL = /^https?:\/\/piweb\.ooirsn\.uw\.edu\/./i;
+function downloadsOf(response) {
+  const cited = new Set();
+  for (const [, inner] of String(response.answer ?? "").matchAll(/\[([\d,\s–-]+)\]/g)) {
+    for (const part of inner.split(",")) {
+      const [a, b] = part.split(/[–-]/).map(v => parseInt(v, 10));
+      if (Number.isFinite(a)) for (let k = a; k <= (Number.isFinite(b) ? b : a); k++) cited.add(k);
+    }
+  }
+  const routes = (response.answer_citations ?? []).map((c, i) => ({ n: i + 1, title: c.title || c.url, url: c.url || "" }))
+    .filter(r => PORTAL.test(r.url));
+  const chosen = routes.some(r => cited.has(r.n)) ? routes.filter(r => cited.has(r.n)) : routes;
+  const seen = new Set();
+  return chosen.filter(r => !seen.has(r.url) && seen.add(r.url));
+}
+
+// The evidence the ← / → tour steps through: one stop per place on the map (each lead), or the quake events.
+export const tourOf = ev => (ev?.located?.length ? ev.located.filter(x => (x.lead ?? x.n) === x.n) : ev?.events ?? []);

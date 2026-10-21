@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, parseHypo71Events, publicHit, sourceKey, withRouteCitations } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, sourceKey, withRouteCitations } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -181,4 +181,48 @@ test("a download question puts every routing record in front of the model, even 
   assert.deepEqual(data.answer_citations.filter((c) => c.url.includes("/Silixa/")).map((c) => c.title), ["Silixa DAS", "Silixa DTS"]);
   assert.doesNotMatch(prompt, /COVIS/);   // another instrument's downloads stay out of a DAS answer
   assert.ok(!data.answer_citations.some((c) => c.url.includes("/covis/")));
+});
+
+test("DAS experiments are recognised by the map's labels, their years, and their interrogators", () => {
+  const key = (q) => namedDas(q)?.key ?? null;
+  assert.equal(key("where can i download DAS21 data"), "das21");
+  assert.equal(key("where can i download DAS data from 2021"), "das21");
+  assert.equal(key("Silixa DTS files?"), "das21");
+  assert.equal(key("where can I get DAS24 data"), "das24");
+  assert.equal(key("RAPID DAS download"), "das24");
+  assert.equal(key("2025 DAS data"), "das25");
+  assert.equal(key("DAS-25 routes"), "das25");
+  assert.equal(key("MultiDAS 2025 files"), "multidas");   // a route before its experiment
+  assert.equal(key("where is the OptoDAS data"), "optodas");
+  assert.equal(key("what das data is available for download"), null);   // all experiments, not one
+  assert.match(namedDas("DAS21").search, /2021 RCA Distributed Acoustic and Temperature Sensing experiment/);
+  assert.ok(namedDas("DAS21").record.test("Data for 2021 RCA Distributed Acoustic and Temperature Sensing experiment are available"));
+});
+
+test("a DAS experiment named by the map's label (DAS21) reaches the model with all its routes", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  const paper = (i) => ({ chunk_id: `A${i}`, collection_id: "arcada", title: `RCA Distributed Acoustic Sensing paper ${i}`, text: "The Regional Cabled Array DAS deployment.",
+    citations: [{ source_id: `A${i}`, title: `paper ${i}`, url: `https://doi.org/${i}` }] });
+  const r21 = { chunk_id: "R21", collection_id: "pi_portal", title: "2021 RCA Distributed Acoustic and Temperature Sensing experiment data availability and routing",
+    text: "Data for 2021 RCA Distributed Acoustic and Temperature Sensing experiment are available to download from OptaSense south cable receive fiber (http://piweb.ooirsn.uw.edu/das/data/Optasense/SouthCable/ReceiveFiber/); Silixa DTS (http://piweb.ooirsn.uw.edu/das/data/Silixa/DTS/). Physical site: RCA north and south backbone cables.",
+    citations: [{ source_id: "PI", title: "Shared RCA and COSZO Instruments corpus", url: "http://piweb.ooirsn.uw.edu/das/data/Optasense/SouthCable/ReceiveFiber/" }] };
+  const r25 = { ...r21, chunk_id: "R25", title: "2025–2026 RCA Distributed Acoustic Sensing experiment data availability and routing",
+    text: "Data for 2025–2026 RCA Distributed Acoustic Sensing experiment are available to download from DAS25 MultiDAS (http://piweb.ooirsn.uw.edu/das25/data/MultiDAS/). Physical site: RCA.",
+    citations: [{ source_id: "PI", title: "Shared RCA and COSZO Instruments corpus", url: "http://piweb.ooirsn.uw.edu/das25/data/MultiDAS/" }] };
+  let query = "", prompt = "";
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    if (String(url).endsWith("/v1/context")) { query = JSON.parse(init.body).query; return Response.json({ hits: [r21, r25, ...Array.from({ length: 8 }, (_, i) => paper(i))], neighbors: [], tool_hints: [] }); }
+    prompt = JSON.parse(init.body).contents[0].parts[0].text;
+    return Response.json({ candidates: [{ content: { parts: [{ text: "2021\n- OptaSense south cable receive fiber [1]\n- Silixa DTS [2]" }] } }] });
+  });
+  const res = await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "where can i download DAS21 data" }),
+  }), { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g" });
+  const data = await res.json();
+  assert.match(query, /2021 RCA Distributed Acoustic and Temperature Sensing experiment/);   // the search names it as the corpus does
+  assert.match(prompt, /Silixa DTS \(http/);
+  assert.match(prompt, /named DAS21, the 2021 RCA Distributed Acoustic and Temperature Sensing experiment/);
+  assert.doesNotMatch(prompt, /MultiDAS/);   // the named experiment only
+  assert.deepEqual(data.answer_citations.map((c) => c.title), ["OptaSense south cable receive fiber", "Silixa DTS"]);
 });

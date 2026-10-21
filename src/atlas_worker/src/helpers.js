@@ -28,6 +28,29 @@ export function publicHit(hit) {
 // One key per cited source: the id plus its URL (a PI portal record lists several routes under one id).
 export const sourceKey = (id, url) => `${id}|${url || ""}`;
 
+// The DAS experiments by the names people type, the map's own labels included (DAS21, DAS24, DAS25). The corpus
+// names them by year ("2021 RCA Distributed Acoustic and Temperature Sensing experiment"), so each carries the
+// words that retrieve its records (search), the text that identifies them (record), and how to name it to the
+// model (about). Specific routes come before their experiment, so "MultiDAS 2025" is MultiDAS.
+export const DAS_PRODUCTS = [
+  { key: "multidas", asked: /\bmulti[\s-]?das\b/, record: /multidas/i,
+    about: "DAS25 MultiDAS, the Nokia multi-span DAS route of the 2025–2026 RCA Distributed Acoustic Sensing experiment",
+    search: "2025–2026 RCA Distributed Acoustic Sensing experiment DAS25 MultiDAS" },
+  { key: "optodas", asked: /\bopto[\s-]?das\b/, record: /optodas/i,
+    about: "DAS25 OptoDAS, the OptoDAS route of the 2025–2026 RCA Distributed Acoustic Sensing experiment",
+    search: "2025–2026 RCA Distributed Acoustic Sensing experiment DAS25 OptoDAS" },
+  { key: "das21", asked: /\bdas[\s-]?21\b|\b2021\b[^?]*\b(?:das|dts)\b|\b(?:das|dts)\b[^?]*\b2021\b|\boptasense\b|\bsilixa\b/, record: /2021 RCA Distributed Acoustic/i,
+    about: "DAS21, the 2021 RCA Distributed Acoustic and Temperature Sensing experiment (OptaSense and Silixa interrogators)",
+    search: "2021 RCA Distributed Acoustic and Temperature Sensing experiment OptaSense Silixa DTS" },
+  { key: "das24", asked: /\bdas[\s-]?24\b|\b2024\b[^?]*\bdas\b|\bdas\b[^?]*\b2024\b|\brapid\b/, record: /2024 RCA Distributed Acoustic|\bdas24\b/i,
+    about: "DAS24, the 2024 RCA Distributed Acoustic Sensing experiment (RAPID; an OptoDAS interrogator on the south cable)",
+    search: "2024 RCA Distributed Acoustic Sensing experiment DAS24 dphi RAPID" },
+  { key: "das25", asked: /\bdas[\s-]?25\b|\b202[56]\b[^?]*\bdas\b|\bdas\b[^?]*\b202[56]\b/, record: /2025–2026 RCA Distributed Acoustic|\bdas25\b/i,
+    about: "DAS25, the 2025–2026 RCA Distributed Acoustic Sensing experiment (MultiDAS and OptoDAS routes)",
+    search: "2025–2026 RCA Distributed Acoustic Sensing experiment DAS25 MultiDAS OptoDAS" },
+];
+export const namedDas = (question) => DAS_PRODUCTS.find((p) => p.asked.test(String(question || "").toLowerCase())) ?? null;
+
 // A PI portal availability record names every download route in its text ("are available to download from
 // DAS25 MultiDAS (http://…); DAS25 OptoDAS (http://…)."), but carries only the first as its citation, so the
 // other routes never reached the answer's sources. Each named route becomes a citation of its own.
@@ -145,7 +168,7 @@ export function isInstrumentInventoryQuestion(question) {
 export function answerPrompt({ question, evidence, sources, mode, product = null }) {
   const sourceListText = sources.map((c, i) => `[${i + 1}] ${c.title}`).join("; ");
   const namedProductInstruction = product
-    ? `The user specifically named ${product}; answer only about that named product. Do not include related products, file formats, instruments, or data types unless the evidence explicitly assigns them to ${product}.`
+    ? `The user specifically named ${product}; answer only about it. Do not include other experiments, routes, file formats, instruments, or data types unless the evidence assigns them to it.`
     : "";
   const compactInstruction = mode === "compact"
     ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it with its years, coverage and file formats, followed by hyphen bullets, one per download route the evidence names, each cited with that route's own source number. A route bullet gives the route's name and only what the evidence ties to that route itself (a cable or span its name or the evidence assigns to it); never copy the dataset's overall coverage or formats onto each route. After a dataset's routes, add one bullet for its folder layout or a caveat (such as very many files per day) when the evidence gives one. List every route the evidence names; never merge or drop routes. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
