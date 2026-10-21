@@ -34,22 +34,33 @@ export const sourceKey = (id, url) => `${id}|${url || ""}`;
 // model (about). Specific routes come before their experiment, so "MultiDAS 2025" is MultiDAS.
 export const DAS_PRODUCTS = [
   { key: "multidas", asked: /\bmulti[\s-]?das\b/, record: /multidas/i,
-    about: "DAS25 MultiDAS, the Nokia multi-span DAS route of the 2025–2026 RCA Distributed Acoustic Sensing experiment",
+    about: "the 2025–26 multi-span DAS dataset (MultiDAS, Nokia), part of the 2025–2026 RCA Distributed Acoustic Sensing experiment",
     search: "2025–2026 RCA Distributed Acoustic Sensing experiment DAS25 MultiDAS" },
   { key: "optodas", asked: /\bopto[\s-]?das\b/, record: /optodas/i,
-    about: "DAS25 OptoDAS, the OptoDAS route of the 2025–2026 RCA Distributed Acoustic Sensing experiment",
+    about: "the 2025–26 OptoDAS dataset, part of the 2025–2026 RCA Distributed Acoustic Sensing experiment",
     search: "2025–2026 RCA Distributed Acoustic Sensing experiment DAS25 OptoDAS" },
   { key: "das21", asked: /\bdas[\s-]?21\b|\b2021\b[^?]*\b(?:das|dts)\b|\b(?:das|dts)\b[^?]*\b2021\b|\boptasense\b|\bsilixa\b/, record: /2021 RCA Distributed Acoustic/i,
-    about: "DAS21, the 2021 RCA Distributed Acoustic and Temperature Sensing experiment (OptaSense and Silixa interrogators)",
+    about: "DAS21, the 2021 conventional DAS experiment (the 2021 RCA Distributed Acoustic and Temperature Sensing experiment, with OptaSense and Silixa interrogators)",
     search: "2021 RCA Distributed Acoustic and Temperature Sensing experiment OptaSense Silixa DTS" },
   { key: "das24", asked: /\bdas[\s-]?24\b|\b2024\b[^?]*\bdas\b|\bdas\b[^?]*\b2024\b|\brapid\b/, record: /2024 RCA Distributed Acoustic|\bdas24\b/i,
-    about: "DAS24, the 2024 RCA Distributed Acoustic Sensing experiment (RAPID; an OptoDAS interrogator on the south cable)",
+    about: "DAS24, the 2024 multiplexed DAS experiment (the 2024 RCA Distributed Acoustic Sensing experiment, RAPID)",
     search: "2024 RCA Distributed Acoustic Sensing experiment DAS24 dphi RAPID" },
   { key: "das25", asked: /\bdas[\s-]?25\b|\b202[56]\b[^?]*\bdas\b|\bdas\b[^?]*\b202[56]\b/, record: /2025–2026 RCA Distributed Acoustic|\bdas25\b/i,
-    about: "DAS25, the 2025–2026 RCA Distributed Acoustic Sensing experiment (MultiDAS and OptoDAS routes)",
+    about: "DAS25, the 2025–2026 RCA Distributed Acoustic Sensing experiment: the 2025–26 OptoDAS and 2025–26 multi-span DAS (MultiDAS) datasets",
     search: "2025–2026 RCA Distributed Acoustic Sensing experiment DAS25 MultiDAS OptoDAS" },
 ];
 export const namedDas = (question) => DAS_PRODUCTS.find((p) => p.asked.test(String(question || "").toLowerCase())) ?? null;
+
+// The four DAS datasets as the RCA team names them, one download link each. The corpus lists the 2021
+// experiment's six sub-folders as routes of their own (OptaSense north and south cable receive and transmit
+// fibers, Silixa DAS and DTS); they share one parent folder, which is that dataset's link.
+export const DAS_DATASETS = [
+  { route: /piweb\.ooirsn\.uw\.edu\/das\/data\//i, title: "2021 conventional DAS (OptaSense and Silixa)", url: "http://piweb.ooirsn.uw.edu/das/data/" },
+  { route: /\/das24\/data\//i, title: "2024 multiplexed DAS", url: "http://piweb.ooirsn.uw.edu/das24/data/" },
+  { route: /\/das25\/data\/optodas\//i, title: "2025–26 OptoDAS", url: "http://piweb.ooirsn.uw.edu/das25/data/OptoDAS/" },
+  { route: /\/das25\/data\/multidas\//i, title: "2025–26 multi-span DAS (MultiDAS)", url: "http://piweb.ooirsn.uw.edu/das25/data/MultiDAS/" },
+];
+export const dasDataset = (url) => DAS_DATASETS.find((d) => d.route.test(url || "")) ?? null;
 
 // A PI portal availability record names every download route in its text ("are available to download from
 // DAS25 MultiDAS (http://…); DAS25 OptoDAS (http://…)."), but carries only the first as its citation, so the
@@ -65,7 +76,11 @@ export function withRouteCitations(hit) {
   const own = cited.map((c) => (labels.has(c.url) && /shared rca and coszo instruments corpus/i.test(c.title || "") ? { ...c, title: labels.get(c.url) } : c));
   const added = [...labels].filter(([url]) => !cited.some((c) => c.url === url))
     .map(([url, title]) => ({ ...base, source_id: base.source_id || hit.chunk_id, title, url }));
-  return { ...hit, citations: [...own, ...added] };
+  // A DAS route is cited as its dataset: the 2021 record's six sub-folders become its one link.
+  const seen = new Set();
+  const routes = [...own, ...added].map((c) => { const d = dasDataset(c.url); return d ? { ...c, title: d.title, url: d.url } : c; })
+    .filter((c) => !c.url || (!seen.has(c.url) && seen.add(c.url)));
+  return { ...hit, citations: routes };
 }
 
 // The evidence text for the prompt: each hit under a header with its source numbers.
@@ -171,7 +186,7 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? `The user specifically named ${product}; answer only about it. Do not include other experiments, routes, file formats, instruments, or data types unless the evidence assigns them to it.`
     : "";
   const compactInstruction = mode === "compact"
-    ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it with its years, coverage and file formats, followed by hyphen bullets, one per download route the evidence names, each cited with that route's own source number. A route bullet gives the route's name and only what the evidence ties to that route itself (a cable or span its name or the evidence assigns to it); never copy the dataset's overall coverage or formats onto each route. After a dataset's routes, add one bullet for its folder layout or a caveat (such as very many files per day) when the evidence gives one. List every route the evidence names; never merge or drop routes. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
+    ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it by its source's title, with its years, coverage and file formats, cited with its source number; when one dataset has several numbered sources (download routes), add one hyphen bullet per source, giving its name and only what the evidence ties to that source itself. Sub-folders that the evidence names inside one source (such as the 2021 dataset's OptaSense and Silixa folders) are described in one bullet of that dataset, not bullets of their own. Add one bullet for the folder layout or a caveat (such as very many files per day) when the evidence gives one. Include every numbered download source; never drop one. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
     : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
   const formatInstruction = mode === "compact"
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."

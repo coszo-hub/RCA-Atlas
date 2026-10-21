@@ -71,6 +71,27 @@ def _conventional(data) -> list[dict]:
     return out
 
 
+FIRST_SOUTH_REPEATER_M = 95_000   # "the first optical repeater on the South cable ... about 95 km offshore" (OOI)
+
+
+def _distance_to(coords: list[list[float]], point: list[float]) -> float:
+    """Metres along a centerline to its vertex nearest `point`."""
+    along, best = 0.0, (float("inf"), 0.0)
+    for i, p in enumerate(coords):
+        if i:
+            along += _km(coords[i - 1], p) * 1000
+        best = min(best, (_km(p, point), along))
+    return best[1]
+
+
+def first_south_span(south: list[list[float]], conventional: list[dict]) -> list[list[float]]:
+    """The south cable from shore to its first optical repeater, where the 2024 multiplexed DAS and 2025-26 OptoDAS
+    observed. It ends where the 2021 OptaSense south-cable channel geometry ends, at that same repeater; ~95 km
+    when the geometry is missing. (This was the backbone's first 101 vertices, which ran 204 km to Slope Base.)"""
+    end = next((l["coords"][-1] for l in conventional if l["cable"] == "south" and l["coords"]), None)
+    return _slice_by_distance(south, 0, _distance_to(south, end) if end else FIRST_SOUTH_REPEATER_M)
+
+
 def build(data, cable: dict) -> dict:
     conventional = _conventional(data)
     coverage = load_jsonl(data / "OOIDASGeometry" / "multidas_unmasked_coverage.jsonl")
@@ -85,8 +106,9 @@ def build(data, cable: dict) -> dict:
                           "caveat": "Schematic on the mapped backbone at the documented shore-distance coordinate; exact MultiDAS channel coordinates were not published."})
     south = _backbone(cable, "south")
     # The official project page documents OptoDAS on the first south-cable span; no channel-coordinate file exists.
-    opto = [{"id": "optodas-south-first-span", "experiment": "2025–2026 OptoDAS", "kind": "optodas", "cable": "south",
-             "coords": south[:101], "color": COLORS["optodas"], "detail": "Documented first south-cable span.",
-             "caveat": "Schematic first-span extent; published materials do not supply OptoDAS channel coordinates."}]
+    opto = [{"id": "optodas-south-first-span", "experiment": "OptoDAS, south cable first span (2024 multiplexed DAS; 2025–26 OptoDAS)",
+             "kind": "optodas", "cable": "south", "coords": first_south_span(south, conventional), "color": COLORS["optodas"],
+             "detail": "South cable from shore to the first optical repeater (~95 km offshore).",
+             "caveat": "Schematic along the mapped backbone; it ends where the 2021 south-cable channel geometry reaches that repeater. OptoDAS channel coordinates were not published."}]
     return {"layers": conventional + multi + opto,
             "summary": {"conventional": "2021 OptaSense geometry", "multidas": "2025–2026 unmasked spans", "optodas": "2025–2026 south first span"}}

@@ -68,9 +68,9 @@ function citations(hits) {
     // The PI portal importer preserves a shared corpus title for provenance,
     // but visitors need the dataset-specific route name beside the actual URL.
     title: /\/das25\/data\/multidas\/?$/i.test(citation.url || "")
-      ? "DAS25 MultiDAS"
+      ? "2025–26 multi-span DAS (MultiDAS)"
       : (/\/das25\/data\/optodas\/?$/i.test(citation.url || "")
-        ? "DAS25 OptoDAS"
+        ? "2025–26 OptoDAS"
         : (/shared rca and coszo instruments corpus/i.test(citation.title || "")
           ? hit.title
           : (citation.title || hit.title))),
@@ -165,19 +165,19 @@ function directDownloadSource(question, hits) {
 function namedDatasetDownloadAnswer(product) {
   const details = {
     multidas: {
-      label: "DAS25 MultiDAS",
+      label: "2025–26 multi-span DAS (MultiDAS)",
       format: "proprietary raw binary files",
       coverage: "the RCA north and south backbone cables",
       layout: "year/month/day/cable directories",
     },
     optodas: {
-      label: "DAS25 OptoDAS",
+      label: "2025–26 OptoDAS",
       format: "HDF5 files",
       coverage: "the south cable's first span",
       layout: "year/month/day/cable directories",
     },
     das24: {
-      label: "DAS24 (the 2024 RAPID experiment)",
+      label: "2024 multiplexed DAS (DAS24)",
       format: "ten-second HDF5 (dphi) files",
       coverage: "the south cable, from shore to the first repeater",
       layout: "one YYYYMMDD/dphi directory per day, each holding thousands of files, so download specific days",
@@ -188,7 +188,7 @@ function namedDatasetDownloadAnswer(product) {
 }
 
 function multiSpanDownloadAnswer() {
-  return "Multi-span DAS data for the 2025–2026 experiment can be downloaded from DAS25 MultiDAS.\n- Nokia multi-span DAS data are available as binary files.\n- OptoDAS data for the south cable are available as HDF5 files.\n- Data are organized by year, month, day, and cable.\n- Further reading and availability details are available through the linked documentation.";
+  return "Multi-span DAS data for the 2025–2026 experiment can be downloaded from the 2025–26 multi-span DAS (MultiDAS) dataset.\n- Nokia multi-span DAS data are available as binary files.\n- OptoDAS data for the south cable are available as HDF5 files.\n- Data are organized by year, month, day, and cable.\n- Further reading and availability details are available through the linked documentation.";
 }
 
 function answerLinks(question, hits) {

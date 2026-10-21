@@ -58,7 +58,7 @@ test("the answer prompt asks for bracketed source numbers after claims, and noth
 test("the compact prompt keeps a word limit, lists every route, and names the product", () => {
   const prompt = answerPrompt({ question: "How do I get the DAS data?", evidence: "e", sources: [], mode: "compact", product: "multidas" });
   assert.match(prompt, /under 230 words/);
-  assert.match(prompt, /List every route the evidence names; never merge or drop routes/);
+  assert.match(prompt, /Include every numbered download source; never drop one/);
   assert.match(prompt, /specifically named multidas/);
   assert.match(prompt, /\[n\]/);
 });
@@ -137,18 +137,20 @@ test("inventory questions name an instrument type or a generic word, with a plac
     "what instruments does COSZO use?"]) assert.equal(isInstrumentInventoryQuestion(q), false, q);
 });
 
-test("a PI portal availability record cites every download route it names, each under its own name", () => {
+test("a PI portal record's download routes become sources: DAS routes as their dataset, other routes each under its own name", () => {
   const hit = {
     chunk_id: "PI-CHUNK-1",
     text: "Data for 2021 RCA Distributed Acoustic and Temperature Sensing experiment are available to download from OptaSense north cable receive fiber (http://piweb.ooirsn.uw.edu/das/data/Optasense/NorthCable/ReceiveFiber/); Silixa DAS (http://piweb.ooirsn.uw.edu/das/data/Silixa/DAS/); Silixa DTS (http://piweb.ooirsn.uw.edu/das/data/Silixa/DTS/). Physical site: RCA north and south backbone cables. Official OOI context: https://oceanobservatories.org/pi-instrument/x/",
     citations: [{ source_id: "SRC-1", title: "Shared RCA and COSZO Instruments corpus", url: "http://piweb.ooirsn.uw.edu/das/data/Optasense/NorthCable/ReceiveFiber/" }],
   };
   const out = withRouteCitations(hit);
+  // The 2021 dataset's sub-folders are one dataset with one link: its parent folder.
   assert.deepEqual(out.citations.map((c) => [c.source_id, c.title, c.url]), [
-    ["SRC-1", "OptaSense north cable receive fiber", "http://piweb.ooirsn.uw.edu/das/data/Optasense/NorthCable/ReceiveFiber/"],
-    ["SRC-1", "Silixa DAS", "http://piweb.ooirsn.uw.edu/das/data/Silixa/DAS/"],
-    ["SRC-1", "Silixa DTS", "http://piweb.ooirsn.uw.edu/das/data/Silixa/DTS/"],
+    ["SRC-1", "2021 conventional DAS (OptaSense and Silixa)", "http://piweb.ooirsn.uw.edu/das/data/"],
   ]);
+  const covis = withRouteCitations({ chunk_id: "C", citations: [{ source_id: "S", title: "Shared RCA and COSZO Instruments corpus", url: "http://piweb.ooirsn.uw.edu/covis/data/COVIS/" }],
+    text: "Data for COVIS are available to download from COVIS raw survey archives (http://piweb.ooirsn.uw.edu/covis/data/COVIS/); COVIS browse products (http://piweb.ooirsn.uw.edu/covis/data/BROWSE/). Physical site: ASHES." });
+  assert.deepEqual(covis.citations.map((c) => c.title), ["COVIS raw survey archives", "COVIS browse products"]);
   // Other hits pass through untouched.
   const paper = { chunk_id: "P", text: "DAS denoising without clean data", citations: [{ source_id: "D", url: "https://doi.org/x" }] };
   assert.equal(withRouteCitations(paper), paper);
@@ -177,8 +179,9 @@ test("a download question puts every routing record in front of the model, even 
   const data = await res.json();
   assert.equal(res.status, 200);
   assert.match(prompt, /Silixa DTS \(http:\/\/piweb\.ooirsn\.uw\.edu\/das\/data\/Silixa\/DTS\/\)/);
-  assert.match(prompt, /\[\d+\] Silixa DTS/);   // the second route is a numbered source of its own
-  assert.deepEqual(data.answer_citations.filter((c) => c.url.includes("/Silixa/")).map((c) => c.title), ["Silixa DAS", "Silixa DTS"]);
+  assert.match(prompt, /\[\d+\] 2021 conventional DAS \(OptaSense and Silixa\)/);   // the dataset is one numbered source
+  assert.deepEqual(data.answer_citations.filter((c) => c.url.includes("/das/data/")).map((c) => [c.title, c.url]),
+    [["2021 conventional DAS (OptaSense and Silixa)", "http://piweb.ooirsn.uw.edu/das/data/"]]);
   assert.doesNotMatch(prompt, /COVIS/);   // another instrument's downloads stay out of a DAS answer
   assert.ok(!data.answer_citations.some((c) => c.url.includes("/covis/")));
 });
@@ -199,7 +202,7 @@ test("DAS experiments are recognised by the map's labels, their years, and their
   assert.ok(namedDas("DAS21").record.test("Data for 2021 RCA Distributed Acoustic and Temperature Sensing experiment are available"));
 });
 
-test("a DAS experiment named by the map's label (DAS21) reaches the model with all its routes", async (t) => {
+test("a DAS experiment named by the map's label (DAS21) reaches the model, cited as its one dataset", async (t) => {
   const { default: worker } = await import("../src/index.js");
   const paper = (i) => ({ chunk_id: `A${i}`, collection_id: "arcada", title: `RCA Distributed Acoustic Sensing paper ${i}`, text: "The Regional Cabled Array DAS deployment.",
     citations: [{ source_id: `A${i}`, title: `paper ${i}`, url: `https://doi.org/${i}` }] });
@@ -222,7 +225,7 @@ test("a DAS experiment named by the map's label (DAS21) reaches the model with a
   const data = await res.json();
   assert.match(query, /2021 RCA Distributed Acoustic and Temperature Sensing experiment/);   // the search names it as the corpus does
   assert.match(prompt, /Silixa DTS \(http/);
-  assert.match(prompt, /named DAS21, the 2021 RCA Distributed Acoustic and Temperature Sensing experiment/);
+  assert.match(prompt, /named DAS21, the 2021 conventional DAS experiment/);
   assert.doesNotMatch(prompt, /MultiDAS/);   // the named experiment only
-  assert.deepEqual(data.answer_citations.map((c) => c.title), ["OptaSense south cable receive fiber", "Silixa DTS"]);
+  assert.deepEqual(data.answer_citations.map((c) => c.title), ["2021 conventional DAS (OptaSense and Silixa)"]);
 });
