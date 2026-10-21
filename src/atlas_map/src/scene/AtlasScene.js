@@ -4,13 +4,22 @@ import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { KX, KZ, toX, toZ } from "./geo.js";
-import { buildArrays, stack } from "./grid.js";
+import { buildArrays, coarsen, stack } from "./grid.js";
+import { sceneSignature } from "./renderGate.js";
 import { terrainMaterial } from "./terrainMaterial.js";
 import { AuvLod } from "./AuvLod.js";
 import { SubsurfaceLayer, loadSubsurface } from "./SubsurfaceLayer.js";
 import { approach, centerShift, ease, fitDist, isMoveKey, motionDuration, moveStep, rotateSpeedFor, viewPose } from "./cameraMath.js";
 
 export { loadGrids } from "./grid.js";
+
+// Terrain meshes by camera distance (the controls' orbit radius): [grid step, farthest distance drawn]. The
+// overview opens at 650 and the regions at 14-95. A patch's step-4 cells (about 180 m) stay under a pixel from
+// 400 out, so only invisible detail is dropped; each switch has 10% hysteresis so it does not flicker.
+const PATCH_LODS = [[1, 160], [2, 400], [4, Infinity]];
+const OVERVIEW_LODS = [[1, 900], [2, Infinity]];
+const AUV_FAR = 150;   // beyond this the 16 m summit survey hides and the GMRT grid draws the summit
+const REDRAW_MS = 2000;   // an unchanged scene still redraws this often, in case something slipped the fingerprint
 
 export class AtlasScene {
   constructor(canvas, bundle, grids, { onFrame } = {}) {
@@ -20,7 +29,7 @@ export class AtlasScene {
     this._motion = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
     this.elevAt = stack([grids.axial, grids.hydrate, grids.overview]);   // until `ready` adds the AUV survey
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true }));
-    r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(innerWidth, innerHeight);
+    r.setPixelRatio(Math.min(devicePixelRatio, 1.5)); r.setSize(innerWidth, innerHeight);   // 2x quadrupled the fill for no visible gain
     this.scene = new THREE.Scene(); this.scene.background = new THREE.Color("#121211");
     this.camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.05, 6000);
     const shrink = (b, m) => new THREE.Vector4(b[0] + m, b[1] - m, b[2] + m, b[3] - m);
@@ -29,15 +38,19 @@ export class AtlasScene {
                holeA: shrink(grids.axial.box, 0.35), holeB: shrink(grids.hydrate.box, 0.35) };
     // Terrain, including the MBARI 1 m Axial summit tiles when they are built. Await `ready` before
     // anything samples elevAt for good (cable, moorings, markers): the AUV survey changes the summit's heights.
-    this.terrainMats = [];
+    this.terrainMats = []; this.terrainLods = [];
     this.ready = (async () => {
       const sub = loadSubsurface();   // optional, like the AUV tiles: null when it is not built
       const base = stack([grids.axial, grids.hydrate, grids.overview]);
-      this.auv = await AuvLod.create(this.scene, this.U, terrainMaterial, undefined, base);
-      if (this.auv) this.terrainMats.push(...this.auv.mats);
-      this._addTerrain(grids.overview, 100, true, 1);
-      this._addTerrain(grids.axial, 50, false, 3, this.auv ? { holeC: this.auv.box } : {});
-      this._addTerrain(grids.hydrate, 50, false, 3);
+      // The GMRT grids draw first; the summit survey loads behind them (hidden until the camera is close), and
+      // the Axial patch opens a hole for it only once it exists.
+      this._addTerrain(grids.overview, 100, true, 1, {}, OVERVIEW_LODS);
+      this._axialMat = this._addTerrain(grids.axial, 50, false, 3, { holeC: new THREE.Vector4() }, PATCH_LODS);
+      this._axialMat.uniforms.uHoleCOn.value = 0;
+      this._addTerrain(grids.hydrate, 50, false, 3, {}, PATCH_LODS);
+      this.auv = await AuvLod.create(this.scene, this.U, terrainMaterial, undefined, base, { visible: false });   // _updateTerrain shows it up close
+      if (this.auv) { this.terrainMats.push(...this.auv.mats); this._axialMat.uniforms.uHoleC.value.copy(this.auv.box); }
+      this._prebuildTerrain();
       const data = await sub;
       if (data) {
         this.subsurface = new SubsurfaceLayer(this.scene, this.U, data);
@@ -72,17 +85,60 @@ export class AtlasScene {
     this._raf = requestAnimationFrame(this._tick);
   }
 
-  _addTerrain(grid, interval, holes, smooth, extra = {}) {
-    const a = buildArrays(grid, smooth);
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(a.positions, 3));
-    g.setAttribute("elev", new THREE.BufferAttribute(a.elev, 1));
-    g.setAttribute("grad", new THREE.BufferAttribute(a.grad, 2));
-    g.setIndex(new THREE.BufferAttribute(a.index, 1));
+  // One material per grid, shared by its distance levels; each level's mesh is built the first time it is needed.
+  _addTerrain(grid, interval, holes, smooth, extra, lods) {
     const m = terrainMaterial(this.U, interval, holes, extra);
     this.terrainMats.push(m);
     if (!holes) { m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2; }
-    this.scene.add(new THREE.Mesh(g, m));
+    this.terrainLods.push({ grid, smooth, m, levels: lods.map(([step, far]) => ({ step, far, mesh: null })), current: -1 });
+    return m;
+  }
+
+  _terrainMesh(t, level) {
+    if (!level.mesh) {
+      const a = buildArrays(coarsen(t.grid, level.step), Math.max(1, Math.round(t.smooth / level.step)));
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.BufferAttribute(a.positions, 3));
+      g.setAttribute("elev", new THREE.BufferAttribute(a.elev, 1));
+      g.setAttribute("grad", new THREE.BufferAttribute(a.grad, 2));
+      g.setIndex(new THREE.BufferAttribute(a.index, 1));
+      level.mesh = new THREE.Mesh(g, t.m); level.mesh.visible = false;
+      this.scene.add(level.mesh);
+    }
+    return level.mesh;
+  }
+
+  // The levels the opening view does not use are built one at a time while the browser is idle, so zooming in
+  // later does not stall on building a full-resolution mesh.
+  _prebuildTerrain() {
+    const later = typeof requestIdleCallback === "function" ? cb => requestIdleCallback(cb, { timeout: 4000 }) : cb => setTimeout(cb, 200);
+    const next = () => {
+      if (this._disposed) return;
+      // Finest first: zooming in from the overview is the usual next move.
+      const todo = this.terrainLods.flatMap(t => t.levels.filter(l => !l.mesh).map(l => [t, l])).sort((a, b) => a[1].step - b[1].step);
+      if (!todo.length) return;
+      this._terrainMesh(...todo[0]);
+      later(next);
+    };
+    later(next);
+  }
+
+  _updateTerrain(dist) {
+    for (const t of this.terrainLods) {
+      let i = t.current < 0 ? t.levels.findIndex(l => dist <= l.far) : t.current;
+      while (i < t.levels.length - 1 && dist > t.levels[i].far * 1.1) i++;
+      while (i > 0 && dist < t.levels[i - 1].far * 0.9) i--;
+      if (i === t.current) continue;
+      const shown = this._terrainMesh(t, t.levels[i]);
+      for (const l of t.levels) if (l.mesh) l.mesh.visible = l.mesh === shown;
+      t.current = i;
+    }
+    if (this.auv) {
+      const near = dist < AUV_FAR * (this.auv.visible ? 1.1 : 0.9);
+      this.auv.setVisible(near);
+      // The GMRT Axial patch leaves a hole for the survey; it closes while the survey is hidden.
+      if (this._axialMat) this._axialMat.uniforms.uHoleCOn.value = near ? 1 : 0;
+    }
   }
 
   addCable(cable) {
@@ -280,12 +336,18 @@ export class AtlasScene {
     this.camera.updateMatrixWorld();   // overlays project with exactly this frame's camera
     const dist = this.camera.position.distanceTo(this.controls.target);
     this.frame = { dist, regionMode: dist > 160, flat: this.U.flat.value, exag: this.U.exag.value, e: this.e };
+    this._updateTerrain(dist);
     this.onFrame?.(this);
-    this.renderer.render(this.scene, this.camera);
+    const sig = sceneSignature(this.scene, this.camera, this.renderer.domElement.width, this.renderer.domElement.height);
+    if (sig !== this._sig || now - (this._drawnAt ?? 0) > REDRAW_MS) {
+      this._sig = sig; this._drawnAt = now;
+      this.renderer.render(this.scene, this.camera);
+    }
     this._raf = requestAnimationFrame(this._tick);
   };
 
   dispose() {
+    this._disposed = true;
     cancelAnimationFrame(this._raf);
     removeEventListener("keydown", this._onKeyDown); removeEventListener("keyup", this._onKeyUp);
     removeEventListener("blur", this._onBlur); removeEventListener("resize", this._onResize);

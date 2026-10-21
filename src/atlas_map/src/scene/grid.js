@@ -16,6 +16,20 @@ export function makeGrid(meta, arrayBuffer) {
   return { meta, heights, H, sample, box };
 }
 
+// Every `step`th sample of a grid, for drawing it from afar; sampling (elevAt) keeps the full grid. Coarse cell
+// centres sit on full ones, so the coarse mesh lies within the full mesh, short of it by under `step` cells at
+// the east and south edges.
+export function coarsen(grid, step) {
+  if (step === 1) return grid;
+  const { ncols, nrows, west, south, cellsize } = grid.meta;
+  const nc = Math.floor((ncols - 1) / step) + 1, nr = Math.floor((nrows - 1) / step) + 1, cs = cellsize * step;
+  const heights = new Int16Array(nc * nr);
+  for (let r = 0; r < nr; r++) for (let c = 0; c < nc; c++) heights[r * nc + c] = grid.heights[r * step * ncols + c * step];
+  // Full row R is centred at south + (nrows - R - 0.5) * cellsize, and coarse row r is full row r * step.
+  return makeGrid({ ncols: nc, nrows: nr, cellsize: cs, west: west + 0.5 * cellsize - 0.5 * cs,
+                    south: south + (nrows - 0.5) * cellsize - (nr - 0.5) * cs }, heights.buffer);
+}
+
 export const stack = grids => (lon, lat) => {
   for (const g of grids) { const v = g.sample(lon, lat); if (v !== null) return v; }
   return -2500;

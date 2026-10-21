@@ -21,11 +21,13 @@ async function fetchTile(url, S, zScale, zOffset) {
 }
 
 export class AuvLod {
-  // ground(lon, lat): the terrain around the survey (GMRT), which its edge blends into.
-  static async create(scene3d, U, makeMaterial, base = atlasUrl("auv/"), ground = null) {
+  // ground(lon, lat): the terrain around the survey (GMRT), which its edge blends into. visible: false keeps the
+  // base tiles hidden as they load (the opening view is too far out for them) until setVisible(true).
+  static async create(scene3d, U, makeMaterial, base = atlasUrl("auv/"), ground = null, { visible = true } = {}) {
     let index;
     try { const r = await fetch(base + "index.json"); if (!r.ok) return null; index = await r.json(); } catch { return null; }
     const lod = new AuvLod(scene3d, U, makeMaterial, base, index, ground);
+    lod.visible = visible;
     try { await lod._loadBase(); } catch (err) {
       // An optional layer: without its 16 m base the summit falls back to the GMRT grid.
       lod.dispose();
@@ -37,7 +39,7 @@ export class AuvLod {
 
   constructor(scene3d, U, makeMaterial, base, index, ground = null) {
     Object.assign(this, { scene3d, base, index, ground, S: index.tileCells + 1, credit: index.credit, last: 0, pending: new Set(),
-      cache: new Map(), cacheMax: 160, failed: new Map() });   // cache: finer levels only, LRU; failed: key -> retry time
+      cache: new Map(), cacheMax: 160, failed: new Map(), visible: true });   // cache: finer levels only, LRU; failed: key -> retry time
     const { west, north } = index;
     this.levels = index.levels.map(l => ({ ...l, tileDeg: l.cellDeg * index.tileCells, have: new Set(l.tiles.map(([y, x]) => `${y}_${x}`)) }));
     this.masks = this.levels.map(L => {
@@ -106,6 +108,7 @@ export class AuvLod {
     if (this.shown[k].has(key)) return;
     const mesh = new THREE.Mesh(g, this.mats[k]);
     mesh.frustumCulled = false;   // heights are applied in the shader; bounds at y=0 would cull wrongly
+    mesh.visible = this.visible;
     this.scene3d.add(mesh); this.shown[k].set(key, mesh); this._setMask(k, key, true);
   }
   _hide(k, key) {
@@ -162,6 +165,14 @@ export class AuvLod {
     if (k < 2) return true;
     const [ty, tx] = key.split("_").map(Number);
     return this.shown[1].has(`${Math.floor(ty / 4)}_${Math.floor(tx / 4)}`);
+  }
+
+  // From afar the summit is a few hundred pixels wide and the GMRT grid beneath draws it as well, so the scene hides
+  // the survey there instead of drawing its 30 base tiles (3.9 M triangles) every frame.
+  setVisible(on) {
+    if (on === this.visible) return;
+    this.visible = on;
+    for (const level of this.shown) for (const mesh of level.values()) mesh.visible = on;
   }
 
   finest() { return this.shown[2].size ? "1 m" : this.shown[1].size ? "4 m" : "16 m"; }
