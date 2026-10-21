@@ -197,13 +197,17 @@ def register(app, settings, deps, cache, limiter) -> None:
             # One-minute probes keep the search cheap; the first window holding data bounds the archive's delay.
             return next((lag for lag in ARCHIVE_LAG_PROBES if download(end - timedelta(minutes=lag), 1)), None)
 
-        data, lag = download(end, minutes), 0
-        if data is None:
+        data, lag, probed = download(end, minutes), 0, False
+        # Probing costs up to eight more EarthScope calls, so it runs only for channels the map itself shows for
+        # this station; a caller cycling arbitrary channel codes gets one call per window, as before.
+        if data is None and cha in known.get("channels", ()):
+            probed = True
             lag = cache.get_or_set(f"wave-lag:{station_id}:{cha}:{end.isoformat()}", TTL["waveform"], archive_lag)
             data = download(end - timedelta(minutes=lag), minutes) if lag else None
         if data is None:
             return {"station": station_id, "channel": cha, "rate": None, "points": [], "rawCount": 0, "endMs": None,
-                    "sourceUrl": None, "message": f"No recording in the last {ARCHIVE_LAG_PROBES[-1] // 60} hours."}
+                    "sourceUrl": None,
+                    "message": f"No recording in the last {ARCHIVE_LAG_PROBES[-1] // 60} hours." if probed else "No recording in this window."}
         return {"station": station_id, "channel": cha, **data, "message": None}
 
     @app.get("/waveform/{station_id}/health")

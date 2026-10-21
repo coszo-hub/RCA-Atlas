@@ -80,6 +80,14 @@ class WaveformRouteTest(unittest.TestCase):
                           "2026-09-23T10:58:00Z", "2026-09-23T10:28:00Z", "2026-09-23T10:28:00Z"])
         self.assertEqual(es.calls[-1][3], "2026-09-23T10:18:00Z")
 
+    def test_channels_the_map_does_not_show_are_never_probed(self):
+        es = LaggingEarthScope(archived_until="2026-09-23T10:40:00Z")
+        r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1", params={"channel": "LHZ"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["points"], [])
+        self.assertEqual(len(es.calls), 1)   # the requested window only: no archive-lag probes
+        self.assertEqual(r.json()["message"], "No recording in this window.")
+
     def test_health_reports_the_archive_delay(self):
         es = LaggingEarthScope(archived_until="2026-09-23T10:40:00Z")
         r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1/health")

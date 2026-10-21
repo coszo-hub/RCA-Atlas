@@ -60,7 +60,7 @@ class BundleIndexTest(unittest.TestCase):
         self.assertFalse(self.ix.has_refdes("RS99XXXX-XX000-00-NOPE00000"))
         self.assertEqual(self.ix.erddap_dataset("RS03AXPS-PC03A-4A-CTDPFA303"), "ooi-rs03axps-pc03a-4a-ctdpfa303")
         self.assertIsNone(self.ix.erddap_dataset("RS01SBPD-DP01A-01-CTDPFL104"))
-        self.assertEqual(self.ix.station("OO", "AXCC1"), {"channel": "HHZ"})
+        self.assertEqual(self.ix.station("OO", "AXCC1"), {"channel": "HHZ", "channels": {"HHZ"}})
         self.assertIsNone(self.ix.station("OO", "NOPE"))
         self.assertTrue(self.ix.has_pi("PI-COVIS"))
         self.assertFalse(self.ix.has_pi("PI-NOPE"))
