@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { waveform } from "../../api/gateway.js";
+import { fmtMinutes } from "../../data/format.js";
 import Chart from "./Chart.jsx";
 import Failure from "./Failure.jsx";
 import { useLive } from "./useLive.js";
+
+// EarthScope serves its newest archived window, which can be an hour or more old.
+const ends = endMs => (endMs ? `ends ${new Date(endMs).toISOString().slice(11, 16)} UTC, ${fmtMinutes((Date.now() - endMs) / 60_000)} ago` : "newest EarthScope data");
 
 export default function WaveformView({ route }) {
   const [minutes, setMinutes] = useState(10);
@@ -17,7 +21,7 @@ export default function WaveformView({ route }) {
       {w.state === "error" && <Failure error={w.error} retry={w.retry} />}
       {w.state === "ok" && (w.data.points.length
         ? (<><Chart points={w.data.points} unit="counts" label={`${station} ${w.data.channel}`} />
-            <p className="chart-foot mono">{w.data.channel} · {w.data.rate} samples/s · ends 2 minutes ago · drag to zoom, double-click to reset</p></>)
+            <p className="chart-foot mono">{w.data.channel} · {w.data.rate} samples/s · {ends(w.data.endMs)} · drag to zoom, double-click to reset</p></>)
         : <p className="muted">{w.data.message ?? "No recording in this window."}</p>)}
     </div>
   );

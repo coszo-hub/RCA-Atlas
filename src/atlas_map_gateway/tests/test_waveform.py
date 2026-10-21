@@ -12,6 +12,19 @@ from atlas_map_gateway.tests.fakes import FIX, SETTINGS, FakeEarthScope, deps
 
 MSEED = FIX / "axcc1_hhz_20260901.mseed"
 OK = {"ok": True, "file": str(MSEED), "source_url": "https://service.earthscope.org/fdsnws/dataselect/1/query?x"}
+NO_DATA = {"ok": False, "error": {"type": "no_data", "message": "EarthScope returned no waveform data"}}
+
+
+class LaggingEarthScope(FakeEarthScope):
+    """Serves the fixture only for windows that begin before the archive's newest data."""
+
+    def __init__(self, archived_until):
+        super().__init__(OK)
+        self.archived_until = archived_until
+
+    def download_waveform(self, network, station, channel, begin, end, location="--"):
+        self.calls.append((network, station, channel, begin, end, location))
+        return OK if begin < self.archived_until else NO_DATA
 
 
 class DecodeTest(unittest.TestCase):
@@ -52,7 +65,27 @@ class WaveformRouteTest(unittest.TestCase):
         r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["points"], [])
-        self.assertEqual(r.json()["message"], "No recording in this window.")
+        self.assertEqual(r.json()["message"], "No recording in the last 6 hours.")
+        self.assertEqual(len(es.calls), 1 + 8)   # the live window, then every archive-lag probe
+
+    def test_lagging_archive_serves_the_newest_window_instead_of_nothing(self):
+        es = LaggingEarthScope(archived_until="2026-09-23T10:40:00Z")   # 80 minutes behind the 12:00 clock
+        r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1", params={"minutes": 10})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["rawCount"], 12001)
+        self.assertIsNone(r.json()["message"])
+        # The live window and the 15/30/60-minute probes are empty; the 90-minute probe finds data.
+        self.assertEqual([c[4] for c in es.calls],
+                         ["2026-09-23T11:58:00Z", "2026-09-23T11:43:00Z", "2026-09-23T11:28:00Z",
+                          "2026-09-23T10:58:00Z", "2026-09-23T10:28:00Z", "2026-09-23T10:28:00Z"])
+        self.assertEqual(es.calls[-1][3], "2026-09-23T10:18:00Z")
+
+    def test_health_reports_the_archive_delay(self):
+        es = LaggingEarthScope(archived_until="2026-09-23T10:40:00Z")
+        r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1/health")
+        self.assertTrue(r.json()["recording"])
+        self.assertEqual(r.json()["latestMs"], 1788220860000)   # the fixture's last sample, 2026-09-01T00:01:00Z
+        self.assertEqual(r.json()["delayMinutes"], 22 * 1440 + 719)   # to the fake clock's 2026-09-23T12:00:00Z
 
     def test_health_reports_recent_waveform_availability_without_claiming_operational_status(self):
         r = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK)))).get("/waveform/OO.AXCC1/health")

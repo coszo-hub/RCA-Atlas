@@ -50,6 +50,14 @@ class AccessTest(unittest.TestCase):
         es = [x for x in routes if x["kind"] == "earthscope"][0]
         self.assertEqual((es["channel"], es["channelSource"]), ("BHZ", "station metadata"))
 
+    def test_closed_station_gets_metadata_not_a_live_waveform(self):
+        ext = {**EXT, "earthscope": {"AXCC1": {"lat": 45.95, "lon": -130.01, "channels": ["HHZ"]}}}
+        routes = access.build_access(rec(id="EARTHSCOPE-OO-AXCC2"), ext, PI, {})
+        self.assertNotIn("earthscope", [r["kind"] for r in routes])
+        meta = [r for r in routes if r["kind"] == "documentation"][0]
+        self.assertIn("sta=AXCC2", meta["url"])
+        self.assertIn("closed", meta["label"])
+
     def test_earthscope_channel_from_inventory(self):
         ext = {**EXT, "earthscope": {"AXAS1": {"lat": 45.93, "lon": -130.01, "channels": ["EHE", "EHZ", "LHZ"]}}}
         es = [x for x in access.build_access(rec(id="EARTHSCOPE-OO-AXAS1"), ext, PI, {}) if x["kind"] == "earthscope"][0]

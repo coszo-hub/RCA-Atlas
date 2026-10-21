@@ -1,5 +1,5 @@
 import { status as fetchStatus, waveformHealth } from "../../api/gateway.js";
-import { fmtDate, statusLabel } from "../../data/format.js";
+import { fmtDate, fmtMinutes, statusLabel } from "../../data/format.js";
 import { useLive } from "./useLive.js";
 
 export default function LiveStatus({ sensor, manifest }) {
@@ -10,7 +10,12 @@ export default function LiveStatus({ sensor, manifest }) {
   const snapshot = `${statusLabel(sensor.status)}${sensor.statusSource ? ` · ${sensor.statusSource}` : ""}`;
   if (earthscope) {
     if (waveform.state === "idle" || waveform.state === "loading") return <div className="live-status">Checking recent EarthScope waveform…</div>;
-    if (waveform.state === "ok") return <div className="live-status">{waveform.data.recording ? "Waveform available" : "No waveform in the recent window"} · EarthScope checked live</div>;
+    if (waveform.state === "ok") {
+      const d = waveform.data;
+      // EarthScope's archive often trails real time by an hour or more; say so rather than imply a live stream.
+      const lag = d.recording && d.delayMinutes >= 5 ? ` · EarthScope archive ${fmtMinutes(d.delayMinutes)} behind` : "";
+      return <div className="live-status">{d.recording ? `Waveform available${lag}` : (d.message ?? "No recent waveform")} · EarthScope checked live</div>;
+    }
     if (waveform.error.kind === "unreachable") return <div className="live-status degraded">EarthScope live check unavailable <button onClick={waveform.retry}>Retry</button></div>;
     return <div className="live-status degraded">EarthScope: {waveform.error.message} <button onClick={waveform.retry}>Retry</button></div>;
   }

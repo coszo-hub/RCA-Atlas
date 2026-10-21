@@ -32,6 +32,22 @@ describe("LiveData", () => {
     await waitFor(() => expect(screen.getByText(/No readings in this range/)).toBeInTheDocument());
     expect(screen.getByText(/data runs to Sep 1, 2026/)).toBeInTheDocument();
   });
+  it("an empty preset moves to the measurement's newest reading when it stopped before the dataset did", async () => {
+    const fetchMock = vi.fn(async url => {
+      const u = String(url);
+      if (u.includes("/variables")) return { ok: true, status: 200, json: async () => ({ variables: [{ name: "t", units: "C", longName: "T" }], coverage: { end: "2026-09-23T10:48:00Z" } }) };
+      const end = new URL(u, "http://x").searchParams.get("end");
+      const body = end === "2026-09-18T06:41:00Z"
+        ? { points: [[1, 7.3], [2, 7.4], [3, 7.5]], units: "C", rawCount: 3, downloadUrl: "x", latest: null, message: null }
+        : { points: [], units: null, rawCount: 0, downloadUrl: "x", latest: "2026-09-18T06:41:00Z", message: "No readings in this range." };
+      return { ok: true, status: 200, json: async () => body };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<LiveData sensor={b.sensorById["base-ctd"]} />);
+    await waitFor(() => expect(screen.getByTestId("chart")).toHaveTextContent("3 points C"));
+    expect(screen.getByText(/newest reading is from Sep 18, 2026; the 24h window ends there/)).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([u]) => !String(u).includes("/variables"))).toHaveLength(2);
+  });
   it("custom range longer than 31 days is blocked without a request", async () => {
     const f = routes([["/api/series/RS03AXBS-LJ03A-12-CTDPFB301/variables", { variables: [{ name: "t", units: "C" }], coverage: {} }],
                       ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301?", { points: [], rawCount: 0, message: null }]]);

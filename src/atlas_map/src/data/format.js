@@ -17,3 +17,5 @@ export const fmtDate = iso => {
   return d && !Number.isNaN(d.getTime())
     ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "unknown date";
 };
+// An archive delay or data age in minutes: "83 min", "2 h 5 min".
+export const fmtMinutes = m => (m < 90 ? `${Math.max(0, Math.round(m))} min` : `${Math.floor(m / 60)} h${Math.round(m % 60) ? ` ${Math.round(m % 60)} min` : ""}`);

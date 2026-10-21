@@ -18,6 +18,9 @@ from .app_support import call_toolkit
 VAR_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,254}")
 TTL = {"variables": 3600, "series": 300, "plots": 1800, "waveform": 300, "files": 300}
 MAX_FILE_ENTRIES = 200
+# EarthScope's archive can trail real time by over an hour (83 minutes for every OO station on 2026-10-21), so an
+# empty recent window is usually latency, not a silent station. Probe this far back, in minutes, for the newest data.
+ARCHIVE_LAG_PROBES = (15, 30, 60, 90, 120, 180, 240, 360)
 
 
 class ChatBody(BaseModel):
@@ -93,10 +96,18 @@ def register(app, settings, deps, cache, limiter) -> None:
         def fetch():
             with limiter.slot("ERDDAP"):
                 raw = deps.erddap.series(ds, var, t0, t1)
+            latest = None
+            if not raw["times"]:
+                # An empty window often means this measurement stopped before the dataset's other columns did,
+                # so say where its newest reading is and let the chart move there.
+                def newest():
+                    with limiter.slot("ERDDAP"):
+                        return deps.erddap.latest(ds, var)
+                latest = cache.get_or_set(f"latest:{ds}:{var}", TTL["series"], newest)
             times, values = thinning.minmax(raw["times"], raw["values"], settings.max_points)
             return {"refdes": refdes, "var": var, "units": raw["units"],
                     "points": [[t, v] for t, v in zip(times, values)], "rawCount": len(raw["times"]),
-                    "downloadUrl": deps.erddap.csv_url(ds, var, t0, t1),
+                    "downloadUrl": deps.erddap.csv_url(ds, var, t0, t1), "latest": latest,
                     "message": None if raw["times"] else "No readings in this range."}
         return cache.get_or_set(f"series:{ds}:{var}:{t0.isoformat()}:{t1.isoformat()}", TTL["series"], fetch)
 
@@ -156,29 +167,44 @@ def register(app, settings, deps, cache, limiter) -> None:
             return _bad("channel must be three letters or digits, like HHZ")   # the toolkit would accept wildcards
         cha = channel or known.get("channel") or "HHZ"
         end = deps.now().replace(second=0, microsecond=0) - timedelta(minutes=2)
-        begin = end - timedelta(minutes=minutes)
-        b, e = begin.strftime("%Y-%m-%dT%H:%M:%SZ"), end.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        def fetch():
-            with limiter.slot("EarthScope"):
+        def download(window_end: datetime, window_minutes: int) -> dict | None:
+            b = (window_end - timedelta(minutes=window_minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            e = window_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+            def fetch():
+                with limiter.slot("EarthScope"):
+                    try:
+                        res = call_toolkit("EarthScope", lambda: deps.earthscope.download_waveform(net, sta, cha, b, e, "--"))
+                    except errors.UpstreamError as exc:
+                        if "no waveform data" in exc.message.lower():
+                            return None
+                        raise
+                file = Path(res["file"])
                 try:
-                    res = call_toolkit("EarthScope", lambda: deps.earthscope.download_waveform(net, sta, cha, b, e, "--"))
-                except errors.UpstreamError as exc:
-                    if "no waveform data" in exc.message.lower():
-                        return {"station": station_id, "channel": cha, "rate": None, "points": [], "rawCount": 0,
-                                "sourceUrl": None, "message": "No recording in this window."}
-                    raise
-            file = Path(res["file"])
-            try:
-                d = seismic.decode(file)
-            finally:
-                seismic.discard_request_dir(file, deps.earthscope_root)
-            times = [d["startMs"] + i * 1000.0 / d["rate"] for i in range(len(d["samples"]))] if d["rate"] else []
-            tt, vv = thinning.minmax(times, d["samples"], settings.max_points)
-            return {"station": station_id, "channel": cha, "rate": d["rate"],
-                    "points": [[int(t), v] for t, v in zip(tt, vv)], "rawCount": len(d["samples"]),
-                    "sourceUrl": res.get("source_url"), "message": None if d["samples"] else "No recording in this window."}
-        return cache.get_or_set(f"wave:{station_id}:{cha}:{b}:{e}", TTL["waveform"], fetch)
+                    d = seismic.decode(file)
+                finally:
+                    seismic.discard_request_dir(file, deps.earthscope_root)
+                if not d["samples"] or not d["rate"]:
+                    return None
+                times = [d["startMs"] + i * 1000.0 / d["rate"] for i in range(len(d["samples"]))]
+                tt, vv = thinning.minmax(times, d["samples"], settings.max_points)
+                return {"rate": d["rate"], "points": [[int(t), v] for t, v in zip(tt, vv)], "rawCount": len(d["samples"]),
+                        "endMs": int(times[-1]), "sourceUrl": res.get("source_url")}
+            return cache.get_or_set(f"wave:{station_id}:{cha}:{b}:{e}", TTL["waveform"], fetch)
+
+        def archive_lag() -> int | None:
+            # One-minute probes keep the search cheap; the first window holding data bounds the archive's delay.
+            return next((lag for lag in ARCHIVE_LAG_PROBES if download(end - timedelta(minutes=lag), 1)), None)
+
+        data, lag = download(end, minutes), 0
+        if data is None:
+            lag = cache.get_or_set(f"wave-lag:{station_id}:{cha}:{end.isoformat()}", TTL["waveform"], archive_lag)
+            data = download(end - timedelta(minutes=lag), minutes) if lag else None
+        if data is None:
+            return {"station": station_id, "channel": cha, "rate": None, "points": [], "rawCount": 0, "endMs": None,
+                    "sourceUrl": None, "message": f"No recording in the last {ARCHIVE_LAG_PROBES[-1] // 60} hours."}
+        return {"station": station_id, "channel": cha, **data, "message": None}
 
     @app.get("/waveform/{station_id}/health")
     def waveform_health(station_id: str, channel: str | None = None):
@@ -189,8 +215,13 @@ def register(app, settings, deps, cache, limiter) -> None:
         non-empty waveform is useful evidence that their public stream works.
         """
         data = waveform(station_id, minutes=1, channel=channel)
+        if isinstance(data, JSONResponse):
+            return data
+        now = deps.now()
         return {"station": data["station"], "channel": data["channel"],
-                "recording": bool(data["points"]), "checkedAt": deps.now().isoformat(),
+                "recording": bool(data["points"]), "checkedAt": now.isoformat(),
+                "latestMs": data["endMs"],
+                "delayMinutes": round((now.timestamp() * 1000 - data["endMs"]) / 60_000) if data["endMs"] else None,
                 "message": data["message"]}
 
     @app.post("/chat")

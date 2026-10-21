@@ -149,11 +149,18 @@ def build_access(record: dict, external: dict, pi_endpoints: dict[str, list[dict
         channel, source = vertical_channels.get(f"{net}.{sta}"), "station metadata"
         if not channel:
             channel, source = inventory_vertical(inventory.get(sta)), "EarthScope inventory"
-        routes.append({"kind": "earthscope", "label": "EarthScope FDSN", "network": net, "station": sta,
-                       "channel": channel or DEFAULT_VERTICAL_CHANNEL,
-                       "channelSource": source if channel else "default",
-                       "url": f"https://service.earthscope.org/fdsnws/station/1/query?net={net}&sta={sta}&level=channel&format=text",
-                       "how": "Public seismic waveforms (MiniSEED) and station metadata; no login."})
+        station_url = f"https://service.earthscope.org/fdsnws/station/1/query?net={net}&sta={sta}&level=channel&format=text"
+        if not channel and inventory and sta not in inventory:
+            # The inventory lists only channels open now. A station absent from it has closed (AXCC2's tilt and
+            # acceleration channels ended in 2021), so it gets its archive's metadata, not a live waveform to probe.
+            routes.append({"kind": "documentation", "label": "EarthScope station metadata (station closed)", "url": station_url,
+                           "how": "EarthScope lists no open channels for this station; the metadata gives each channel's dates."})
+        else:
+            routes.append({"kind": "earthscope", "label": "EarthScope FDSN", "network": net, "station": sta,
+                           "channel": channel or DEFAULT_VERTICAL_CHANNEL,
+                           "channelSource": source if channel else "default",
+                           "url": station_url,
+                           "how": "Public seismic waveforms (MiniSEED) and station metadata; no login."})
     hyd = hydrophone_station(record, inventory)
     if hyd:
         sta, km = hyd

@@ -52,6 +52,23 @@ class ErddapClient:
         q = f"time,{var}&time>={_iso(start)}&time<={_iso(end)}"
         return f"{BASE}/tabledap/{dataset_id}.csv?" + urllib.parse.quote(q, safe=",&=:")
 
+    def latest(self, dataset_id: str, var: str) -> str | None:
+        """Time of the newest non-NaN reading of one variable.
+
+        A dataset's time_coverage_end is its newest row for any variable; the measurement being plotted can stop
+        days or years earlier (BOTPT botpres on RS03CCAL ended 28 h before the row clock on 2026-10-21).
+        """
+        q = f'time&{var}!=NaN&orderByMax("time")'
+        resp = self._get(f"{BASE}/tabledap/{dataset_id}.csv?" + urllib.parse.quote(q, safe=",&=:!"))
+        if resp.status_code == 404 and "no matching results" in resp.text:
+            return None
+        if resp.status_code != 200:
+            raise UpstreamError("ERDDAP", f"ERDDAP returned HTTP {resp.status_code}")
+        rows = list(csv.reader(io.StringIO(resp.text)))
+        if len(rows) < 3 or rows[0][:1] != ["time"]:
+            raise UpstreamError("ERDDAP", "unexpected ERDDAP CSV response")
+        return rows[2][0] or None
+
     def series(self, dataset_id: str, var: str, start: datetime, end: datetime) -> dict:
         resp = self._get(self.csv_url(dataset_id, var, start, end))
         if resp.status_code == 404 and "no matching results" in resp.text:

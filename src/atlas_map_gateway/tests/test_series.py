@@ -1,5 +1,6 @@
 import dataclasses
 import unittest
+import urllib.parse
 from datetime import datetime, timezone
 
 import httpx
@@ -25,11 +26,13 @@ INFO = {"table": {"columnNames": ["Row Type", "Variable Name", "Attribute Name",
 CSV = "time,sea_water_temperature\nUTC,degree_Celsius\n2026-09-20T00:00:00Z,7.32\n2026-09-20T00:01:00Z,NaN\n2026-09-20T00:02:00Z,7.33\n"
 
 
-def transport(handler_log, csv=CSV, csv_status=200, info=INFO):
+def transport(handler_log, csv=CSV, csv_status=200, info=INFO, latest_csv=None):
     def handler(request: httpx.Request):
         handler_log.append(str(request.url))
         if "/info/" in request.url.path:
             return httpx.Response(200, json=info)
+        if latest_csv is not None and "orderByMax" in str(request.url):
+            return httpx.Response(200, text=latest_csv)
         return httpx.Response(csv_status, text=csv)
     return httpx.MockTransport(handler)
 
@@ -131,6 +134,23 @@ class SeriesRouteTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["points"], [])
         self.assertEqual(r.json()["message"], "No readings in this range.")
+        self.assertIsNone(r.json()["latest"])
+
+    def test_empty_window_reports_the_measurements_newest_reading(self):
+        log = []
+        no_rows = "Error {\n    code=404;\n    message=\"Not Found: Your query produced no matching results.\";\n}\n"
+        r = client(log, csv=no_rows, csv_status=404, latest_csv="time\nUTC\n2026-09-18T06:41:00Z\n").get(
+            f"/series/{REF}", params={"var": "sea_water_temperature", "start": "2026-09-22T10:48:00Z", "end": "2026-09-23T10:48:00Z"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["points"], [])
+        self.assertEqual(r.json()["latest"], "2026-09-18T06:41:00Z")
+        self.assertIn("sea_water_temperature!=NaN", urllib.parse.unquote(log[-1]))
+
+    def test_window_with_readings_skips_the_newest_reading_lookup(self):
+        log = []
+        r = client(log).get(f"/series/{REF}", params={"var": "sea_water_temperature", "start": "2026-09-20T00:00:00Z", "end": "2026-09-21T00:00:00Z"})
+        self.assertIsNone(r.json()["latest"])
+        self.assertFalse(any("orderByMax" in u for u in log))
 
     def test_html_instead_of_csv_is_502(self):
         r = client([], csv="<html>maintenance</html>").get(

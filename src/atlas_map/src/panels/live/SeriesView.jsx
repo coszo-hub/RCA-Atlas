@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { series, variables } from "../../api/gateway.js";
 import { fmtDate } from "../../data/format.js";
 import Chart from "./Chart.jsx";
@@ -14,12 +14,21 @@ export default function SeriesView({ refdes }) {
   const listed = vars.data?.variables ?? [];
   const chosen = varName ?? defaultMeasurement(refdes, listed.map(v => v.name));
   // A preset is fixed when chosen, so re-renders do not refetch as the clock ticks. It ends at the newest reading.
-  const dataEnd = vars.data?.coverage?.end ?? null;
+  // The dataset's coverage end is its newest row for any column; a measurement can stop earlier, so once a
+  // preset comes back empty the gateway's newest reading for that measurement anchors it instead.
+  const [varEnd, setVarEnd] = useState({});
+  const dataEnd = varEnd[chosen] ?? vars.data?.coverage?.end ?? null;
   const presetWin = useMemo(() => (range === "custom" ? null : preset(range, new Date(), dataEnd)), [range, dataEnd]);
   const behind = presetWin && Date.now() - Date.parse(presetWin.end) > 3 * 3600e3;
   const win = range === "custom" ? custom : presetWin;
   const key = chosen && win ? `series:${refdes}:${chosen}:${win.start}:${win.end}` : null;
   const data = useLive(key, o => series(refdes, { var: chosen, start: win.start, end: win.end }, o));
+  const latest = data.state === "ok" && !data.data.points.length ? data.data.latest : null;
+  useEffect(() => {
+    if (latest && range !== "custom" && !varEnd[chosen] && Date.parse(latest) < Date.parse(presetWin.end)) {
+      setVarEnd(v => ({ ...v, [chosen]: latest }));
+    }
+  }, [latest, range, chosen, varEnd, presetWin]);
 
   if (vars.state === "loading") return <p className="muted">Loading variables…</p>;
   if (vars.state === "error") return <Failure error={vars.error} retry={vars.retry} />;
@@ -56,7 +65,8 @@ export default function SeriesView({ refdes }) {
       {data.state === "ok" && (data.data.points.length
         ? (<><Chart points={data.data.points} unit={data.data.units} label={meta?.longName ?? chosen} />
             <p className="chart-foot mono">{data.data.rawCount.toLocaleString("en-US")} readings{data.data.rawCount > data.data.points.length ? `, shown as ${data.data.points.length.toLocaleString("en-US")}` : ""} · drag to zoom, double-click to reset · <a href={data.data.downloadUrl} target="_blank" rel="noreferrer">Download this range (CSV)</a></p></>)
-        : <p className="muted">No readings in this range.{vars.data?.coverage?.end ? ` The data runs to ${fmtDate(vars.data.coverage.end)}.` : ""}</p>)}
+        : <p className="muted">No readings in this range.{data.data.latest ? ` The newest ${meta?.longName ?? chosen} reading is from ${fmtDate(data.data.latest)}.`
+            : vars.data?.coverage?.end ? ` The data runs to ${fmtDate(vars.data.coverage.end)}.` : ""}</p>)}
     </div>
   );
 }

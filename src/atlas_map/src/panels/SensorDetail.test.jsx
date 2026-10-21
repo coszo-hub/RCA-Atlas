@@ -28,6 +28,11 @@ describe("SensorDetail", () => {
     await waitFor(() => expect(screen.getByText("Waveform available · EarthScope checked live")).toBeInTheDocument());
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/waveform/OO.AXCC1/health"), expect.anything());
   });
+  it("says how far EarthScope's archive trails real time instead of reporting no waveform", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ recording: true, station: "OO.AXCC1", channel: "HHZ", delayMinutes: 83 }) })));
+    render(<SensorDetail sensor={b.sensorById["axcc1"]} bundle={b} onBack={() => {}} />);
+    await waitFor(() => expect(screen.getByText("Waveform available · EarthScope archive 83 min behind · EarthScope checked live")).toBeInTheDocument());
+  });
   it("lists every access route with its how-to", () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) })));
     render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
