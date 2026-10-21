@@ -52,16 +52,54 @@ export const DAS_PRODUCTS = [
 // Field shorthand the corpus spells out. "dv/v" appears once in the OOI article on Kidiwela et al. (2026), whose
 // text says "seismic velocity" and "ambient seismic noise interferometry"; in a long question the shorthand lost
 // to every paper matching "Cascadia subduction zone".
+// Each was checked against the corpus, where the spelled-out form is the common one (OSB 1 vs "Slope Base" 1,399;
+// IDF 0 vs "International District" 604). CI and ETS match only in capitals; as words they mean other things.
 const SHORTHAND = [
   { asked: /(?:\bd|δ)v\s*\/\s*v\b/i, search: "relative seismic velocity change dv/v ambient seismic noise interferometry temporal velocity variations" },
+  { asked: /\bamc\b/i, search: "axial magma chamber" },
+  { asked: /\bcsz\b/i, search: "Cascadia subduction zone" },
+  { asked: /\bjdf\b/i, search: "Juan de Fuca" },
+  { asked: /\bv?lfes?\b/i, search: "low-frequency earthquakes" },
+  { asked: /\bvlfes?\b/i, search: "very low frequency earthquakes" },
+  { asked: /\bsses?\b/i, search: "slow slip events" },
+  { asked: /\bETS\b/, search: "episodic tremor and slip" },
+  { asked: /\bnvt\b/i, search: "non-volcanic tremor" },
+  { asked: /\bobss?\b/i, search: "ocean bottom seismometer" },
+  { asked: /\bonc\b/i, search: "Ocean Networks Canada" },
+  { asked: /\bCI\b/, search: "Cascadia Initiative" },
+  { asked: /\bidf\b/i, search: "International District hydrothermal field" },
+  { asked: /\bosb\b/i, search: "Oregon Slope Base" },
+  { asked: /\bshr\b/i, search: "Southern Hydrate Ridge" },
+  { asked: /\bzplsc?\b/i, search: "bio-acoustic sonar zooplankton" },
+  { asked: /\bvp\s*\/\s*vs\b/i, search: "P-wave to S-wave velocity ratio" },
+  { asked: /\bt[- ]phases?\b/i, search: "T-phase hydroacoustic" },
+  { asked: /\bmorb\b/i, search: "mid-ocean ridge basalt" },
+  { asked: /\brtdd\b/i, search: "real-time double-difference earthquake location" },
+  { asked: /\bbprs?\b/i, search: "bottom pressure recorder" },
+  { asked: /\bapgs?\b/i, search: "absolute pressure gauge" },
+  { asked: /\beew\b/i, search: "earthquake early warning" },
+  { asked: /\bmef\b/i, search: "Main Endeavour Field" },
+  { asked: /\bgnss[- ]a\b/i, search: "GNSS-Acoustic seafloor geodesy" },
+  { asked: /\bbotpt\b/i, search: "bottom pressure and tilt" },
+  // Replaced, not added: the token "DAS" itself pulls in every DAS-titled paper, which buried "seismic ocean
+  // thermometry" behind them even with the phrase added.
+  // Kept in data questions ("How do I get the DAS data?"), whose download records the token itself finds.
+  { asked: /\bdas\b/gi, search: "distributed acoustic sensing", replace: true,
+    unless: /\b(?:download|get|access|available|availability|files?|data|dataset)\b/i },
 ];
 
 // The words the corpus search and the evidence ranking use for a question: the question, the corpus name of a
 // named DAS experiment, and spelled-out shorthand.
 export function searchText(question) {
-  const q = String(question || "");
-  const extra = [namedDas(q)?.search, ...SHORTHAND.filter((x) => x.asked.test(q)).map((x) => x.search)].filter(Boolean);
-  return extra.length ? `${q} ${extra.join(" ")}` : q;
+  let q = String(question || "");
+  const extra = [namedDas(q)?.search];
+  for (const x of SHORTHAND) {
+    x.asked.lastIndex = 0;
+    if (!x.asked.test(q) || x.unless?.test(q)) continue;
+    if (x.replace) { x.asked.lastIndex = 0; q = q.replace(x.asked, x.search); } else extra.push(x.search);
+  }
+  const words = extra.filter(Boolean);
+  return words.length ? `${q} ${words.join(" ")}` : q;
 }
 
 export const namedDas = (question) => DAS_PRODUCTS.find((p) => p.asked.test(String(question || "").toLowerCase())) ?? null;

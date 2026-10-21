@@ -124,8 +124,17 @@ function prioritizedHits(context, question, limit = 6) {
   // Once a routing record matches the question, routing records for other instruments (COVIS for a DAS
   // question) are off topic: they would list another instrument's downloads beside the answer.
   const matched = routing && scored.some((x) => x.isRouting && x.relevance > 0);
+  // At most two sections of one document: a long paper (DAS-N2N filled five of ten hits) otherwise crowds out the
+  // other papers a literature question is choosing between.
+  const perTitle = new Map();
   return scored.filter((x) => !(matched && x.isRouting && x.relevance === 0))
-    .sort((a, b) => b.score - a.score || a.index - b.index).slice(0, limit).map(({ hit }) => hit);
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .filter(({ hit }) => {
+      const key = String(hit.title || hit.chunk_id).replace(/\s*\((?:description|params)\)$/i, "").toLowerCase();
+      perTitle.set(key, (perTitle.get(key) || 0) + 1);
+      return perTitle.get(key) <= 2;
+    })
+    .slice(0, limit).map(({ hit }) => hit);
 }
 
 function answerMode(question) {
@@ -444,7 +453,8 @@ export default {
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
         // A DAS name such as DAS21, or shorthand such as dv/v, is searched with the words the corpus uses.
         query: searchText(query),
-        limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS,
+        // Room beyond the evidence kept, since repeated sections of one paper are dropped (prioritizedHits).
+        limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS + 4,
         graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
       context.hits = (context.hits || []).map(withRouteCitations);

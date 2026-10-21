@@ -237,4 +237,31 @@ test("shorthand and DAS labels are searched with the corpus's own words", () => 
   assert.match(searchText("where can i download DAS21 data"), /2021 RCA Distributed Acoustic and Temperature Sensing experiment/);
   assert.equal(searchText("what is axial seamount"), "what is axial seamount");
   assert.equal(searchText("the dvd archive"), "the dvd archive");
+  assert.match(searchText("how deep is the AMC at axial"), /axial magma chamber/);
+  assert.match(searchText("what instruments are at OSB"), /Oregon Slope Base/);
+  assert.match(searchText("which study used CI OBS data"), /Cascadia Initiative .*ocean bottom seismometer|ocean bottom seismometer .*Cascadia Initiative/);
+  assert.equal(searchText("the ci of the estimate"), "the ci of the estimate");   // lower-case ci is not the Cascadia Initiative
+  assert.match(searchText("VLFEs offshore"), /very low frequency earthquakes/);
+  assert.equal(searchText("which paper used DAS for seismic ocean thermometry"), "which paper used distributed acoustic sensing for seismic ocean thermometry");
+  assert.equal(searchText("How do I get the DAS data?"), "How do I get the DAS data?");   // its download records match "DAS" itself
+});
+
+test("one long paper does not crowd out the others: at most two of its sections reach the model", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  const section = (title, i) => ({ chunk_id: `${title}-${i}`, collection_id: "arcada", title, text: `Distributed acoustic sensing on the Regional Cabled Array, part ${i}.`,
+    citations: [{ source_id: title, title, url: `https://doi.org/${encodeURIComponent(title)}` }] });
+  const hits = [...[1, 2, 3, 4, 5].map((i) => section("DAS-N2N denoising", i)), section("Seismic ocean thermometry with DAS", 1), section("DAS early warning", 1)];
+  let prompt = "";
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    if (String(url).endsWith("/v1/context")) return Response.json({ hits, neighbors: [], tool_hints: [] });
+    prompt = JSON.parse(init.body).contents[0].parts[0].text;
+    return Response.json({ candidates: [{ content: { parts: [{ text: "Thermometry [2]." }] } }] });
+  });
+  await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "which paper used DAS for seismic ocean thermometry" }),
+  }), { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g" });
+  assert.equal((prompt.match(/^DAS-N2N denoising/gm) || []).length, 2);
+  assert.match(prompt, /^Seismic ocean thermometry with DAS/m);
+  assert.match(prompt, /^DAS early warning/m);
 });
