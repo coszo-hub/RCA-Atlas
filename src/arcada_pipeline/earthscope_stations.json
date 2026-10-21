@@ -1,0 +1,2595 @@
+{
+ "retrieved_at": "2026-10-21T19:28:15+00:00",
+ "stations": {
+  "OO.AXAS1": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXAS1&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    }
+   ]
+  },
+  "OO.AXAS2": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXAS2&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    }
+   ]
+  },
+  "OO.AXBA1": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXBA1&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "BHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNE",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNN",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNZ",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-08",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "UDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2014-08-08",
+     "end": "2016-07-12"
+    },
+    {
+     "location": "10",
+     "channel": "UDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2016-07-13",
+     "end": "2020-08-05"
+    },
+    {
+     "location": "10",
+     "channel": "UDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2020-08-06",
+     "end": "2022-08-29"
+    },
+    {
+     "location": "10",
+     "channel": "UDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2022-08-30",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "UK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2014-08-08",
+     "end": "2016-07-12"
+    },
+    {
+     "location": "10",
+     "channel": "UK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2016-07-13",
+     "end": "2020-08-05"
+    },
+    {
+     "location": "10",
+     "channel": "UK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2020-08-06",
+     "end": "2022-08-29"
+    },
+    {
+     "location": "10",
+     "channel": "UK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2022-08-30",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": "2016-07-12"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-13",
+     "end": "2019-07-07"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-07-07",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": "2016-07-12"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-13",
+     "end": "2019-07-07"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-07-07",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": "2016-07-12"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-13",
+     "end": "2019-07-07"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-07-07",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-08",
+     "end": "2016-07-12"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-13",
+     "end": "2019-07-07"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-07-07",
+     "end": null
+    }
+   ]
+  },
+  "OO.AXCC1": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXCC1&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "BHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNE",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNN",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNZ",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "BDO",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 20.0,
+     "start": "2014-07-25",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "BK1",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 20.0,
+     "start": "2014-07-25",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAA",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-25",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAX",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-25",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAY",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-25",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAA",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-25",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAD",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-25",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAM",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-25",
+     "end": null
+    }
+   ]
+  },
+  "OO.AXCC2": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXCC2&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "AHD",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 40.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "BKA",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 40.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "BNE",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 40.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "BNG",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 40.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "BNN",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 40.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "BNZ",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 40.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "BXG",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 40.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "MKA",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 8.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "MNE",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 8.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "MNG",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 8.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "MNN",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 8.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "MNZ",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 8.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    },
+    {
+     "location": "",
+     "channel": "MXG",
+     "sensor": "SCTA 3-axis quartz accel, rotated to calibrate",
+     "sample_rate_hz": 8.0,
+     "start": "2018-07-06",
+     "end": "2021-08-27"
+    }
+   ]
+  },
+  "OO.AXEC1": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC1&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    }
+   ]
+  },
+  "OO.AXEC2": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC2&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "BHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNE",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNN",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNZ",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "BDO",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 20.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "BK1",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 20.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAA",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAX",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAY",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAA",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAD",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAM",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-23",
+     "end": null
+    }
+   ]
+  },
+  "OO.AXEC3": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC3&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": null
+    }
+   ]
+  },
+  "OO.AXID1": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXID1&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "BDO",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 20.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "BK1",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 20.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAA",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAX",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "11",
+     "channel": "LAY",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAA",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAD",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    },
+    {
+     "location": "12",
+     "channel": "LAM",
+     "sensor": "Bottom Pressure and Tilt: BOTPT Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2014-07-21",
+     "end": null
+    }
+   ]
+  },
+  "OO.HYS11": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS11&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-01",
+     "end": null
+    }
+   ]
+  },
+  "OO.HYS12": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS12&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-01",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-01",
+     "end": null
+    }
+   ]
+  },
+  "OO.HYS13": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS13&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "EHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "EHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "EHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 200.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LME",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "LME",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "LME",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LMN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "LMN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "LMN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LMZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "LMZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "LMZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 1.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 8.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "SHE",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "SHN",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2022-08-21",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2014-08-01",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2019-06-25",
+     "end": "2022-08-21"
+    },
+    {
+     "location": "",
+     "channel": "SHZ",
+     "sensor": "CMG-6TF, 1s-100Hz, 2400 V/m/s-DM-24 Mk3 Variable G",
+     "sample_rate_hz": 40.0,
+     "start": "2022-08-21",
+     "end": null
+    }
+   ]
+  },
+  "OO.HYS14": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS14&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "BHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNE",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNN",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNZ",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-07",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "LDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 2,000 psia): PREST Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2017-08-11",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "LK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 2,000 psia): PREST Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2017-08-11",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "UDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 2,000 psia): PREST Series B",
+     "sample_rate_hz": 0.066667,
+     "start": "2014-09-07",
+     "end": "2017-08-11"
+    },
+    {
+     "location": "10",
+     "channel": "UK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 2,000 psia): PREST Series B",
+     "sample_rate_hz": 0.066667,
+     "start": "2014-09-07",
+     "end": "2017-08-11"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-09",
+     "end": "2016-07-23"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-24",
+     "end": "2017-08-11"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2017-08-11",
+     "end": "2018-06-26"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2018-06-26",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2024-08-20"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-21",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-09",
+     "end": "2016-07-23"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-24",
+     "end": "2017-08-11"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2017-08-11",
+     "end": "2018-06-26"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2018-06-26",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2024-08-20"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-21",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-09",
+     "end": "2016-07-23"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-24",
+     "end": "2017-08-11"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2017-08-11",
+     "end": "2018-06-26"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2018-06-26",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2024-08-20"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-21",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-09",
+     "end": "2016-07-23"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-24",
+     "end": "2017-08-11"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2017-08-11",
+     "end": "2018-06-26"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2018-06-26",
+     "end": "2019-06-25"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2019-06-25",
+     "end": "2024-08-20"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-21",
+     "end": null
+    }
+   ]
+  },
+  "OO.HYSB1": {
+   "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYSB1&level=channel&format=text",
+   "channels": [
+    {
+     "location": "",
+     "channel": "BHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "BHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 40.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNE",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNN",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "HNZ",
+     "sensor": "CMG-5T, DC_100 s,  1.02 V/m/s**2, 1g clip level,",
+     "sample_rate_hz": 200.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LDH",
+     "sensor": "HT1-90-U/Diff Hydrophone-DM-24 Mk3 Fixed Gain, g",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "LHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHE",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHN",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "",
+     "channel": "MHZ",
+     "sensor": "CMG-1T, 360 s, 3000 V/m/s-DM-24 Mk3 Fixed Gain, ga",
+     "sample_rate_hz": 8.0,
+     "start": "2014-09-13",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "LDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2018-06-26",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "LK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 1.0,
+     "start": "2018-06-26",
+     "end": null
+    },
+    {
+     "location": "10",
+     "channel": "UDO",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2014-09-13",
+     "end": "2018-06-26"
+    },
+    {
+     "location": "10",
+     "channel": "UK1",
+     "sensor": "Tidal Seafloor Pressure (Tsunameter 6,000 psia): PREST Series A",
+     "sample_rate_hz": 0.066667,
+     "start": "2014-09-13",
+     "end": "2018-06-26"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": "2016-07-17"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-17",
+     "end": "2024-08-09"
+    },
+    {
+     "location": "20",
+     "channel": "LKO",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-10",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": "2016-07-17"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-17",
+     "end": "2024-08-09"
+    },
+    {
+     "location": "20",
+     "channel": "LOE",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-10",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": "2016-07-17"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-17",
+     "end": "2024-08-09"
+    },
+    {
+     "location": "20",
+     "channel": "LON",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-10",
+     "end": null
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2014-09-13",
+     "end": "2016-07-17"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2016-07-17",
+     "end": "2024-08-09"
+    },
+    {
+     "location": "20",
+     "channel": "LOZ",
+     "sensor": "3-D Single Point Velocity Meter (Nobska MAVS-4): VEL3D Series B",
+     "sample_rate_hz": 1.0,
+     "start": "2024-08-10",
+     "end": null
+    }
+   ]
+  }
+ }
+}

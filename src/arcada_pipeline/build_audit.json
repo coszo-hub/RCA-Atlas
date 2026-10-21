@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-09-19T03:01:29.005739+00:00",
+  "created_at": "2026-10-21T19:29:34.585084+00:00",
   "source_rows": 802,
   "retained_rows": 802,
   "excluded_rows": [],
@@ -93,5 +93,232 @@
       ]
     }
   ],
+  "earthscope_corrected_rows": [
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXAS1",
+      "source_row_index": 89,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXAS1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXAS1::desc",
+      "source_row_index": 90,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXAS1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXAS2",
+      "source_row_index": 91,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXAS2&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXAS2::desc",
+      "source_row_index": 92,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXAS2&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXBA1",
+      "source_row_index": 93,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXBA1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXBA1::desc",
+      "source_row_index": 94,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXBA1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXCC1",
+      "source_row_index": 95,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXCC1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXCC1::desc",
+      "source_row_index": 96,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXCC1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXCC2",
+      "source_row_index": 97,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": null,
+      "closed": "2021-08-27",
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXCC2&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXCC2::desc",
+      "source_row_index": 98,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": null,
+      "closed": "2021-08-27",
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXCC2&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXEC1",
+      "source_row_index": 99,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXEC1::desc",
+      "source_row_index": 100,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXEC2",
+      "source_row_index": 101,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC2&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXEC2::desc",
+      "source_row_index": 102,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC2&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXEC3",
+      "source_row_index": 103,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC3&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXEC3::desc",
+      "source_row_index": 104,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXEC3&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXID1",
+      "source_row_index": 105,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXID1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-AXID1::desc",
+      "source_row_index": 106,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=AXID1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS11",
+      "source_row_index": 107,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS11&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS11::desc",
+      "source_row_index": 108,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS11&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS12",
+      "source_row_index": 109,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS12&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS12::desc",
+      "source_row_index": 110,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS12&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS13",
+      "source_row_index": 111,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS13&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS13::desc",
+      "source_row_index": 112,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-6TF",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS13&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS14",
+      "source_row_index": 113,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS14&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYS14::desc",
+      "source_row_index": 114,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYS14&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYSB1",
+      "source_row_index": 115,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYSB1&level=channel&format=text"
+    },
+    {
+      "source_chunk_id": "EARTHSCOPE-OO-HYSB1::desc",
+      "source_row_index": 116,
+      "reason": "earthscope_station_metadata_corrected",
+      "seismometer": "CMG-1T",
+      "closed": null,
+      "source_url": "https://service.earthscope.org/fdsnws/station/1/query?net=OO&sta=HYSB1&level=channel&format=text"
+    }
+  ],
+  "earthscope_snapshot_retrieved_at": "2026-10-21T19:28:15+00:00",
   "source_sha256": "59a4ad21eff60131addc8cada275b2073a946e90998fac9951ab0bbebcde9964"
 }

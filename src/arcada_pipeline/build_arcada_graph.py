@@ -112,6 +112,94 @@ def prepare_rows(raw_rows: list[dict]) -> tuple[list[dict], list[dict]]:
     return prepared, repairs
 
 
+EARTHSCOPE_SNAPSHOT = Path(__file__).with_name("earthscope_stations.json")
+SEISMOMETER_CLASSES = {   # vertical sensor model -> how the station is described
+    "CMG-1T": "Broadband seismometer (Güralp CMG-1T, 360 s)",
+    "CMG-6TF": "Short-period seismometer (Güralp CMG-6TF, 1 s to 100 Hz)",
+}
+
+
+def _sensor_name(description: str) -> str:
+    """The sensor model, without the digitizer and gain: "CMG-1T, 360 s, 3000 V/m/s-DM-24 ..." -> "CMG-1T"."""
+    name, depth = "", 0
+    for ch in description.split("-DM-24", 1)[0]:
+        depth += (ch == "(") - (ch == ")")
+        if ch == "," and depth <= 0:
+            break
+        name += ch
+    return name.strip()
+
+
+def _component_order(channel: str) -> tuple:
+    return ("ZNE12".find(channel[2]) % 6, channel)
+
+
+def _rate(hz: float) -> str:
+    return f"{hz:g} Hz"
+
+
+def station_summary(station: dict) -> dict:
+    """What EarthScope says a station is: its seismometer class, channel groups, and whether it has closed."""
+    chans = station["channels"]
+    current = [c for c in chans if not c["end"]] or chans
+    closed = None if any(not c["end"] for c in chans) else max(c["end"] for c in chans)
+    groups: dict[tuple[str, float, str], list[str]] = collections.defaultdict(list)
+    for c in sorted(current, key=lambda c: (-c["sample_rate_hz"], c["channel"][:2], _component_order(c["channel"]))):
+        groups[(c["channel"][:2], c["sample_rate_hz"], _sensor_name(c["sensor"]))].append(c["channel"])
+    vertical = next((c for c in current if c["channel"][1] == "H" and c["channel"][2] == "Z"), None)
+    model = _sensor_name(vertical["sensor"]) if vertical else None
+    seismic = [f"{', '.join(dict.fromkeys(v))} at {_rate(rate)}" for (band, rate, _), v in groups.items() if band[1] == "H"]
+    other = [f"{', '.join(dict.fromkeys(v))} ({sensor}, {_rate(rate)})" for (band, rate, sensor), v in groups.items()
+             if band[1] in "ND" and sensor]
+    return {"class": SEISMOMETER_CLASSES.get(model or ""), "model": model, "seismic_channels": "; ".join(seismic),
+            "other_channels": "; ".join(other), "closed": closed}
+
+
+def correct_earthscope_rows(rows: list[dict], snapshot: dict) -> list[dict]:
+    """Replace Arcada's one-size station template with what EarthScope's metadata says.
+
+    Arcada calls every OO station broadband (or high-frequency) with BHZ, BHN and BHE. Eight are short-period
+    CMG-6TF stations with EH/SH channels, two Hydrate Ridge stations are broadband CMG-1T, and AXCC2 closed in
+    2021. Only the Description and Channels lines change; the original text hash stays in the audit trail.
+    """
+    corrections = []
+    for row in rows:
+        m = re.fullmatch(r"EARTHSCOPE-([A-Z0-9]{1,2})-([A-Z0-9]{1,5})(::desc)?", row["id"])
+        station = m and snapshot["stations"].get(f"{m.group(1)}.{m.group(2)}")
+        if not station:
+            continue
+        s = station_summary(station)
+        original = row.get("text") or ""
+        text = original
+
+        def describe(description: str) -> str:
+            if s["class"]:
+                description = re.sub(r"^(?:Broadband|High-frequency|Short-period) seismometer", s["class"], description)
+            if s["closed"]:
+                description = description.rstrip(". ") + f". Station closed: every channel ended {s['closed']} (EarthScope)."
+            return description
+
+        if m.group(3):   # the ::desc row is the bare description
+            text = describe(text.strip())
+        else:
+            text = re.sub(r"^Description: (.*)$", lambda d: "Description: " + describe(d.group(1)), text, flags=re.M)
+            # Only seismometer rows carry Arcada's BH template; other stations keep their own channel list.
+            if row.get("type") == "seismometer" and s["seismic_channels"]:
+                text = re.sub(r"^Channels: .*$", "Channels: " + s["seismic_channels"], text, flags=re.M)
+            if row.get("type") == "seismometer" and s["other_channels"]:
+                text = re.sub(r"^(Channels: .*)$", lambda c: c.group(1) + "\nOther sensors: " + s["other_channels"], text, flags=re.M)
+        if text == original:
+            continue
+        row["text"] = text
+        row["_repair"] = {**(row.get("_repair") or {}), "reason": "earthscope_station_metadata_corrected",
+                          "source_url": station["source_url"], "snapshot_retrieved_at": snapshot["retrieved_at"],
+                          "original_text_sha256": hashlib.sha256(original.encode()).hexdigest()}
+        corrections.append({"source_chunk_id": row["id"], "source_row_index": row["_source_row_index"],
+                            "reason": "earthscope_station_metadata_corrected", "seismometer": s["model"],
+                            "closed": s["closed"], "source_url": station["source_url"]})
+    return corrections
+
+
 def parent_key(row: dict) -> str:
     source_id = row["id"]
     if row.get("source") == "pdf":
@@ -162,6 +250,8 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
     raw_bytes = chunks_path.read_bytes()
     raw_rows = json.loads(raw_bytes)
     selected, repairs = prepare_rows(raw_rows)
+    station_snapshot = read_json(EARTHSCOPE_SNAPSHOT)
+    station_corrections = correct_earthscope_rows(selected, station_snapshot)
     commit = subprocess.run(
         ["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, capture_output=True, text=True
     ).stdout.strip()
@@ -421,6 +511,7 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
         "checks": [
             "source revision and SHA recorded", "all 802 source rows retained",
             "six placeholder-only duplicate rows repaired with an explicit audit trail",
+            "EarthScope station rows corrected from a dated channel-metadata snapshot",
             "unique namespaced node IDs", "relationship endpoint integrity",
             "every document has contiguous chunks", "nonempty normalized chunk text",
             "no undefined placeholders", "no HTML tags", "local text files exist",
@@ -431,7 +522,9 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
     audit_output.parent.mkdir(parents=True, exist_ok=True)
     audit_output.write_text(json.dumps({
         "created_at": now(), "source_rows": len(raw_rows), "retained_rows": len(selected),
-        "excluded_rows": [], "repaired_rows": repairs, "source_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+        "excluded_rows": [], "repaired_rows": repairs, "earthscope_corrected_rows": station_corrections,
+        "earthscope_snapshot_retrieved_at": station_snapshot["retrieved_at"],
+        "source_sha256": hashlib.sha256(raw_bytes).hexdigest(),
     }, indent=2) + "\n")
     if errors:
         raise RuntimeError("Validation failed: " + "; ".join(errors[:10]))
@@ -448,6 +541,8 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
         "retained_source_rows": len(selected),
         "excluded_source_rows": 0,
         "repaired_placeholder_rows": len(repairs),
+        "earthscope_corrected_rows": len(station_corrections),
+        "earthscope_snapshot": {"file": EARTHSCOPE_SNAPSHOT.name, "retrieved_at": station_snapshot["retrieved_at"]},
         "chunks": len(chunks),
         "documents": len(documents),
         "documents_by_type": dict(collections.Counter(x["document_type"] for x in documents)),
@@ -464,6 +559,9 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
             "MIT covers repository-authored code and documentation; paper text and scraped third-party content retain their original rights.",
             "Eleven linked instrument identifiers absent from the source chunks are represented as unresolved reference nodes.",
             "Arcada paper chunks preserve the repository's existing overlapping chunk boundaries and were not rechunked.",
+            "Arcada describes every EarthScope OO station as broadband (or high-frequency) with BHZ, BHN and BHE; those "
+            "rows' Description and Channels lines are corrected from EarthScope's channel metadata, and the original text "
+            "hash is kept in source_row_repair.",
         ],
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

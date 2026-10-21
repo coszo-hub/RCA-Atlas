@@ -1,31 +1,34 @@
 {
   "schema_version": "1.0",
-  "prepared_at_utc": "2026-09-20T13:20:00Z",
-  "catalog_fingerprint_sha256": "9a31ca841c13534a8c72c7ee0cc23eb4e809ad7e403e7d04e568580924178a1c",
+  "prepared_at_utc": "2026-10-21T19:30:56Z",
+  "catalog_fingerprint_sha256": "c11bb2c51da8b08970d93560741def98a6ecfdf3ec0febab4c3d9680cfa62bed",
   "normalized_build": {
     "status": "complete",
-    "collections": 13,
-    "chunks": 6565,
-    "nodes": 21938,
-    "node_records": 23404,
-    "edge_facts": 29538,
-    "edge_records": 30242,
-    "structured_records": 76984
+    "collections": 16,
+    "chunks": 6668,
+    "nodes": 22167,
+    "node_records": 23636,
+    "edge_facts": 29875,
+    "edge_records": 30579,
+    "structured_records": 154948
   },
   "embeddings": {
     "status": "complete",
     "model_id": "BAAI/bge-small-en-v1.5",
     "dimensions": 384,
-    "rows": 6565,
-    "matrix_sha256": "a765e875a7f30ec7e2d35181f9227ac640783819cc6e8bf0f2682d56b2d54cd8"
+    "rows": 6668,
+    "reused_rows": 6640,
+    "matrix_sha256": "d9388a5dffa0035c98aa4d6cbf001da6bb492406e2a678df76a9fc4a34427dc4"
   },
   "postgresql_load": {
-    "status": "not_run",
-    "reason": "No PostgreSQL/pgvector server or Docker executable is installed on this host."
+    "status": "loaded_and_activated",
+    "loaded_at_utc": "2026-10-21T19:32:00Z",
+    "host": "rootless Docker on this VM (graphrag_runtime-db-1, pgvector pg16)"
   },
   "public_api": {
-    "status": "packaged_not_deployed",
-    "reason": "Deployment host/domain/TLS ingress are not configured."
+    "status": "serving",
+    "path": "Cloudflare Worker rca-atlas.quakehunt.workers.dev -> Cloudflare quick tunnel -> 127.0.0.1:18000",
+    "caveat": "Quick-tunnel URLs change on restart; after a reboot restart Docker, the containers, the map gateway and the tunnels, then reset the Worker's ATLAS_API_ORIGIN and ATLAS_MAP_GATEWAY_ORIGIN secrets."
   },
   "validation": {
     "unit_contract_tests": 13,

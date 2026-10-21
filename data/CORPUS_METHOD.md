@@ -183,6 +183,16 @@ none of the source rows was discarded. The native snapshot, catalogs,
 embeddings, MiniSearch index, README, and license are kept under
 `src/arcada_pipeline/source_snapshot/` for provenance.
 
+**EarthScope station correction.** Arcada gives all 14 OO EarthScope stations
+one template: broadband (or high-frequency) with BHZ, BHN and BHE. EarthScope's
+channel metadata shows eight short-period Güralp CMG-6TF stations (AXAS1,
+AXAS2, AXEC1, AXEC3, AXID1, HYS11, HYS12, HYS13) with EH/SH channels, five
+broadband CMG-1T stations (AXBA1, AXCC1, AXEC2, HYS14, HYSB1), and the AXCC2
+tiltmeter, closed on 2021-08-27. The build rewrites only those 28 rows'
+Description and Channels lines from `src/arcada_pipeline/earthscope_stations.json`,
+a dated snapshot made by `refresh_earthscope_stations.py`, and records each
+original text hash in `source_row_repair` and `build_audit.json`.
+
 **Normalization and chunking.** Original Arcada chunk text and its overlapping
 paper boundaries were preserved rather than rechunked. IDs were namespaced,
 text was normalized, and source and normalized hashes were recorded. The 802
