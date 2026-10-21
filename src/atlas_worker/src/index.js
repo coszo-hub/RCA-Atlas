@@ -87,7 +87,9 @@ function cleanAnswer(answer) {
   // The interface uses plain text. Normalize occasional model-emitted Markdown
   // bullets so compact replies retain the same minimal visual language.
   // Groq's GPT-OSS writes its bullets with U+2011 (non-breaking hyphen) or an en dash, which the panel would not read as bullets.
-  return String(answer || "").replace(/^\s*[*•\u2010\u2011\u2012\u2013]\s+/gm, "- ").trim();
+  // It also cites with full-width brackets (【3】, 【1, 2】), which the panel would not read as citations.
+  return String(answer || "").replace(/^\s*[*•\u2010\u2011\u2012\u2013]\s+/gm, "- ")
+    .replace(/【\s*(\d+(?:\s*[,，–\u2010-\u2012-]\s*\d+)*)\s*】/g, (_, inner) => `[${inner.replace(/，/g, ",")}]`).trim();
 }
 
 // Short words that say nothing about the record wanted; three-letter terms such as "das" or "ctd" still count.

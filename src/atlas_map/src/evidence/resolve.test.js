@@ -127,6 +127,18 @@ describe("resolveEvidence: resolution rules", () => {
     expect(ev.downloads.map(d => [d.n, d.title])).toEqual([[1, "North receive"], [2, "North transmit"], [3, "South receive"]]);
   });
 
+  it("only the sources the answer cites are evidence; an answer citing nothing keeps them all", () => {
+    const pages = [["P24", "RAPID 2024 page", "http://piweb.ooirsn.uw.edu/das24/data/"], ["P21", "2021 community test", "http://piweb.ooirsn.uw.edu/das/data/"],
+      ["PMS", "Multi-span distributed fiber sensing", "http://piweb.ooirsn.uw.edu/das25/data/MultiDAS/"], ["DOC", "A paper", "https://doi.org/x"]];
+    const response = answer => ({ answer, answer_citations: pages.map(([id, t, u]) => cite(id, t, u)), hits: pages.map(([id, t, u]) => hit(id, t, { url: u })) });
+    const ev = resolveEvidence(response("Nokia Bell Labs provided the multi-span system [3]."), bundle);
+    expect(ev.located.map(x => [x.n, x.id])).toEqual([[3, "das25-multidas"]]);
+    expect(ev.documents).toEqual([]);
+    expect(ev.downloads.map(d => d.n)).toEqual([3]);   // not the uncited 2024 and 2021 routes
+    expect(resolveEvidence(response("Nokia Bell Labs built it [4]."), bundle).downloads).toEqual([]);
+    expect(resolveEvidence(response("No markers here."), bundle).located.map(x => x.n)).toEqual([1, 2, 3]);
+  });
+
   it("several sensors at one site make a site; a site named in the excerpt is found; unknown ids are documents", () => {
     const ev = resolveEvidence({ answer_citations: [cite("A", "Two at the summit"), cite("B", "Cruise report"), cite("C", "Nothing")],
       hits: [hit("A", "Two at the summit", { excerpt: "RS01SUM2-MJ01B-12-ADCPSK101 and RS01SUM2-MJ01B-00-FLOBNC101 were recovered." }),

@@ -197,8 +197,12 @@ export function resolveEvidence(response, bundle) {
   if (!response || typeof response !== "object") return { located: [], documents: [], downloads: [], events: null, count: null };
   const idx = indexOf(bundle), hits = Array.isArray(response.hits) ? response.hits : [];
   const located = [], documents = [];
+  // Only the sources the answer cites are its evidence: retrieval also returns related records (the 2021 and 2024
+  // DAS pages beside a multi-span answer) that would crowd the map. An answer that cites nothing keeps them all.
+  const cited = citedNumbers(response.answer);
   (response.answer_citations ?? []).forEach((cite, i) => {
     const n = i + 1, behind = hitsFor(cite, hits);
+    if (cited.size && !cited.has(n)) return;
     const title = cite.title || behind[0]?.title || cite.id;
     let { excerpt, quote } = readableExcerpt(behind.map(h => h.excerpt).find(Boolean));
     const item = locate(cite, behind, idx, bundle);
@@ -220,20 +224,28 @@ export function resolveEvidence(response, bundle) {
   return { located, documents, downloads: downloadsOf(response), events: ev?.length ? ev : null, count: countOf(response, ev) };
 }
 
-// Download routes the answer cites (the PI data portal's directories), each once, in source order. Every route
-// listed when the answer cites none of them, so an answer without citations still says where to download.
+// Download routes the answer cites (the PI data portal's directories), each once, in source order. Every route is
+// listed when the answer cites nothing at all, so an answer without citations still says where to download.
 const PORTAL = /^https?:\/\/piweb\.ooirsn\.uw\.edu\/./i;
-function downloadsOf(response) {
+
+// The source numbers an answer cites: [3], [1, 2], and ranges [1-6] (any hyphen or dash).
+export function citedNumbers(answer) {
   const cited = new Set();
-  for (const [, inner] of String(response.answer ?? "").matchAll(/\[([\d,\s–-]+)\]/g)) {
+  for (const [, inner] of String(answer ?? "").matchAll(/\[([\d,\s–\u2010-\u2012-]+)\]/g)) {
     for (const part of inner.split(",")) {
-      const [a, b] = part.split(/[–-]/).map(v => parseInt(v, 10));
-      if (Number.isFinite(a)) for (let k = a; k <= (Number.isFinite(b) ? b : a); k++) cited.add(k);
+      const [a, b] = part.split(/[–\u2010-\u2012-]/).map(v => parseInt(v, 10));
+      if (Number.isFinite(a)) for (let k = a; k <= (Number.isFinite(b) && b - a < 200 ? b : a); k++) cited.add(k);
     }
   }
+  return cited;
+}
+
+function downloadsOf(response) {
+  const cited = citedNumbers(response.answer);
   const routes = (response.answer_citations ?? []).map((c, i) => ({ n: i + 1, title: c.title || c.url, url: c.url || "" }))
     .filter(r => PORTAL.test(r.url));
-  const chosen = routes.some(r => cited.has(r.n)) ? routes.filter(r => cited.has(r.n)) : routes;
+  // An answer that cites sources lists only the routes it cites (none for "who developed it"); one citing nothing lists them all.
+  const chosen = cited.size ? routes.filter(r => cited.has(r.n)) : routes;
   const seen = new Set();
   return chosen.filter(r => !seen.has(r.url) && seen.add(r.url));
 }
