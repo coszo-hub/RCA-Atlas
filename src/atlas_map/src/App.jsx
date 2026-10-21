@@ -11,6 +11,7 @@ import SensorDetail from "./panels/SensorDetail.jsx";
 import SitePanel from "./panels/SitePanel.jsx";
 import UnplacedPanel from "./panels/UnplacedPanel.jsx";
 import { INSET as inset, hudBottom } from "./ui/layout.js";
+import { setSideRoom, useSideWidth } from "./ui/sideWidth.js";
 import Tooltip from "./ui/Tooltip.jsx";
 import AskPanel, { askStartsOpen } from "./ask/AskPanel.jsx";
 import { EvidenceLayer } from "./scene/EvidenceLayer.js";
@@ -179,11 +180,13 @@ function Atlas({ bundle, onError }) {
 
   // A minimized side panel is a tab at the bottom right, so the map and top row take its width back.
   const panelOpen = (!!siteId || unplacedOpen) && !sideMin;
+  useLayoutEffect(() => setSideRoom(chatOpen ? inset.chat : inset.none), [chatOpen]);
+  const sideInset = useSideWidth() + 2 * inset.none;   // the panel's draggable width and its 16 px margins
   useLayoutEffect(() => {
     const root = document.documentElement.style;
-    root.setProperty("--right-inset", `${panelOpen ? inset.side : inset.none}px`);
+    root.setProperty("--right-inset", `${panelOpen ? sideInset : inset.none}px`);
     root.setProperty("--side-reserve", sideMin ? "284px" : "0px");   // the family strip keeps clear of the minimized side tab (≤260 px wide)
-  }, [panelOpen, sideMin]);
+  }, [panelOpen, sideMin, sideInset]);
 
   // The map centers on the area the panels leave free: between the chat and side panels, below the top-row
   // HUD (header and regions, or the dock if it is lower), and above the family strip.
@@ -202,9 +205,9 @@ function Atlas({ bundle, onError }) {
   useLayoutEffect(() => {
     if (!scene) return;
     const first = !scene.framed;
-    scene.setInsets(chatOpen ? inset.chat : inset.none, panelOpen ? inset.side : inset.none, first);
+    scene.setInsets(chatOpen ? inset.chat : inset.none, panelOpen ? sideInset : inset.none, first);
     if (first) scene.jumpTo(scene.fit(bundle.overview));
-  }, [scene, chatOpen, panelOpen, bundle]);
+  }, [scene, chatOpen, panelOpen, sideInset, bundle]);
 
   const site = siteId ? bundle.siteById[siteId] : null;
   const sensor = sensorId ? bundle.sensorById[sensorId] : null;
