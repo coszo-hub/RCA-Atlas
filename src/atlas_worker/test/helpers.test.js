@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, sourceKey, withRouteCitations } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, withRouteCitations } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -228,4 +228,13 @@ test("a DAS experiment named by the map's label (DAS21) reaches the model, cited
   assert.match(prompt, /named DAS21, the 2021 conventional DAS experiment/);
   assert.doesNotMatch(prompt, /MultiDAS/);   // the named experiment only
   assert.deepEqual(data.answer_citations.map((c) => c.title), ["2021 conventional DAS (OptaSense and Silixa)"]);
+});
+
+test("shorthand and DAS labels are searched with the corpus's own words", () => {
+  assert.match(searchText("which paper showcased the dv/v for cascadia subduction zone"), /seismic velocity change .*ambient seismic noise interferometry/);
+  assert.match(searchText("δv/v at Slope Base"), /seismic velocity change/);
+  assert.match(searchText("dv / v trends"), /seismic velocity change/);
+  assert.match(searchText("where can i download DAS21 data"), /2021 RCA Distributed Acoustic and Temperature Sensing experiment/);
+  assert.equal(searchText("what is axial seamount"), "what is axial seamount");
+  assert.equal(searchText("the dvd archive"), "the dvd archive");
 });

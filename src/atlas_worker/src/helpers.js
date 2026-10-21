@@ -49,6 +49,21 @@ export const DAS_PRODUCTS = [
     about: "DAS25, the 2025–2026 RCA Distributed Acoustic Sensing experiment: the 2025–26 OptoDAS and 2025–26 multi-span DAS (MultiDAS) datasets",
     search: "2025–2026 RCA Distributed Acoustic Sensing experiment DAS25 MultiDAS OptoDAS" },
 ];
+// Field shorthand the corpus spells out. "dv/v" appears once in the OOI article on Kidiwela et al. (2026), whose
+// text says "seismic velocity" and "ambient seismic noise interferometry"; in a long question the shorthand lost
+// to every paper matching "Cascadia subduction zone".
+const SHORTHAND = [
+  { asked: /(?:\bd|δ)v\s*\/\s*v\b/i, search: "relative seismic velocity change dv/v ambient seismic noise interferometry temporal velocity variations" },
+];
+
+// The words the corpus search and the evidence ranking use for a question: the question, the corpus name of a
+// named DAS experiment, and spelled-out shorthand.
+export function searchText(question) {
+  const q = String(question || "");
+  const extra = [namedDas(q)?.search, ...SHORTHAND.filter((x) => x.asked.test(q)).map((x) => x.search)].filter(Boolean);
+  return extra.length ? `${q} ${extra.join(" ")}` : q;
+}
+
 export const namedDas = (question) => DAS_PRODUCTS.find((p) => p.asked.test(String(question || "").toLowerCase())) ?? null;
 
 // The four DAS datasets as the RCA team names them, one download link each. The corpus lists the 2021

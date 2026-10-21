@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, namedDas, publicHit, sourceKey, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, namedDas, publicHit, searchText, sourceKey, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -97,7 +97,7 @@ const STOP_TERMS = new Set(["the", "and", "how", "get", "can", "for", "are", "an
   "which", "where", "when", "with", "from", "this", "that", "there", "about", "data", "available", "download", "access"]);
 
 function prioritizedHits(context, question, limit = 6) {
-  const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{3,}/g) || [])].filter((t) => !STOP_TERMS.has(t));
+  const terms = [...new Set(searchText(question).toLowerCase().match(/[a-z0-9]{3,}/g) || [])].filter((t) => !STOP_TERMS.has(t));
   // A download or availability question wants the PI portal's routing records, which name every download route;
   // ranked only by title words, papers about the same instrument used to push them past the evidence cut.
   const routing = answerMode(question) === "compact" || isDownloadQuestion(question);
@@ -442,8 +442,8 @@ export default {
         return response({ error: "service is not configured" }, 503, cors);
       }
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
-        // A DAS name such as DAS21 never appears in the corpus, which names the experiments by year.
-        query: namedDas(query) ? `${query} ${namedDas(query).search}` : query,
+        // A DAS name such as DAS21, or shorthand such as dv/v, is searched with the words the corpus uses.
+        query: searchText(query),
         limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS,
         graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
