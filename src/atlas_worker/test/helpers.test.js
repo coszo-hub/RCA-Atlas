@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, parseHypo71Events, publicHit, sourceKey } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, parseHypo71Events, publicHit, sourceKey, withRouteCitations } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -55,9 +55,10 @@ test("the answer prompt asks for bracketed source numbers after claims, and noth
   assert.match(prompt, /Question: What measures inflation\?/);
 });
 
-test("the compact prompt keeps its word limit and names the product", () => {
+test("the compact prompt keeps a word limit, lists every route, and names the product", () => {
   const prompt = answerPrompt({ question: "How do I get the DAS data?", evidence: "e", sources: [], mode: "compact", product: "multidas" });
-  assert.match(prompt, /under 120 words/);
+  assert.match(prompt, /under 230 words/);
+  assert.match(prompt, /List every route the evidence names; never merge or drop routes/);
   assert.match(prompt, /specifically named multidas/);
   assert.match(prompt, /\[n\]/);
 });
@@ -134,4 +135,50 @@ test("inventory questions name an instrument type or a generic word, with a plac
     "which seismic stations are in the caldera"]) assert.equal(isInstrumentInventoryQuestion(q), true, q);
   for (const q of ["what is axial seamount?", "how do seismometers work?", "when did axial seamount last erupt?",
     "what instruments does COSZO use?"]) assert.equal(isInstrumentInventoryQuestion(q), false, q);
+});
+
+test("a PI portal availability record cites every download route it names, each under its own name", () => {
+  const hit = {
+    chunk_id: "PI-CHUNK-1",
+    text: "Data for 2021 RCA Distributed Acoustic and Temperature Sensing experiment are available to download from OptaSense north cable receive fiber (http://piweb.ooirsn.uw.edu/das/data/Optasense/NorthCable/ReceiveFiber/); Silixa DAS (http://piweb.ooirsn.uw.edu/das/data/Silixa/DAS/); Silixa DTS (http://piweb.ooirsn.uw.edu/das/data/Silixa/DTS/). Physical site: RCA north and south backbone cables. Official OOI context: https://oceanobservatories.org/pi-instrument/x/",
+    citations: [{ source_id: "SRC-1", title: "Shared RCA and COSZO Instruments corpus", url: "http://piweb.ooirsn.uw.edu/das/data/Optasense/NorthCable/ReceiveFiber/" }],
+  };
+  const out = withRouteCitations(hit);
+  assert.deepEqual(out.citations.map((c) => [c.source_id, c.title, c.url]), [
+    ["SRC-1", "OptaSense north cable receive fiber", "http://piweb.ooirsn.uw.edu/das/data/Optasense/NorthCable/ReceiveFiber/"],
+    ["SRC-1", "Silixa DAS", "http://piweb.ooirsn.uw.edu/das/data/Silixa/DAS/"],
+    ["SRC-1", "Silixa DTS", "http://piweb.ooirsn.uw.edu/das/data/Silixa/DTS/"],
+  ]);
+  // Other hits pass through untouched.
+  const paper = { chunk_id: "P", text: "DAS denoising without clean data", citations: [{ source_id: "D", url: "https://doi.org/x" }] };
+  assert.equal(withRouteCitations(paper), paper);
+});
+
+test("a download question puts every routing record in front of the model, even ranked last by retrieval", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  const paper = (i) => ({ chunk_id: `P${i}`, collection_id: "arcada", title: `DAS paper ${i}`, text: "Distributed acoustic sensing (DAS) on the Regional Cabled Array: methods.",
+    citations: [{ source_id: `P${i}`, title: `DAS paper ${i}`, url: `https://doi.org/${i}` }] });
+  const routing = { chunk_id: "R21", collection_id: "pi_portal", title: "2021 RCA DAS experiment data availability and routing",
+    text: "Data for the 2021 RCA Distributed Acoustic and Temperature Sensing experiment (DAS) are available to download from Silixa DAS (http://piweb.ooirsn.uw.edu/das/data/Silixa/DAS/); Silixa DTS (http://piweb.ooirsn.uw.edu/das/data/Silixa/DTS/). Physical site: RCA north and south backbone cables.",
+    citations: [{ source_id: "PI", title: "Shared RCA and COSZO Instruments corpus", url: "http://piweb.ooirsn.uw.edu/das/data/Silixa/DAS/" }] };
+  let prompt = "";
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    const covis = { chunk_id: "RC", collection_id: "pi_portal", title: "COVIS data availability and routing",
+      text: "Data for COVIS are available to download from COVIS raw survey archives (http://piweb.ooirsn.uw.edu/covis/data/COVIS/). Physical site: ASHES.",
+      citations: [{ source_id: "PI", title: "Shared RCA and COSZO Instruments corpus", url: "http://piweb.ooirsn.uw.edu/covis/data/COVIS/" }] };
+    if (String(url).endsWith("/v1/context")) return Response.json({ hits: [covis, ...Array.from({ length: 9 }, (_, i) => paper(i)), routing], neighbors: [], tool_hints: [] });
+    prompt = JSON.parse(init.body).contents[0].parts[0].text;
+    return Response.json({ candidates: [{ content: { parts: [{ text: "2021 experiment\n- Silixa DAS [1]\n- Silixa DTS [2]" }] } }] });
+  });
+  const res = await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "How do I get the DAS data?" }),
+  }), { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g" });
+  const data = await res.json();
+  assert.equal(res.status, 200);
+  assert.match(prompt, /Silixa DTS \(http:\/\/piweb\.ooirsn\.uw\.edu\/das\/data\/Silixa\/DTS\/\)/);
+  assert.match(prompt, /\[\d+\] Silixa DTS/);   // the second route is a numbered source of its own
+  assert.deepEqual(data.answer_citations.filter((c) => c.url.includes("/Silixa/")).map((c) => c.title), ["Silixa DAS", "Silixa DTS"]);
+  assert.doesNotMatch(prompt, /COVIS/);   // another instrument's downloads stay out of a DAS answer
+  assert.ok(!data.answer_citations.some((c) => c.url.includes("/covis/")));
 });

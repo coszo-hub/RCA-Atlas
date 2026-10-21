@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, publicHit, sourceKey } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, publicHit, sourceKey, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -89,18 +89,35 @@ function cleanAnswer(answer) {
   return String(answer || "").replace(/^\s*[*•]\s+/gm, "- ").trim();
 }
 
+// Short words that say nothing about the record wanted; three-letter terms such as "das" or "ctd" still count.
+const STOP_TERMS = new Set(["the", "and", "how", "get", "can", "for", "are", "any", "all", "its", "who", "why", "was", "has", "you", "what",
+  "which", "where", "when", "with", "from", "this", "that", "there", "about", "data", "available", "download", "access"]);
+
 function prioritizedHits(context, question, limit = 6) {
-  const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{4,}/g) || [])];
-  return [...(context.hits || [])].map((hit, index) => {
+  const terms = [...new Set(String(question || "").toLowerCase().match(/[a-z0-9]{3,}/g) || [])].filter((t) => !STOP_TERMS.has(t));
+  // A download or availability question wants the PI portal's routing records, which name every download route;
+  // ranked only by title words, papers about the same instrument used to push them past the evidence cut.
+  const routing = answerMode(question) === "compact" || isDownloadQuestion(question);
+  const scored = [...(context.hits || [])].map((hit, index) => {
     const title = String(hit.title || "").toLowerCase();
     const text = String(hit.text || "").toLowerCase();
     const collection = String(hit.collection_id || "").toLowerCase();
-    const relevance = terms.reduce((score, term) => score +
-      (title.includes(term) ? 12 : 0) + (text.includes(term) ? 2 : 0), 0);
+    // Whole words: "das" must not match inside another word and pull in an unrelated routing record.
+    const relevance = terms.reduce((score, term) => {
+      const word = new RegExp(`\\b${term}\\b`);
+      return score + (word.test(title) ? 12 : 0) + (word.test(text) ? 2 : 0);
+    }, 0);
     const rcaScope = /(regional cabled array|cabled array|coszo|axial|hydrate ridge|oregon shelf|oregon offshore)/.test(`${title}\n${text}`) ? 10 : 0;
     const primaryCorpus = /^(instruments|websites|arcada|coszo)/.test(collection) ? 4 : 0;
-    return { hit, index, score: relevance + rcaScope + primaryCorpus };
-  }).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, limit).map(({ hit }) => hit);
+    const isRouting = /available to download from/.test(text);
+    const route = routing && isRouting && relevance > 0 ? 40 : 0;
+    return { hit, index, isRouting, relevance, score: relevance + rcaScope + primaryCorpus + route };
+  });
+  // Once a routing record matches the question, routing records for other instruments (COVIS for a DAS
+  // question) are off topic: they would list another instrument's downloads beside the answer.
+  const matched = routing && scored.some((x) => x.isRouting && x.relevance > 0);
+  return scored.filter((x) => !(matched && x.isRouting && x.relevance === 0))
+    .sort((a, b) => b.score - a.score || a.index - b.index).slice(0, limit).map(({ hit }) => hit);
 }
 
 function answerMode(question) {
@@ -179,7 +196,7 @@ function answerLinks(question, hits) {
 
 function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
-  let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : 6);
+  let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
   if (product) {
     const productHits = hits.filter((hit) =>
       `${hit.title || ""}\n${hit.text || ""}`.toLowerCase().includes(product),
@@ -252,7 +269,7 @@ async function generateGroqAnswer(prompt, mode, env, selected = GROQ_MODELS["gro
     model: selected.id,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
-    max_tokens: mode === "compact" ? 400 : 4096,
+    max_tokens: mode === "compact" ? 1000 : 4096,
   }, { authorization: `Bearer ${env.GROQ_API_KEY}` });
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("Groq model returned no answer");
@@ -265,7 +282,7 @@ async function generateOpenRouterAnswer(prompt, mode, env, selectedModel = env.O
     model: selectedModel,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
-    max_tokens: mode === "compact" ? 400 : 4096,
+    max_tokens: mode === "compact" ? 1000 : 4096,
   }, { authorization: `Bearer ${env.OPENROUTER_API_KEY}` });
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("OpenRouter model returned no answer");
@@ -281,7 +298,7 @@ async function generateOpenAIAnswer(prompt, requestedModel, mode, env) {
     // reasoning and returned no text, so compact answers reason lightly within a larger budget (the prompt
     // still holds the answer to 120 words).
     reasoning: { effort: requestedModel === "gpt-5.6-sol" ? "high" : mode === "compact" ? "low" : "medium" },
-    max_output_tokens: mode === "compact" ? 1200 : 4096,
+    max_output_tokens: mode === "compact" ? 1600 : 4096,
     store: false,
   }, { authorization: `Bearer ${env.OPENAI_API_KEY}` });
   const answer = upstream.output_text || upstream.output?.flatMap((item) => item.content || [])
@@ -315,7 +332,7 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.15,
-      maxOutputTokens: mode === "compact" ? 400 : 4096,
+      maxOutputTokens: mode === "compact" ? 1000 : 4096,
       thinkingConfig: { thinkingBudget: mode === "compact" ? 128 : 1024 },
     },
   };
@@ -412,6 +429,7 @@ export default {
         query, limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS,
         graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
+      context.hits = (context.hits || []).map(withRouteCitations);
       const evidenceHits = selectedEvidenceHits(context, query);
       const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
       const multiSpanSource = isDownloadQuestion(query) && isMultiSpanQuestion(query)

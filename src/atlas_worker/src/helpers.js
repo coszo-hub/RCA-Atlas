@@ -28,6 +28,23 @@ export function publicHit(hit) {
 // One key per cited source: the id plus its URL (a PI portal record lists several routes under one id).
 export const sourceKey = (id, url) => `${id}|${url || ""}`;
 
+// A PI portal availability record names every download route in its text ("are available to download from
+// DAS25 MultiDAS (http://…); DAS25 OptoDAS (http://…)."), but carries only the first as its citation, so the
+// other routes never reached the answer's sources. Each named route becomes a citation of its own.
+const ROUTE_LIST = /available to download from (.+?\))\.(?:\s|$)/;
+const ROUTE = /([^;()]+?)\s*\((https?:\/\/[^\s)]+)\)/g;
+export function withRouteCitations(hit) {
+  const list = ROUTE_LIST.exec(String(hit.text || ""));
+  if (!list) return hit;
+  const labels = new Map([...list[1].matchAll(ROUTE)].map(([, label, url]) => [url, label.trim()]));
+  const cited = hit.citations || [], base = cited[0] || { source_id: hit.chunk_id };
+  // The record's own citation carries the corpus name ("Shared RCA and COSZO Instruments corpus"); name its route.
+  const own = cited.map((c) => (labels.has(c.url) && /shared rca and coszo instruments corpus/i.test(c.title || "") ? { ...c, title: labels.get(c.url) } : c));
+  const added = [...labels].filter(([url]) => !cited.some((c) => c.url === url))
+    .map(([url, title]) => ({ ...base, source_id: base.source_id || hit.chunk_id, title, url }));
+  return { ...hit, citations: [...own, ...added] };
+}
+
 // The evidence text for the prompt: each hit under a header with its source numbers.
 export function evidencePackage(hits, sourceNumbers) {
   const sections = [];
@@ -131,11 +148,11 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? `The user specifically named ${product}; answer only about that named product. Do not include related products, file formats, instruments, or data types unless the evidence explicitly assigns them to ${product}.`
     : "";
   const compactInstruction = mode === "compact"
-    ? `This is a data-availability, download, or list question. ${namedProductInstruction} Return a direct answer followed by at most four single-sentence bullets; each bullet names one available dataset or route, with its year or coverage and file type only when established. Use no sub-bullets, section headings, capability descriptions, deployment background, calibration details, or related literature. Keep the whole answer under 120 words. The interface renders links separately.`
+    ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it with its years, coverage and file formats, followed by hyphen bullets, one per download route the evidence names, each cited with that route's own source number. A route bullet gives the route's name and only what the evidence ties to that route itself (a cable or span its name or the evidence assigns to it); never copy the dataset's overall coverage or formats onto each route. After a dataset's routes, add one bullet for its folder layout or a caveat (such as very many files per day) when the evidence gives one. List every route the evidence names; never merge or drop routes. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
     : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
   const formatInstruction = mode === "compact"
-    ? "Use plain text, with no Markdown hashes or asterisks. Obey the 120-word, single-sentence-bullet limit exactly."
+    ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} State clearly what the evidence does not establish. ${citationInstruction} Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }
