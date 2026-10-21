@@ -54,24 +54,28 @@ def official_ooi_hardware(cache_root: Path) -> dict[str, dict]:
     unlisted historical records deliberately remain unresolved.
     """
     result: dict[str, dict] = {}
-    for path in sorted(cache_root.glob("RS*.html")):
+    # RS pages are the RCA's own sites; CE pages are Coastal Endurance platforms the RCA powers (CE04OSBP).
+    for path in sorted([*cache_root.glob("RS*.html"), *cache_root.glob("CE*.html")]):
         raw = path.read_text(encoding="utf-8", errors="replace")
         for row in re.findall(r"(?is)<tr[^>]*>(.*?)</tr>", raw):
             cells = re.findall(r"(?is)<td[^>]*>(.*?)</td>", row)
             if len(cells) < 5:
                 continue
             canonical = _html_text(cells[0])
-            if not canonical.startswith("RS"):
+            if not canonical.startswith(("RS", "CE")):
                 continue
             instrument_class = _html_text(cells[3])
             make_model = _html_text(cells[4])
             if not make_model or " - " not in make_model:
                 continue
             manufacturer, model = (part.strip() for part in make_model.split(" - ", 1))
+            depth = re.fullmatch(r"(\d+(?:\.\d+)?)\s*m", _html_text(cells[1]))
             result[canonical] = {
                 "manufacturer": manufacturer,
                 "model": model,
                 "instrument_class": instrument_class,
+                "depth_m": float(depth.group(1)) if depth else None,
+                "node_name": _html_text(cells[2]),
                 "source_url": f"https://oceanobservatories.org/site/{path.stem.casefold()}/",
                 "source_file": path.name,
                 "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -475,6 +479,49 @@ def build(data_root: Path, output: Path) -> None:
         notes="Campaign instrument above a fracture near Phoenix vent; not a persistent RCA core sensor.",
     )
 
+    # Coastal Endurance platforms the RCA powers. Arcada catalogs only RS sites, so the Oregon Offshore Cabled
+    # Benthic Experiment Package (CE04OSBP, LJ01C and LV01C off primary node PN1C) was missing from the inventory
+    # and the map. Its official site inventory lists each deployed instrument with depth, node, and make and model;
+    # the platform position is the one OOI ERDDAP publishes for its datasets.
+    sources["SOURCE-OOI-ERDDAP-CE04OSBP"] = source(
+        "SOURCE-OOI-ERDDAP-CE04OSBP", "OOI ERDDAP Oregon Offshore Cabled Benthic Experiment Package datasets",
+        "https://erddap.dataexplorer.oceanobservatories.org/erddap/", "official_data_service",
+        source_url="https://erddap.dataexplorer.oceanobservatories.org/erddap/info/ooi-ce04osbp-lj01c-06-ctdbpo108/index.json",
+    )
+    sources["SOURCE-WEB-CE04OSBP"] = source(
+        "SOURCE-WEB-CE04OSBP", "CE04OSBP: Oregon Offshore Cabled Benthic Experiment Package", "Websites/pages.jsonl", "web_page",
+        source_url="https://oceanobservatories.org/site/ce04osbp/", page_id="PAGE-34b765b7df994841",
+    )
+    CE_PLATFORMS = {
+        # geospatial_lat_min / _lon_min of every CE04OSBP ERDDAP dataset (retrieved 2026-10-21)
+        "CE04OSBP": {"name": "Oregon Offshore Cabled Benthic Experiment Package", "latitude": 44.369304, "longitude": -124.953627},
+    }
+    CE_TYPES = {"ADCPS": "adcp", "CTDBP": "ctd", "DOSTA": "dissolved_oxygen", "VEL3D": "three_dimensional_current_meter",
+                "OPTAA": "spectrophotometer", "PCO2W": "pco2", "PHSEN": "ph", "HYDBB": "hydrophone", "CAMDS": "camera"}
+    known = {r["canonical_id"] for r in records}
+    for canonical, hardware in sorted(ooi_hardware.items()):
+        site, node, code = canonical.split("-", 2)
+        platform = CE_PLATFORMS.get(site)
+        if not platform or canonical in known:
+            continue
+        cls = code.split("-", 1)[-1][:5]   # "07-VEL3DC107" -> "VEL3D"
+        if cls not in CE_TYPES:
+            raise RuntimeError(f"{canonical}: no instrument type for OOI class {cls}; add it to CE_TYPES")
+        label = re.sub(r"\s*\([A-Z0-9]+\)$", "", hardware["instrument_class"])   # "CTD (CTDBPO)" -> "CTD"
+        add(
+            canonical, f"{platform['name']} {label}", CE_TYPES[cls], platform["name"],
+            ["Coastal Endurance Array", "Regional Cabled Array"], "official_inventory_instance", "listed_on_official_OOI_site_inventory",
+            [ev("SOURCE-OOI-SITE-INVENTORY", canonical, f"{hardware['source_file']} sha256:{hardware['source_sha256']}"),
+             ev("SOURCE-WEB-CE04OSBP", "PAGE-34b765b7df994841-CHUNK-001"),
+             ev("SOURCE-OOI-ERDDAP-CE04OSBP", canonical, "NC_GLOBAL geospatial_lat_min/lon_min")],
+            coszo_role=None, aliases=[], site=site, node=node, station=None, network=None, instrument_code=code,
+            latitude=platform["latitude"], longitude=platform["longitude"], depth_m=hardware["depth_m"],
+            manufacturer=hardware["manufacturer"], model=hardware["model"], sensor_components=[],
+            source_system="official OOI site inventory", source_urls=[hardware["source_url"]], arcada_document_id=None,
+            notes=f"On the {hardware['node_name']} of a Coastal Endurance platform powered and connected by the Regional Cabled Array.",
+            official_ooi_instrument_class=hardware["instrument_class"],
+        )
+
     # Reference-only IDs linked in Arcada. They stay visibly unresolved rather than being silently dropped.
     ref_types = {
         "PI-MASSP-ASHES": ("mass_spectrometer", "ASHES PI mass spectrometer"),
@@ -528,7 +575,7 @@ def build(data_root: Path, output: Path) -> None:
     # Entity and relationship layer.
     entities: dict[str, dict] = {}
     relationships: list[dict] = []
-    for name, typ in [("Regional Cabled Array", "observatory"), ("COSZO", "project")]:
+    for name, typ in [("Regional Cabled Array", "observatory"), ("COSZO", "project"), ("Coastal Endurance Array", "observatory")]:
         entities[entity_id(name)] = {"entity_id": entity_id(name), "name": name, "type": typ, "method": "curated_literal_vocabulary"}
     for row in records:
         type_name = row["instrument_type"]
@@ -626,10 +673,11 @@ def build(data_root: Path, output: Path) -> None:
     write_jsonl(output / "instrument_types.jsonl", type_rows)
 
     # Human-readable complete list.
-    status_order = ["catalogued_instance", "documented_project_instance", "confirmed_PI_instrument",
+    status_order = ["catalogued_instance", "official_inventory_instance", "documented_project_instance", "confirmed_PI_instrument",
                     "time_bounded_campaign", "reference_only", "deployment_site_reference"]
     labels = {
         "catalogued_instance": "RCA catalogued instrument and deployment records",
+        "official_inventory_instance": "Coastal Endurance instruments the RCA powers (official OOI site inventory)",
         "documented_project_instance": "COSZO site-specific instrument suite",
         "confirmed_PI_instrument": "Additional confirmed RCA PI instruments",
         "time_bounded_campaign": "Time-bounded RCA experiments",
