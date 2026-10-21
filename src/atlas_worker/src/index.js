@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, publicHit, sourceKey } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, publicHit, sourceKey } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -87,12 +87,6 @@ function cleanAnswer(answer) {
   // The interface uses plain text. Normalize occasional model-emitted Markdown
   // bullets so compact replies retain the same minimal visual language.
   return String(answer || "").replace(/^\s*[*•]\s+/gm, "- ").trim();
-}
-
-function isInstrumentInventoryQuestion(question) {
-  const q = String(question || "").toLowerCase();
-  return /\b(sensor|sensors|instrument|instruments|equipment)\b/.test(q) &&
-    /\b(site|location|located|deployed|seafloor|southern hydrate ridge|hydrate ridge)\b/.test(q);
 }
 
 function prioritizedHits(context, question, limit = 6) {

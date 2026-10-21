@@ -114,6 +114,17 @@ export function eventsInWindow(files, window) {
 
 // The synthesis prompt. Sources are numbered in answer_citations order; the evidence headers carry the same
 // numbers, and the model cites them as [n] so the interface can link each claim to its source (and its place).
+// Inventory questions ("which seismometers are at Axial?") must list every match, so they retrieve and keep more
+// evidence than a narrative question: Axial alone has eight seismic stations, past the default six. Either a
+// generic word or a named instrument type counts, alongside a place.
+const INSTRUMENT_WORDS = /\b(sensors?|instruments?|equipment|seismometers?|seismic stations?|hydrophones?|tiltmeters?|accelerometers?|pressure sensors?|ctds?|adcps?|cameras?|thermistors?|fluorometers?)\b/;
+const PLACE_WORDS = /\b(sites?|location|located|deployed|seafloor|southern hydrate ridge|hydrate ridge|axial|caldera|ashes|international district|oregon shelf|oregon offshore|slope base|summit)\b/;
+
+export function isInstrumentInventoryQuestion(question) {
+  const q = String(question || "").toLowerCase();
+  return INSTRUMENT_WORDS.test(q) && PLACE_WORDS.test(q);
+}
+
 export function answerPrompt({ question, evidence, sources, mode, product = null }) {
   const sourceListText = sources.map((c, i) => `[${i + 1}] ${c.title}`).join("; ");
   const namedProductInstruction = product

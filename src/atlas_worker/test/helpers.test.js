@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, parseHypo71Events, publicHit, sourceKey } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, parseHypo71Events, publicHit, sourceKey } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -126,4 +126,12 @@ test("events in the window: the Seattle day so far counts rows from both files a
   assert.equal(events.length, 65);
   assert.ok(events.every(e => e.time >= "2026-09-24T07:00:00Z" && e.time < "2026-09-25T07:00:00Z"));
   assert.ok(events[0].time < events[events.length - 1].time);
+});
+
+test("inventory questions name an instrument type or a generic word, with a place", () => {
+  for (const q of ["what seismometers are available at axial seamount", "Which hydrophones are at the ASHES vent field?",
+    "what sensors are at the southern hydrate ridge site", "list the instruments deployed at the Oregon Shelf",
+    "which seismic stations are in the caldera"]) assert.equal(isInstrumentInventoryQuestion(q), true, q);
+  for (const q of ["what is axial seamount?", "how do seismometers work?", "when did axial seamount last erupt?",
+    "what instruments does COSZO use?"]) assert.equal(isInstrumentInventoryQuestion(q), false, q);
 });
