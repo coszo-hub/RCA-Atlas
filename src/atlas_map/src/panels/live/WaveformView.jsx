@@ -21,7 +21,9 @@ export default function WaveformView({ route }) {
       {w.state === "error" && <Failure error={w.error} retry={w.retry} />}
       {w.state === "ok" && (w.data.points.length
         ? (<><Chart points={w.data.points} unit="counts" label={`${station} ${w.data.channel}`} />
-            <p className="chart-foot mono">{w.data.channel} · {w.data.rate} samples/s · {ends(w.data.endMs)} · drag to zoom, double-click to reset</p></>)
+            <p className="chart-foot mono">{w.data.channel} · {w.data.rate} samples/s · {ends(w.data.endMs)} · drag to zoom, double-click to reset</p>
+            {w.data.requestedChannel && w.data.requestedChannel !== w.data.channel &&
+              <p className="muted">{w.data.requestedChannel} has no recent data at EarthScope, so this shows {w.data.channel}, the same sensor at a lower sample rate.</p>}</>)
         : <p className="muted">{w.data.message ?? "No recording in this window."}</p>)}
     </div>
   );

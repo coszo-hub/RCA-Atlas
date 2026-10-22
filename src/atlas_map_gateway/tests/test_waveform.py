@@ -65,8 +65,8 @@ class WaveformRouteTest(unittest.TestCase):
         r = TestClient(create_app(SETTINGS, deps(earthscope=es))).get("/waveform/OO.AXCC1")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["points"], [])
-        self.assertEqual(r.json()["message"], "No recording in the last 6 hours.")
-        self.assertEqual(len(es.calls), 1 + 8)   # the live window, then every archive-lag probe
+        self.assertEqual(r.json()["message"], "No recording in the last 24 hours.")
+        self.assertEqual(len(es.calls), 1 + 12 + 3 * 4)   # the live window, every archive-lag probe, then BHZ, MHZ, LHZ back an hour
 
     def test_lagging_archive_serves_the_newest_window_instead_of_nothing(self):
         es = LaggingEarthScope(archived_until="2026-09-23T10:40:00Z")   # 80 minutes behind the 12:00 clock
@@ -74,11 +74,36 @@ class WaveformRouteTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["rawCount"], 12001)
         self.assertIsNone(r.json()["message"])
-        # The live window and the 15/30/60-minute probes are empty; the 90-minute probe finds data.
-        self.assertEqual([c[4] for c in es.calls],
-                         ["2026-09-23T11:58:00Z", "2026-09-23T11:43:00Z", "2026-09-23T11:28:00Z",
-                          "2026-09-23T10:58:00Z", "2026-09-23T10:28:00Z", "2026-09-23T10:28:00Z"])
-        self.assertEqual(es.calls[-1][3], "2026-09-23T10:18:00Z")
+        # The live window and the 15/30/60-minute probes are empty; the 90-minute probe finds data. That is over an
+        # hour behind, so the lower-rate channels are tried at the live window; they lag too, so HHZ's window stays.
+        self.assertEqual([(c[2], c[4]) for c in es.calls][:6],
+                         [("HHZ", "2026-09-23T11:58:00Z"), ("HHZ", "2026-09-23T11:43:00Z"), ("HHZ", "2026-09-23T11:28:00Z"),
+                          ("HHZ", "2026-09-23T10:58:00Z"), ("HHZ", "2026-09-23T10:28:00Z"), ("HHZ", "2026-09-23T10:28:00Z")])
+        self.assertEqual({c[2] for c in es.calls[6:]}, {"BHZ", "MHZ", "LHZ"})   # each looked back up to an hour, all lagging
+        self.assertEqual(r.json()["channel"], "HHZ")
+        self.assertNotIn("requestedChannel", r.json())
+
+    def test_a_stalled_high_rate_channel_gives_way_to_a_current_lower_rate_one(self):
+        class StalledHigh(FakeEarthScope):   # 200 and 40 samples/s stopped; 8 samples/s current, as on 2026-10-21
+            def download_waveform(self, network, station, channel, begin, end, location="--"):
+                self.calls.append((network, station, channel, begin, end, location))
+                return OK if channel[0] in "ML" else NO_DATA
+        es = StalledHigh(OK)
+        app = TestClient(create_app(SETTINGS, deps(earthscope=es)))
+        r = app.get("/waveform/OO.AXCC1", params={"minutes": 10})
+        self.assertEqual((r.json()["channel"], r.json()["requestedChannel"]), ("MHZ", "HHZ"))
+        self.assertEqual(r.json()["rawCount"], 12001)
+        self.assertIsNone(r.json()["message"])
+        h = app.get("/waveform/OO.AXCC1/health").json()
+        self.assertTrue(h["recording"])
+        self.assertEqual((h["channel"], h["requestedChannel"]), ("MHZ", "HHZ"))
+
+    def test_lower_rate_channels_keep_sensor_and_component(self):
+        from atlas_map_gateway.routes_data import lower_rate_channels
+        self.assertEqual(lower_rate_channels("HHZ"), ["BHZ", "MHZ", "LHZ"])
+        self.assertEqual(lower_rate_channels("EHZ"), ["SHZ", "MHZ", "LHZ"])
+        self.assertEqual(lower_rate_channels("HDH"), ["BDH", "MDH", "LDH"])
+        self.assertEqual(lower_rate_channels("LHZ"), [])
 
     def test_channels_the_map_does_not_show_are_never_probed(self):
         es = LaggingEarthScope(archived_until="2026-09-23T10:40:00Z")

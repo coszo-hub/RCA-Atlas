@@ -20,7 +20,17 @@ TTL = {"variables": 3600, "series": 300, "plots": 1800, "waveform": 300, "files"
 MAX_FILE_ENTRIES = 200
 # EarthScope's archive can trail real time by over an hour (83 minutes for every OO station on 2026-10-21), so an
 # empty recent window is usually latency, not a silent station. Probe this far back, in minutes, for the newest data.
-ARCHIVE_LAG_PROBES = (15, 30, 60, 90, 120, 180, 240, 360)
+ARCHIVE_LAG_PROBES = (15, 30, 60, 90, 120, 180, 240, 360, 480, 720, 1080, 1440)
+# EarthScope can stall one sample rate while others flow: on 2026-10-21 the OO network's 200 and 40 samples/s
+# channels (HHZ, EHZ, HDH, BHZ, SHZ) stopped at 16:05 UTC while MHZ (8/s) and LHZ, LDH (1/s) stayed current. A
+# channel this far behind gives way to a current lower-rate one of the same sensor and component.
+STALE_MINUTES = 60
+LOWER_BANDS = {"H": "BML", "E": "SML", "B": "ML", "S": "ML", "M": "L"}   # SEED band codes, fastest first
+
+
+def lower_rate_channels(channel: str) -> list[str]:
+    """HHZ -> BHZ, MHZ, LHZ; EHZ -> SHZ, MHZ, LHZ; HDH -> BDH, MDH, LDH."""
+    return [band + channel[1:] for band in LOWER_BANDS.get(channel[:1], "")]
 
 
 class ChatBody(BaseModel):
@@ -168,14 +178,14 @@ def register(app, settings, deps, cache, limiter) -> None:
         cha = channel or known.get("channel") or "HHZ"
         end = deps.now().replace(second=0, microsecond=0) - timedelta(minutes=2)
 
-        def download(window_end: datetime, window_minutes: int) -> dict | None:
+        def download(window_end: datetime, window_minutes: int, ch: str = cha) -> dict | None:
             b = (window_end - timedelta(minutes=window_minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
             e = window_end.strftime("%Y-%m-%dT%H:%M:%SZ")
 
             def fetch():
                 with limiter.slot("EarthScope"):
                     try:
-                        res = call_toolkit("EarthScope", lambda: deps.earthscope.download_waveform(net, sta, cha, b, e, "--"))
+                        res = call_toolkit("EarthScope", lambda: deps.earthscope.download_waveform(net, sta, ch, b, e, "--"))
                     except errors.UpstreamError as exc:
                         if "no waveform data" in exc.message.lower():
                             return None
@@ -191,7 +201,7 @@ def register(app, settings, deps, cache, limiter) -> None:
                 tt, vv = thinning.minmax(times, d["samples"], settings.max_points)
                 return {"rate": d["rate"], "points": [[int(t), v] for t, v in zip(tt, vv)], "rawCount": len(d["samples"]),
                         "endMs": int(times[-1]), "sourceUrl": res.get("source_url")}
-            return cache.get_or_set(f"wave:{station_id}:{cha}:{b}:{e}", TTL["waveform"], fetch)
+            return cache.get_or_set(f"wave:{station_id}:{ch}:{b}:{e}", TTL["waveform"], fetch)
 
         def archive_lag() -> int | None:
             # One-minute probes keep the search cheap; the first window holding data bounds the archive's delay.
@@ -204,6 +214,15 @@ def register(app, settings, deps, cache, limiter) -> None:
             probed = True
             lag = cache.get_or_set(f"wave-lag:{station_id}:{cha}:{end.isoformat()}", TTL["waveform"], archive_lag)
             data = download(end - timedelta(minutes=lag), minutes) if lag else None
+        # A stalled or missing channel gives way to a current lower-rate one, only for channels the map shows. A
+        # 1 sample/s record spans minutes, so its newest minute may not have arrived: look back up to the stale limit.
+        if probed and (data is None or lag >= STALE_MINUTES):
+            for alt in lower_rate_channels(cha):
+                for back in (0, 15, 30, STALE_MINUTES):
+                    alt_data = download(end - timedelta(minutes=back), minutes, alt)
+                    if alt_data:
+                        return {"station": station_id, "channel": alt, "requestedChannel": cha, **alt_data,
+                                "requestedDelayMinutes": lag if data else None, "message": None}
         if data is None:
             return {"station": station_id, "channel": cha, "rate": None, "points": [], "rawCount": 0, "endMs": None,
                     "sourceUrl": None,
@@ -222,8 +241,8 @@ def register(app, settings, deps, cache, limiter) -> None:
         if isinstance(data, JSONResponse):
             return data
         now = deps.now()
-        return {"station": data["station"], "channel": data["channel"],
-                "recording": bool(data["points"]), "checkedAt": now.isoformat(),
+        return {"station": data["station"], "channel": data["channel"], "requestedChannel": data.get("requestedChannel"),
+                "rate": data.get("rate"), "recording": bool(data["points"]), "checkedAt": now.isoformat(),
                 "latestMs": data["endMs"],
                 "delayMinutes": round((now.timestamp() * 1000 - data["endMs"]) / 60_000) if data["endMs"] else None,
                 "message": data["message"]}

@@ -14,7 +14,10 @@ export default function LiveStatus({ sensor, manifest }) {
       const d = waveform.data;
       // EarthScope's archive often trails real time by an hour or more; say so rather than imply a live stream.
       const lag = d.recording && d.delayMinutes >= 5 ? ` · EarthScope archive ${fmtMinutes(d.delayMinutes)} behind` : "";
-      return <div className="live-status">{d.recording ? `Waveform available${lag}` : (d.message ?? "No recent waveform")} · EarthScope checked live</div>;
+      // A stalled high-rate channel (HHZ) gave way to a current lower-rate one (MHZ): say which, so 8 samples/s is not taken for the full stream.
+      const via = d.recording && d.requestedChannel && d.requestedChannel !== d.channel
+        ? ` on ${d.channel}${d.rate ? ` (${d.rate} samples/s)` : ""}; ${d.requestedChannel} delayed at EarthScope` : "";
+      return <div className="live-status">{d.recording ? `Waveform available${via}${lag}` : (d.message ?? "No recent waveform")} · EarthScope checked live</div>;
     }
     if (waveform.error.kind === "unreachable") return <div className="live-status degraded">EarthScope live check unavailable <button onClick={waveform.retry}>Retry</button></div>;
     return <div className="live-status degraded">EarthScope: {waveform.error.message} <button onClick={waveform.retry}>Retry</button></div>;
