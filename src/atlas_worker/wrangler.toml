@@ -11,6 +11,9 @@ ANSWER_MODEL = "gemini-2.5-flash"
 # through cleanly if its temporary provider capacity is unavailable.
 # Free models tried in order, comma-separated (OpenRouter retires and rate-limits them one by one).
 OPENROUTER_FREE_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free,google/gemma-4-31b-it:free"
+# Auto's last resort, a paid OpenAI model on OPENAI_API_KEY, used only when Gemini, Groq and every OpenRouter free
+# model refuse (all three were rate-limited at once on 2026-10-22, and visitors got no answer). Remove to keep Auto free.
+AUTO_FALLBACK_OPENAI_MODEL = "gpt-5.4-mini"
 
 # Secrets, never committed. Configure after deployment:
 #   wrangler secret put GEMINI_API_KEY

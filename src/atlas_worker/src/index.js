@@ -498,8 +498,8 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
       lastError = error;
     }
   }
-  // Local development only: AUTO_FALLBACK_OPENAI_MODEL (set in .dev.vars, never in wrangler.toml or as a deployed
-  // secret) lets Auto finish on an OpenAI model when every free route is out of quota. Deployed, Auto stays free.
+  // AUTO_FALLBACK_OPENAI_MODEL (wrangler.toml) lets Auto finish on a paid OpenAI model when every free route is out
+  // of quota, so a visitor still gets an answer. Unset, Auto stays free.
   if (requestedModel === "auto" && env.AUTO_FALLBACK_OPENAI_MODEL && env.OPENAI_API_KEY) {
     try {
       return await generateOpenAIAnswer(prompt, env.AUTO_FALLBACK_OPENAI_MODEL, mode, env);
