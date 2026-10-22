@@ -470,6 +470,11 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
 async function liveAxialCount(question, tz) {
   const window = axialDayWindow(question, { tz });
   if (!window) return null;
+  if (window.future) return {
+    query: question, answer: `${window.label}, ${window.day.slice(0, 4)} has not happened yet, so the live Axial catalog has no earthquakes for it.`,
+    answer_model: "axial_count_events (live catalog)", answer_citations: [{ id: "axial-live-catalog", title: "Axial Seamount Earthquake Catalog", url: AXIAL_CATALOG }],
+    hits: [], neighbors: [], events: [], tool_hints: [],
+  };
   const urls = window.stamps.map((stamp) => `${AXIAL_CATALOG}/hypo71/hypo71_${stamp}.dat`);
   // A local day can reach into a UTC day the catalog has not started yet; only a day with no file at all fails.
   const files = (await Promise.all(urls.map(async (url, i) => {

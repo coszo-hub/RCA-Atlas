@@ -400,3 +400,15 @@ test("an overview of the DAS experiments counts the 2025–26 datasets as one ex
   assert.match(prompt, /DAS21, the 2021[\s\S]*DAS24, the 2024[\s\S]*DAS25, the 2025–2026[\s\S]*not an experiment of its own/);
   assert.doesNotMatch(answerPrompt({ question: "How does DAS detect whales?", evidence: "e", sources: [], mode: "research" }), /DAS experiments are/);
 });
+
+test("an Axial count understands a day as people write it", () => {
+  const now = new Date("2026-10-22T18:00:00Z");
+  for (const q of ["how many earthquakes occurs at axial seamount on October 1sr 2026", "How many earthquakes at Axial on Oct 1?",
+    "number of earthquakes at Axial on 1 October 2026", "how many earthquakes at axial on 10/1/2026", "Count earthquakes at Axial on 2026-10-01"]) {
+    assert.equal(axialDayWindow(q, { now }).day, "2026-10-01", q);
+  }
+  assert.equal(axialDayWindow("How many earthquakes at Axial on Nov 3?", { now }).day, "2025-11-03");   // the latest Nov 3 so far
+  assert.equal(axialDayWindow("How many earthquakes at Axial on February 30 2026?", { now }), null);
+  assert.equal(axialDayWindow("How many earthquakes at Axial since 2015?", { now }), null);
+  assert.ok(axialDayWindow("How many earthquakes at Axial on December 1 2026?", { now }).future);
+});

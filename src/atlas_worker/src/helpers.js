@@ -302,13 +302,36 @@ function localMidnight(day, tz) {
   return wall - zoneOffset(tz, guess);   // again at the guess, in case a DST change falls between
 }
 
+// A calendar day as people write it: 2026-10-01, October 1 2026, Oct 1st, 1 October, 10/1/2026 (US order), with a
+// slip in the ordinal ("1sr") allowed. Without a year it is the latest such day up to today. Null for none, or for a
+// day that does not exist (February 30).
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const MONTH = "(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?";
+const DAY = "(\\d{1,2})(?:st|nd|rd|th|[a-z]{1,2})?";
+const YEAR = "(?:,?\\s*(20\\d{2}))?";
+export function namedDay(question, today) {
+  const q = String(question || "").toLowerCase();
+  let y, m, d;
+  let match = q.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
+  if (match) [, y, m, d] = match;
+  else if ((match = q.match(new RegExp(`\\b${MONTH}\\s+${DAY}\\b${YEAR}`)))) { m = MONTHS.indexOf(match[1].slice(0, 3)) + 1; [, , d, y] = match; }
+  else if ((match = q.match(new RegExp(`\\b${DAY}\\s+(?:of\\s+)?${MONTH}${YEAR}`)))) { m = MONTHS.indexOf(match[2].slice(0, 3)) + 1; [, d, , y] = match; }
+  else if ((match = q.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(20\d{2}))?\b/))) [, m, d, y] = match;
+  else return null;
+  const iso = (year) => `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  let day = iso(y || today.slice(0, 4));
+  if (!y && day > today) day = iso(Number(today.slice(0, 4)) - 1);
+  const check = new Date(`${day}T00:00:00Z`);
+  return Number.isNaN(check.getTime()) || check.toISOString().slice(0, 10) !== day ? null : day;
+}
+
 export function axialDayWindow(question, { tz, now = new Date() } = {}) {
   const q = String(question || "").toLowerCase();
   if (!/axial/.test(q) || !/(how many|count|number of)/.test(q) || !/earthquake/.test(q)) return null;
   const zone = tz ? validZone(tz) : "UTC", today = ymd(now, zone);
-  const explicit = q.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  const named = namedDay(q, today);
   let day;
-  if (explicit) day = explicit[1];
+  if (named) day = named;
   else if (q.includes("yesterday")) day = ymd(new Date(localMidnight(today, zone) - DAY_MS / 2), zone);
   else if (q.includes("today")) day = today;
   else return null;
@@ -321,7 +344,7 @@ export function axialDayWindow(question, { tz, now = new Date() } = {}) {
   const label = new Intl.DateTimeFormat("en-US", { timeZone: zone, weekday: "long", month: "long", day: "numeric" }).format(new Date(start));
   const zoneName = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "long" }).formatToParts(new Date(start))
     .find((p) => p.type === "timeZoneName")?.value ?? zone;
-  return { day, tz: zone, today: day === today, start: new Date(start), end: new Date(end), stamps, label, zoneName };
+  return { day, tz: zone, today: day === today, future: day > today, start: new Date(start), end: new Date(end), stamps, label, zoneName };
 }
 
 // Every event from the fetched files ([text, stamp] pairs) that falls inside the window, in time order.
