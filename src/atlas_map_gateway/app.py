@@ -17,8 +17,22 @@ from .cache import HostLimiter, TTLCache
 from .config import Settings
 
 STATUS_TTL = 120
+FALLBACK_TTL = 1800   # data age changes slowly: ERDDAP refreshes daily, QA/QC plots daily or weekly
 # Nereus reports "live", "live_cache" (its own 60 s disk cache of a live answer) or "snapshot_fallback".
 EVIDENCE_MODES = {"live": "live", "live_cache": "live", "snapshot_fallback": "snapshot"}
+
+
+def head_last_modified(url: str, timeout: float = 10.0) -> str | None:
+    """When a QA/QC plot was last regenerated (its Last-Modified header), as ISO 8601 UTC."""
+    import urllib.request
+    from email.utils import parsedate_to_datetime
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "rca-atlas-gateway"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            value = resp.headers.get("Last-Modified")
+    except OSError as exc:
+        raise errors.UpstreamError("QA/QC", f"QA/QC plot request failed: {exc}") from None
+    return parsedate_to_datetime(value).astimezone(timezone.utc).isoformat().replace("+00:00", "Z") if value else None
 
 
 @dataclass
@@ -32,6 +46,7 @@ class Deps:
     erddap: Any = None
     chat: Callable[[str], dict] | None = None
     now: Callable[[], datetime] = field(default=lambda: datetime.now(timezone.utc))
+    qaqc_modified: Callable[[str], str | None] = head_last_modified
 
 
 def not_found(source: str, message: str) -> JSONResponse:
@@ -76,7 +91,41 @@ def create_app(settings: Settings, deps: Deps, on_shutdown: Callable[[], None] |
                     "evidenceMode": EVIDENCE_MODES.get(res.get("evidence_mode"), res.get("evidence_mode")), "source": "Nereus", "sourceUrl": res.get("source_url")}
 
         result = cache.get_or_set(f"status:{refdes}", STATUS_TTL, fetch)
-        return result if result else not_found("Nereus", "Nereus does not track this sensor")
+        if result:
+            return result
+        # Nereus does not track every sensor (none of CE04OSBP, for one). The data sources the map already reads still
+        # say how recent its data are: ERDDAP's newest reading, else when its QA/QC day plot was last regenerated.
+        # They describe data, not operational status, so status stays null and the basis is named.
+        fallback = cache.get_or_set(f"status-fallback:{refdes}", FALLBACK_TTL, lambda: data_age(refdes))
+        return fallback if fallback else not_found("Nereus", "Nereus does not track this sensor")
+
+    def data_age(refdes: str) -> dict | None:
+        ds = deps.index.erddap_dataset(refdes)
+        if ds and deps.erddap is not None:
+            def fetch_vars():
+                with limiter.slot("ERDDAP"):
+                    return deps.erddap.variables(ds)
+            try:
+                end = cache.get_or_set(f"vars:{ds}", 3600, fetch_vars)["coverage"]["end"]   # the series route's key
+            except errors.UpstreamError:
+                end = None
+            if end:
+                return {"refdes": refdes, "status": None, "evidenceMode": "data_age", "basis": "erddap", "latestAt": end,
+                        "source": "OOI ERDDAP", "sourceUrl": f"https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/{ds}.html"}
+        if deps.qaqc is not None:
+            try:
+                with limiter.slot("QA/QC"):
+                    res = call_toolkit("QA/QC", lambda: deps.qaqc.search_plots(reference_designator=refdes, time_span="day", limit=5))
+                plot = next((p for p in res.get("plots", []) if p.get("reference_designator") == refdes), None)
+                if plot:
+                    with limiter.slot("QA/QC"):
+                        modified = deps.qaqc_modified(plot["url"])
+                    if modified:
+                        return {"refdes": refdes, "status": None, "evidenceMode": "data_age", "basis": "qaqc",
+                                "latestAt": modified, "source": "RCA QA/QC", "sourceUrl": plot["url"]}
+            except errors.UpstreamError:
+                return None
+        return None
 
     routes_data.register(app, settings, deps, cache, limiter)
     return app

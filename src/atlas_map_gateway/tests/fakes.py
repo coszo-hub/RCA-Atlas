@@ -24,7 +24,7 @@ class FakeQAQC:
     def __init__(self, response):
         self.calls, self.response = [], response
 
-    def search_plots(self, reference_designator=None, limit=20):
+    def search_plots(self, reference_designator=None, limit=20, **filters):
         self.calls.append(reference_designator)
         return self.response
 

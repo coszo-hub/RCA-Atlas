@@ -17,6 +17,19 @@ describe("SensorDetail", () => {
     render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
     await waitFor(() => expect(screen.getByText(/Operating · checked live/)).toBeInTheDocument());
   });
+  it("a sensor Nereus does not track shows its newest ERDDAP reading instead of an unknown status", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ refdes: "x", status: null, evidenceMode: "data_age",
+      basis: "erddap", latestAt: new Date(Date.now() - 3600e3).toISOString(), source: "OOI ERDDAP" }) })));
+    render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
+    await waitFor(() => expect(screen.getByText(/^Data through .* UTC · OOI ERDDAP · not tracked by Nereus$/)).toBeInTheDocument());
+  });
+  it("old QA/QC plots read as degraded", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ refdes: "x", status: null, evidenceMode: "data_age",
+      basis: "qaqc", latestAt: "2024-06-17T13:05:00Z", source: "RCA QA/QC" }) })));
+    render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
+    const line = await screen.findByText("QA/QC plots updated Jun 17, 2024 · not tracked by Nereus");
+    expect(line).toHaveClass("degraded");
+  });
   it("falls back to the snapshot when the gateway is down", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
     render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);

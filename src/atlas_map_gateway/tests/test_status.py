@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from atlas_map_gateway.app import create_app
-from atlas_map_gateway.tests.fakes import SETTINGS, FakeNereus, deps
+from atlas_map_gateway.tests.fakes import SETTINGS, FakeNereus, FakeQAQC, deps
 
 REF = "RS03AXPS-PC03A-4A-CTDPFA303"
 OK = {"ok": True, "evidence_mode": "live", "source_url": "https://nereus.ooirsn.uw.edu/hasura/v1/graphql",
@@ -94,3 +94,44 @@ class StatusTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FakeErddap:
+    def __init__(self, end):
+        self.calls, self.end = [], end
+
+    def variables(self, dataset_id):
+        self.calls.append(dataset_id)
+        return {"variables": [], "coverage": {"start": "2014-08-25T18:50:00Z", "end": self.end}}
+
+
+UNTRACKED = {"ok": True, "evidence_mode": "live", "instruments": []}
+PLOT = {"ok": True, "plots": [{"reference_designator": REF, "variable": "temp", "time_span": "day",
+                               "url": "https://ec2.qaqc.ooi-rca.net/QAQC_plots/RS03AXPS/x_day_none_full.png"}]}
+
+
+class DataAgeFallbackTest(unittest.TestCase):
+    def test_erddap_newest_reading_stands_in_when_nereus_does_not_track_the_sensor(self):
+        erd = FakeErddap("2026-10-21T03:24:00Z")
+        r = TestClient(create_app(SETTINGS, deps(nereus=FakeNereus(UNTRACKED), erddap=erd))).get(f"/status/{REF}")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["basis"], "erddap")
+        self.assertEqual(r.json()["latestAt"], "2026-10-21T03:24:00Z")
+        self.assertIsNone(r.json()["status"])   # data age, not an operational status
+        self.assertEqual(r.json()["evidenceMode"], "data_age")
+
+    def test_without_erddap_the_qaqc_day_plot_date_stands_in(self):
+        seen = []
+        app = create_app(SETTINGS, deps(nereus=FakeNereus(UNTRACKED), erddap=None, qaqc=FakeQAQC(PLOT),
+                                        qaqc_modified=lambda url: seen.append(url) or "2024-06-17T13:05:00Z"))
+        r = TestClient(app).get(f"/status/{REF}")
+        self.assertEqual((r.json()["basis"], r.json()["latestAt"]), ("qaqc", "2024-06-17T13:05:00Z"))
+        self.assertEqual(seen, [PLOT["plots"][0]["url"]])
+
+    def test_erddap_wins_over_qaqc_and_is_cached(self):
+        erd, seen = FakeErddap("2026-10-21T03:24:00Z"), []
+        client = TestClient(create_app(SETTINGS, deps(nereus=FakeNereus(UNTRACKED), erddap=erd, qaqc=FakeQAQC(PLOT),
+                                                      qaqc_modified=lambda url: seen.append(url) or "x")))
+        self.assertEqual(client.get(f"/status/{REF}").json()["basis"], "erddap")
+        client.get(f"/status/{REF}")
+        self.assertEqual((len(erd.calls), seen), (1, []))

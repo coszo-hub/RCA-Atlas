@@ -24,6 +24,14 @@ export default function LiveStatus({ sensor, manifest }) {
   }
   if (!sensor.refdes || live.state === "idle") return <div className="live-status">{snapshot}</div>;
   if (live.state === "loading") return <div className="live-status">{snapshot} · checking live…</div>;
+  if (live.state === "ok" && live.data.evidenceMode === "data_age") {
+    // Nereus does not track this sensor; the gateway reports how recent its data are instead (ERDDAP's newest
+    // reading, else its QA/QC day plot's date). Data age, not an operational status, so no status is claimed.
+    const d = live.data, at = new Date(d.latestAt), stale = Date.now() - at > 3 * 864e5;
+    const when = `${fmtDate(d.latestAt)}${d.basis === "erddap" ? `, ${at.toUTCString().slice(17, 22)} UTC` : ""}`;
+    const what = d.basis === "erddap" ? `Data through ${when} · OOI ERDDAP` : `QA/QC plots updated ${when}`;
+    return <div className={`live-status${stale ? " degraded" : ""}`}>{what} · not tracked by Nereus</div>;
+  }
   if (live.state === "ok") {
     const d = live.data;
     // Nereus answers live, or falls back to its snapshot when the instrument check fails; never claim both.
