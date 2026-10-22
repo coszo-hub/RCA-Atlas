@@ -170,6 +170,30 @@ def write_jsonl(path: Path, values: Iterable[dict[str, Any]]) -> int:
     return count
 
 
+ERRATA_FILE = "errata.jsonl"
+
+
+def load_errata(project_root: Path, collection: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    """A collection's corrections, by chunk ID: text a source got wrong and the authority (a paper) that fixes it."""
+    errata: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in collection.get("auxiliary_inputs", []):
+        if Path(item["path"]).name == ERRATA_FILE:
+            for _, entry in rows(corpus_path(project_root, item["path"])):
+                errata[entry["chunk_id"]].append(entry)
+    return errata
+
+
+def apply_errata(record: dict[str, Any], entries: list[dict[str, Any]], where: str) -> dict[str, Any]:
+    """The record with each erratum applied once to its text; a stale erratum (wrong text not found) stops the build."""
+    text = str(record.get("text") or "")
+    for entry in entries:
+        if text.count(entry["wrong"]) != 1:
+            raise ValueError(f"Erratum for {where} does not match its text exactly once: {entry['wrong']!r}")
+        text = text.replace(entry["wrong"], entry["right"])
+    return {**record, "text": text, "errata": [
+        {"wrong": e["wrong"], "right": e["right"], "authority": e["authority"], "reason": e["reason"]} for e in entries]}
+
+
 def normalize(project_root: Path, catalog_path: Path, output: Path) -> dict[str, Any]:
     project_root = project_root.resolve()
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
@@ -202,6 +226,8 @@ def normalize(project_root: Path, catalog_path: Path, output: Path) -> dict[str,
             "root_path": collection["root_path"], "scope": collection.get("scope"),
             "manifest": collection.get("manifest", {}),
         })
+        errata = load_errata(project_root, collection)
+        corrected: set[str] = set()
         embedding_paths = {item["path"] for item in collection["embedding_inputs"]}
         node_paths = {item["path"] for item in collection["graph_node_inputs"]}
         edge_paths = {item["path"] for item in collection["graph_edge_inputs"]}
@@ -243,6 +269,9 @@ def normalize(project_root: Path, catalog_path: Path, output: Path) -> dict[str,
             if path.suffix == ".jsonl" and relative in node_paths:
                 for line_no, record in rows(path):
                     local_id = primary_id(cid, path.name, record)
+                    if relative in embedding_paths and local_id in errata:
+                        record = apply_errata(record, errata[local_id], f"{cid}/{local_id}")
+                        corrected.add(local_id)
                     kind = path.stem
                     payload = canonical_json(record)
                     node_record_rows.append({
@@ -316,6 +345,8 @@ def normalize(project_root: Path, catalog_path: Path, output: Path) -> dict[str,
                         "input_schema": tool.get("inputSchema") or tool.get("input_schema") or {},
                         "runtime": tool.get("runtime"), "manifest_path": relative, "metadata": tool,
                     }
+        if set(errata) - corrected:
+            raise ValueError(f"Errata name chunks not in {cid}: {sorted(set(errata) - corrected)[:5]}")
 
     node_rows = []
     for key, row in sorted(logical_nodes.items()):

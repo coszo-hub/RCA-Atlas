@@ -137,13 +137,23 @@ export function withRouteCitations(hit) {
 }
 
 // The evidence text for the prompt: each hit under a header with its source numbers.
+// What kind of source a hit is, so that where sources disagree the answer can prefer the scientific literature: the
+// literature collection, and the papers RCA Information carries in full text (source_row_type "paper").
+export function sourceKind(hit) {
+  const collection = String(hit.collection_id || "").toLowerCase();
+  if (collection === "literature" || hit.metadata?.source_row_type === "paper") return "scientific literature";
+  if (collection === "websites") return "website";
+  return null;
+}
+
 export function evidencePackage(hits, sourceNumbers) {
   const sections = [];
   let remaining = MAX_EVIDENCE_CHARS;
   for (const hit of hits) {
     if (remaining <= 0) break;
     const refs = [...new Set((hit.citations || []).map((c) => sourceNumbers.get(sourceKey(c.source_id || hit.chunk_id, c.url))).filter(Boolean))];
-    const header = `${hit.title}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
+    const kind = sourceKind(hit);
+    const header = `${hit.title}${kind ? ` (${kind})` : ""}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
     const text = String(hit.text || "").slice(0, Math.max(0, remaining - header.length));
     sections.push(`${header}${text}`);
     remaining -= header.length + text.length + 2;
@@ -245,5 +255,5 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }

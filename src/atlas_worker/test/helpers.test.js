@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, withRouteCitations } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, withRouteCitations } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -89,6 +89,21 @@ test("evidence headers number sources that share an id by their URL", () => {
     { chunk_id: "C-3", title: "Guide", text: "c", citations: [{ url: null }] },
   ], numbers);
   assert.equal(text, "DAS25 | sources: [1]\na\n\nDAS24 | sources: [2]\nb\n\nGuide | sources: [3]\nc");
+});
+
+test("evidence headers mark papers and websites, and the prompt prefers the paper where they disagree", () => {
+  assert.equal(sourceKind({ collection_id: "literature" }), "scientific literature");
+  assert.equal(sourceKind({ collection_id: "arcada", metadata: { source_row_type: "paper" } }), "scientific literature");
+  assert.equal(sourceKind({ collection_id: "websites" }), "website");
+  assert.equal(sourceKind({ collection_id: "instruments" }), null);
+  const numbers = new Map([[sourceKey("L", ""), 1], [sourceKey("W", ""), 2], [sourceKey("I", ""), 3]]);
+  const text = evidencePackage([
+    { chunk_id: "L", collection_id: "literature", title: "Stacked sills", text: "300–450 m", citations: [{ source_id: "L" }] },
+    { chunk_id: "W", collection_id: "websites", title: "Roots of Axial", text: "400-500 m", citations: [{ source_id: "W" }] },
+    { chunk_id: "I", collection_id: "instruments", title: "BOTPT", text: "x", citations: [{ source_id: "I" }] },
+  ], numbers);
+  assert.equal(text, "Stacked sills (scientific literature) | sources: [1]\n300–450 m\n\nRoots of Axial (website) | sources: [2]\n400-500 m\n\nBOTPT | sources: [3]\nx");
+  assert.match(answerPrompt({ question: "q", evidence: text, sources: [], mode: "research" }), /disagree about a fact or number, give the scientific literature's value/);
 });
 
 const day24 = await readFile(new URL("./fixtures/hypo71_20260924.dat", import.meta.url), "utf8");

@@ -65,7 +65,7 @@ KNOWN_NODE_FILES = {
 }
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
-KNOWN_AUXILIARY_FILES = {"visual_chunks.jsonl", "visual_summaries.jsonl"}
+KNOWN_AUXILIARY_FILES = {"visual_chunks.jsonl", "visual_summaries.jsonl", "errata.jsonl"}
 TIME_KEYS = ("created_at", "built_at_utc", "generated_at", "generated_at_utc", "audit_date")
 
 

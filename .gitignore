@@ -24,6 +24,9 @@ src/atlas_ui/dist/
 !/data/README.md
 !/data/CORPUS_METHOD.md
 !/data/cleanup_validation.json
+# Hand-written corrections, where a website misstates the paper it cites.
+!/data/Websites/
+!/data/Websites/errata.jsonl
 
 /source_material/**
 !/source_material/README.md

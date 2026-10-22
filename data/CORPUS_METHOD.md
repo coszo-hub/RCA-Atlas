@@ -323,6 +323,20 @@ and every referenced local Markdown or image file. The crawl and packaging
 method is in `src/website_pipeline/crawl.py`; the coverage audit is in
 `src/website_pipeline/AUDIT.md`.
 
+**Errata.** Where a page misstates the paper it cites, `errata.jsonl` (kept in
+git) replaces the wrong phrase in that chunk with the paper's value. Each entry
+names its chunk, the exact wrong and right text, the authority (title and DOI)
+and the reason. The normalizer and the embedding build both apply them, and the
+build stops if an entry's wrong text no longer appears exactly once in its
+chunk. The corrected chunk's metadata keeps the entry, so the change is
+traceable. There are two entries: the stacked-sills lens spacing on "Discovery
+of the Roots of the Axial Seamount" (Carbotte et al., 2020: 300–450 m, not
+400–500 m), and the Southern Hydrate Ridge plume height on "Explosive Bubble
+Plume Emissions" (Philip et al., 2016: plume tops at 320–620 m below sea level
+over seeps at about 780 m, not ~480 m above the seafloor). The answer prompt
+also labels evidence as scientific literature or website, and prefers the
+literature where they disagree.
+
 ## Instruments
 
 **Source and reconciliation.** The inventory compiles instrument-level facts

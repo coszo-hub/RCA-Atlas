@@ -16,6 +16,9 @@ from typing import Any, Callable, Iterable, Protocol
 
 import numpy as np
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from normalize_corpus import apply_errata, load_errata  # noqa: E402  (the same corrections the normalized chunks carry)
+
 
 MODEL_NAME = "BAAI/bge-small-en-v1.5"
 MODEL_SOURCE_REPOSITORY = "qdrant/bge-small-en-v1.5-onnx-q"
@@ -103,6 +106,7 @@ def load_records(catalog_path: Path, project_root: Path | None = None) -> tuple[
         collection_id = collection.get("collection_id")
         if not isinstance(collection_id, str) or not collection_id:
             raise BuildError("Every collection requires collection_id")
+        errata = load_errata(root, collection)
         for descriptor in collection.get("embedding_inputs", []):
             relative = descriptor.get("path")
             if not isinstance(relative, str) or not relative:
@@ -132,6 +136,8 @@ def load_records(catalog_path: Path, project_root: Path | None = None) -> tuple[
                     if value is None:
                         raise BuildError(f"No supported record ID at {path}:{line_number}")
                     record_id = str(value)
+                    if record_id in errata:
+                        text = apply_errata(row, errata[record_id], f"{collection_id}/{record_id}")["text"]
                     key = (collection_id, record_id)
                     if key in seen_keys:
                         raise BuildError(f"Duplicate record key {collection_id}:{record_id}")
