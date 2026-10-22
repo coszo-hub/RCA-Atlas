@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -18,6 +18,7 @@ from .config import Settings
 
 STATUS_TTL = 120
 FALLBACK_TTL = 1800   # data age changes slowly: ERDDAP refreshes daily, QA/QC plots daily or weekly
+ERDDAP_LIVE_DAYS = 3  # a sensor Nereus does not track is operating when ERDDAP has readings this recent
 # Nereus reports "live", "live_cache" (its own 60 s disk cache of a live answer) or "snapshot_fallback".
 EVIDENCE_MODES = {"live": "live", "live_cache": "live", "snapshot_fallback": "snapshot"}
 
@@ -95,7 +96,7 @@ def create_app(settings: Settings, deps: Deps, on_shutdown: Callable[[], None] |
             return result
         # Nereus does not track every sensor (none of CE04OSBP, for one). The data sources the map already reads still
         # say how recent its data are: ERDDAP's newest reading, else when its QA/QC day plot was last regenerated.
-        # They describe data, not operational status, so status stays null and the basis is named.
+        # Recent ERDDAP readings count as operating; otherwise status stays null and the data's age and basis are given.
         fallback = cache.get_or_set(f"status-fallback:{refdes}", FALLBACK_TTL, lambda: data_age(refdes))
         return fallback if fallback else not_found("Nereus", "Nereus does not track this sensor")
 
@@ -110,8 +111,14 @@ def create_app(settings: Settings, deps: Deps, on_shutdown: Callable[[], None] |
             except errors.UpstreamError:
                 end = None
             if end:
-                return {"refdes": refdes, "status": None, "evidenceMode": "data_age", "basis": "erddap", "latestAt": end,
-                        "source": "OOI ERDDAP", "sourceUrl": f"https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/{ds}.html"}
+                # Readings within the last three days (ERDDAP refreshes about daily) count as operating.
+                try:
+                    recent = deps.now() - datetime.fromisoformat(end.replace("Z", "+00:00")) <= timedelta(days=ERDDAP_LIVE_DAYS)
+                except ValueError:
+                    recent = False
+                return {"refdes": refdes, "status": "OPERATIONAL" if recent else None, "evidenceMode": "data_age",
+                        "basis": "erddap", "latestAt": end, "source": "OOI ERDDAP",
+                        "sourceUrl": f"https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/{ds}.html"}
         if deps.qaqc is not None:
             try:
                 with limiter.slot("QA/QC"):

@@ -75,3 +75,4 @@ body.resizing-side { cursor: ew-resize; user-select: none; }
 .custom-range .degraded { flex-basis: 100%; margin: 0; }
 .live-data details summary { cursor: pointer; color: var(--text-secondary); font-size: 12.5px; margin: 8px 0; }
 .files + .files, .series + .files, .waveform + .files { margin-top: 10px; }
+.sp-row .stale { color: var(--text-muted); }   /* data older than three days (SitePanel RowStatus) */

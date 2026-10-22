@@ -23,6 +23,12 @@ describe("SensorDetail", () => {
     render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
     await waitFor(() => expect(screen.getByText(/^Data through .* UTC · OOI ERDDAP · not tracked by Nereus$/)).toBeInTheDocument());
   });
+  it("recent ERDDAP readings make a sensor Nereus does not track read as operating", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ refdes: "x", status: "OPERATIONAL", evidenceMode: "data_age",
+      basis: "erddap", latestAt: "2026-10-21T03:24:00Z", source: "OOI ERDDAP" }) })));
+    render(<SensorDetail sensor={b.sensorById["base-ctd"]} bundle={b} onBack={() => {}} />);
+    expect(await screen.findByText("Operating · data through Oct 21, 2026, 03:24 UTC · OOI ERDDAP")).toBeInTheDocument();
+  });
   it("old QA/QC plots read as degraded", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ refdes: "x", status: null, evidenceMode: "data_age",
       basis: "qaqc", latestAt: "2024-06-17T13:05:00Z", source: "RCA QA/QC" }) })));

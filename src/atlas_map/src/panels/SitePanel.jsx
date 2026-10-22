@@ -1,7 +1,21 @@
 import DepthSection from "./DepthSection.jsx";
 import SidePanel from "./SidePanel.jsx";
 import Glyph from "../ui/Glyph.jsx";
-import { fmtDepth, fmtRange, statusLabel } from "../data/format.js";
+import { fmtDate, fmtDepth, fmtRange, statusLabel } from "../data/format.js";
+import { status as fetchStatus } from "../api/gateway.js";
+import { useLive } from "./live/useLive.js";
+
+// A row's status. Sensors Nereus does not track have no snapshot status ("Status unknown"); for those with an ERDDAP
+// dataset or QA/QC plots the gateway reports how recent their data are, as the sensor card does. Others make no request.
+function RowStatus({ sensor }) {
+  const dated = sensor.status === "UNKNOWN" && sensor.refdes && sensor.access.some(a => a.kind === "erddap" || a.kind === "qaqc");
+  const live = useLive(dated ? `status:${sensor.refdes}` : null, o => fetchStatus(sensor.refdes, o));
+  const d = live.state === "ok" && live.data.evidenceMode === "data_age" ? live.data : null;
+  if (!d) return <>{statusLabel(sensor.status)}</>;
+  if (d.status) return <>{statusLabel(d.status)}</>;   // recent ERDDAP readings: operating
+  const stale = Date.now() - new Date(d.latestAt) > 3 * 864e5;
+  return <span className={stale ? "stale" : undefined}>{d.basis === "erddap" ? "Data to" : "Plots"} {fmtDate(d.latestAt)}</span>;
+}
 
 export default function SitePanel({ site, bundle, elevAt, onClose, onBack, onSensor, minimized, onMinimize, children }) {
   const inDetail = children != null && children !== false;
@@ -24,7 +38,7 @@ export default function SitePanel({ site, bundle, elevAt, onClose, onBack, onSen
               {inFam.map(s => (
                 <button key={s.id} className="sp-row" onClick={() => onSensor(s.id)} aria-label={`${s.name}, ${statusLabel(s.status)}`}>
                   <span className="nm">{s.name}</span>
-                  <span className="mono d">{statusLabel(s.status)} · {s.depthRange ? fmtRange(...s.depthRange) : fmtDepth(s.depth)}</span>
+                  <span className="mono d"><RowStatus sensor={s} /> · {s.depthRange ? fmtRange(...s.depthRange) : fmtDepth(s.depth)}</span>
                 </button>
               ))}
             </section>

@@ -112,13 +112,18 @@ PLOT = {"ok": True, "plots": [{"reference_designator": REF, "variable": "temp", 
 
 class DataAgeFallbackTest(unittest.TestCase):
     def test_erddap_newest_reading_stands_in_when_nereus_does_not_track_the_sensor(self):
-        erd = FakeErddap("2026-10-21T03:24:00Z")
+        erd = FakeErddap("2026-09-01T03:24:00Z")   # three weeks before the fake clock's 2026-09-23: stale
         r = TestClient(create_app(SETTINGS, deps(nereus=FakeNereus(UNTRACKED), erddap=erd))).get(f"/status/{REF}")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["basis"], "erddap")
-        self.assertEqual(r.json()["latestAt"], "2026-10-21T03:24:00Z")
-        self.assertIsNone(r.json()["status"])   # data age, not an operational status
+        self.assertEqual(r.json()["latestAt"], "2026-09-01T03:24:00Z")
+        self.assertIsNone(r.json()["status"])   # too old to call operating; the date is reported instead
         self.assertEqual(r.json()["evidenceMode"], "data_age")
+
+    def test_recent_erddap_readings_count_as_operating(self):
+        erd = FakeErddap("2026-09-22T03:24:00Z")   # a day before the fake clock
+        r = TestClient(create_app(SETTINGS, deps(nereus=FakeNereus(UNTRACKED), erddap=erd))).get(f"/status/{REF}")
+        self.assertEqual((r.json()["status"], r.json()["basis"]), ("OPERATIONAL", "erddap"))
 
     def test_without_erddap_the_qaqc_day_plot_date_stands_in(self):
         seen = []

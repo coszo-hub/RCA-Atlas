@@ -20,6 +20,26 @@ describe("SitePanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Axial Base bottom pressure and tilt, location not recorded" }));
     expect(onSensor).toHaveBeenCalledWith("unlocated-bpt");
   });
+  it("rows of sensors without a snapshot status show how recent their data are", async () => {
+    const site = b.siteById["axial-seamount-base"];
+    const sensor = site.sensorIds.map(id => b.sensorById[id]).find(s => s.refdes && s.access.some(a => a.kind === "erddap" || a.kind === "qaqc"));
+    const unknown = { ...b, sensorById: { ...b.sensorById, [sensor.id]: { ...sensor, status: "UNKNOWN" } } };
+    vi.stubGlobal("fetch", vi.fn(async url => ({ ok: true, status: 200, json: async () => (String(url).includes(encodeURIComponent(sensor.refdes))
+      ? { refdes: sensor.refdes, status: null, evidenceMode: "data_age", basis: "erddap", latestAt: "2026-10-21T03:24:00Z" } : {}) })));
+    render(<SitePanel site={site} bundle={unknown} elevAt={() => -2614} onClose={() => {}} onSensor={() => {}} />);
+    expect(await screen.findByText("Data to Oct 21, 2026")).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(1);   // only the sensor without a snapshot status asks
+    vi.unstubAllGlobals();
+  });
+  it("a row whose sensor has recent ERDDAP readings reads as operating", async () => {
+    const site = b.siteById["axial-seamount-base"];
+    const sensor = site.sensorIds.map(id => b.sensorById[id]).find(s => s.refdes && s.access.some(a => a.kind === "erddap" || a.kind === "qaqc"));
+    const unknown = { ...b, sensorById: { ...b.sensorById, [sensor.id]: { ...sensor, status: "UNKNOWN" } } };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ refdes: sensor.refdes, status: "OPERATIONAL", evidenceMode: "data_age", basis: "erddap", latestAt: "2026-10-21T03:24:00Z" }) })));
+    render(<SitePanel site={site} bundle={unknown} elevAt={() => -2614} onClose={() => {}} onSensor={() => {}} />);
+    expect(await screen.findByRole("button", { name: new RegExp(`^${sensor.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`) })).toHaveTextContent("Operating");
+    vi.unstubAllGlobals();
+  });
   it("closes on Escape", () => {
     const onClose = vi.fn();
     render(<SitePanel site={b.siteById["oregon-shelf"]} bundle={b} elevAt={() => -80} onClose={onClose} onSensor={() => {}} />);

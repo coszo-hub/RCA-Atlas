@@ -29,6 +29,8 @@ export default function LiveStatus({ sensor, manifest }) {
     // reading, else its QA/QC day plot's date). Data age, not an operational status, so no status is claimed.
     const d = live.data, at = new Date(d.latestAt), stale = Date.now() - at > 3 * 864e5;
     const when = `${fmtDate(d.latestAt)}${d.basis === "erddap" ? `, ${at.toUTCString().slice(17, 22)} UTC` : ""}`;
+    // Recent ERDDAP readings make it operating (the gateway decides); the data's age and source stay visible.
+    if (d.status) return <div className="live-status">{statusLabel(d.status)} · data through {when} · OOI ERDDAP</div>;
     const what = d.basis === "erddap" ? `Data through ${when} · OOI ERDDAP` : `QA/QC plots updated ${when}`;
     return <div className={`live-status${stale ? " degraded" : ""}`}>{what} · not tracked by Nereus</div>;
   }
