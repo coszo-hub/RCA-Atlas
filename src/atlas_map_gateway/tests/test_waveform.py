@@ -233,6 +233,17 @@ class BandpassTest(unittest.TestCase):
             with self.subTest(band=band):
                 self.assertEqual(app.get("/waveform/OO.AXCC1", params={"bandpass": band}).status_code, 422)
 
+    def test_the_low_frequency_preset_works_on_8_samples_per_second(self):
+        import atlas_map_gateway.seismic as sm
+        real = sm.decode
+        sm.decode = lambda path: {**real(path), "rate": 8.0}
+        try:
+            r = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK)))).get("/waveform/OO.AXCC1", params={"bandpass": "1-3"})
+        finally:
+            sm.decode = real
+        self.assertEqual(r.json()["bandpass"], {"low": 1.0, "high": 3.0})
+        self.assertIsNone(r.json()["filterNote"])
+
     def test_too_slow_a_channel_is_not_filtered_to_a_sliver(self):
         # At 8 samples/s (MHZ during EarthScope's 2026-10-21 stall), 3-20 Hz would leave only 3-3.2 Hz.
         class Slow(FakeEarthScope):

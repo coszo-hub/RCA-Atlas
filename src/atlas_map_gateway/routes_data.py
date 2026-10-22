@@ -28,8 +28,10 @@ STALE_MINUTES = 60
 LOWER_BANDS = {"H": "BML", "E": "SML", "B": "ML", "S": "ML", "M": "L"}   # SEED band codes, fastest first
 
 
-# Waveform filters the map offers, in Hz: small local earthquakes, above the ocean microseism (about 0.1-1 Hz).
-BANDPASS_PRESETS = {"3-20": (3.0, 20.0)}
+# Waveform filters the map offers, in Hz. 3-20: small local earthquakes, above the ocean microseism (about 0.1-1
+# Hz); needs 50 samples/s. 1-3: their low-frequency end, which 8 samples/s MHZ can hold; on 2026-10-21 it showed
+# 10 of 28 events detected at 3-20 Hz on HHZ, against 4 in the raw MHZ trace.
+BANDPASS_PRESETS = {"3-20": (3.0, 20.0), "1-3": (1.0, 3.0)}
 
 
 def lower_rate_channels(channel: str) -> list[str]:

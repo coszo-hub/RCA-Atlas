@@ -8,9 +8,10 @@ import { useLive } from "./useLive.js";
 // EarthScope serves its newest archived window, which can be an hour or more old.
 const ends = endMs => (endMs ? `ends ${new Date(endMs).toISOString().slice(11, 16)} UTC, ${fmtMinutes((Date.now() - endMs) / 60_000)} ago` : "newest EarthScope data");
 
-// Raw counts, or a zero-phase 3-20 Hz Butterworth bandpass applied by the gateway to the full-rate samples:
-// above the ocean microseism (about 0.1-1 Hz), where small local earthquakes carry their energy.
-const FILTERS = [["raw", "Raw", null], ["quake", "Earthquakes 3–20 Hz", "3-20"]];
+// Raw counts, or a zero-phase Butterworth bandpass the gateway applies to the full-rate samples. 3-20 Hz sits above
+// the ocean microseism (about 0.1-1 Hz), where small local earthquakes carry their energy, and needs 50 samples/s;
+// 1-3 Hz is their low-frequency end, which the 8 samples/s channel can hold when the high-rate feed is stalled.
+const FILTERS = [["raw", "Raw", null], ["quake", "Earthquakes 3–20 Hz", "3-20"], ["low", "Low-frequency 1–3 Hz", "1-3"]];
 
 export default function WaveformView({ route }) {
   const [minutes, setMinutes] = useState(10);
