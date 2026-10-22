@@ -18,8 +18,8 @@ class FullBuildTest(unittest.TestCase):
             out = Path(d)
             summary = build_atlas_bundle.build(out, paths.RUNTIME, paths.DATA)
             self.assertEqual(summary["errors"], [])
-            self.assertEqual(summary["total"], 191)   # 171 + 9 CE04OSBP + 11 CE02SHBP instruments
-            self.assertEqual(summary["located"], 175)
+            self.assertEqual(summary["total"], 193)   # 171 + 9 CE04OSBP + 11 CE02SHBP + VADCPB301, D1000A301
+            self.assertEqual(summary["located"], 177)
             self.assertEqual(summary["unlocated"], 16)
             self.assertEqual(summary["unplaced"], 5)
             self.assertEqual(summary["sites"], 32)

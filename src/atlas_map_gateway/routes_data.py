@@ -133,8 +133,9 @@ def register(app, settings, deps, cache, limiter) -> None:
         """One instrument's QA/QC plots for one variable and time span, with the variables and spans it has.
 
         All of its plots are read (an ADCP has 735, a profiler CTD over 4,000), not the first 200, which hid most
-        variables; only the chosen variable and span are returned."""
-        if not deps.index.has_refdes(refdes):
+        variables; only the chosen variable and span are returned. A seismometer's plots are filed under its OOI
+        OBS reference designator, which only its QA/QC route names."""
+        if not (deps.index.has_refdes(refdes) or deps.index.has_qaqc(refdes)):
             return _missing("atlas", "unknown sensor")
         if variable is not None and not VAR_RE.fullmatch(variable):
             return _bad("invalid variable name")

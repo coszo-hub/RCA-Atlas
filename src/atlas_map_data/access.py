@@ -21,6 +21,18 @@ VERTICAL_PREFERENCE = ("HHZ", "EHZ", "BHZ", "SHZ")
 FDSN_STATION = "https://service.earthscope.org/fdsnws/station/1/query"
 # An OOI low-frequency hydrophone is archived at EarthScope as the HDH channel of the seismic station on its node.
 HYDROPHONE_MATCH_KM = 2.0
+# The OOI seismometer (OBS) at each OO station, whose QA/QC plots are filed under its reference designator. Paired by
+# position: each one's latest deployment in OOI asset-management (deployment/{site}_Deploy.csv) lies within 25 m of
+# the station's EarthScope coordinates, most at 0 m, and no other station is within 340 m.
+OBS_REFDES = {
+    "HYSB1": "RS01SLBS-MJ01A-05-OBSBBA102", "HYS14": "RS01SUM1-LJ01B-05-OBSBBA101",
+    "HYS13": "RS01SUM1-LJ01B-06-OBSSPA103", "HYS12": "RS01SUM1-LJ01B-07-OBSSPA102",
+    "HYS11": "RS01SUM1-LJ01B-08-OBSSPA101", "AXAS2": "RS03ASHS-MJ03B-05-OBSSPA302",
+    "AXAS1": "RS03ASHS-MJ03B-06-OBSSPA301", "AXBA1": "RS03AXBS-MJ03A-05-OBSBBA303",
+    "AXCC1": "RS03CCAL-MJ03F-06-OBSBBA301", "AXEC1": "RS03ECAL-MJ03E-05-OBSSPA303",
+    "AXEC3": "RS03ECAL-MJ03E-08-OBSSPA304", "AXEC2": "RS03ECAL-MJ03E-09-OBSBBA302",
+    "AXID1": "RS03INT2-MJ03D-05-OBSSPA305",
+}
 ALLOWED_HOSTS = {
     "erddap.dataexplorer.oceanobservatories.org", "dataexplorer.oceanobservatories.org",
     "oceanobservatories.org", "ooinet.oceanobservatories.org", "ec2.qaqc.ooi-rca.net",
@@ -167,6 +179,10 @@ def build_access(record: dict, external: dict, pi_endpoints: dict[str, list[dict
                            "channelSource": source if channel else "default",
                            "url": station_url,
                            "how": "Public seismic waveforms (MiniSEED) and station metadata; no login."})
+        obs = OBS_REFDES.get(sta) if net == "OO" else None
+        if obs in external["qaqc"]:
+            routes.append({"kind": "qaqc", "label": "RCA QA/QC plots", "refdes": obs,
+                           "url": f"{QAQC}/", "how": f"Pre-rendered charts of recent ground motion, filed as {obs}."})
     hyd = hydrophone_station(record, inventory)
     if hyd:
         sta, km = hyd

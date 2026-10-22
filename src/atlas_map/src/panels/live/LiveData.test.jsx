@@ -91,6 +91,23 @@ describe("LiveData", () => {
     await waitFor(() => expect(screen.getByText(/no recent plots for this sensor/)).toBeInTheDocument());
     expect(plotCalls()).toBe(1);
   });
+  it("a seismometer offers its OOI OBS QA/QC plots below the waveform", async () => {
+    const obs = "RS03CCAL-MJ03F-06-OBSBBA301";
+    const f = routes([
+      ["/api/waveform/", { error: { source: "EarthScope", message: "down" } }, 502],
+      [`/api/plots/${obs}`, { refdes: obs, variables: ["groundvel_accel"], variable: "groundvel_accel", spans: ["day"], span: "day", total: 3,
+        plots: [{ variable: "groundvel_accel", timeSpan: "day", overlay: "none", dataRange: "full", depth: "", url: "https://q/o.png" }] }],
+    ]);
+    vi.stubGlobal("fetch", f);
+    const base = b.sensorById["axcc1"];
+    const sensor = { ...base, access: [...base.access, { kind: "qaqc", label: "RCA QA/QC plots", refdes: obs, url: "https://ec2.qaqc.ooi-rca.net/", how: "" }] };
+    const { container } = render(<LiveData sensor={sensor} />);
+    const details = container.querySelector("details");
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    await waitFor(() => expect(screen.getByRole("img")).toHaveAttribute("src", "https://q/o.png"));
+    expect(f.mock.calls.some(([u]) => String(u).startsWith(`/api/plots/${obs}`))).toBe(true);
+  });
   it("QA/QC plots: every variable is listed, and a span button asks for that span's plots", async () => {
     const body = (variable, span) => ({ refdes: "R", variables: ["beam1", "temperature"], variable, spans: ["day", "week"], span, total: 735,
       plots: [{ variable, timeSpan: span, overlay: "none", dataRange: "full", depth: "", url: `https://q/${variable}_${span}.png` }] });

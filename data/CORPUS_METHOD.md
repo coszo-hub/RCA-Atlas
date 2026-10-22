@@ -355,8 +355,16 @@ make and model, at the platform position OOI ERDDAP publishes, with record
 status `official_inventory_instance`. The planned COSZO Oregon Offshore and
 Oregon Shelf instruments remain separate records; the Oregon Shelf package
 shares its location, "Oregon Shelf", with the planned station on the same spot.
-Current output: 188 instruments, four infrastructure records, 74 entities,
-36 sources, 188 chunks, and 1,300 relationships.
+Their names follow the RCA's own records ("3D Current Meter", "Broadband
+Hydrophone", "pH Sensor"), with OOI's class wording kept as an alias. Two
+current RCA instruments that OOI publishes data for but Arcada predates are
+added with status `ooi_data_instance` (OOI asset management, ERDDAP): the Axial
+shallow profiler's replacement vertical ADCP `VADCPB301` (August 2024) and the
+International District fluid sampler's temperature probe `D1000A301`, each at
+the position of the Arcada record on its platform port. The OOI page's
+`RS01SBPD-DP01A-03-FLNTUA104` is kept as an alias of Arcada's `04-FLNTUA104`.
+Current output: 190 instruments, four infrastructure records, 74 entities,
+38 sources, 190 chunks, and 1,312 relationships.
 
 **Validation.** The builder checks ID and endpoint integrity, one chunk per
 instrument, retention of all 120 Arcada instrument/deployment records, all 25

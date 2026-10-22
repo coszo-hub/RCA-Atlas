@@ -524,6 +524,9 @@ def build(data_root: Path, output: Path) -> None:
         if cls.startswith("ADCP"):   # OOI's "Velocity Profiler (75 kHz)"; the RCA's own records say ADCP
             freq = re.search(r"\(([^)]*kHz)\)", label, re.I)
             label = f"ADCP ({freq.group(1).replace('kHz', ' kHz').replace('  ', ' ')})" if freq else "ADCP"
+        # OOI's class wording, as the RCA's own records name the same classes (RS...VEL3DB "3D Current Meter").
+        label = {"3-D Single Point Velocity Meter": "3D Current Meter", "Broadband Acoustic Receiver (Hydrophone)": "Broadband Hydrophone",
+                 "pCO2 Water": "pCO2 Sensor", "Seawater pH": "pH Sensor", "Bio-acoustic Sonar (Coastal)": "Bio-acoustic Sonar"}.get(label, label)
         if class_counts[(site, official)] > 1:
             label = f"{label} ({hardware['model']})"
         add(
@@ -541,6 +544,43 @@ def build(data_root: Path, output: Path) -> None:
             notes=f"On the {hardware['node_name']} of a Coastal Endurance platform powered and connected by the Regional Cabled Array.",
             official_ooi_instrument_class=hardware["instrument_class"],
         )
+
+    # Current RCA instruments that OOI publishes data for (ERDDAP dataset, RCA QA/QC plots, Nereus status) but Arcada
+    # predates: the Axial shallow profiler's replacement vertical ADCP (VADCPB301, deployed August 2024) and the
+    # temperature probe deployed with the International District fluid sampler (D1000A301). Each sits on the same
+    # platform port as an Arcada record, whose position and depth it takes: asset-management lists VADCPB301's
+    # 2025 deployment 20 km from its mooring and marks D1000A301's 2026 position preliminary.
+    sources["SOURCE-OOI-ASSET-MANAGEMENT"] = source(
+        "SOURCE-OOI-ASSET-MANAGEMENT", "OOI asset management deployment sheets", "official_public_web", "official_data_repository",
+        source_url="https://github.com/oceanobservatories/asset-management/tree/master/deployment",
+    )
+    sources["SOURCE-OOI-ERDDAP-RCA"] = source(
+        "SOURCE-OOI-ERDDAP-RCA", "OOI ERDDAP Regional Cabled Array datasets",
+        "https://erddap.dataexplorer.oceanobservatories.org/erddap/", "official_data_service",
+        source_url="https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/allDatasets.html",
+    )
+    by_canonical = {r["canonical_id"]: r for r in records}
+    ooi_data_only = [
+        ("RS03AXPS-PC03A-06-VADCPB301", "RS03AXPS-PC03A-06-VADCPA301", "Axial Seamount Shallow Profiler Vertical ADCP", "adcp",
+         "Replaced VADCPA301 on the shallow profiler's 200 m platform in August 2024."),
+        ("RS03INT1-MJ03C-07-D1000A301", "RS03INT1-MJ03C-07-RASFLA301", "International District Fluid Sampler Temperature Probe", "thermistor",
+         "The high-temperature probe deployed with the Remote Access Fluid Sampler on port 07 (same OOI asset)."),
+    ]
+    for canonical, sibling_id, name, typ, note in ooi_data_only:
+        sibling = by_canonical[sibling_id]
+        site, node, code = canonical.split("-", 2)
+        add(
+            canonical, name, typ, sibling["location"], ["Regional Cabled Array"], "ooi_data_instance", "publishing_OOI_data",
+            [ev("SOURCE-OOI-ASSET-MANAGEMENT", canonical, f"deployment/{site}_Deploy.csv"),
+             ev("SOURCE-OOI-ERDDAP-RCA", canonical, f"ooi-{canonical.lower()}")],
+            coszo_role=None, aliases=[], site=site, node=node, station=None, network=None, instrument_code=code,
+            latitude=sibling["latitude"], longitude=sibling["longitude"], depth_m=sibling["depth_m"],
+            manufacturer=None, model=None, sensor_components=[], source_system="OOI asset management",
+            source_urls=sibling["source_urls"], arcada_document_id=None, notes=note,
+        )
+    # The OOI site page lists the deep profiler's second FLNTU as RS01SBPD-DP01A-03-FLNTUA104; every FLNTU before it
+    # ran on port 04, and port 03 carries the CDOM fluorometer, so the page's code is kept as an alias of Arcada's.
+    by_canonical["RS01SBPD-DP01A-04-FLNTUA104"]["aliases"].append("RS01SBPD-DP01A-03-FLNTUA104")
 
     # Reference-only IDs linked in Arcada. They stay visibly unresolved rather than being silently dropped.
     ref_types = {
@@ -693,11 +733,12 @@ def build(data_root: Path, output: Path) -> None:
     write_jsonl(output / "instrument_types.jsonl", type_rows)
 
     # Human-readable complete list.
-    status_order = ["catalogued_instance", "official_inventory_instance", "documented_project_instance", "confirmed_PI_instrument",
+    status_order = ["catalogued_instance", "official_inventory_instance", "ooi_data_instance", "documented_project_instance", "confirmed_PI_instrument",
                     "time_bounded_campaign", "reference_only", "deployment_site_reference"]
     labels = {
         "catalogued_instance": "RCA catalogued instrument and deployment records",
         "official_inventory_instance": "Coastal Endurance instruments the RCA powers (official OOI site inventory)",
+        "ooi_data_instance": "Current RCA instruments OOI publishes data for that Arcada predates",
         "documented_project_instance": "COSZO site-specific instrument suite",
         "confirmed_PI_instrument": "Additional confirmed RCA PI instruments",
         "time_bounded_campaign": "Time-bounded RCA experiments",

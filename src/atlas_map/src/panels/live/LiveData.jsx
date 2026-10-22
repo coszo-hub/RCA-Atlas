@@ -5,13 +5,15 @@ import SeriesView from "./SeriesView.jsx";
 import WaveformView from "./WaveformView.jsx";
 
 // One primary view, in this order: ERDDAP series, else EarthScope waveform, else QA/QC plots; plus PI file browsing.
+// QA/QC plots are filed under the route's refdes: a seismometer's is its OOI OBS, the sensor itself has none.
 export default function LiveData({ sensor }) {
   const by = k => sensor.access.find(a => a.kind === k);
   const erddap = by("erddap"), es = by("earthscope"), qaqc = by("qaqc"), pi = sensor.access.filter(a => a.kind === "pi_portal");
+  const plotsRef = qaqc?.refdes ?? sensor.refdes;
   return (
     <section className="live-data"><h3>Live data</h3>
-      {erddap ? <SeriesView refdes={sensor.refdes} /> : es ? <WaveformView route={es} /> : qaqc ? <PlotGallery refdes={sensor.refdes} /> : null}
-      {erddap && qaqc && <LazyPlots refdes={sensor.refdes} />}
+      {erddap ? <SeriesView refdes={sensor.refdes} /> : es ? <WaveformView route={es} /> : qaqc ? <PlotGallery refdes={plotsRef} /> : null}
+      {(erddap || es) && qaqc && <LazyPlots refdes={plotsRef} />}
       {pi.map(r => <FileBrowser key={r.endpointId ?? r.url} route={r} />)}
     </section>
   );

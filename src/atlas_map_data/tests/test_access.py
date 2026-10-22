@@ -58,6 +58,13 @@ class AccessTest(unittest.TestCase):
         self.assertIn("sta=AXCC2", meta["url"])
         self.assertIn("closed", meta["label"])
 
+    def test_seismometer_gets_its_obs_qaqc_plots(self):
+        ext = {**EXT, "qaqc": {"RS03CCAL-MJ03F-06-OBSBBA301"}}
+        q = [x for x in access.build_access(rec(id="EARTHSCOPE-OO-AXCC1"), ext, PI, {}) if x["kind"] == "qaqc"]
+        self.assertEqual([x["refdes"] for x in q], ["RS03CCAL-MJ03F-06-OBSBBA301"])
+        self.assertNotIn("qaqc", [x["kind"] for x in access.build_access(rec(id="EARTHSCOPE-OO-AXCC1"), EXT, PI, {})])
+        self.assertEqual(len(set(access.OBS_REFDES.values())), len(access.OBS_REFDES))   # one OBS per station
+
     def test_earthscope_channel_from_inventory(self):
         ext = {**EXT, "earthscope": {"AXAS1": {"lat": 45.93, "lon": -130.01, "channels": ["EHE", "EHZ", "LHZ"]}}}
         es = [x for x in access.build_access(rec(id="EARTHSCOPE-OO-AXAS1"), ext, PI, {}) if x["kind"] == "earthscope"][0]

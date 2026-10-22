@@ -56,6 +56,14 @@ class PlotsFilesTest(unittest.TestCase):
         self.assertEqual(w["plots"][0]["overlay"], "none")   # plain plots first
         self.assertEqual(app.get(f"/plots/{REF}", params={"variable": "bad var!"}).status_code, 422)
 
+    def test_seismometer_plots_under_its_obs_refdes(self):
+        # AXCC1's QA/QC plots are filed as its OOI OBS; the sensor has no refdes, only its QA/QC route names it.
+        obs = "RS03CCAL-MJ03F-06-OBSBBA301"
+        q = FakeQAQC({"ok": True, "plots": [{"reference_designator": obs, "variable": "groundvel_accel", "time_span": "day",
+                                             "overlay": "none", "data_range": "full", "depth_or_profile": "", "url": "https://ec2.qaqc.ooi-rca.net/QAQC_plots/o.png"}]})
+        r = TestClient(create_app(SETTINGS, deps(qaqc=q))).get(f"/plots/{obs}")
+        self.assertEqual((r.status_code, r.json()["variables"]), (200, ["groundvel_accel"]))
+
     def test_plots_unknown_sensor_404(self):
         r = TestClient(create_app(SETTINGS, deps(qaqc=FakeQAQC(PLOTS)))).get("/plots/RS99XXXX-XX000-00-NOPE00000")
         self.assertEqual(r.status_code, 404)

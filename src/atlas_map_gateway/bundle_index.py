@@ -9,6 +9,7 @@ from pathlib import Path
 @dataclass
 class BundleIndex:
     refdes: set[str] = field(default_factory=set)
+    qaqc: set[str] = field(default_factory=set)        # refdes with QA/QC plots, including a seismometer's OOI OBS
     erddap: dict[str, str] = field(default_factory=dict)
     stations: dict[str, dict] = field(default_factory=dict)
     pi_keys: set[str] = field(default_factory=set)
@@ -23,6 +24,8 @@ class BundleIndex:
             for a in s.get("access", []):
                 if a["kind"] == "erddap":
                     ix.erddap[s["refdes"]] = a["datasetId"]
+                elif a["kind"] == "qaqc":
+                    ix.qaqc.add(a["refdes"])
                 elif a["kind"] == "earthscope":
                     key = f"{a['network']}.{a['station']}"   # a station's default stays its seismometer, not a hydrophone's HDH
                     channels = ix.stations.get(key, {}).get("channels", set()) | {a.get("channel")} - {None}
@@ -37,6 +40,9 @@ class BundleIndex:
 
     def has_refdes(self, refdes: str) -> bool:
         return refdes in self.refdes
+
+    def has_qaqc(self, refdes: str) -> bool:
+        return refdes in self.qaqc
 
     def erddap_dataset(self, refdes: str) -> str | None:
         return self.erddap.get(refdes)
