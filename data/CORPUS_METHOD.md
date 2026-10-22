@@ -354,7 +354,7 @@ nine deployed instruments with OOI's depth, node, and make and model, at the
 platform position OOI ERDDAP publishes, with record status
 `official_inventory_instance`. The planned COSZO Oregon Offshore instruments
 remain separate records. Current output: 177 instruments, four infrastructure
-records, 73 entities, 34 sources, 177 chunks, and 1,212 relationships.
+records, 74 entities, 34 sources, 177 chunks, and 1,212 relationships.
 
 **Validation.** The builder checks ID and endpoint integrity, one chunk per
 instrument, retention of all 120 Arcada instrument/deployment records, all 25
