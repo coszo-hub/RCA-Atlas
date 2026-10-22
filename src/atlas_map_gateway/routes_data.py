@@ -28,6 +28,10 @@ STALE_MINUTES = 60
 LOWER_BANDS = {"H": "BML", "E": "SML", "B": "ML", "S": "ML", "M": "L"}   # SEED band codes, fastest first
 
 
+# Waveform filters the map offers, in Hz: small local earthquakes, above the ocean microseism (about 0.1-1 Hz).
+BANDPASS_PRESETS = {"3-20": (3.0, 20.0)}
+
+
 def lower_rate_channels(channel: str) -> list[str]:
     """HHZ -> BHZ, MHZ, LHZ; EHZ -> SHZ, MHZ, LHZ; HDH -> BDH, MDH, LDH."""
     return [band + channel[1:] for band in LOWER_BANDS.get(channel[:1], "")]
@@ -175,12 +179,13 @@ def register(app, settings, deps, cache, limiter) -> None:
             return _bad(f"minutes must be between 1 and {settings.max_waveform_minutes}")
         if channel is not None and not CHANNEL_RE.fullmatch(channel):
             return _bad("channel must be three letters or digits, like HHZ")   # the toolkit would accept wildcards
+        # Named presets only: each band is its own cached download and filter run, so arbitrary corners would let a
+        # caller bypass the cache and multiply EarthScope requests.
         band = None
         if bandpass is not None:
-            bm = re.fullmatch(r"(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)", bandpass)
-            band = (float(bm.group(1)), float(bm.group(2))) if bm else None
-            if not band or not 0 < band[0] < band[1] <= 100:
-                return _bad("bandpass must be low-high in Hz, like 3-20, with 0 < low < high <= 100")
+            band = BANDPASS_PRESETS.get(bandpass)
+            if band is None:
+                return _bad(f"bandpass must be one of: {', '.join(BANDPASS_PRESETS)}")
         cha = channel or known.get("channel") or "HHZ"
         end = deps.now().replace(second=0, microsecond=0) - timedelta(minutes=2)
 

@@ -219,11 +219,13 @@ class BandpassTest(unittest.TestCase):
         self.assertIsNone(r.json()["filterNote"])
         self.assertLess(abs(sum(p[1] for p in r.json()["points"]) / len(r.json()["points"])), 100)   # the -34,000-count offset is removed
 
-    def test_a_band_beyond_the_channel_rate_is_shown_raw_with_a_note(self):
-        r = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK)))).get("/waveform/OO.AXCC1", params={"bandpass": "80-95"})
-        self.assertIsNone(r.json()["bandpass"])
-        self.assertIn("unfiltered", r.json()["filterNote"])
-        self.assertIn(-35842, [p[1] for p in r.json()["points"]])   # the raw samples
+    def test_only_preset_bands_are_accepted_so_callers_cannot_bypass_the_cache(self):
+        es = FakeEarthScope(OK)
+        app = TestClient(create_app(SETTINGS, deps(earthscope=es)))
+        for band in ("3.1-20", "3-20.5", "80-95"):
+            with self.subTest(band=band):
+                self.assertEqual(app.get("/waveform/OO.AXCC1", params={"bandpass": band}).status_code, 422)
+        self.assertEqual(es.calls, [])   # refused before any EarthScope request
 
     def test_bad_bands_are_refused(self):
         app = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK))))
