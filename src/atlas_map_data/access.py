@@ -67,9 +67,9 @@ def load_external(runtime: Path) -> dict:
     return out
 
 
-# The RCA's own sites (RS...) and the Coastal Endurance platform it powers off PN1C (CE04OSBP), whose
+# The RCA's own sites (RS...) and the Coastal Endurance benthic packages it powers (CE04OSBP, CE02SHBP), whose
 # instruments the inventory takes from the official OOI site inventory.
-CABLED_PREFIXES = ("RS", "CE04OSBP")
+CABLED_PREFIXES = ("RS", "CE04OSBP", "CE02SHBP")
 
 
 def refresh_erddap(runtime: Path, urlopen=urllib.request.urlopen) -> int:

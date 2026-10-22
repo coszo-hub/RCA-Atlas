@@ -347,14 +347,16 @@ the Oregon Shelf APG and current-meter rows remain explicitly
 workbook-specified. The PI portal audit added the previously missing MARUM
 CTD-DO instrument `CTDPFA110` and corrected A-0-A source/alias metadata while
 preserving its established graph ID. Arcada catalogs only RS sites, so the
-Oregon Offshore Cabled Benthic Experiment Package (CE04OSBP), a Coastal
-Endurance platform the RCA powers off primary node PN1C, is added from the
-archived official OOI site inventory (`OOISiteInventory/CE04OSBP.html`): its
-nine deployed instruments with OOI's depth, node, and make and model, at the
-platform position OOI ERDDAP publishes, with record status
-`official_inventory_instance`. The planned COSZO Oregon Offshore instruments
-remain separate records. Current output: 177 instruments, four infrastructure
-records, 74 entities, 34 sources, 177 chunks, and 1,212 relationships.
+Coastal Endurance cabled benthic experiment packages the RCA powers are added
+from the archived official OOI site inventories (`OOISiteInventory/`): the
+Oregon Offshore package (CE04OSBP, off PN1C, nine instruments) and the Oregon
+Shelf package (CE02SHBP, off PN1D, eleven), each with OOI's depth, node, and
+make and model, at the platform position OOI ERDDAP publishes, with record
+status `official_inventory_instance`. The planned COSZO Oregon Offshore and
+Oregon Shelf instruments remain separate records; the Oregon Shelf package
+shares its location, "Oregon Shelf", with the planned station on the same spot.
+Current output: 188 instruments, four infrastructure records, 74 entities,
+36 sources, 188 chunks, and 1,300 relationships.
 
 **Validation.** The builder checks ID and endpoint integrity, one chunk per
 instrument, retention of all 120 Arcada instrument/deployment records, all 25

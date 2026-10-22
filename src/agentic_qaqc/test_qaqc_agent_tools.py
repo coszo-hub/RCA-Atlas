@@ -20,7 +20,8 @@ class QAQCToolkitTests(unittest.TestCase):
         self.paths = [
             "RS01SLBS/RS01SLBS-MJ01A-12-VEL3DB101_velocity_east_month_flag_local.png",
             "RS01SLBS/RS01SLBS-MJ01A-12-VEL3DB101_velocity_north_week_none_standard.svg",
-            "CE02SHBP/CE02SHBP-LJ01D-05-ADCPTB104_velocity_east_day_none_full.png",
+            "CE01ISSM/CE01ISSM-MFD35-04-ADCPTM000_velocity_east_day_none_full.png",   # uncabled: not RCA
+            "CE02SHBP/CE02SHBP-LJ01D-05-ADCPTB104_velocity_east_day_none_full.png",   # cabled benthic package the RCA powers
         ]
         self.cache.write_text(json.dumps(self.paths))
         self.toolkit = QAQCToolkit(cache_path=self.cache, cache_ttl_seconds=999999)
@@ -37,8 +38,8 @@ class QAQCToolkitTests(unittest.TestCase):
 
     def test_search_defaults_to_rca(self):
         result = self.toolkit.search_plots(variable="velocity", limit=10)
-        self.assertEqual(result["total_matches"], 2)
-        self.assertTrue(all(x["site"].startswith("RS") for x in result["plots"]))
+        self.assertEqual(result["total_matches"], 3)
+        self.assertEqual(sorted({x["site"] for x in result["plots"]}), ["CE02SHBP", "RS01SLBS"])   # not CE01ISSM
 
     def test_get_plot_rejects_unknown_path(self):
         self.assertFalse(self.toolkit.get_plot("missing.png")["ok"])

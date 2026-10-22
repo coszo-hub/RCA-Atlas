@@ -479,27 +479,38 @@ def build(data_root: Path, output: Path) -> None:
         notes="Campaign instrument above a fracture near Phoenix vent; not a persistent RCA core sensor.",
     )
 
-    # Coastal Endurance platforms the RCA powers. Arcada catalogs only RS sites, so the Oregon Offshore Cabled
-    # Benthic Experiment Package (CE04OSBP, LJ01C and LV01C off primary node PN1C) was missing from the inventory
-    # and the map. Its official site inventory lists each deployed instrument with depth, node, and make and model;
-    # the platform position is the one OOI ERDDAP publishes for its datasets.
-    sources["SOURCE-OOI-ERDDAP-CE04OSBP"] = source(
-        "SOURCE-OOI-ERDDAP-CE04OSBP", "OOI ERDDAP Oregon Offshore Cabled Benthic Experiment Package datasets",
-        "https://erddap.dataexplorer.oceanobservatories.org/erddap/", "official_data_service",
-        source_url="https://erddap.dataexplorer.oceanobservatories.org/erddap/info/ooi-ce04osbp-lj01c-06-ctdbpo108/index.json",
-    )
-    sources["SOURCE-WEB-CE04OSBP"] = source(
-        "SOURCE-WEB-CE04OSBP", "CE04OSBP: Oregon Offshore Cabled Benthic Experiment Package", "Websites/pages.jsonl", "web_page",
-        source_url="https://oceanobservatories.org/site/ce04osbp/", page_id="PAGE-34b765b7df994841",
-    )
+    # Coastal Endurance platforms the RCA powers. Arcada catalogs only RS sites, so their cabled benthic
+    # experiment packages were missing from the inventory and the map. Each official site inventory lists the
+    # deployed instruments with depth, node, and make and model; the platform position is the one OOI ERDDAP
+    # publishes for its datasets (geospatial_lat_min / _lon_min, retrieved 2026-10-21).
     CE_PLATFORMS = {
-        # geospatial_lat_min / _lon_min of every CE04OSBP ERDDAP dataset (retrieved 2026-10-21)
         "CE04OSBP": {"name": "Oregon Offshore Cabled Benthic Experiment Package", "short": "Oregon Offshore Benthic Package",
-                     "latitude": 44.369304, "longitude": -124.953627},
+                     "latitude": 44.369304, "longitude": -124.953627, "page_id": "PAGE-34b765b7df994841",
+                     "erddap": "ooi-ce04osbp-lj01c-06-ctdbpo108"},   # LJ01C and LV01C, off primary node PN1C
+        "CE02SHBP": {"name": "Oregon Shelf Cabled Benthic Experiment Package", "short": "Oregon Shelf Benthic Package",
+                     "latitude": 44.637184, "longitude": -124.305648, "page_id": "PAGE-5680ede0e6f1351f",
+                     "erddap": "ooi-ce02shbp-lj01d-06-ctdbpn106",   # LJ01D and MJ01C, off primary node PN1D
+                     # The planned COSZO Oregon Shelf (CZSHF) station is at the same spot, so both are one map site;
+                     # its established name stays: "Oregon Shelf".
+                     "location": "Oregon Shelf"},
     }
-    CE_TYPES = {"ADCPS": "adcp", "CTDBP": "ctd", "DOSTA": "dissolved_oxygen", "VEL3D": "three_dimensional_current_meter",
-                "OPTAA": "spectrophotometer", "PCO2W": "pco2", "PHSEN": "ph", "HYDBB": "hydrophone", "CAMDS": "camera"}
+    for site, platform in CE_PLATFORMS.items():
+        sources[f"SOURCE-OOI-ERDDAP-{site}"] = source(
+            f"SOURCE-OOI-ERDDAP-{site}", f"OOI ERDDAP {platform['name']} datasets",
+            "https://erddap.dataexplorer.oceanobservatories.org/erddap/", "official_data_service",
+            source_url=f"https://erddap.dataexplorer.oceanobservatories.org/erddap/info/{platform['erddap']}/index.json",
+        )
+        sources[f"SOURCE-WEB-{site}"] = source(
+            f"SOURCE-WEB-{site}", f"{site}: {platform['name']}", "Websites/pages.jsonl", "web_page",
+            source_url=f"https://oceanobservatories.org/site/{site.lower()}/", page_id=platform["page_id"],
+        )
+    CE_TYPES = {"ADCPS": "adcp", "ADCPT": "adcp", "CTDBP": "ctd", "DOSTA": "dissolved_oxygen", "VEL3D": "three_dimensional_current_meter",
+                "OPTAA": "spectrophotometer", "PCO2W": "pco2", "PHSEN": "ph", "HYDBB": "hydrophone", "CAMDS": "camera",
+                "ZPLSC": "sonar"}
     known = {r["canonical_id"] for r in records}
+    # Two instruments of one class on a platform (CE02SHBP's SAMI-pH and SeapHOx) are told apart by model.
+    class_counts = collections.Counter((c.split("-")[0], re.sub(r"\s*\([A-Z0-9]+\)$", "", h["instrument_class"]))
+                                       for c, h in ooi_hardware.items() if c.split("-")[0] in CE_PLATFORMS)
     for canonical, hardware in sorted(ooi_hardware.items()):
         site, node, code = canonical.split("-", 2)
         platform = CE_PLATFORMS.get(site)
@@ -509,13 +520,15 @@ def build(data_root: Path, output: Path) -> None:
         if cls not in CE_TYPES:
             raise RuntimeError(f"{canonical}: no instrument type for OOI class {cls}; add it to CE_TYPES")
         label = re.sub(r"\s*\([A-Z0-9]+\)$", "", hardware["instrument_class"])   # "CTD (CTDBPO)" -> "CTD"
+        if class_counts[(site, label)] > 1:
+            label = f"{label} ({hardware['model']})"
         add(
             # The short platform name keeps instrument names readable in lists; the location keeps the full one.
-            canonical, f"{platform['short']} {label}", CE_TYPES[cls], platform["name"],
+            canonical, f"{platform['short']} {label}", CE_TYPES[cls], platform.get("location", platform["name"]),
             ["Coastal Endurance Array", "Regional Cabled Array"], "official_inventory_instance", "listed_on_official_OOI_site_inventory",
             [ev("SOURCE-OOI-SITE-INVENTORY", canonical, f"{hardware['source_file']} sha256:{hardware['source_sha256']}"),
-             ev("SOURCE-WEB-CE04OSBP", "PAGE-34b765b7df994841-CHUNK-001"),
-             ev("SOURCE-OOI-ERDDAP-CE04OSBP", canonical, "NC_GLOBAL geospatial_lat_min/lon_min")],
+             ev(f"SOURCE-WEB-{site}", f"{platform['page_id']}-CHUNK-001"),
+             ev(f"SOURCE-OOI-ERDDAP-{site}", canonical, "NC_GLOBAL geospatial_lat_min/lon_min")],
             coszo_role=None, aliases=[f"{platform['name']} {label}", f"{site} {label}"], site=site, node=node, station=None, network=None, instrument_code=code,
             latitude=platform["latitude"], longitude=platform["longitude"], depth_m=hardware["depth_m"],
             manufacturer=hardware["manufacturer"], model=hardware["model"], sensor_components=[],

@@ -31,8 +31,8 @@ from typing import Any
 DEFAULT_BASE_URL = "https://ec2.qaqc.ooi-rca.net"
 DEFAULT_INDEX_PATH = "QAQC_plots/index.json"
 MAX_INLINE_IMAGE_BYTES = 15 * 1024 * 1024
-# RCA-cabled sites: the RCA's own (RS...) and the Coastal Endurance platform it powers off PN1C (CE04OSBP).
-RCA_PREFIXES = ("RS", "CE04OSBP")
+# RCA-cabled sites: the RCA's own (RS...) and the Coastal Endurance benthic packages it powers (CE04OSBP off PN1C, CE02SHBP off PN1D).
+RCA_PREFIXES = ("RS", "CE04OSBP", "CE02SHBP")
 REFDES_RE = re.compile(r"\b(?:RS|CE)\d{2}[A-Z0-9]{4}-[A-Z0-9]+-\d{2}-[A-Z0-9]+\b", re.I)
 SITE_RE = re.compile(r"\b(?:RS|CE)\d{2}[A-Z0-9]{4}\b", re.I)
 
