@@ -67,11 +67,17 @@ def load_external(runtime: Path) -> dict:
     return out
 
 
+# The RCA's own sites (RS...) and the Coastal Endurance platform it powers off PN1C (CE04OSBP), whose
+# instruments the inventory takes from the official OOI site inventory.
+CABLED_PREFIXES = ("RS", "CE04OSBP")
+
+
 def refresh_erddap(runtime: Path, urlopen=urllib.request.urlopen) -> int:
-    url = f"{ERDDAP}/tabledap/allDatasets.csv?datasetID&datasetID=~%22ooi-rs.*%22"
+    pattern = "|".join(p.lower() for p in CABLED_PREFIXES)
+    url = f"{ERDDAP}/tabledap/allDatasets.csv?datasetID&datasetID=~%22ooi-({pattern}).*%22"
     with urlopen(url, timeout=60) as resp:
         rows = list(csv.reader(io.StringIO(resp.read().decode("utf-8"))))
-    ids = sorted({r[0] for r in rows[2:] if r and r[0].startswith("ooi-rs")})
+    ids = sorted({r[0] for r in rows[2:] if r and r[0].startswith(tuple(f"ooi-{p.lower()}" for p in CABLED_PREFIXES))})
     runtime.mkdir(parents=True, exist_ok=True)
     (runtime / "erddap_datasets.json").write_text(json.dumps(
         {"retrievedAt": datetime.now(timezone.utc).isoformat(), "source": url, "datasetIds": ids}, indent=1))
@@ -118,7 +124,7 @@ def hydrophone_station(record: dict, inventory: dict) -> tuple[str, float] | Non
 
 
 def refresh_qaqc(runtime: Path, index_paths: list[str]) -> int:
-    refdes = sorted({p.rsplit("/", 1)[-1].split("_", 1)[0] for p in index_paths if p.startswith("RS")})
+    refdes = sorted({p.rsplit("/", 1)[-1].split("_", 1)[0] for p in index_paths if p.startswith(CABLED_PREFIXES)})
     runtime.mkdir(parents=True, exist_ok=True)
     (runtime / "qaqc_refdes.json").write_text(json.dumps(
         {"retrievedAt": datetime.now(timezone.utc).isoformat(), "source": f"{QAQC}/QAQC_plots/index.json",

@@ -31,6 +31,8 @@ from typing import Any
 DEFAULT_BASE_URL = "https://ec2.qaqc.ooi-rca.net"
 DEFAULT_INDEX_PATH = "QAQC_plots/index.json"
 MAX_INLINE_IMAGE_BYTES = 15 * 1024 * 1024
+# RCA-cabled sites: the RCA's own (RS...) and the Coastal Endurance platform it powers off PN1C (CE04OSBP).
+RCA_PREFIXES = ("RS", "CE04OSBP")
 REFDES_RE = re.compile(r"\b(?:RS|CE)\d{2}[A-Z0-9]{4}-[A-Z0-9]+-\d{2}-[A-Z0-9]+\b", re.I)
 SITE_RE = re.compile(r"\b(?:RS|CE)\d{2}[A-Z0-9]{4}\b", re.I)
 
@@ -134,7 +136,7 @@ class QAQCToolkit:
         }
         matches = []
         for path in self.get_index():
-            if not include_non_rca and not path.startswith("RS"):
+            if not include_non_rca and not path.startswith(RCA_PREFIXES):
                 continue
             record = self.parse_plot_path(path)
             if not record:
@@ -160,7 +162,7 @@ class QAQCToolkit:
         sites, refs, variables, spans, overlays, ranges = Counter(), Counter(), Counter(), Counter(), Counter(), Counter()
         parsed = 0
         for path in self.get_index():
-            if not include_non_rca and not path.startswith("RS"):
+            if not include_non_rca and not path.startswith(RCA_PREFIXES):
                 continue
             record = self.parse_plot_path(path)
             if not record:
@@ -241,7 +243,7 @@ class QAQCToolkit:
         filtered = []
         for row in rows:
             refdes, note, filename = row.get("reference_designator", ""), row.get("note", ""), row.get("source_file", "")
-            if not include_non_rca and not refdes.startswith("RS"):
+            if not include_non_rca and not refdes.startswith(RCA_PREFIXES):
                 continue
             if query and query.casefold() not in filename.casefold() and query.casefold() not in refdes.casefold() and query.casefold() not in note.casefold():
                 continue

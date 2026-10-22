@@ -18,11 +18,11 @@ class FullBuildTest(unittest.TestCase):
             out = Path(d)
             summary = build_atlas_bundle.build(out, paths.RUNTIME, paths.DATA)
             self.assertEqual(summary["errors"], [])
-            self.assertEqual(summary["total"], 171)
-            self.assertEqual(summary["located"], 155)
+            self.assertEqual(summary["total"], 180)   # 171 + the 9 CE04OSBP instruments
+            self.assertEqual(summary["located"], 164)
             self.assertEqual(summary["unlocated"], 16)
             self.assertEqual(summary["unplaced"], 5)
-            self.assertEqual(summary["sites"], 31)
+            self.assertEqual(summary["sites"], 32)
             self.assertTrue(summary["corpusSnapshot"])          # data/Instruments/manifest.json created_at
             bundle = json.loads((out / "sensors.json").read_text())
             by_id = {s["id"]: s for s in bundle["sensors"]}

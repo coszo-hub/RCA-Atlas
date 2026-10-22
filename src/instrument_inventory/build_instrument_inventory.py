@@ -494,7 +494,8 @@ def build(data_root: Path, output: Path) -> None:
     )
     CE_PLATFORMS = {
         # geospatial_lat_min / _lon_min of every CE04OSBP ERDDAP dataset (retrieved 2026-10-21)
-        "CE04OSBP": {"name": "Oregon Offshore Cabled Benthic Experiment Package", "latitude": 44.369304, "longitude": -124.953627},
+        "CE04OSBP": {"name": "Oregon Offshore Cabled Benthic Experiment Package", "short": "Oregon Offshore Benthic Package",
+                     "latitude": 44.369304, "longitude": -124.953627},
     }
     CE_TYPES = {"ADCPS": "adcp", "CTDBP": "ctd", "DOSTA": "dissolved_oxygen", "VEL3D": "three_dimensional_current_meter",
                 "OPTAA": "spectrophotometer", "PCO2W": "pco2", "PHSEN": "ph", "HYDBB": "hydrophone", "CAMDS": "camera"}
@@ -509,12 +510,13 @@ def build(data_root: Path, output: Path) -> None:
             raise RuntimeError(f"{canonical}: no instrument type for OOI class {cls}; add it to CE_TYPES")
         label = re.sub(r"\s*\([A-Z0-9]+\)$", "", hardware["instrument_class"])   # "CTD (CTDBPO)" -> "CTD"
         add(
-            canonical, f"{platform['name']} {label}", CE_TYPES[cls], platform["name"],
+            # The short platform name keeps instrument names readable in lists; the location keeps the full one.
+            canonical, f"{platform['short']} {label}", CE_TYPES[cls], platform["name"],
             ["Coastal Endurance Array", "Regional Cabled Array"], "official_inventory_instance", "listed_on_official_OOI_site_inventory",
             [ev("SOURCE-OOI-SITE-INVENTORY", canonical, f"{hardware['source_file']} sha256:{hardware['source_sha256']}"),
              ev("SOURCE-WEB-CE04OSBP", "PAGE-34b765b7df994841-CHUNK-001"),
              ev("SOURCE-OOI-ERDDAP-CE04OSBP", canonical, "NC_GLOBAL geospatial_lat_min/lon_min")],
-            coszo_role=None, aliases=[], site=site, node=node, station=None, network=None, instrument_code=code,
+            coszo_role=None, aliases=[f"{platform['name']} {label}", f"{site} {label}"], site=site, node=node, station=None, network=None, instrument_code=code,
             latitude=platform["latitude"], longitude=platform["longitude"], depth_m=hardware["depth_m"],
             manufacturer=hardware["manufacturer"], model=hardware["model"], sensor_components=[],
             source_system="official OOI site inventory", source_urls=[hardware["source_url"]], arcada_document_id=None,
