@@ -28,6 +28,10 @@ class FakeQAQC:
         self.calls.append(reference_designator)
         return self.response
 
+    def plots_for(self, reference_designator):
+        self.calls.append(reference_designator)
+        return [p for p in self.response.get("plots", []) if p.get("reference_designator") == reference_designator]
+
 
 class FakePI:
     def __init__(self, response=None, exc=None):

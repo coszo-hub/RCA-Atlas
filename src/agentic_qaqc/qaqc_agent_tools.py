@@ -158,6 +158,19 @@ class QAQCToolkit:
         matches.sort(key=lambda x: (-x["match_score"], x["reference_designator"], x["variable"], x["path"]))
         return {"ok": True, "filters": filters, "total_matches": len(matches), "returned": min(len(matches), limit), "plots": matches[:limit], "catalog_source": self.index_url}
 
+    def plots_for(self, reference_designator: str) -> list[dict]:
+        """Every plot of one instrument (exact designator), uncapped: search_plots caps results at 200 for agent
+        responses, and one ADCP has 735 plots across 17 variables."""
+        out = []
+        for path in self.get_index():
+            if not path.rsplit("/", 1)[-1].startswith(reference_designator + "_"):
+                continue
+            record = self.parse_plot_path(path)
+            if record and record["reference_designator"] == reference_designator:
+                record["url"] = f"{self.base_url}/QAQC_plots/{urllib.parse.quote(path, safe='/')}"
+                out.append(record)
+        return out
+
     def catalog_summary(self, include_non_rca: bool = False) -> dict:
         sites, refs, variables, spans, overlays, ranges = Counter(), Counter(), Counter(), Counter(), Counter(), Counter()
         parsed = 0

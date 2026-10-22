@@ -520,7 +520,11 @@ def build(data_root: Path, output: Path) -> None:
         if cls not in CE_TYPES:
             raise RuntimeError(f"{canonical}: no instrument type for OOI class {cls}; add it to CE_TYPES")
         label = re.sub(r"\s*\([A-Z0-9]+\)$", "", hardware["instrument_class"])   # "CTD (CTDBPO)" -> "CTD"
-        if class_counts[(site, label)] > 1:
+        official = label
+        if cls.startswith("ADCP"):   # OOI's "Velocity Profiler (75 kHz)"; the RCA's own records say ADCP
+            freq = re.search(r"\(([^)]*kHz)\)", label, re.I)
+            label = f"ADCP ({freq.group(1).replace('kHz', ' kHz').replace('  ', ' ')})" if freq else "ADCP"
+        if class_counts[(site, official)] > 1:
             label = f"{label} ({hardware['model']})"
         add(
             # The short platform name keeps instrument names readable in lists; the location keeps the full one.
@@ -529,7 +533,8 @@ def build(data_root: Path, output: Path) -> None:
             [ev("SOURCE-OOI-SITE-INVENTORY", canonical, f"{hardware['source_file']} sha256:{hardware['source_sha256']}"),
              ev(f"SOURCE-WEB-{site}", f"{platform['page_id']}-CHUNK-001"),
              ev(f"SOURCE-OOI-ERDDAP-{site}", canonical, "NC_GLOBAL geospatial_lat_min/lon_min")],
-            coszo_role=None, aliases=[f"{platform['name']} {label}", f"{site} {label}"], site=site, node=node, station=None, network=None, instrument_code=code,
+            coszo_role=None, aliases=[f"{platform['name']} {label}", f"{site} {label}"]
+            + ([f"{platform['short']} {official}"] if official != label and class_counts[(site, official)] == 1 else []), site=site, node=node, station=None, network=None, instrument_code=code,
             latitude=platform["latitude"], longitude=platform["longitude"], depth_m=hardware["depth_m"],
             manufacturer=hardware["manufacturer"], model=hardware["model"], sensor_components=[],
             source_system="official OOI site inventory", source_urls=[hardware["source_url"]], arcada_document_id=None,

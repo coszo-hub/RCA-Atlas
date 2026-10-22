@@ -18,6 +18,7 @@ from .app_support import call_toolkit
 VAR_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,254}")
 TTL = {"variables": 3600, "series": 300, "plots": 1800, "waveform": 300, "files": 300}
 MAX_FILE_ENTRIES = 200
+SPAN_ORDER = ["day", "week", "month", "year", "deploy"]   # QA/QC plot spans, shortest first
 # EarthScope's archive can trail real time by over an hour (83 minutes for every OO station on 2026-10-21), so an
 # empty recent window is usually latency, not a silent station. Probe this far back, in minutes, for the newest data.
 ARCHIVE_LAG_PROBES = (15, 30, 60, 90, 120, 180, 240, 360, 480, 720, 1080, 1440)
@@ -128,18 +129,33 @@ def register(app, settings, deps, cache, limiter) -> None:
         return cache.get_or_set(f"series:{ds}:{var}:{t0.isoformat()}:{t1.isoformat()}", TTL["series"], fetch)
 
     @app.get("/plots/{refdes}")
-    def plots(refdes: str):
+    def plots(refdes: str, variable: str | None = None, span: str | None = None):
+        """One instrument's QA/QC plots for one variable and time span, with the variables and spans it has.
+
+        All of its plots are read (an ADCP has 735, a profiler CTD over 4,000), not the first 200, which hid most
+        variables; only the chosen variable and span are returned."""
         if not deps.index.has_refdes(refdes):
             return _missing("atlas", "unknown sensor")
+        if variable is not None and not VAR_RE.fullmatch(variable):
+            return _bad("invalid variable name")
+        if span is not None and not re.fullmatch(r"[a-z]{1,12}", span):
+            return _bad("invalid time span")
 
         def fetch():
             with limiter.slot("QA/QC"):
-                res = call_toolkit("QA/QC", lambda: deps.qaqc.search_plots(reference_designator=refdes, limit=200))
-            return {"refdes": refdes, "plots": [
-                {"variable": p["variable"], "timeSpan": p["time_span"], "overlay": p["overlay"],
-                 "dataRange": p["data_range"], "depth": p.get("depth_or_profile", ""), "url": p["url"]}
-                for p in res.get("plots", []) if p.get("reference_designator") == refdes]}
-        return cache.get_or_set(f"plots:{refdes}", TTL["plots"], fetch)
+                rows = call_toolkit("QA/QC", lambda: {"ok": True, "plots": deps.qaqc.plots_for(refdes)})["plots"]
+            return [{"variable": p["variable"], "timeSpan": p["time_span"], "overlay": p["overlay"],
+                     "dataRange": p["data_range"], "depth": p.get("depth_or_profile", ""), "url": p["url"]} for p in rows]
+        everything = cache.get_or_set(f"plots:{refdes}", TTL["plots"], fetch)
+        variables = sorted({p["variable"] for p in everything})
+        v = variable if variable in variables else (variables[0] if variables else None)
+        spans = sorted({p["timeSpan"] for p in everything if p["variable"] == v},
+                       key=lambda x: (SPAN_ORDER.index(x) if x in SPAN_ORDER else len(SPAN_ORDER), x))
+        sp = span if span in spans else ("day" if "day" in spans else (spans[0] if spans else None))
+        chosen = [p for p in everything if p["variable"] == v and p["timeSpan"] == sp]
+        chosen.sort(key=lambda p: (p["depth"], p["overlay"] != "none", p["overlay"], p["dataRange"]))
+        return {"refdes": refdes, "variables": variables, "variable": v, "spans": spans, "span": sp,
+                "plots": chosen, "total": len(everything)}
 
     @app.get("/files/{instrument_key}")
     def files(instrument_key: str, path: str = "", endpoint: str | None = None):

@@ -35,9 +35,26 @@ class PlotsFilesTest(unittest.TestCase):
         q = FakeQAQC(PLOTS)
         r = TestClient(create_app(SETTINGS, deps(qaqc=q))).get(f"/plots/{REF}")
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json(), {"refdes": REF, "plots": [
+        self.assertEqual(r.json(), {"refdes": REF, "variables": ["temperature"], "variable": "temperature",
+                                    "spans": ["week"], "span": "week", "total": 1, "plots": [
             {"variable": "temperature", "timeSpan": "week", "overlay": "none", "dataRange": "full", "depth": "",
              "url": "https://ec2.qaqc.ooi-rca.net/QAQC_plots/a.png"}]})
+
+    def test_every_variable_and_span_is_reachable_beyond_200_plots(self):
+        # An ADCP has 735 plots across 17 variables; the first 200 used to hide 12 of them.
+        rows = [{"reference_designator": REF, "variable": f"beam{v:02d}", "time_span": span, "overlay": ov, "data_range": rng,
+                 "depth_or_profile": "", "url": f"https://ec2.qaqc.ooi-rca.net/QAQC_plots/{v}_{span}_{ov}_{rng}.png"}
+                for v in range(17) for span in ("day", "week", "month", "year", "deploy") for ov in ("none", "anno", "flag")
+                for rng in ("full", "standard", "local")][:735]
+        app = TestClient(create_app(SETTINGS, deps(qaqc=FakeQAQC({"ok": True, "plots": rows}))))
+        r = app.get(f"/plots/{REF}").json()
+        self.assertEqual((len(r["variables"]), r["total"]), (17, 735))
+        self.assertEqual((r["variable"], r["span"]), ("beam00", "day"))   # day by default
+        self.assertEqual(r["spans"], ["day", "week", "month", "year", "deploy"])
+        w = app.get(f"/plots/{REF}", params={"variable": "beam15", "span": "week"}).json()   # past the old 200 cut
+        self.assertEqual((w["variable"], w["span"], len(w["plots"])), ("beam15", "week", 9))   # 3 overlays x 3 ranges
+        self.assertEqual(w["plots"][0]["overlay"], "none")   # plain plots first
+        self.assertEqual(app.get(f"/plots/{REF}", params={"variable": "bad var!"}).status_code, 422)
 
     def test_plots_unknown_sensor_404(self):
         r = TestClient(create_app(SETTINGS, deps(qaqc=FakeQAQC(PLOTS)))).get("/plots/RS99XXXX-XX000-00-NOPE00000")

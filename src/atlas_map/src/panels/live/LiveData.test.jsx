@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import LiveData from "./LiveData.jsx";
+import PlotGallery from "./PlotGallery.jsx";
 import { bundleFixture } from "../../test/fixtures.js";
 
 vi.mock("./Chart.jsx", () => ({ default: ({ points, unit }) => <div data-testid="chart">{points.length} points {unit}</div> }));
@@ -74,7 +75,7 @@ describe("LiveData", () => {
     const f = routes([
       ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301/variables", { variables: [{ name: "t", units: "C" }], coverage: {} }],
       ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301?", { points: [[1, 7.3]], units: "C", rawCount: 1, downloadUrl: "x", message: null }],
-      ["/api/plots/RS03AXBS-LJ03A-12-CTDPFB301", { refdes: "RS03AXBS-LJ03A-12-CTDPFB301", plots: [] }],
+      ["/api/plots/RS03AXBS-LJ03A-12-CTDPFB301", { refdes: "RS03AXBS-LJ03A-12-CTDPFB301", variables: [], plots: [], spans: [], total: 0 }],
     ]);
     vi.stubGlobal("fetch", f);
     const base = b.sensorById["base-ctd"];
@@ -89,6 +90,21 @@ describe("LiveData", () => {
     fireEvent(details, new Event("toggle"));
     await waitFor(() => expect(screen.getByText(/no recent plots for this sensor/)).toBeInTheDocument());
     expect(plotCalls()).toBe(1);
+  });
+  it("QA/QC plots: every variable is listed, and a span button asks for that span's plots", async () => {
+    const body = (variable, span) => ({ refdes: "R", variables: ["beam1", "temperature"], variable, spans: ["day", "week"], span, total: 735,
+      plots: [{ variable, timeSpan: span, overlay: "none", dataRange: "full", depth: "", url: `https://q/${variable}_${span}.png` }] });
+    const f = vi.fn(async url => {
+      const u = new URL(String(url), "http://x");
+      return { ok: true, status: 200, json: async () => body(u.searchParams.get("variable") ?? "beam1", u.searchParams.get("span") ?? "day") };
+    });
+    vi.stubGlobal("fetch", f);
+    render(<PlotGallery refdes="R" />);
+    expect(await screen.findByRole("option", { name: "temperature" })).toBeInTheDocument();
+    expect(screen.getByText("735 QA/QC plots for this sensor across 2 variables")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Week" }));
+    await waitFor(() => expect(screen.getByRole("img")).toHaveAttribute("src", "https://q/beam1_week.png"));
+    expect(f.mock.calls.some(([u]) => String(u).includes("span=week"))).toBe(true);
   });
   it("defaults to sea water temperature when the dataset has it", async () => {
     const f = routes([

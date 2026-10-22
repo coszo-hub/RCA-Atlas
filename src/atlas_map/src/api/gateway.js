@@ -24,7 +24,7 @@ const q = params => new URLSearchParams(Object.entries(params).filter(([, v]) =>
 export const status = (refdes, o) => api(`/status/${encodeURIComponent(refdes)}`, o);
 export const variables = (refdes, o) => api(`/series/${encodeURIComponent(refdes)}/variables`, o);
 export const series = (refdes, p, o) => api(`/series/${encodeURIComponent(refdes)}?${q(p)}`, o);
-export const plots = (refdes, o) => api(`/plots/${encodeURIComponent(refdes)}`, o);
+export const plots = (refdes, o, { variable, span } = {}) => api(`/plots/${encodeURIComponent(refdes)}${variable || span ? `?${q({ variable, span })}` : ""}`, o);
 export const waveform = (station, minutes, channel, o, bandpass) => api(`/waveform/${station}?${q({ minutes, channel, bandpass })}`, o);
 export const waveformHealth = (station, channel, o) => api(`/waveform/${station}/health?${q({ channel })}`, o);
 export const files = (key, endpoint, path, o) => api(`/files/${encodeURIComponent(key)}?${q({ endpoint, path })}`, o);
