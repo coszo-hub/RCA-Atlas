@@ -14,6 +14,12 @@ The build fails, and writes nothing, when:
 
 Tests: `PYTHONPATH=src .venv/bin/python -m unittest discover -s src/atlas_map_data/tests -t src -v`
 
+## Offshore faults
+
+`faults/qfaults.geojson` is committed: the USGS Quaternary Fault and Fold Database traces in the atlas area (public domain). The build keeps the faults that lie on the seafloor within the overview terrain (the Cascadia megathrust's deformation front, Daisy Bank, Alvin Canyon, Nehalem Bank and others) and drops folds and the Cascadia fold and fault belt. To refresh it from USGS:
+
+    PYTHONPATH=src .venv/bin/python -m atlas_map_data.faults --refresh
+
 ## Axial summit 1 m tiles (optional)
 
 These tiles are built from MBARI's AUV grid, which is supplied by the COSZO project and not stored in git. Place the `.grd` file anywhere, then run:

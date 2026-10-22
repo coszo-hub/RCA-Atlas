@@ -44,14 +44,17 @@ export class OverlayLayer {
       return { node, d, code: d.querySelector("span") };
     });
     this.places = PLACES.map(p => ({ ...p, d: el("place", p.t) }));
-    this._clearCable = () => { scene.renderer.domElement.style.cursor = ""; handlers.onCableHover?.(null, null); };
+    this._clearCable = () => { scene.renderer.domElement.style.cursor = ""; handlers.onCableHover?.(null, null); handlers.onFaultHover?.(null, null); };
     this._onMove = ev => {
       if (ev.buttons) return;
-      const lines = (scene.cableLines ?? []).filter(l => l.userData.info && l.userData.proj)
+      // The cable and the shown faults; a fault's info is its fault record, which the scene keeps in faultInfo.
+      const lines = [...(scene.cableLines ?? []), ...(scene.faultLines ?? []).filter(l => l.visible)]
+        .filter(l => l.userData.info && l.userData.proj)
         .flatMap(l => frontRuns(l.userData.proj).map(pts => ({ info: l.userData.info, pts })));
-      const hit = nearest(ev.clientX, ev.clientY, lines);
+      const hit = nearest(ev.clientX, ev.clientY, lines), fault = !!hit && !!scene.faultInfo?.has(hit);
       scene.renderer.domElement.style.cursor = hit ? "help" : "";
-      handlers.onCableHover?.(hit, hit ? ev : null);
+      handlers.onCableHover?.(fault ? null : hit, hit && !fault ? ev : null);
+      handlers.onFaultHover?.(fault ? hit : null, fault ? ev : null);
     };
     scene.renderer.domElement.addEventListener("pointermove", this._onMove);
     scene.renderer.domElement.addEventListener("pointerleave", this._clearCable);
@@ -115,8 +118,8 @@ export class OverlayLayer {
       const [x, y, z] = sc.project(toX(p.lon), 0.3, toZ(p.lat));
       Object.assign(p.d.style, { left: `${x}px`, top: `${y}px`, opacity: z < 1 ? 1 : 0 });
     }
-    for (const l of sc.cableLines ?? []) {
-      if (!l.userData.info) continue;
+    for (const l of [...(sc.cableLines ?? []), ...(sc.faultLines ?? [])]) {
+      if (!l.userData.info || !l.visible) continue;
       l.userData.proj = l.userData.pts.filter((_, i) => i % 3 === 0).map(([lon, lat]) =>
         sc.project(toX(lon), Math.min(sc.elevAt(lon, lat), 0) * e, toZ(lat)));
     }

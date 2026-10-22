@@ -163,6 +163,33 @@ export class AtlasScene {
     this.updateLines();
   }
 
+  // USGS Quaternary faults, draped on the seafloor beneath the cable: solid where the trace is well constrained,
+  // dashed where it is moderately constrained or inferred; the megathrust's deformation front is heavier.
+  addFaults(faults) {
+    const common = { transparent: true, depthTest: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -50 };
+    const color = FAULT_COLOR, dash = { dashed: true, dashSize: 1.0, gapSize: 0.7 };
+    this.faultMats = {
+      fault: new LineMaterial({ color, linewidth: 1.5, opacity: 0.9, ...common }),
+      faultDashed: new LineMaterial({ color, linewidth: 1.5, opacity: 0.8, ...dash, ...common }),
+      thrust: new LineMaterial({ color, linewidth: 2.8, opacity: 0.95, ...common }),
+      thrustDashed: new LineMaterial({ color, linewidth: 2.8, opacity: 0.85, ...dash, ...common }),
+    };
+    this.faultInfo = new Set(); this.faultLines = [];
+    for (const fault of faults?.faults ?? []) {
+      this.faultInfo.add(fault);
+      for (const run of fault.lines) {
+        const m = this.faultMats[(fault.megathrust ? "thrust" : "fault") + (run.constrained ? "" : "Dashed")];
+        const l = new Line2(new LineGeometry(), m);
+        l.userData = { pts: densify(run.coords, 0.5), info: fault }; l.renderOrder = 4;
+        this.scene.add(l); this.faultLines.push(l);
+      }
+    }
+    this._resolution();
+    this.updateLines();
+  }
+
+  setFaultsVisible(on) { for (const l of this.faultLines ?? []) l.visible = on; }
+
   addDas(das) {
     const common = { transparent: true, depthTest: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -70 };
     this.dasShown = false; this.dasKinds = new Map();
@@ -207,6 +234,12 @@ export class AtlasScene {
       l.geometry.dispose(); l.geometry = new LineGeometry(); l.geometry.setPositions(arr);
       if (l.material.dashed) l.computeLineDistances();
     }
+    for (const l of this.faultLines ?? []) {
+      const arr = [];
+      for (const [lon, lat] of l.userData.pts) arr.push(toX(lon), Math.min(this.elevAt(lon, lat), 0) * e + 0.02 + 0.008 * this.U.exag.value, toZ(lat));
+      l.geometry.dispose(); l.geometry = new LineGeometry(); l.geometry.setPositions(arr);
+      if (l.material.dashed) l.computeLineDistances();
+    }
     for (const l of this.dasLines ?? []) {
       const arr = [];
       for (const [lon, lat] of l.userData.pts) arr.push(toX(lon), Math.min(this.elevAt(lon, lat), 0) * e + 0.05 + 0.018 * this.U.exag.value, toZ(lat));
@@ -225,7 +258,7 @@ export class AtlasScene {
   }
 
   _resolution() {
-    for (const m of [...Object.values(this.mats ?? {}), this.subsurface?.rimMat]) m?.resolution?.set(innerWidth, innerHeight);
+    for (const m of [...Object.values(this.mats ?? {}), ...Object.values(this.faultMats ?? {}), this.subsurface?.rimMat]) m?.resolution?.set(innerWidth, innerHeight);
   }
 
   get reducedMotion() { return !!this._motion?.matches; }
@@ -355,6 +388,8 @@ export class AtlasScene {
     this.controls.dispose(); this.renderer.dispose();
   }
 }
+
+export const FAULT_COLOR = 0xff7a5c;
 
 function densify(coords, stepKm = 0.3) {
   const out = [];

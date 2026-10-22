@@ -56,6 +56,10 @@ export const CABLE = {
 };
 export const DAS = { layers: [{ id: "multidas-north-1", kind: "multidas", cable: "north", color: "#ffbd59",
   coords: [[-123.97, 45.2], [-127.28, 45.75]], detail: "Saved unmasked interval 0–110 km.", caveat: "Schematic." }] };
+export const FAULTS = { credit: "Faults: USGS Quaternary Fault and Fold Database (public domain)", dropped: ["Cascadia fold and fault belt"],
+  faults: [{ id: "798", name: "Daisy Bank fault", slipSense: "Left lateral", age: "latest Quaternary", slipRate: "Between 1.0 and 5.0 mm/yr",
+    dip: null, megathrust: false, note: null, url: "https://earthquake.usgs.gov/x", lines: [
+      { constrained: true, coords: [[-125.5, 44.6], [-124.6, 44.88]] }, { constrained: false, coords: [[-124.6, 44.88], [-124.5, 44.9]] }] }] };
 export const MANIFEST = { builtAt: "2026-09-23T18:00:00Z", total: 7, located: 5, sites: 3, corpusSnapshot: "2026-09-19", warnings: [], errors: [] };
 
 export function bundleFixture() {
@@ -63,6 +67,6 @@ export function bundleFixture() {
   return {
     families: FAMILIES, familyByKey, sensors: SENSORS, sensorById: Object.fromEntries(SENSORS.map(x => [x.id, x])),
     sites: SITES, siteById: Object.fromEntries(SITES.map(x => [x.id, x])), unplaced: ["pi-massp"],
-    regions: REGIONS.regions, overview: REGIONS.overview, cable: CABLE, das: DAS, terrainMeta: null, manifest: MANIFEST,
+    regions: REGIONS.regions, overview: REGIONS.overview, cable: CABLE, das: DAS, faults: FAULTS, terrainMeta: null, manifest: MANIFEST,
   };
 }

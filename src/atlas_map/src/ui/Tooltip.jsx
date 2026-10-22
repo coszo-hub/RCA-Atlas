@@ -12,6 +12,24 @@ const CABLE_TEXT = {
 
 const SITE_ROWS = 14, NODE_SITES = 12;
 
+// The USGS database's slip senses and ages, in words (its age classes: latest Quaternary is under 15,000 years,
+// late Quaternary under 130,000, middle and late Quaternary under 750,000).
+const SLIP = { "Left lateral": "Left-lateral strike-slip fault", "Right lateral": "Right-lateral strike-slip fault",
+  Thrust: "Thrust fault", Reverse: "Reverse fault", Normal: "Normal fault" };
+const AGE = { "latest Quaternary": "in the last 15,000 years", "late Quaternary": "in the last 130,000 years",
+  "middle and late Quaternary": "in the last 750,000 years", "undifferentiated Quaternary": "in the Quaternary" };
+
+function FaultCard({ fault }) {
+  const dashed = fault.lines.some(l => !l.constrained);
+  return (<>
+    <div className="t-name">{fault.name}</div>
+    <div className="t-sub">{[SLIP[fault.slipSense] ?? fault.slipSense, fault.age && `last moved ${AGE[fault.age] ?? fault.age}`].filter(Boolean).join(" · ")}</div>
+    {fault.note && <div className="t-col">{fault.note}</div>}
+    {fault.slipRate && <div className="t-col">Slip-rate category: {fault.slipRate[0].toLowerCase() + fault.slipRate.slice(1).replace(/mm\/yr/, "mm per year")}</div>}
+    <div className="t-more">USGS Quaternary Fault and Fold Database, fault {fault.id}{dashed ? "; dashed where the trace is moderately constrained or inferred" : ""}.</div>
+  </>);
+}
+
 // Where a primary node's position comes from, by its accuracy, when the bundle names no source of its own.
 const NODE_SOURCE = {
   charted: "OOI mariner safety notices and COSZO cruise records, on the charted cable route",
@@ -80,6 +98,7 @@ export default function Tooltip({ hover, bundle }) {
     <div ref={ref} className="tip" style={style} role="tooltip">
       {kind === "site" && <SiteCard site={item} bundle={bundle} />}
       {kind === "node" && <NodeCard node={item} bundle={bundle} />}
+      {kind === "fault" && <FaultCard fault={item} />}
       {kind === "cable" && (<>
         <div className="t-name">{item.kind}</div>
         <div className="t-sub">{item.route}{item.lengthKm ? ` · ${Math.round(item.lengthKm)} km` : ""}</div>

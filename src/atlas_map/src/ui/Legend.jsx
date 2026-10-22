@@ -38,6 +38,10 @@ export default function Legend({ credit, auv = false, subsurface = null }) {
       <div><div className="eyebrow">Cable</div>
         <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#ecebe6" strokeWidth="1.5" /></svg>Charted or mapped route</div>
         <div className="row"><svg className="glyph"><rect x="3" y="3" width="6" height="6" fill="#121211" stroke="#ecebe6" strokeWidth="1.5" /></svg>Primary node</div></div>
+      <div><div className="eyebrow">Faults</div>
+        <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#ff7a5c" strokeWidth="2.8" /></svg>Cascadia megathrust (deformation front)</div>
+        <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#ff7a5c" strokeWidth="1.5" /></svg>Offshore Quaternary fault</div>
+        <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#ff7a5c" strokeWidth="1.5" strokeDasharray="2 1.4" /></svg>Moderately constrained or inferred</div></div>
       <div><div className="eyebrow">DAS coverage</div>
         <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#a98cff" strokeWidth="2.5" /></svg>2021 conventional OptaSense geometry</div>
         <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#ffbd59" strokeWidth="4" /></svg>2025–2026 MultiDAS unmasked span</div>
@@ -52,7 +56,7 @@ export default function Legend({ credit, auv = false, subsurface = null }) {
         <div className="row">Lines every 100 m of depth; the seafloor above turns to glass</div></div>}
       <div><div className="eyebrow">Seafloor depth</div>
         <div className="ramp" /><div className="ramp-labels mono"><span>0 m</span><span>1,500</span><span>3,000</span><span>4,800</span></div></div>
-      <div className="attribution">Bathymetry: {credit}.{auv && " Axial summit: MBARI AUV survey (cruise V2506), 1 m."} Cable: NOAA/BOEM Marine Cadastre, OOI mariner notices; west of the US EEZ and at Axial, ooi_cables.csv (M. Kidiwela). Status: Nereus.{subsurface && ` ${subsurface}.`}</div>
+      <div className="attribution">Bathymetry: {credit}.{auv && " Axial summit: MBARI AUV survey (cruise V2506), 1 m."} Cable: NOAA/BOEM Marine Cadastre, OOI mariner notices; west of the US EEZ and at Axial, ooi_cables.csv (M. Kidiwela). Faults: USGS Quaternary Fault and Fold Database. Status: Nereus.{subsurface && ` ${subsurface}.`}</div>
     </div>
   );
 }

@@ -53,7 +53,7 @@ export default function Controls({ scene, deep = false, onDeep }) {
   const [exag, setExag] = useState(scene?.U?.exag?.value ?? 6);
   useEffect(() => { if (scene) scene.onExag = v => setExag(v); return () => { if (scene) scene.onExag = null; }; }, [scene]);
   const [detail, setDetail] = useState("16 m");   // the finest Axial summit level on screen
-  const [das, setDas] = useState(false);
+  const [das, setDas] = useState(false), [faults, setFaults] = useState(true);
   const [dasKinds, setDasKinds] = useState({ conventional: true, multidas: true, optodas: true });
   useEffect(() => { const id = setInterval(() => scene?.auv && setDetail(scene.auv.finest()), 250); return () => clearInterval(id); }, [scene]);
   return (
@@ -68,6 +68,8 @@ export default function Controls({ scene, deep = false, onDeep }) {
           aria-label="Vertical exaggeration" onChange={e => { const v = +e.target.value; setExag(v); scene.flight = null; scene.setExag(v); }} />
       </div>
       {scene?.auv && <div className="ctl-row"><span className="eyebrow">Axial detail</span><span className="mono" aria-live="polite">{detail}</span></div>}
+      {scene?.faultLines?.length > 0 && <Seg label="Faults" options={[["on", "On"], ["off", "Off"]]} value={faults ? "on" : "off"}
+        onChange={v => { const on = v === "on"; setFaults(on); scene.setFaultsVisible(on); }} />}
       {scene?.dasLines?.length > 0 && <Seg label="DAS coverage" options={[["on", "On"], ["off", "Off"]]} value={das ? "on" : "off"}
         onChange={v => { const on = v === "on"; setDas(on); scene.setDasVisible(on); }} />}
       {scene?.dasLines?.length > 0 && das && (

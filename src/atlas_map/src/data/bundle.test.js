@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { BUILD_COMMAND, BundleMissingError, loadBundle } from "./bundle.js";
-import { CABLE, DAS, FAMILIES, MANIFEST, REGIONS, SENSORS, SITES } from "../test/fixtures.js";
+import { CABLE, DAS, FAMILIES, FAULTS, MANIFEST, REGIONS, SENSORS, SITES } from "../test/fixtures.js";
 
 const files = {
   "/atlas/manifest.json": MANIFEST, "/atlas/families.json": { families: FAMILIES },
   "/atlas/sensors.json": { sensors: SENSORS, unplaced: [] }, "/atlas/sites.json": { sites: SITES },
-  "/atlas/regions.json": REGIONS, "/atlas/cable.json": CABLE, "/atlas/das.json": DAS,
+  "/atlas/regions.json": REGIONS, "/atlas/cable.json": CABLE, "/atlas/das.json": DAS, "/atlas/faults.json": FAULTS,
   "/atlas/terrain/terrain.json": { credit: "GMRT, Ryan et al. (2009), CC BY 4.0", grids: {} },
 };
 const fakeFetch = (overrides = {}) => async url => {
@@ -21,6 +21,7 @@ describe("loadBundle", () => {
     expect(b.familyByKey.seismic.color).toBe("#d95926");
     expect(b.terrainMeta.credit).toContain("GMRT");
     expect(b.das.layers[0].kind).toBe("multidas");
+    expect(b.faults.faults[0].name).toBe("Daisy Bank fault");
   });
   it("reports a missing bundle with the build command", async () => {
     await expect(loadBundle(fakeFetch({ "/atlas/manifest.json": undefined }))).rejects.toBeInstanceOf(BundleMissingError);

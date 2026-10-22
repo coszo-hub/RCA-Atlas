@@ -89,6 +89,7 @@ function Atlas({ bundle, onError }) {
       sc = new AtlasScene(canvasRef.current, bundle, grids);
       await sc.ready;   // the cable, moorings, and markers sample the final elevAt (with the AUV survey)
       if (cancelled) return;
+      sc.addFaults(bundle.faults);
       sc.addCable(bundle.cable);
       sc.addDas(bundle.das);
       sc.addMoorings(bundle.sites);
@@ -100,6 +101,7 @@ function Atlas({ bundle, onError }) {
         onNodeHover: (node, ev) => setHover(ev ? { kind: "node", item: node, ...at(ev) } : null),
         onNodeClick: node => sc.flyToPoint(node.lon, node.lat, 30),
         onCableHover: (line, ev) => setHover(h => (ev ? { kind: "cable", item: line, ...at(ev) } : h?.kind === "cable" ? null : h)),
+        onFaultHover: (fault, ev) => setHover(h => (ev ? { kind: "fault", item: fault, ...at(ev) } : h?.kind === "fault" ? null : h)),
       });
       layerRef.current = layer;
       evLayer = new EvidenceLayer(evidenceRef.current, sc, bundle, {

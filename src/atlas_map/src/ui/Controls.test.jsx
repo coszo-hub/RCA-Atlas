@@ -56,6 +56,18 @@ describe("Controls", () => {
     expect(s.setDasVisible).toHaveBeenCalledWith(false);
     expect(screen.queryByRole("group", { name: "2025–26 MultiDAS" })).toBeNull();
   });
+  it("shows faults by default and can hide them", () => {
+    const s = { ...fakeScene(), faultLines: [{}], setFaultsVisible: vi.fn() };
+    render(<Controls scene={s} />);
+    const group = screen.getByRole("group", { name: "Faults" });
+    expect(within(group).getByRole("button", { name: "On" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(within(group).getByRole("button", { name: "Off" }));
+    expect(s.setFaultsVisible).toHaveBeenCalledWith(false);
+  });
+  it("has no Faults switch without a fault layer", () => {
+    render(<Controls scene={fakeScene()} />);
+    expect(screen.queryByRole("group", { name: "Faults" })).toBeNull();
+  });
   it("has no Subsurface switch when the subsurface layer is not built", () => {
     render(<Controls scene={fakeScene()} />);
     expect(screen.queryByRole("group", { name: "Subsurface" })).toBeNull();

@@ -12,6 +12,13 @@ describe("Tooltip", () => {
     expect(screen.getByText("Axial Seamount Profiler")).toHaveClass("t-head");
     expect(screen.getByText(/1 more sensor has no recorded position/)).toBeInTheDocument();
   });
+  it("fault: slip sense and age in words, the USGS category and fault number, and why it is dashed", () => {
+    render(<Tooltip bundle={b} hover={{ kind: "fault", item: b.faults.faults[0], x: 0, y: 0 }} />);
+    expect(screen.getByText("Daisy Bank fault")).toHaveClass("t-name");
+    expect(screen.getByText("Left-lateral strike-slip fault · last moved in the last 15,000 years")).toBeInTheDocument();
+    expect(screen.getByText("Slip-rate category: between 1.0 and 5.0 mm per year")).toBeInTheDocument();
+    expect(screen.getByText(/fault 798; dashed where the trace is moderately constrained or inferred\.$/)).toBeInTheDocument();
+  });
   it("node: PN5A description, no sites nearby, position accuracy and source", () => {
     render(<Tooltip bundle={b} hover={{ kind: "node", item: b.cable.nodes[0], x: 0, y: 0 }} />);
     expect(screen.getByText(/placeholder node/i)).toBeInTheDocument();
