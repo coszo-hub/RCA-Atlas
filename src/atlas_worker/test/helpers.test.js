@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -440,4 +440,46 @@ test("an Axial count says when the catalog has not located the day yet, or only 
   assert.equal(big.events.length, all.filter((e) => e.mag > 1).length);
   assert.ok(big.events.length < all.length);
   assert.match(big.answer, new RegExp(`^There were ${big.events.length} Axial Seamount earthquakes of magnitude above 1 \\(of ${all.length} in all\\)`));
+});
+
+test("a status question is answered from the instrument's live check, cited as the instrument", async (t) => {
+  assert.ok(isStatusQuestion("is the pressure gauge at slope base operational"));
+  assert.ok(!isStatusQuestion("What does the pressure gauge at Slope Base measure?"));
+  const record = { chunk_id: "I-1", collection_id: "instruments", title: "Oregon Slope Base Seafloor Pressure Sensor",
+    text: "Reference designator RS01SLBS-MJ01A-06-PRESTA101.", citations: [{ source_id: "I-1", url: "https://ooinet.oceanobservatories.org/x" }] };
+  assert.equal(refdesOf(record), "RS01SLBS-MJ01A-06-PRESTA101");
+  assert.match(liveStatusHit(record, "RS01SLBS-MJ01A-06-PRESTA101", { untracked: true }).text, /does not track it/);
+  const { default: worker } = await import("../src/index.js");
+  let prompt = "";
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    const u = String(url);
+    if (u.endsWith("/v1/context")) return Response.json({ hits: [record], neighbors: [], tool_hints: [] });
+    if (u === "https://gw.example/status/RS01SLBS-MJ01A-06-PRESTA101") {
+      return Response.json({ refdes: "RS01SLBS-MJ01A-06-PRESTA101", status: "OPERATIONAL", data: { code: "GOOD", checkedAt: "2026-10-22T23:00:10Z" }, evidenceMode: "live" });
+    }
+    prompt = JSON.parse(init.body).contents[0].parts[0].text;
+    return Response.json({ candidates: [{ content: { parts: [{ text: "Yes, it is operating [1]." }] } }] });
+  });
+  const res = await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "is the pressure gauge at slope base operational" }),
+  }), { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g", ATLAS_MAP_GATEWAY_ORIGIN: "https://gw.example" });
+  const data = await res.json();
+  assert.match(prompt, /^Live status: Oregon Slope Base Seafloor Pressure Sensor \| sources: \[1\]\n.*is operating, checked live by Nereus.*2026-10-22 23:00 UTC\) is GOOD\./m);
+  assert.match(prompt, /checked against the live monitor moments ago/);
+  assert.equal(data.answer_citations.length, 1);                                       // the live check cites the instrument
+});
+
+test("a status question is searched for its instrument, and only that type's records are checked live", () => {
+  assert.equal(searchText(statusSearch("Are the CTDs at Southern Hydrate Ridge online?")), "the CTD at Southern Hydrate Ridge");
+  assert.equal(searchText("Where are the ADCPs?"), "Where are the ADCP?");
+  assert.equal(searchText("What does DAS record?"), "What does distributed acoustic sensing record?");   // DAS is no plural
+  const ctd = askedType("Is the CTD at Southern Hydrate Ridge online?");
+  assert.ok(ctd.some((t) => t.test("MARUM CTD-DO instrument")) && !ctd.some((t) => t.test("Southern Hydrate Ridge Summit ADCP")));
+  assert.deepEqual(liveTargetOf({ title: "Axial Seamount Eastern Caldera Seismic Station AXEC1 (description)" }), { kind: "waveform", id: "OO.AXEC1" });
+  assert.deepEqual(liveTargetOf({ text: "CTD RS01SBPS-PC01A-4A-CTDPFA103" }), { kind: "status", id: "RS01SBPS-PC01A-4A-CTDPFA103" });
+  assert.equal(liveTargetOf({ title: "AXIAL SEAMOUNT" }), null);
+  const wave = liveStatusHit({ title: "Station AXEC1 (description)" }, "OO.AXEC1",
+    { kind: "waveform", recording: true, channel: "EHZ", rate: 200, latestMs: Date.UTC(2026, 9, 22, 23, 12), delayMinutes: 2 });
+  assert.equal(wave.text, "Station AXEC1 (OO.AXEC1) is recording, checked live at EarthScope: its newest waveform (EHZ, 200 samples/s) is from 2026-10-22 23:12 UTC, 2 min behind real time.");
 });

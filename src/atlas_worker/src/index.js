@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -106,6 +106,9 @@ function prioritizedHits(context, question, limit = 6) {
   // A named DAS experiment (DAS21) never appears in its records' words, which name it by year; its records rank
   // first by what identifies them.
   const named = namedDas(question);
+  // A status question about one instrument type ("is the CTD at Southern Hydrate Ridge online") wants that type's
+  // records, which the site's pages outranked by its name.
+  const types = isStatusQuestion(question) ? askedType(question) : [];
   const scored = [...(context.hits || [])].map((hit, index) => {
     const title = String(hit.title || "").toLowerCase();
     const text = String(hit.text || "").toLowerCase();
@@ -121,7 +124,8 @@ function prioritizedHits(context, question, limit = 6) {
     const ofNamed = named ? named.record.test(`${title}\n${text}`) : false;
     const relevant = relevance > 0 || ofNamed;
     const route = routing && isRouting && relevant ? 40 : 0;
-    return { hit, index, isRouting, relevance: relevant ? Math.max(relevance, 1) : 0, score: relevance + rcaScope + primaryCorpus + route + (ofNamed ? 30 : 0) };
+    const ofType = types.some((type) => type.test(hit.title || "")) && !sourceKind(hit) ? 30 : 0;
+    return { hit, index, isRouting, relevance: relevant ? Math.max(relevance, 1) : 0, score: relevance + rcaScope + primaryCorpus + route + (ofNamed ? 30 : 0) + ofType };
   });
   // Once a routing record matches the question, routing records for other instruments (COVIS for a DAS
   // question) are off topic: they would list another instrument's downloads beside the answer.
@@ -218,11 +222,11 @@ function answerLinks(question, hits) {
 function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
-  // Each DAS experiment's own record comes first for a question about the experiments in general.
-  const experiments = context.experiments || [];
-  if (experiments.length) {
-    const ids = new Set(experiments.map((hit) => hit.chunk_id));
-    hits = [...experiments, ...hits.filter((hit) => !ids.has(hit.chunk_id))];
+  // Live status checks lead a status question; each DAS experiment's own record leads a question about them all.
+  const lead = [...(context.live || []), ...(context.experiments || [])];
+  if (lead.length) {
+    const ids = new Set(lead.map((hit) => hit.chunk_id));
+    hits = [...lead, ...hits.filter((hit) => !ids.has(hit.chunk_id))];
   }
   // A named DAS dataset keeps only its own records when the question is about getting its data; a science question
   // about the recordings ("ship noise in the November 2021 DAS") keeps its papers.
@@ -247,6 +251,45 @@ async function dasExperimentRecords(env) {
     console.error("DAS experiment search failed", error instanceof Error ? error.message : "unknown");
     return [];
   }
+}
+
+// The live state of the instruments a status question's evidence names (up to eight), as the map card checks it:
+// Nereus's status by reference designator, or the EarthScope waveform of an OO seismic station. Without a gateway
+// the question is left to the main evidence.
+async function liveStatuses(hits, question, env, allHits = hits) {
+  if (!env.ATLAS_MAP_GATEWAY_ORIGIN) return [];
+  const seen = new Set(), types = askedType(question);
+  // A record without the instrument's identifiers (an Arcada description) takes them from another record of that
+  // instrument the search returned, kept or not (two per name are kept).
+  const targets = new Map();
+  for (const hit of allHits) {
+    const target = !sourceKind(hit) && liveTargetOf(hit);
+    if (target && !targets.has(instrumentKey(hit.title))) targets.set(instrumentKey(hit.title), target);
+  }
+  // Instrument records only: a web page or paper naming a station is not that station's record.
+  const named = hits.filter((hit) => !sourceKind(hit) && hit.collection_id !== "coszo_documents")
+    .filter((hit) => !types.length || types.some((type) => type.test(hit.title || "")))
+    .map((hit) => [hit, liveTargetOf(hit) || targets.get(instrumentKey(hit.title))]);
+  // Else a search by the instrument's own name, among instrument and PI portal records, finds its identifiers.
+  for (const pair of named.filter(([, t]) => !t).slice(0, 4)) {
+    const found = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/search`, { query: instrumentKey(pair[0].title), limit: 5, collection_ids: ["instruments", "pi_portal"] },
+      { "x-api-key": env.ATLAS_API_KEY }).then((r) => r.hits || []).catch(() => []);
+    const same = found.find((hit) => !sourceKind(hit) && instrumentKey(hit.title) === instrumentKey(pair[0].title) && liveTargetOf(hit));
+    if (same) pair[1] = liveTargetOf(same);
+  }
+  const checks = named.filter(([, t]) => t && !seen.has(t.id) && seen.add(t.id)).slice(0, 8);
+  const gateway = env.ATLAS_MAP_GATEWAY_ORIGIN.replace(/\/$/, "");
+  return Promise.all(checks.map(async ([hit, target]) => {
+    const path = target.kind === "status" ? `/status/${encodeURIComponent(target.id)}` : `/waveform/${target.id}/health`;
+    try {
+      const upstream = await fetch(`${gateway}${path}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(15_000) });
+      const live = upstream.ok ? { ...(await upstream.json()), ...(target.kind === "waveform" ? { kind: "waveform" } : {}) }
+        : upstream.status === 404 ? { untracked: true } : null;
+      return liveStatusHit(hit, target.id, live);
+    } catch {
+      return liveStatusHit(hit, target.id, null);
+    }
+  }));
 }
 
 // The full-text layer, asked only when the evidence already holds a paper, and only for that paper's passages
@@ -541,7 +584,7 @@ export default {
       }
       const context = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
         // A DAS name such as DAS21, or shorthand such as dv/v, is searched with the words the corpus uses.
-        query: searchText(query),
+        query: searchText(isStatusQuestion(query) ? statusSearch(query) : query),
         // Room beyond the evidence kept, since repeated sections of one paper are dropped (prioritizedHits).
         limit: isInstrumentInventoryQuestion(query) ? 24 : MAX_HITS + 4,
         graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
@@ -550,6 +593,7 @@ export default {
       // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
       if (isDasOverview(query)) context.experiments = await dasExperimentRecords(env);
       else context.fulltext = await fullTextPassages(context, query, env);
+      if (isStatusQuestion(query)) context.live = await liveStatuses(selectedEvidenceHits(context, query), query, env, context.hits);
       context.hits = withPlaces(context.hits, context.fulltext);
       const evidenceHits = selectedEvidenceHits(context, query);
       const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);

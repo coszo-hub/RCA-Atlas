@@ -179,7 +179,9 @@ const SHORTHAND = [
 // The words the corpus search and the evidence ranking use for a question: the question, the corpus name of a
 // named DAS experiment, and spelled-out shorthand.
 export function searchText(question) {
-  let q = String(question || "");
+  // An acronym's plural ("CTDs", "ADCPs") is not the word the records use: "the CTDs at Southern Hydrate Ridge" found
+  // no CTD record, "the CTD at" did.
+  let q = String(question || "").replace(/\b([A-Z]{2,6})s\b/g, "$1").replace(/\b(ctd|adcp|bpr|auv|rov)s\b/gi, "$1");
   const extra = [namedDas(q)?.search];
   for (const x of SHORTHAND) {
     x.asked.lastIndex = 0;
@@ -388,7 +390,81 @@ export function isInstrumentInventoryQuestion(question) {
   return INSTRUMENT_WORDS.test(q) && PLACE_WORDS.test(q);
 }
 
+// "Is the pressure gauge at Slope Base operational?": a question about an instrument's current state, which the
+// live monitor answers (the map card's own check) and no corpus record can.
+export function isStatusQuestion(question) {
+  return /\b(?:operational|operating|working|online|offline|running|functioning|status|down|broken|healthy|recording|transmitting|streaming)\b/
+    .test(String(question || "").toLowerCase());
+}
+// OOI reference designators (RS01SLBS-MJ01A-06-PRESTA101, RS01SBPS-PC01A-4A-CTDPFA103, RS01SUM2-MJ01B-CTDPFA110), and
+// the OO seismic stations EarthScope serves (AXEC1, HYSB1), which Nereus does not track: their waveform is checked.
+// What a status question asks about, without the words that ask it: "Is the CTD at Southern Hydrate Ridge online?"
+// ranked the CTD's record 48th, "the CTD at Southern Hydrate Ridge" 7th.
+const STATUS_TERMS = /\b(?:is|are|was|were|it|they|still|currently|right now|now|operational|operating|working|online|offline|running|functioning|status|down|broken|healthy|recording|transmitting|streaming)\b/gi;
+export const statusSearch = (question) => String(question || "").replace(STATUS_TERMS, " ").replace(/[?]/g, " ").replace(/\s+/g, " ").trim();
+
+// The instrument types a status question can name, and the words their records use: only instruments of the type
+// asked are checked live ("the CTD at Southern Hydrate Ridge" checks no ADCP). A question naming none checks all.
+const INSTRUMENT_TYPES = [
+  [/\bctds?\b|conductivity/i, /\bctd|conductivity/i], [/seismo|seismic station/i, /seismi/i], [/pressure|\bbpr|\bbotpt|tide gauge/i, /pressure|tidal|\bbotpt|\bprest/i],
+  [/hydrophone/i, /hydrophone/i], [/\badcps?\b|current meter|currents/i, /\badcp|velocity|current/i], [/camera/i, /camera/i],
+  [/fluorometer|chlorophyll|cdom/i, /fluorometer|chlorophyll|cdom/i], [/oxygen|\bdo\b/i, /oxygen|\bdosta|\bctd-do/i], [/tilt/i, /tilt/i],
+  [/thermistor|temperature/i, /thermistor|temperature|\btmpsf/i], [/sonar|covis/i, /sonar|covis/i], [/\bph\b/i, /\bph\b|\bphsen/i],
+  [/spectrometer|mass spec/i, /spectrometer/i], [/profiler/i, /profiler/i], [/\bdas\b|fiber|fibre/i, /\bdas\b|fiber|fibre|distributed acoustic/i],
+];
+export function askedType(question) {
+  const q = String(question || "");
+  return INSTRUMENT_TYPES.filter(([asked]) => asked.test(q)).map(([, record]) => record);
+}
+
+const REFDES = /\b[A-Z]{2}\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}\b/;
+const STATION = /\b(?:AX[A-Z]{2}|HYS[A-Z0-9])\d\b/;
+export const refdesOf = (hit) => `${hit.title || ""}\n${hit.text || ""}`.match(REFDES)?.[0] ?? null;
+// One instrument's records under one name: its Arcada copies, OOI record and PI portal routing record.
+export const instrumentKey = (title) => String(title || "").toLowerCase()
+  .replace(/\s*\((?:description|params)\)$/, "").replace(/\s+data availability and routing$/, "").trim();
+export function liveTargetOf(hit) {
+  const refdes = refdesOf(hit);
+  if (refdes) return { kind: "status", id: refdes };
+  // A PI instrument record names its parts ("Canonical identifier: CTDPFA110", "OOI site RS01SUM2, node MJ01B").
+  const text = `${hit.title || ""}\n${hit.text || ""}`;
+  const id = text.match(/Canonical identifier:\s*([A-Z]{6}\d{3})\b|\/data\/([A-Z]{6}\d{3})\//)?.slice(1).find(Boolean), place = text.match(/OOI site ([A-Z]{2}\d{2}[A-Z0-9]{4}), node ([A-Z0-9]{5})\b/);
+  if (id && place) return { kind: "status", id: `${place[1]}-${place[2]}-${id}` };
+  const station = `${hit.title || ""}\n${hit.text || ""}`.match(STATION)?.[0];
+  return station ? { kind: "waveform", id: `OO.${station}` } : null;
+}
+const STATUS_WORDS = { OPERATIONAL: "operating", PARTIALLY_FUNCTIONAL: "partially functional", NOT_DEPLOYED: "not deployed", RETIRED: "retired",
+  SUPERSEDED: "superseded", RECOVERED: "recovered", UNCABLED: "uncabled", UNKNOWN: "of unknown status" };
+const utcTime = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? null : `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`; };
+
+// The evidence record for one instrument's live check, as the map card reads it: Nereus's status and latest data
+// check, else (for an instrument Nereus does not track) the age of its newest data. It carries the instrument
+// record's citations, so the answer cites, and the map pins, the instrument.
+export function liveStatusHit(hit, refdes, live) {
+  const name = String(hit.title || refdes).replace(/\s*\((?:description|params)\)$/i, "");
+  let text;
+  if (!live) text = `The live check of ${name} (${refdes}) could not be made just now; no current status is known.`;
+  else if (live.kind === "waveform") {
+    text = live.recording
+      ? `${name} (${refdes}) is recording, checked live at EarthScope: its newest waveform (${live.channel}${live.rate ? `, ${live.rate} samples/s` : ""}) is from ${utcTime(live.latestMs) || "a recent time"}, ${live.delayMinutes ?? "?"} min behind real time.`
+      : `${name} (${refdes}) has no recent waveform at EarthScope, checked live: ${live.message || "no recent data"}.`;
+  }
+  else if (live.untracked) text = `${name} (${refdes}) has no live status: the atlas's live monitor does not track it.`;
+  else if (live.evidenceMode === "data_age") {
+    text = `${name} (${refdes}) is not tracked by Nereus, the RCA's instrument monitor. Its newest data are from ${utcTime(live.latestAt) || "an unknown time"}`
+      + `${live.basis === "erddap" ? " (OOI ERDDAP)" : " (its QA/QC plots)"}${live.status ? `, so it counts as ${STATUS_WORDS[live.status] || live.status}` : ""}.`;
+  } else {
+    const how = !live.evidenceMode || live.evidenceMode === "live" ? "checked live" : "from Nereus's last snapshot (the live check failed)";
+    text = `${name} (${refdes}) is ${STATUS_WORDS[live.status] || "of unknown status"}, ${how} by Nereus, the RCA's instrument monitor`
+      + `${live.data?.code ? `; its latest data check (${utcTime(live.data.checkedAt) || "time unknown"}) is ${live.data.code}` : ""}.`;
+  }
+  return { chunk_id: `LIVE-${refdes}`, collection_id: "live_status", title: `Live status: ${name}`, text, citations: hit.citations || [], live: true };
+}
+
 export function answerPrompt({ question, evidence, sources, mode, product = null }) {
+  const liveInstruction = isStatusQuestion(question) && /^Live status: /m.test(evidence)
+    ? "Records titled \"Live status\" were checked against the live monitor moments ago: say from them whether each instrument is operating now, with the time of its data check, ahead of any older or catalog status in other records."
+    : "";
   const overviewInstruction = isDasOverview(question)
     ? `The RCA's DAS experiments are ${DAS_EXPERIMENTS.map((e) => e.about).join("; ")}. Count and describe these experiments, each once; a dataset within an experiment is part of it, not an experiment of its own.`
     : "";
@@ -403,7 +479,7 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${overviewInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${overviewInstruction} ${liveInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }
 
 // The map places a paper by the atlas sites its full text names most (the passage search returns them): they are
