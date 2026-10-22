@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, copiedRuns, sameCitations, rewritePrompt, questionParts, interleave } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -311,16 +311,7 @@ test("full text joins only papers already in the evidence, four passages a paper
     "10.1/a (scientific literature) | sources: [1]\np0\n\n10.1/a (scientific literature, full text) | sources: [1]\np1");
 });
 
-test("an answer that copies a paper is caught, and a rewrite must keep its citations", () => {
-  const paper = "Acoustic water column surveys were conducted using the hull-mounted Kongsberg EM302 multibeam echosounder operating around a center frequency of 30 kHz with 288 beams per swath.";
-  assert.equal(copiedRuns("They used an EM302 multibeam at about 30 kHz [2].", [paper]), 0);
-  assert.ok(copiedRuns("Surveys were conducted using the hull-mounted Kongsberg EM302 multibeam echosounder operating around a center frequency of 30 kHz [2].", [paper]) > 0);
-  assert.ok(sameCitations("A [1]. B [2, 3].", "B [3]. A [1] and [2]."));
-  assert.ok(!sameCitations("A [1].", "A."));
-  assert.match(rewritePrompt("X [1]."), /own words[\s\S]*X \[1\]\.$/);
-});
-
-test("the Worker asks the paper's passages, places the paper, and rewrites an answer that copies it", async (t) => {
+test("the Worker asks the paper's passages, and places the paper", async (t) => {
   const { default: worker } = await import("../src/index.js");
   const text = "Acoustic water column surveys were conducted using the hull-mounted Kongsberg EM302 multibeam echosounder operating around a center frequency of 30 kHz with 288 beams per swath.";
   const abstract = { chunk_id: "LIT-1", collection_id: "literature", title: "Bubble plumes above Southern Hydrate Ridge", text: "Time-series acoustic images of methane bubble plumes.",
@@ -328,8 +319,7 @@ test("the Worker asks the paper's passages, places the paper, and rewrites an an
   const passage = { chunk_id: "FT-1", collection_id: "literature_fulltext", title: abstract.title, text,
     citations: abstract.citations, metadata: { node_local_id: "FT-1", places: ["Southern Hydrate Ridge"] } };
   const calls = [];
-  let answers = ["Surveys were conducted using the hull-mounted Kongsberg EM302 multibeam echosounder operating around a center frequency of 30 kHz [1].",
-    "An EM302 multibeam at about 30 kHz mapped the plumes [1]."];
+  const answer = "Surveys were conducted using the hull-mounted Kongsberg EM302 multibeam echosounder operating around a center frequency of 30 kHz [1].";
   t.mock.method(globalThis, "fetch", async (url, init) => {
     const u = String(url); calls.push(u);
     if (u.endsWith("/v1/context")) return Response.json({ hits: [abstract], neighbors: [], tool_hints: [] });
@@ -337,15 +327,15 @@ test("the Worker asks the paper's passages, places the paper, and rewrites an an
       assert.deepEqual(JSON.parse(init.body).paper_keys, ["10.1002/2016gc006250", "COSZO-REF-145"]);
       return Response.json({ hits: [passage] });
     }
-    return Response.json({ candidates: [{ content: { parts: [{ text: answers.shift() }] } }] });
+    return Response.json({ candidates: [{ content: { parts: [{ text: answer }] } }] });
   });
   const res = await worker.fetch(new Request("https://w.example/v1/answer", {
     method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
     body: JSON.stringify({ query: "which multibeam echosounder mapped bubble plumes above southern hydrate ridge" }),
   }), { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g" });
   const data = await res.json();
-  assert.equal(data.answer, "An EM302 multibeam at about 30 kHz mapped the plumes [1].");
-  assert.equal(calls.filter((u) => u.includes("generativelanguage")).length, 2);       // the answer, then its rewrite
+  assert.equal(data.answer, answer);                                                     // a cited answer may use the paper's words
+  assert.equal(calls.filter((u) => u.includes("generativelanguage")).length, 1);
   assert.deepEqual(data.hits[0].metadata.places, ["Southern Hydrate Ridge"]);
   assert.equal(data.hits[0].excerpt, "");
   assert.ok(!JSON.stringify(data).includes("288 beams per swath"));                       // no passage text reaches the reader

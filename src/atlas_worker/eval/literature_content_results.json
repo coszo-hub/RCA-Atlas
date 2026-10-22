@@ -1,0 +1,302 @@
+[
+ {
+  "id": "Q4",
+  "paper": "COSZO-REF-143",
+  "question": "What is Pythia's Oasis, how warm is its fluid, and which fault is thought to drain the overpressured reservoir?",
+  "abstract": true,
+  "facts": [
+   [
+    "~9 °C above background",
+    true,
+    false
+   ],
+   [
+    "Alvin Canyon fault",
+    true,
+    false
+   ],
+   [
+    "10-30 cm/s flow",
+    false,
+    true
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "Brief answer: Pythia’s Oasis is a newly discovered seafloor seep on the central Oregon segment of the Cascadia Subduction Zone; its fluids are about 9°C above background temperature, and the overpressured reservoir is thought to drain along the vertical Alvin Canyon Fault [1, 2].\n\nComparison of the retrieved records\n- The scientific paper identifies Pythia’s Oasis as a warm, high-flux seafloor seep on the central Cascadia Subduction Zone and gives the fluid temperature anomaly as ~9°C above background [1].\n- The OOI website describes the same site as a “first-of-its-kind seep” and emphasizes its unusually altered, warm, low-salinity fluids, but it is a summary page rather than the primary source for the quantitative result [2].\n\nDirect answer\n- What is Pythia’s Oasis? A newly discovered seafloor seep on the central Oregon segment of the Cascadia Subduction Zone [1, 2].\n- How warm is its fluid? About 9°C above the background seafloor temperature [1].\n- Which fault is thought to drain the overpressured reservoir? The vertical Alvin Canyon Fault [1].\n\nWhat the evidence does not establish\n- The retrieved evidence does not establish any different fault as the primary drainage path.\n- The website’s “four times background temperatures” wording is not the quantitative value used here; the paper’s ~9°C above background is the supported measurement [1, 2].",
+  "citations": [
+   "Fluid sources and overpressures within the central Cascadia Subduction Zone revealed by a ",
+   "Pythias Oasis: The First-of-Its-Kind Seep in the Oceans",
+   "V19 Live Video",
+   "The 2021 Field Season Comes to an End"
+  ],
+  "copied_runs": 12
+ },
+ {
+  "id": "T1",
+  "paper": "COSZO-REF-119",
+  "question": "How fast did the dike propagate along Axial Seamount's north rift during the 2015 eruption, and how many earthquakes were relocated in the three months before it?",
+  "abstract": false,
+  "facts": [
+   [
+    "0.55 m/s",
+    true,
+    false
+   ],
+   [
+    "~62,000 earthquakes",
+    true,
+    false
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "The dike propagated along Axial Seamount’s north rift at about 0.55 m/s, and about 62,000 earthquakes were relocated in the three months before the eruption [3].\n\nEvidence check\n- The Science paper on caldera dynamics [3] directly reports both the north-rift dike propagation speed and the pre-eruption relocated earthquake count.\n- The north-rift eruption dynamics paper [2] describes the eruptive timing and growth rates of seafloor mounds, but it does not provide the requested dike speed or relocated-earthquake total.\n- The other retrieved papers [1, 4] focus on lower-crustal velocity changes and post-eruption deformation/seismicity trends, not these two specific quantities.\n\nAnswer\n- Dike propagation speed along the north rift: 0.55 m/s [3]\n- Earthquakes relocated in the 3 months before eruption: ~62,000 [3]\n\nWhat the evidence does not establish\n- The retrieved evidence does not show a competing number for either quantity in the OOI Regional Cabled Array/COSZO scope, so [3] is the basis for the answer here.",
+  "citations": [
+   "Monitoring Dynamic Magma Movement in the Lower Crust During the 2015 Eruption of Axial Sea",
+   "Quantification of eruption dynamics on the north rift at Axial Seamount, Juan de Fuca Ridg",
+   "Seismic constraints on caldera dynamics from the 2015 Axial Seamount eruption",
+   "Geodetic Monitoring at Axial Seamount Since Its 2015 Eruption Reveals a Waning Magma Suppl"
+  ],
+  "copied_runs": 0
+ },
+ {
+  "id": "T2",
+  "paper": "COSZO-REF-145",
+  "question": "Which multibeam echosounder, at what frequency, was used to map methane bubble plumes above Southern Hydrate Ridge in the 2016 time-series study?",
+  "abstract": false,
+  "facts": [
+   [
+    "Kongsberg EM302",
+    true,
+    false
+   ],
+   [
+    "30 kHz",
+    true,
+    false
+   ],
+   [
+    "288 beams",
+    false,
+    true
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "Brief answer: the 2016 time-series study used a hull-mounted Kongsberg EM302 multibeam echosounder, operating around 30 kHz, to map the methane bubble plumes above Southern Hydrate Ridge [1].\n\nDetails\n- Instrument: Kongsberg EM302 multibeam echosounder, hull-mounted [1]\n- Frequency: around 30 kHz [1]\n- What it was used for: acoustic water-column surveys to determine the location and rise-height of bubble plumes at Southern Hydrate Ridge [1]\n\nWhat the evidence does not establish\n- The retrieved evidence does not show any other multibeam echosounder for that 2016 study, and it does not provide a conflicting frequency for that paper [1].",
+  "citations": [
+   "Time-series measurements of bubble plume variability and water column methane distribution",
+   "Variability of Natural Methane Bubble Release at Southern Hydrate Ridge",
+   "Explosive Bubble Plume Emissions from Southern Hydrate Ridge",
+   "Long-Term Monitoring of Gas Emissions at Southern Hydrate Ridge"
+  ],
+  "copied_runs": 0
+ },
+ {
+  "id": "T3",
+  "paper": "OOI-ZOT-023",
+  "question": "From the 4-day OOI ocean-bottom DAS experiment, how many oceanic earthquakes per year could the DAS detect, and how far away was the repeating earthquake used for seismic ocean thermometry?",
+  "abstract": false,
+  "facts": [
+   [
+    "~8,000 per year",
+    true,
+    false
+   ],
+   [
+    "~3,000 km",
+    true,
+    false
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "Brief answer: the 4-day OOI ocean-bottom DAS experiment was extrapolated to about 8,000 oceanic earthquakes per year, and the repeating earthquake used for seismic ocean thermometry was on a source-receiver path of about 3,000 km [1].\n\nEvidence check\n- The scientific paper directly gives both numbers: an extrapolated annual detection rate of approximately 8,000 events from 92 detections in 4 days, and an SOT example based on a repeating-earthquake T-wave path of roughly 3,000 km [1].\n- The RCA dataset pages describe the 2021 and 2024 DAS experiments on the OOI Regional Cabled Array, but they do not establish these specific quantitative results [2, 4].\n\nAnswer\n- Estimated annual DAS detection rate: approximately 8,000 oceanic earthquakes per year [1].\n- Distance for the repeating earthquake used in seismic ocean thermometry: about 3,000 km along the source-receiver path [1].\n\nWhat the evidence does not establish\n- The 8,000-per-year figure is a rough linear extrapolation from a 4-day experiment and is explicitly described as uncertain, not a validated long-term rate [1].\n- The 3,000 km value is the propagation path length used for the SOT example; the evidence does not provide a more precise earthquake-to-station distance for that case [1].",
+  "citations": [
+   "Ocean Bottom Distributed Acoustic Sensing for Oceanic Seismicity Detection and Seismic Oce",
+   "RAPID: Multiplexed Distributed Acoustic Sensing (DAS) at the Ocean Observatory Initiative ",
+   "Distributed Acoustic Sensing Lays Groundwork for Earthquake, Tsunami Warnings, and More",
+   "RAPID: Distributed Acoustic Sensing on the OOI’s Regional Cabled Array",
+   "Multi-span distributed fiber sensing on the Ocean Observatories Initiative Regional Cabled"
+  ],
+  "copied_runs": 0
+ },
+ {
+  "id": "T4",
+  "paper": "COSZO-REF-143",
+  "question": "For how long has fluid flow been sustained at Pythia's Oasis, according to the gas hydrate (BSR) anomalies?",
+  "abstract": false,
+  "facts": [
+   [
+    "~1,500 years",
+    true,
+    false
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "Briefly: the gas hydrate (BSR) anomalies indicate that fluid flow at Pythia’s Oasis has been sustained on the order of about 1,500 years [7].\n\nComparison against the retrieved records\n- Pythia’s Oasis is described as a long-lived, high-flux seep, but the relevant duration estimate comes from the scientific paper’s BSR analysis, not the overview website [3, 7].\n- The paper states that the nearest detectable BSR to the orifice is about 150 m away and about 50 m shallower than the background BSR depth, and that the time required to shift the lower limit of gas hydrate stability implies elevated flow rates have persisted for roughly 1,500 years [7].\n\nAnswer\n- According to the BSR anomalies, fluid flow at Pythia’s Oasis has likely been sustained for about 1,500 years [7].\n\nWhat the evidence does not establish\n- It does not give an exact start date for the seep.\n- It does not prove uninterrupted flow for every one of those years; it gives an order-of-magnitude estimate based on the BSR perturbation [7].",
+  "citations": [
+   "Osmotic Fluid Sampler",
+   "First ROV dive at Southern Hydrate Ridge",
+   "Pythias Oasis: The First-of-Its-Kind Seep in the Oceans",
+   "Leg 2 Ends with A Spectacular Dive At Southern Hydrate Ridge",
+   "Focused Fluid Flow Along the Nootka Fault Zone and Continental Slope, Explorer-Juan de Fuc",
+   "Science Questions",
+   "Fluid sources and overpressures within the central Cascadia Subduction Zone revealed by a "
+  ],
+  "copied_runs": 1
+ },
+ {
+  "id": "T5",
+  "paper": "OOI-ZOT-129",
+  "question": "How long was the 2021 upwelling season off the US Pacific Northwest, and between which dates?",
+  "abstract": false,
+  "facts": [
+   [
+    "189 days",
+    true,
+    false
+   ],
+   [
+    "March 22",
+    true,
+    false
+   ],
+   [
+    "September 16",
+    true,
+    false
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "The 2021 upwelling season off the US Pacific Northwest lasted 189 days, from March 22 to September 16 [1].\n\nDetails\n- The paper defines the upwelling season as running from the spring transition to the fall transition, and for 2021 it spans March 22 to September 16 [1].",
+  "citations": [
+   "Widespread and increasing near-bottom hypoxia in the coastal ocean off the United States P",
+   "Subsurface Temperature Anomalies Off Central Oregon During 2014–2021",
+   "Diel Vertical Migrators Respond to Short-Term Upwelling Events",
+   "New Research Powered by OOI Data: July 2026",
+   "Slope and Shelf Flow Anomalies Off Oregon Influenced by the El Niño Remote Oceanic Mechani",
+   "Oregon Offshore"
+  ],
+  "copied_runs": 0
+ },
+ {
+  "id": "T6",
+  "paper": "COSZO-REF-084",
+  "question": "What are the nominal seafloor pressure and the calibration pressure of the self-calibrating pressure recorder at Axial Seamount?",
+  "abstract": false,
+  "facts": [
+   [
+    "15,550 kPa seafloor",
+    true,
+    false
+   ],
+   [
+    "15,350 kPa calibration",
+    true,
+    false
+   ],
+   [
+    "98.7%",
+    false,
+    true
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "Direct answer: The Axial Seamount SCPR paper says the calibration pressure is nominally 15,350 kPa, and that this is 206 kPa less than the mean seafloor pressure, so the nominal mean seafloor pressure is about 15,556 kPa [2].\n\nEvidence check\n- The SCPR website explains the instrument and its in situ reference pressure, but it does not give the numeric pressures asked for [1].\n- The 2013–2014 paper describes the SCPR deployment and drift-correction method, but the specific pressure values requested are given in the 2018–2021 paper [2, 3].\n\nAnswer\n- Nominal seafloor pressure: about 15,556 kPa, inferred from the paper’s statement that the calibration pressure is 206 kPa below the mean seafloor pressure [2].\n- Calibration pressure: 15,350 kPa [2].",
+  "citations": [
+   "Self-Calibrating Pressure Recorder",
+   "Drift Corrected Seafloor Pressure Observations of Vertical Deformation at Axial Seamount 2",
+   "Drift-corrected seafloor pressure observations of vertical deformation at Axial Seamount 2",
+   "Axial Seamount Base Seafloor Seafloor Pressure"
+  ],
+  "copied_runs": 0
+ },
+ {
+  "id": "T7",
+  "paper": "OOI-ZOT-093",
+  "question": "At about what temperature and pressure does the Main Endeavour Field vent-fluid sampler study infer that subseafloor reactions buffer the fluid chemistry?",
+  "abstract": false,
+  "facts": [
+   [
+    "~480 °C",
+    true,
+    false
+   ],
+   [
+    "~48 MPa",
+    true,
+    false
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "Brief answer: the study infers buffering by subseafloor reactions at about 480 °C and 48 MPa [1].\n\nEvidence comparison\n- The only directly matching record is the Main Endeavour Field vent-fluid sampler study [1].\n- In its discussion, the paper states that “subseafloor alteration and mass transfer [are] buffered by reaction at elevated temperatures and pressures (~480 °C, ~48 MPa)” [1].\n- The paper also gives a closely related phase-equilibria estimate of about 490 °C and 48 MPa from average chloride and silica concentrations [1], but the buffering statement itself uses ~480 °C and ~48 MPa [1].\n\nWhat the evidence does not establish\n- It does not support a more precise temperature or pressure than those approximate values.\n- It does not show that any of the other retrieved records address this Main Endeavour Field inference.",
+  "citations": [
+   "Time series of hydrothermal vent fluid chemistry at Main Endeavour Field, Juan de Fuca Rid",
+   "Osmotic Fluid Sampler",
+   "International District Remote Access Fluid Sampler",
+   "Facilitating Observatory-Based Subseafloor Science",
+   "Diffuse venting at the ASHES hydrothermal field: Heat flux and tidally modulated flow vari"
+  ],
+  "copied_runs": 1
+ },
+ {
+  "id": "T8",
+  "paper": "OOI-ZOT-119",
+  "question": "In the November 2021 OOI DAS recordings, between which frequencies did the cargo ship's spectrogram show acoustic energy, and how many channels did the beamformer sub-array use?",
+  "abstract": false,
+  "facts": [
+   [
+    "10-60 Hz",
+    true,
+    false
+   ],
+   [
+    "150 channels",
+    true,
+    false
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "The November 2021 OOI DAS paper reports that the cargo ship’s spectrogram showed acoustic energy between 10 and 60 Hz, and the beamformer used a 150-channel sub-array [5].\n\nEvidence check\n- The scientific literature record directly gives both quantities for the ship example: energy between 10 and 60 Hz, and a plane-wave beamformer using a 150-channel sub-array [5].\n- The retrieved website records describe the experiment and data availability, but in the provided text they do not add a different value for this specific ship example [3, 4].\n\nAnswer\n- Acoustic energy in the cargo ship spectrogram: 10–60 Hz [5]\n- Beamformer sub-array size: 150 channels [5]",
+  "citations": [
+   "2021 conventional DAS (OptaSense and Silixa)",
+   "RAPID: Multiplexed Distributed Acoustic Sensing (DAS) at the Ocean Observatory Initiative ",
+   "RAPID: Distributed Acoustic Sensing on the OOI’s Regional Cabled Array",
+   "RCA Distributed Acoustic Sensing (Optasense 2025)",
+   "Distributed acoustic sensing recordings of low-frequency whale calls and ship noise offsho"
+  ],
+  "copied_runs": 0
+ },
+ {
+  "id": "S2",
+  "paper": "OOI-ZOT-089",
+  "question": "On the OOI broadband hydrophones on the Oregon margin, at what frequency does underwater rain noise correlate best with rain rate, and at what depths were the hydrophones?",
+  "abstract": true,
+  "facts": [
+   [
+    "13 kHz",
+    true,
+    false
+   ],
+   [
+    "81 m",
+    true,
+    false
+   ],
+   [
+    "581 m",
+    true,
+    false
+   ]
+  ],
+  "model": "OpenAI gpt-5.4-mini",
+  "answer": "Briefly: underwater rain noise correlated best with rain rate at 13 kHz, and the Oregon margin OOI broadband hydrophones were deployed at 81 m and 581 m depth [1].\n\nDetails\n- Best rain-rate correlation: the highest correlation between spectral level and rain rate occurs at 13 kHz [1].\n- Hydrophone depths: one hydrophone was at 81 m on the continental shelf, and the other was at 581 m on the continental slope [1].\n\nWhat the evidence shows\n- The paper reports two broadband hydrophones on the northeast Pacific continental margin near Oregon, so there is not one single depth for all hydrophones; there were two depths in the study [1].",
+  "citations": [
+   "Characterizing underwater noise during rain at the northeast Pacific continental margin",
+   "Statistical analysis and modeling of underwater wind noise at the northeast pacific contin",
+   "An Overview of Ambient Sound Using OOI Hydrophones",
+   "Investigation of the acoustic properties of underwater rainfall noise measured by a bottom",
+   "Broadband Hydrophone",
+   "An overview of ambient sound using Ocean Observatories Initiative hydrophones"
+  ],
+  "copied_runs": 0
+ }
+]

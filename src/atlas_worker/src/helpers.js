@@ -343,7 +343,7 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Do not quote scientific literature word for word; state its findings in your own words and cite the paper, whose link lets the reader read it in full. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }
 
 // The map places a paper by the atlas sites its full text names most (the passage search returns them): they are
@@ -360,7 +360,6 @@ export function withPlaces(hits, passages) {
   });
 }
 
-const COPY_RUN = 12;
 function runsOf(texts, n) {
   const runs = new Set();
   for (const text of texts) {
@@ -369,21 +368,4 @@ function runsOf(texts, n) {
   }
   return runs;
 }
-const words = (text) => String(text || "").toLowerCase().replace(/[\u2010-\u2013]/g, "-").replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
-
-// How many 12-word runs of the answer appear word for word in the given texts (the papers in its evidence).
-export function copiedRuns(answer, texts) {
-  const runs = runsOf(texts, COPY_RUN);
-  const a = words(answer);
-  let n = 0;
-  for (let i = 0; i + COPY_RUN <= a.length; i += 1) if (runs.has(a.slice(i, i + COPY_RUN).join(" "))) n += 1;
-  return n;
-}
-
-const citationsIn = (text) => [...new Set((String(text || "").match(/\[(\d+(?:\s*,\s*\d+)*)\]/g) || [])
-  .flatMap((m) => m.slice(1, -1).split(",").map((x) => x.trim())))].sort();
-export const sameCitations = (a, b) => citationsIn(a).join(",") === citationsIn(b).join(",");
-
-export function rewritePrompt(answer) {
-  return `Rewrite the answer below in your own words. Keep every fact, number, unit and bracketed citation such as [2] or [1, 3] exactly, and keep its plain-text structure (labels on their own lines and hyphen bullets, no Markdown hashes or asterisks). Do not reproduce any run of more than eight words from the papers it cites. Return only the rewritten answer.\n\nAnswer:\n${answer}`;
-}
+const words = (text) => String(text || "").toLowerCase().replace(/[‐-–]/g, "-").replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);

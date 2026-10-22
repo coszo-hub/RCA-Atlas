@@ -314,11 +314,8 @@ as a whole is placed at the summit caldera or Southern Hydrate Ridge. The
 Worker adds them to the paper's hits, where the map finds site names.
 
 Passages are never shown to readers. The Worker sends no excerpt for any paper
-(abstract or full text) and does not quote papers; the answer states findings
-in its own words and cites the paper, whose DOI link leads to the full text.
-An answer that still copies a 12-word run from a paper in its evidence is
-rewritten once, and the rewrite is kept if it copies less and keeps every
-citation.
+(abstract or full text); the answer cites the paper, whose DOI link leads to
+the full text. It may use the paper's own wording.
 
 Graph: each paper `HAS_FULLTEXT_PASSAGE` its passages, and a passage `MENTIONS`
 the RCA sites, named systems (COVIS, BOTPT, the Regional Cabled Array) and

@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, copiedRuns, rewritePrompt, sameCitations, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -383,23 +383,7 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   // have several routes, which the model lists.
   const mode = answerMode(question);
   const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product: product && namedDas(question).about });
-  const result = await completePrompt(prompt, mode, env, requestedModel);
-  return withoutCopiedPapers(result, evidenceHits, mode, env, requestedModel);
-}
-
-// Papers are cited, never reproduced: an answer that copies a 12-word run from a paper in its evidence is rewritten
-// once in its own words, and the rewrite is used if it copies less and keeps every citation.
-async function withoutCopiedPapers(result, evidenceHits, mode, env, requestedModel) {
-  const papers = evidenceHits.filter((hit) => sourceKind(hit) === "scientific literature").map((hit) => hit.text || "");
-  const copied = copiedRuns(result.answer, papers);
-  if (!copied) return result;
-  try {
-    const rewritten = await completePrompt(rewritePrompt(result.answer), mode, env, requestedModel);
-    if (copiedRuns(rewritten.answer, papers) < copied && sameCitations(rewritten.answer, result.answer)) return rewritten;
-  } catch (error) {
-    console.warn("rewrite of a copied answer failed", error instanceof Error ? error.message : "unknown");
-  }
-  return result;
+  return completePrompt(prompt, mode, env, requestedModel);
 }
 
 async function completePrompt(prompt, mode, env, requestedModel = "auto") {
