@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -363,4 +363,40 @@ test("long main evidence leaves the full-text passages their own room", () => {
   assert.ok(evidence.endsWith("Paper (scientific literature, full text)\nthe stated fact"));
   assert.ok(evidence.length < 12_000 + 200);                                            // with passages, 12,000 of main evidence
   assert.ok(evidencePackage(main, new Map()).length > 17_000);                           // without, 18,000
+});
+
+test("a question about the DAS experiments in general is given each experiment's record", async (t) => {
+  assert.ok(isDasOverview("what DAS experiments were done here"));
+  assert.ok(!isDasOverview("what did the 2021 DAS experiment record"));                   // names one
+  assert.ok(!isDasOverview("How does DAS detect whales?"));
+  assert.deepEqual(DAS_EXPERIMENTS.map((e) => e.key), ["das21", "das24", "das25"]);
+  const { default: worker } = await import("../src/index.js");
+  const record = (year) => ({ chunk_id: `PI-${year}`, collection_id: "pi_portal", title: `${year} RCA Distributed Acoustic Sensing experiment data availability and routing`,
+    text: `${year} RCA Distributed Acoustic Sensing experiment`, citations: [{ source_id: `PI-${year}`, url: `http://piweb.ooirsn.uw.edu/${year}/` }] });
+  const searched = [];
+  let prompt = "";
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    const u = String(url);
+    if (u.endsWith("/v1/context")) return Response.json({ hits: [{ chunk_id: "W", collection_id: "websites", title: "DAS on the RCA", text: "DAS page" }], neighbors: [], tool_hints: [] });
+    if (u.endsWith("/v1/search")) {
+      const query = JSON.parse(init.body).query; searched.push(query);
+      return Response.json({ hits: [record(query.startsWith("2021") ? "2021" : query.startsWith("2024") ? "2024" : "2025–2026")] });
+    }
+    if (u.endsWith("/v1/passages")) throw new Error("an overview asks no full text");
+    prompt = JSON.parse(init.body).contents[0].parts[0].text;
+    return Response.json({ candidates: [{ content: { parts: [{ text: "Three [1, 2, 3]." }] } }] });
+  });
+  const res = await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "what DAS experiments were done here" }),
+  }), { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g" });
+  assert.equal(res.status, 200);
+  assert.equal(searched.length, 3);
+  for (const year of ["2021", "2024", "2025–2026"]) assert.ok(prompt.includes(`${year} RCA Distributed Acoustic Sensing experiment data availability`));
+});
+
+test("an overview of the DAS experiments counts the 2025–26 datasets as one experiment", () => {
+  const prompt = answerPrompt({ question: "what DAS experiments were done here", evidence: "e", sources: [], mode: "research" });
+  assert.match(prompt, /DAS21, the 2021[\s\S]*DAS24, the 2024[\s\S]*DAS25, the 2025–2026[\s\S]*not an experiment of its own/);
+  assert.doesNotMatch(answerPrompt({ question: "How does DAS detect whales?", evidence: "e", sources: [], mode: "research" }), /DAS experiments are/);
 });

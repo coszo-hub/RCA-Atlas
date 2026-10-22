@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -218,6 +218,12 @@ function answerLinks(question, hits) {
 function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
+  // Each DAS experiment's own record comes first for a question about the experiments in general.
+  const experiments = context.experiments || [];
+  if (experiments.length) {
+    const ids = new Set(experiments.map((hit) => hit.chunk_id));
+    hits = [...experiments, ...hits.filter((hit) => !ids.has(hit.chunk_id))];
+  }
   // A named DAS dataset keeps only its own records when the question is about getting its data; a science question
   // about the recordings ("ship noise in the November 2021 DAS") keeps its papers.
   if (product && (isDownloadQuestion(question) || answerMode(question) === "compact")) {
@@ -226,6 +232,21 @@ function selectedEvidenceHits(context, question) {
     if (productHits.length) hits = productHits;
   }
   return [...hits, ...fullTextFor(hits, context.fulltext)];
+}
+
+// The first record of each DAS experiment, from a search in that experiment's own words (isDasOverview). A failed
+// search leaves the question to the main evidence.
+async function dasExperimentRecords(env) {
+  try {
+    const found = await Promise.all(DAS_EXPERIMENTS.map((experiment) => postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/search`, {
+      query: experiment.search, limit: 6,
+    }, { "x-api-key": env.ATLAS_API_KEY }).then((result) => (result.hits || [])
+      .find((hit) => experiment.record.test(`${hit.title || ""}\n${hit.text || ""}`)))));
+    return found.filter(Boolean).map(withRouteCitations);
+  } catch (error) {
+    console.error("DAS experiment search failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
 }
 
 // The full-text layer, asked only when the evidence already holds a paper, and only for that paper's passages
@@ -506,7 +527,9 @@ export default {
         graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
       context.hits = (context.hits || []).map(withRouteCitations);
-      context.fulltext = await fullTextPassages(context, query, env);
+      // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
+      if (isDasOverview(query)) context.experiments = await dasExperimentRecords(env);
+      else context.fulltext = await fullTextPassages(context, query, env);
       context.hits = withPlaces(context.hits, context.fulltext);
       const evidenceHits = selectedEvidenceHits(context, query);
       const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
