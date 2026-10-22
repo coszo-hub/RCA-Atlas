@@ -154,6 +154,7 @@ build can be retained for rollback. Current normalized outputs live under
 |---|---|---|---|
 | `Arcada` | `chunks.jsonl` | documents, entities, relationships, source document | rebuild from pinned repository snapshot |
 | `Literature` | `chunks.jsonl` | works, citation occurrences, authors/topics, glossary | rerun literature acquisition and graph build |
+| `LiteratureFullText` | `chunks.jsonl` (a retrieval layer) | papers, passages, site/instrument mentions | `build_fulltext_corpus.py` from the full-text cache |
 | `Websites` | `chunks.jsonl` | pages, figures, links, entities | recrawl public sites and repackage |
 | `Instruments` | `chunks.jsonl` | instruments, types, sources, infrastructure | rebuild after upstream corpus changes |
 | `coszo` | `graphrag/chunks.jsonl` | PDF sources, documents, pages, figures, entities | rebuild from document inbox/originals |
@@ -278,6 +279,33 @@ without a separate reviewed corpus rebuild. The read-only
 `literature_full_text_status` tool checks cache and candidate state without a
 network request. Code: `src/literature_fulltext/`; registration:
 `data/Literature/tool_manifest.json`.
+
+## Literature full text (a retrieval layer)
+
+`data/LiteratureFullText` is built by `src/literature_fulltext/build_fulltext_corpus.py`
+from the validated full-text cache: 301 papers (174 supplied under license,
+the rest open access), 15,332 page-level passages. Reference-list pages and
+fragments under 40 words are left out (3,265 and 4,276 pages). Each paper keeps
+its literature-catalog ID and DOI link, so a passage cites the same source, by
+the same number, as the paper's abstract.
+
+It is a layer, not a peer of the other collections. The search leaves any
+`*_fulltext` collection out unless a request names it
+(`migrations/003_retrieval_layers.sql`), so the main evidence for every
+question is unchanged by it. The Worker asks the layer only when that evidence
+already holds a paper, and keeps at most two passages of that paper, three in
+all, after the main evidence and with their own room in the prompt.
+
+Passages are never shown to readers. The Worker sends no excerpt for any paper
+(abstract or full text) and does not quote papers; the answer states findings
+in its own words and cites the paper, whose DOI link leads to the full text.
+
+Graph: each paper `HAS_FULLTEXT_PASSAGE` its passages, and a passage `MENTIONS`
+the RCA sites, named systems (COVIS, BOTPT, the Regional Cabled Array) and
+reference designators it names, by literal match only, with the words and page
+on the edge. A caldera or vent-field name counts only where the passage also
+names Axial. The entities carry the names and reference designators other
+collections use, so they resolve across collections by identifier.
 
 ## Websites
 

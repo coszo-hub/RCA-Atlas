@@ -12,6 +12,7 @@ export function excerpt(text) {
   return `${(space > EXCERPT_CHARS * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, "")}…`;
 }
 
+// Papers are never excerpted to readers: their citation links to the paper, where it can be read in full.
 export function publicHit(hit) {
   return {
     chunk_id: hit.chunk_id,
@@ -21,12 +22,42 @@ export function publicHit(hit) {
     score: hit.score,
     citations: hit.citations || [],
     metadata: hit.metadata || {},
-    excerpt: excerpt(hit.text),
+    excerpt: sourceKind(hit) === "scientific literature" ? "" : excerpt(hit.text),
   };
 }
 
-// One key per cited source: the id plus its URL (a PI portal record lists several routes under one id).
-export const sourceKey = (id, url) => `${id}|${url || ""}`;
+const DOI_URL = /^https?:\/\/(?:dx\.)?doi\.org\//i;
+
+// One key per cited source: the id plus its URL (a PI portal record lists several routes under one id). A paper is
+// keyed by its DOI link, so its abstract, its full text and another collection's copy are one numbered source.
+export const sourceKey = (id, url) => (DOI_URL.test(url || "") ? `doi|${String(url).toLowerCase().replace(/^http:/, "https:")}` : `${id}|${url || ""}`);
+
+// The paper a hit belongs to, or null: the key the full-text layer is matched on.
+export function paperKey(hit) {
+  if (sourceKind(hit) !== "scientific literature") return null;
+  const c = (hit.citations || [])[0] || {};
+  return sourceKey(c.source_id || hit.chunk_id, c.url);
+}
+
+export const FULLTEXT_COLLECTION = "literature_fulltext";
+const FULLTEXT_PER_PAPER = 2;
+const FULLTEXT_MAX = 3;
+
+// Full-text passages for the papers already in the evidence, best first: at most two per paper and three in all,
+// so the layer adds to a paper's evidence and never displaces another source.
+export function fullTextFor(hits, passages) {
+  const papers = new Set(hits.map(paperKey).filter(Boolean));
+  const perPaper = new Map();
+  const chosen = [];
+  for (const passage of passages || []) {
+    const key = passage.collection_id === FULLTEXT_COLLECTION ? paperKey(passage) : null;
+    if (!key || !papers.has(key) || (perPaper.get(key) || 0) >= FULLTEXT_PER_PAPER) continue;
+    perPaper.set(key, (perPaper.get(key) || 0) + 1);
+    chosen.push(passage);
+    if (chosen.length >= FULLTEXT_MAX) break;
+  }
+  return chosen;
+}
 
 // The DAS experiments by the names people type, the map's own labels included (DAS21, DAS24, DAS25). The corpus
 // names them by year ("2021 RCA Distributed Acoustic and Temperature Sensing experiment"), so each carries the
@@ -138,21 +169,25 @@ export function withRouteCitations(hit) {
 
 // The evidence text for the prompt: each hit under a header with its source numbers.
 // What kind of source a hit is, so that where sources disagree the answer can prefer the scientific literature: the
-// literature collection, and the papers RCA Information carries in full text (source_row_type "paper").
+// literature collection and its full-text layer, and any record cited by a DOI (the papers RCA Information carries).
 export function sourceKind(hit) {
   const collection = String(hit.collection_id || "").toLowerCase();
-  if (collection === "literature" || hit.metadata?.source_row_type === "paper") return "scientific literature";
+  if (collection === "literature" || collection === FULLTEXT_COLLECTION || hit.metadata?.source_row_type === "paper"
+      || (hit.citations || []).some((c) => DOI_URL.test(c.url || ""))) return "scientific literature";
   if (collection === "websites") return "website";
   return null;
 }
 
 export function evidencePackage(hits, sourceNumbers) {
   const sections = [];
-  let remaining = MAX_EVIDENCE_CHARS;
+  // Full-text passages come last; they bring their own room, so they never shorten the main evidence.
+  const fullText = hits.filter((hit) => hit.collection_id === FULLTEXT_COLLECTION)
+    .reduce((n, hit) => n + String(hit.text || "").length + 120, 0);
+  let remaining = MAX_EVIDENCE_CHARS + Math.min(fullText, 4_500);
   for (const hit of hits) {
     if (remaining <= 0) break;
     const refs = [...new Set((hit.citations || []).map((c) => sourceNumbers.get(sourceKey(c.source_id || hit.chunk_id, c.url))).filter(Boolean))];
-    const kind = sourceKind(hit);
+    const kind = hit.collection_id === FULLTEXT_COLLECTION ? "scientific literature, full text" : sourceKind(hit);
     const header = `${hit.title}${kind ? ` (${kind})` : ""}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
     const text = String(hit.text || "").slice(0, Math.max(0, remaining - header.length));
     sections.push(`${header}${text}`);
@@ -255,5 +290,5 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Do not quote scientific literature word for word; state its findings in your own words and cite the paper, whose link lets the reader read it in full. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }

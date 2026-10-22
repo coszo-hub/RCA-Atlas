@@ -80,3 +80,17 @@ python3 src/literature_fulltext/build_tool_manifest.py \
 
 Run local tests with the bundled PDF-capable Python runtime. Tests do not use
 the internet.
+
+## Full-text retrieval layer
+
+`build_fulltext_corpus.py` packages the validated cache as `data/LiteratureFullText`, a collection the search
+leaves out unless a request names it (`src/graphrag_runtime/migrations/003_retrieval_layers.sql`). The Worker
+asks it only for papers its main evidence already holds, two passages a paper and three in all, and never shows a
+passage or an abstract to readers: answers paraphrase and cite the paper's DOI link. Passages link to their paper
+and to the sites and instruments they name, by literal match. Rebuild after importing or acquiring papers:
+
+```sh
+python3 src/literature_fulltext/build_fulltext_corpus.py
+```
+
+then rerun the corpus catalog, normalizer, embeddings and loader.

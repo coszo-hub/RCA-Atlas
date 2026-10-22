@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, withRouteCitations } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, withRouteCitations } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -104,6 +104,7 @@ test("evidence headers mark papers and websites, and the prompt prefers the pape
   ], numbers);
   assert.equal(text, "Stacked sills (scientific literature) | sources: [1]\n300–450 m\n\nRoots of Axial (website) | sources: [2]\n400-500 m\n\nBOTPT | sources: [3]\nx");
   assert.match(answerPrompt({ question: "q", evidence: text, sources: [], mode: "research" }), /disagree about a fact or number, give the scientific literature's value/);
+  assert.match(answerPrompt({ question: "q", evidence: text, sources: [], mode: "research" }), /do not substitute a related finding/);
 });
 
 const day24 = await readFile(new URL("./fixtures/hypo71_20260924.dat", import.meta.url), "utf8");
@@ -279,4 +280,20 @@ test("one long paper does not crowd out the others: at most two of its sections 
   assert.equal((prompt.match(/^DAS-N2N denoising/gm) || []).length, 2);
   assert.match(prompt, /^Seismic ocean thermometry with DAS/m);
   assert.match(prompt, /^DAS early warning/m);
+});
+
+test("full text joins only papers already in the evidence, two passages a paper, three in all, and is never excerpted", () => {
+  const paper = (doi, n, collection = "literature_fulltext") => ({ chunk_id: `${doi}-${n}`, collection_id: collection, title: doi, text: `p${n}`,
+    citations: [{ source_id: `REF-${doi}`, url: `https://doi.org/${doi}` }] });
+  const evidence = [paper("10.1/a", 0, "literature"), { chunk_id: "W", collection_id: "websites", title: "W", citations: [{ source_id: "W", url: "https://x" }] },
+    paper("10.1/b", 0, "arcada")];
+  const passages = [paper("10.1/a", 1), paper("10.1/c", 1), paper("10.1/a", 2), paper("10.1/a", 3), paper("10.1/b", 1), paper("10.1/b", 2)];
+  assert.deepEqual(fullTextFor(evidence, passages).map((p) => p.chunk_id), ["10.1/a-1", "10.1/a-2", "10.1/b-1"]);
+  assert.deepEqual(fullTextFor([evidence[1]], passages), []);                   // no paper in the evidence, no full text
+  assert.equal(sourceKey("REF-a", "https://doi.org/10.1/A"), sourceKey("ARCADA-PAPER-1", "http://doi.org/10.1/a"));
+  assert.equal(publicHit(passages[0]).excerpt, "");
+  assert.equal(publicHit(evidence[0]).excerpt, "");
+  const numbers = new Map([[sourceKey("REF-10.1/a", "https://doi.org/10.1/a"), 1]]);
+  assert.equal(evidencePackage([evidence[0], passages[0]], numbers),
+    "10.1/a (scientific literature) | sources: [1]\np0\n\n10.1/a (scientific literature, full text) | sources: [1]\np1");
 });

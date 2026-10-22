@@ -9,7 +9,8 @@ ALLOWED_ORIGIN = "https://coszo.org"
 ANSWER_MODEL = "gemini-2.5-flash"
 # Update this when the OpenRouter free catalog changes; the Worker falls
 # through cleanly if its temporary provider capacity is unavailable.
-OPENROUTER_FREE_MODEL = "z-ai/glm-5.2:free"
+# Free models tried in order, comma-separated (OpenRouter retires and rate-limits them one by one).
+OPENROUTER_FREE_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free,google/gemma-4-31b-it:free"
 
 # Secrets, never committed. Configure after deployment:
 #   wrangler secret put GEMINI_API_KEY

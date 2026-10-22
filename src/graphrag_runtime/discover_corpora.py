@@ -32,6 +32,8 @@ COLLECTION_NAMES = {
     "FETCH": ("fetch", "FETCH acoustic ranging stations"),
     "Instruments": ("instruments", "RCA and COSZO instruments"),
     "Literature": ("literature", "Scientific literature"),
+    # A retrieval layer: the search leaves *_fulltext collections out unless a request names them (migration 003).
+    "LiteratureFullText": ("literature_fulltext", "Scientific literature full text"),
     "Nereus/graphrag": ("nereus", "Nereus operational data"),
     "OOIDASGeometry": ("ooi_das_geometry", "OOI RCA OptaSense DAS channel geometry"),
     "PIPortal": ("pi_portal", "RCA PI data portal"),

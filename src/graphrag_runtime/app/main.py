@@ -112,9 +112,15 @@ def create_app(*, settings: Settings | None = None, repository: Repository | Non
                     seed_nodes.append({"collection_id": key[0], "local_id": key[1]})
                     seen.add(key)
             seed_nodes = seed_nodes[:20]
-            neighbors = repo.neighbors(seed_nodes, hops=body.graph_hops,
-                                       limit=min(100, body.neighbors_per_seed * max(1, len(seed_nodes)))) \
-                if seed_nodes and body.graph_hops else []
+            neighbors = []
+            if seed_nodes and body.graph_hops:
+                # The hits answer the question; neighbours only add context, so a slow graph walk drops them
+                # instead of failing the request.
+                try:
+                    neighbors = repo.neighbors(seed_nodes, hops=body.graph_hops,
+                                               limit=min(100, body.neighbors_per_seed * max(1, len(seed_nodes))))
+                except Exception:
+                    LOGGER.exception("neighbor lookup failed; returning hits without neighbors")
             tool_hints = repo.route_tools(body.query, limit=body.tool_limit) if body.tool_limit else []
             return {"query": body.query, "hits": hits, "neighbors": neighbors, "tool_hints": tool_hints}
         except Exception:

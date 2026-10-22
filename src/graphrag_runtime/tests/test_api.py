@@ -64,6 +64,15 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["neighbors"][0]["local_id"], "e2")
         self.assertEqual(response.json()["tool_hints"][0]["name"], "count_events")
 
+    def test_context_keeps_its_hits_when_the_graph_walk_times_out(self):
+        def slow(ids, **kwargs):
+            raise RuntimeError("canceling statement due to statement timeout")
+        self.repo.neighbors = slow
+        response = self.client.post("/v1/context", headers=self.headers, json={"query": "exact event count", "graph_hops": 2})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["hits"][0]["chunk_id"], "c1")
+        self.assertEqual(response.json()["neighbors"], [])
+
     def test_bounds_and_unknown_fields(self):
         response = self.client.post("/v1/neighbors", headers=self.headers,
                                     json={"seeds": [{"collection_id": "axial_earthquakes", "local_id": "e1"}], "hops": 99})

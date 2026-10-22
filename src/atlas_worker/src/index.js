@@ -2,11 +2,13 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, isInstrumentInventoryQuestion, namedDas, publicHit, searchText, sourceKey, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, FULLTEXT_COLLECTION, fullTextFor, isInstrumentInventoryQuestion, namedDas, paperKey, publicHit, searchText, sourceKey, sourceKind, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
 const MAX_GRAPH_HOPS = 2;
+const OPENROUTER_TIMEOUT_MS = 110_000;
+const DEFAULT_OPENROUTER_MODELS = "nvidia/nemotron-3-ultra-550b-a55b:free,google/gemma-4-31b-it:free";
 const AXIAL_CATALOG = "http://axial.ocean.washington.edu";
 
 function corsHeaders(env, origin) {
@@ -76,7 +78,7 @@ function citations(hits) {
           : (citation.title || hit.title))),
     url: citation.url || "",
   }))).filter((citation) => {
-    const key = `${citation.id}|${citation.url}`;
+    const key = sourceKey(citation.id, citation.url);   // a paper's abstract and full text share its DOI link
     if (known.has(key)) return false;
     known.add(key);
     return true;
@@ -221,7 +223,22 @@ function selectedEvidenceHits(context, question) {
     const productHits = hits.filter((hit) => record.test(`${hit.title || ""}\n${hit.text || ""}`));
     if (productHits.length) hits = productHits;
   }
-  return hits;
+  return [...hits, ...fullTextFor(hits, context.fulltext)];
+}
+
+// The full-text layer, asked only when the evidence already holds a paper, and only for that paper's passages
+// (fullTextFor). A failure here leaves the answer to the main evidence.
+async function fullTextPassages(context, query, env) {
+  if (!selectedEvidenceHits(context, query).some(paperKey)) return [];
+  try {
+    const layer = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
+      query: searchText(query), limit: 12, collection_ids: [FULLTEXT_COLLECTION], graph_hops: 0, tool_limit: 0,
+    }, { "x-api-key": env.ATLAS_API_KEY });
+    return layer.hits || [];
+  } catch (error) {
+    console.error("full-text layer failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
 }
 
 function quickGraphAnswer(context, question) {
@@ -239,7 +256,10 @@ function quickGraphAnswer(context, question) {
     const sentenceEnd = normalized.slice(0, 420).search(/[.!?](?:\s|$)/);
     return (sentenceEnd >= 0 ? normalized.slice(0, sentenceEnd + 1) : normalized.slice(0, 420)).trim();
   };
-  const statements = hits.map((hit) => `- ${hit.title}: ${excerpt(hit.text)}`).filter((line) => !line.endsWith(": "));
+  // A paper is named, not quoted: its link leads to the paper itself.
+  const statements = hits.map((hit) => (sourceKind(hit) === "scientific literature"
+    ? `- ${hit.title} (paper; read it at its link)` : `- ${hit.title}: ${excerpt(hit.text)}`))
+    .filter((line, i, all) => !line.endsWith(": ") && all.indexOf(line) === i);   // two sections of one paper: one line
   const entities = [...new Set((context.neighbors || []).slice(0, 6)
     .map((node) => node.name || node.local_id).filter(Boolean))];
   return [
@@ -249,7 +269,7 @@ function quickGraphAnswer(context, question) {
   ].join("\n");
 }
 
-async function postJson(url, body, headers = {}) {
+async function postJson(url, body, headers = {}, timeoutMs = 55_000) {
   const result = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json", ...headers },
@@ -257,7 +277,7 @@ async function postJson(url, body, headers = {}) {
     // The first local embedding request can warm the API model cache, and the
     // full evidence-to-answer path may cross a Cloudflare Tunnel. Keep a hard
     // ceiling, but allow that one bounded end-to-end request to complete.
-    signal: AbortSignal.timeout(55_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!result.ok) throw new Error(`upstream ${result.status}`);
   return result.json();
@@ -297,14 +317,32 @@ async function generateGroqAnswer(prompt, mode, env, selected = GROQ_MODELS["gro
   return { answer: cleanAnswer(answer), model: selected.label };
 }
 
-async function generateOpenRouterAnswer(prompt, mode, env, selectedModel = env.OPENROUTER_FREE_MODEL || "z-ai/glm-5.2:free") {
+// OPENROUTER_FREE_MODEL lists free models, comma-separated, tried in order: OpenRouter retires free models (GLM 5.2
+// went in October 2026) and rate-limits them one by one, so one model's 404 or 429 moves to the next.
+async function generateOpenRouterAnswer(prompt, mode, env) {
+  const models = String(env.OPENROUTER_FREE_MODEL || DEFAULT_OPENROUTER_MODELS).split(",").map((m) => m.trim()).filter(Boolean);
+  let lastError = new Error("OpenRouter has no model configured");
+  for (const model of models) {
+    try {
+      return await generateOpenRouterModelAnswer(prompt, mode, env, model);
+    } catch (error) {
+      lastError = error;
+      console.warn("openrouter model failed", model, error instanceof Error ? error.message : "unknown");
+    }
+  }
+  throw lastError;
+}
+
+async function generateOpenRouterModelAnswer(prompt, mode, env, selectedModel) {
   if (!env.OPENROUTER_API_KEY) throw new Error("OpenRouter is not configured");
   const upstream = await postJson("https://openrouter.ai/api/v1/chat/completions", {
     model: selectedModel,
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
     max_tokens: mode === "compact" ? 3000 : 6000,   // free models often reason first, as GPT-OSS does
-  }, { authorization: `Bearer ${env.OPENROUTER_API_KEY}` });
+  // Free reasoning models answer at ~30 tokens/s here (Nemotron Ultra took 60 s for a full answer); as the last
+  // route, they get the time to finish.
+  }, { authorization: `Bearer ${env.OPENROUTER_API_KEY}` }, OPENROUTER_TIMEOUT_MS);
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("OpenRouter model returned no answer");
   return { answer: cleanAnswer(answer), model: `OpenRouter ${upstream.model || selectedModel}` };
@@ -377,6 +415,7 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
       return await generateGroqAnswer(prompt, mode, env);
     } catch (error) {
       lastError = error;
+      console.warn("groq answer failed", error instanceof Error ? error.message : "unknown");
     }
   }
   if (requestedModel === "auto" && env.OPENROUTER_API_KEY) {
@@ -458,6 +497,7 @@ export default {
         graph_hops: MAX_GRAPH_HOPS, neighbors_per_seed: isInstrumentInventoryQuestion(query) ? 16 : 8, tool_limit: 3,
       }, { "x-api-key": env.ATLAS_API_KEY });
       context.hits = (context.hits || []).map(withRouteCitations);
+      context.fulltext = await fullTextPassages(context, query, env);
       const evidenceHits = selectedEvidenceHits(context, query);
       const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
       const multiSpanSource = isDownloadQuestion(query) && isMultiSpanQuestion(query)

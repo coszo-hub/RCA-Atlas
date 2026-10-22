@@ -10,6 +10,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./migrations/001_initial.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
       - ./migrations/002_local_api_role.sql:/docker-entrypoint-initdb.d/002-api-role.sql:ro
+      - ./migrations/003_retrieval_layers.sql:/docker-entrypoint-initdb.d/003-retrieval-layers.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U graphrag_owner -d graphrag"]
       interval: 5s
