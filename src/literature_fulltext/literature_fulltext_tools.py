@@ -33,7 +33,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-EXTRACTION_VERSION = "1.0"
+EXTRACTION_VERSION = "1.1"
 REQUIRED_REASON = "abstract_relevant_but_insufficient"
 MAX_PASSAGES_LIMIT = 10
 MAX_PASSAGE_CHARS = 1400
@@ -618,7 +618,9 @@ class LiteratureFullTextToolkit:
             for number in range(1, selected_pages+1):
                 page_text=""
                 if shutil.which("pdftotext"):
-                    result=subprocess.run(["pdftotext","-f",str(number),"-l",str(number),"-layout",str(path),"-"],capture_output=True,text=True,timeout=self.timeout)
+                    # Reading order, not -layout: -layout keeps a two-column page's columns side by side, so every line spliced
+                    # the left column into the right.
+                    result=subprocess.run(["pdftotext","-f",str(number),"-l",str(number),str(path),"-"],capture_output=True,text=True,timeout=self.timeout)
                     if result.returncode==0: page_text=result.stdout
                 if len(_tokens(page_text)) < 20 and len(ocr_pages) < max_ocr_pages and shutil.which("pdftoppm") and shutil.which("tesseract"):
                     prefix=temp_dir/f"page-{number}"

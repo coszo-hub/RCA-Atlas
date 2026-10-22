@@ -355,3 +355,12 @@ test("a two-part question is searched part by part, and a summary's DOI brings i
     citations: [{ source_id: "COSZO-REF-143", url: "https://doi.org/10.1126/sciadv.add6688" }] };
   assert.deepEqual(fullTextFor([site], [passage]).map((p) => p.chunk_id), ["P1"]);
 });
+
+test("long main evidence leaves the full-text passages their own room", () => {
+  const main = Array.from({ length: 12 }, (_, i) => ({ chunk_id: `W${i}`, collection_id: "websites", title: `Page ${i}`, text: "w ".repeat(1500) }));
+  const passage = { chunk_id: "P", collection_id: "literature_fulltext", title: "Paper", text: "the stated fact" };
+  const evidence = evidencePackage([...main, passage], new Map());
+  assert.ok(evidence.endsWith("Paper (scientific literature, full text)\nthe stated fact"));
+  assert.ok(evidence.length < 12_000 + 200);                                            // with passages, 12,000 of main evidence
+  assert.ok(evidencePackage(main, new Map()).length > 17_000);                           // without, 18,000
+});

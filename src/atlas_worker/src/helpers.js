@@ -42,10 +42,14 @@ export function paperKey(hit) {
 export const FULLTEXT_COLLECTION = "literature_fulltext";
 // Four passages a paper and eight in all (a paper alone may take all eight), skipping passages that mostly repeat
 // the evidence (a paper's first page restates its abstract): with the question searched part by part, that brings
-// every asked fact of the full-text eval questions to the model, against 6 of 16 with two and three passages.
+// every asked fact of the full-text eval questions to the model (five passages missed two of them).
 const FULLTEXT_PER_PAPER = 4;
 const FULLTEXT_MAX = 8;
 const PASSAGE_CHARS = 1_800;
+// With passages the whole prompt stays near 26,000 characters (~5,800 tokens at Groq's ~4.5 characters a token):
+// Groq's free tier refuses a request over 8,000 tokens a minute, and the 34,000-character prompts were refused.
+const FULLTEXT_CHARS = 11_000;
+const MAIN_WITH_FULLTEXT_CHARS = 12_000;
 const REPEAT_RUN = 8;
 const REPEAT_SHARE = 0.2;
 const isLayer = (hit) => hit.layer === true || hit.collection_id === FULLTEXT_COLLECTION;
@@ -89,7 +93,7 @@ export function interleave(lists) {
   return out;
 }
 
-// Full-text passages for the papers already in the evidence, best first: at most three per paper and five in all,
+// Full-text passages for the papers already in the evidence, best first: at most four per paper and eight in all,
 // so the layer adds to a paper's evidence and never displaces another source.
 export function fullTextFor(hits, passages) {
   const papers = new Set([...hits.map(paperKey).filter(Boolean),
@@ -233,18 +237,18 @@ export function sourceKind(hit) {
 
 export function evidencePackage(hits, sourceNumbers) {
   const sections = [];
-  // Full-text passages come last; they bring their own room, so they never shorten the main evidence.
-  // Eight passages of ~1,500 characters (the median page) each.
-  const fullText = hits.filter(isLayer).reduce((n, hit) => n + Math.min(String(hit.text || "").length, PASSAGE_CHARS) + 120, 0);
-  let remaining = MAX_EVIDENCE_CHARS + Math.min(fullText, 13_000);
+  // Full-text passages come last, in room of their own (eight passages of ~1,300 characters, the median page):
+  // the main evidence and the passages never take each other's room.
+  const room = { main: hits.some(isLayer) ? MAIN_WITH_FULLTEXT_CHARS : MAX_EVIDENCE_CHARS, layer: FULLTEXT_CHARS };
   for (const hit of hits) {
-    if (remaining <= 0) break;
+    const budget = isLayer(hit) ? "layer" : "main";
+    if (room[budget] <= 0) continue;
     const refs = [...new Set((hit.citations || []).map((c) => sourceNumbers.get(sourceKey(c.source_id || hit.chunk_id, c.url))).filter(Boolean))];
     const kind = isLayer(hit) ? "scientific literature, full text" : sourceKind(hit);
     const header = `${hit.title}${kind ? ` (${kind})` : ""}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
-    const text = String(hit.text || "").slice(0, isLayer(hit) ? PASSAGE_CHARS : undefined).slice(0, Math.max(0, remaining - header.length));
+    const text = String(hit.text || "").slice(0, isLayer(hit) ? PASSAGE_CHARS : undefined).slice(0, Math.max(0, room[budget] - header.length));
     sections.push(`${header}${text}`);
-    remaining -= header.length + text.length + 2;
+    room[budget] -= header.length + text.length + 2;
   }
   return sections.join("\n\n");
 }

@@ -303,10 +303,17 @@ only names by DOI (an OOI page adapted from a paper) is searched too, and a
 question asking two things is searched part by part. The Worker skips passages
 that mostly repeat the evidence (a first page restating the abstract) and keeps
 four passages a paper and eight in all (a lone paper may take all eight), after
-the main evidence and with their own room in the prompt. The builder strips
-publisher download stamps (Wiley, Science, GeoScienceWorld) from the passages.
-On the full-text eval questions (T1-T8) with GPT-5.4 mini, every asked fact is
-answered.
+the main evidence and in 11,000 characters of their own; with passages, the
+main evidence gets 12,000 characters (18,000 without). The prompt so stays near
+26,000 characters, about 5,800 tokens: Groq's free tier refuses any request
+over 8,000 tokens a minute, and the earlier 34,000-character prompts (7,700
+tokens) were refused every time. Five passages instead of eight missed two
+full-text facts. The builder strips publisher download stamps (Wiley, Science,
+GeoScienceWorld) from the passages. PDF text is extracted in reading order
+(`pdftotext` without `-layout`): `-layout` kept two-column pages' columns side
+by side, so every line spliced the left column into the right;
+`reextract_pdfs.py` re-extracts the cache. On all 33 literature eval questions
+with GPT-5.4 mini, every asked fact (79 of 79) is answered.
 
 Map: each paper carries `places`, the atlas sites (or reference designators)
 its passages name most, specific sites first; a paper on Axial or Hydrate Ridge

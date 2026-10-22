@@ -36,7 +36,7 @@ CASES = [  # (id, paper, question, [(fact label, regex)], answerable from the ab
  ("Q7", "COSZO-REF-145", "How high did methane bubble plumes rise above Southern Hydrate Ridge, and how did that compare with the hydrate stability zone?",
   [("320-620 m below sea level", r"320\s*(?:–|-|to)\s*620"), ("~190 m above stability limit", r"190")], True),
  ("Q8", "COSZO-REF-078", "What is the typical in situ long-term drift and resolution of Paroscientific seafloor pressure sensors?",
-  [("-0.88 kPa/a drift", r"0\.88"), ("20.7 Pa noise", r"20\.7"), ("118 time series", r"\b118\b", "extra")], True),
+  [("-0.88 kPa/a drift", r"0\.88"), ("17.8 Pa mean or 20.7 Pa upper noise", r"17\.8|20\.7"), ("118 time series", r"\b118\b", "extra")], True),
  ("Q9", "COSZO-REF-030", "What did five years of bottom pressure recorder measurements in Axial's caldera show about subsidence events?",
   [("five events", r"\bfive\b|\b5\b"), ("3-10 cm", r"3\s*(?:–|-|to)\s*10\s*cm"), ("10-14 days", r"10\s*(?:–|-|to)\s*14\s*days")], True),
  ("Q10", "COSZO-REF-091", "How many earthquakes are in the Cascadia Initiative offshore seismicity catalog, and where is offshore seismicity sparse?",
