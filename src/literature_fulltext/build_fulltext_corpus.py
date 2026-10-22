@@ -20,6 +20,7 @@ import argparse
 import hashlib
 import json
 import re
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -105,6 +106,33 @@ def keep(text: str) -> bool:
     return len(text.split()) >= MIN_WORDS and reference_score(text) < REFERENCE_SCORE
 
 
+# Places a paper is pinned to on the map: the atlas sites and instruments its passages name most, specific sites
+# before the volcano, ridge or array they lie in.
+GENERIC = {"SITE-axial-seamount", "SITE-hydrate-ridge"}
+# A paper on the volcano or ridge as a whole is pinned at the atlas site that stands for it.
+PIN_AS = {"SITE-axial-seamount": "Axial Seamount summit caldera", "SITE-hydrate-ridge": "Southern Hydrate Ridge"}
+MAX_PLACES = 3
+
+
+def paper_places(counts: Counter, names: dict[str, str]) -> list[str]:
+    def rank(eid):
+        return (eid in GENERIC, -counts[eid], eid)
+    pinnable = [e for e in counts if e.startswith("SITE-") or REFDES.fullmatch(e)]
+    places = []
+    for e in sorted(pinnable, key=rank):
+        name = PIN_AS.get(e, names[e])
+        if name not in places:
+            places.append(name)
+    return places[:MAX_PLACES]
+
+
+def paper_keys(work: dict) -> list[str]:
+    """How the Worker names a paper it found: its DOI (lowercase, no resolver prefix) and its catalog ID."""
+    doi = (work.get("doi") or "").strip().lower()
+    doi = re.sub(r"^https?://(dx\.)?doi\.org/", "", doi)
+    return [k for k in (doi, work["document_id"]) if k]
+
+
 def build(cache: Path = CACHE, catalog: Path = CATALOG, output: Path = OUTPUT) -> dict:
     works = {}
     for line in catalog.open(encoding="utf-8"):
@@ -112,6 +140,7 @@ def build(cache: Path = CACHE, catalog: Path = CATALOG, output: Path = OUTPUT) -
         works[d["document_id"]] = d
     documents, chunks, dropped = [], [], {"short": 0, "references": 0}
     entity_records, matchers, refdes = entities()
+    names = {e["entity_id"]: e["name"] for e in entity_records}
     relationships, used, seen = [], set(), set()
     for meta_path in sorted(cache.glob("*/metadata.json")):
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
@@ -140,13 +169,19 @@ def build(cache: Path = CACHE, catalog: Path = CATALOG, output: Path = OUTPUT) -
             "source_url": work.get("source_url"), "text_source": meta.get("source_origin"),
             "document_sha256": meta.get("sha256"), "source_is_untrusted_data": True,
         })
-        for c, text in kept:
+        found = [(c, text, mentions(text, matchers, refdes)) for c, text in kept]
+        counts = Counter(eid for _, _, m in found for eid in m)
+        places = paper_places(counts, names)
+        keys = paper_keys(work)
+        documents[-1]["places"] = places
+        for c, text, m in found:
             relationships.append({"source_id": work["document_id"], "predicate": "HAS_FULLTEXT_PASSAGE", "target_id": c["chunk_id"]})
-            for eid, literal in mentions(text, matchers, refdes).items():
+            for eid, literal in m.items():
                 used.add(eid)
                 relationships.append({"source_id": c["chunk_id"], "predicate": "MENTIONS", "target_id": eid,
                                       "evidence": {"literal": literal, "page": c.get("page"), "source_sha256": meta.get("sha256")}})
             chunks.append({
+                "paper_keys": keys, "places": places,
                 "chunk_id": c["chunk_id"], "document_id": work["document_id"], "title": work["title"],
                 "doi": work.get("doi"), "source_url": work.get("source_url"), "page": c.get("page"),
                 "locator": f"page {c['page']}" if c.get("page") else None, "section_heading": c.get("section"),

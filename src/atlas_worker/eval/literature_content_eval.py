@@ -1,7 +1,8 @@
 """Literature content questions with known answers, from the supplied papers' abstracts: ask the deployed Worker and
 check that each answer carries the paper's key facts. Q1-Q10 test papers on Axial and the Cascadia margin, S1-S13
 spread across sensors and datasets (hydrophones, DAS, echosounders, oxygen, moorings, seismometers, vent samplers),
-F1-F2 ask facts beyond the abstracts. Facts marked "extra" are in the paper but not asked for: they are reported, not scored. A miss on an asked fact is a
+F1-F2 ask facts beyond the abstracts that instrument pages also give;
+T1-T8 ask facts found only in the papers' full text. Facts marked "extra" are in the paper but not asked for: they are reported, not scored. A miss on an asked fact is a
 fact left out or a wrong value; read the answers in the JSON to tell.
 Paces requests 25 s apart to stay under the free models' rate limits.
 Usage: python3 literature_content_eval.py [case ids...]"""
@@ -44,6 +45,23 @@ CASES = [  # (id, paper, question, [(fact label, regex)], answerable from the ab
   [("400 kHz", r"400\s*kHz"), ("200 kHz", r"200\s*kHz")], False),
  ("F2", "COSZO-REF-084", "Which RCA junction box was the drift-corrected (self-calibrating) pressure recorder at Axial connected to?",
   [("MJ03F", r"MJ03F")], False),
+ # T1-T8: facts only in the papers' full text (in no abstract, website or instrument record): the full-text layer.
+ ("T1", "COSZO-REF-119", "How fast did the dike propagate along Axial Seamount's north rift during the 2015 eruption, and how many earthquakes were relocated in the three months before it?",
+  [("0.55 m/s", r"0\.55\s*m"), ("~62,000 earthquakes", r"62,?000")], False),
+ ("T2", "COSZO-REF-145", "Which multibeam echosounder, at what frequency, was used to map methane bubble plumes above Southern Hydrate Ridge in the 2016 time-series study?",
+  [("Kongsberg EM302", r"EM\s?302"), ("30 kHz", r"30\s*kHz"), ("288 beams", r"\b288\b", "extra")], False),
+ ("T3", "OOI-ZOT-023", "From the 4-day OOI ocean-bottom DAS experiment, how many oceanic earthquakes per year could the DAS detect, and how far away was the repeating earthquake used for seismic ocean thermometry?",
+  [("~8,000 per year", r"8,?000"), ("~3,000 km", r"3,?000\s*km")], False),
+ ("T4", "COSZO-REF-143", "For how long has fluid flow been sustained at Pythia's Oasis, according to the gas hydrate (BSR) anomalies?",
+  [("~1,500 years", r"1,?500\s*(?:years|yr)")], False),
+ ("T5", "OOI-ZOT-129", "How long was the 2021 upwelling season off the US Pacific Northwest, and between which dates?",
+  [("189 days", r"\b189\b"), ("March 22", r"March\s*22|22\s*March"), ("September 16", r"September\s*16|16\s*September")], False),
+ ("T6", "COSZO-REF-084", "What are the nominal seafloor pressure and the calibration pressure of the self-calibrating pressure recorder at Axial Seamount?",
+  [("15,550 kPa seafloor", r"15,?550"), ("15,350 kPa calibration", r"15,?350"), ("98.7%", r"98\.7", "extra")], False),
+ ("T7", "OOI-ZOT-093", "At about what temperature and pressure does the Main Endeavour Field vent-fluid sampler study infer that subseafloor reactions buffer the fluid chemistry?",
+  [("~480 °C", r"480\s*[°◦]?\s*C"), ("~48 MPa", r"48\s*MPa")], False),
+ ("T8", "OOI-ZOT-119", "Up to what frequency did ship noise appear in the November 2021 OOI DAS recordings, and how many channels did the beamformer sub-array use?",
+  [("no energy above 60 Hz", r"60\s*Hz"), ("150 channels", r"\b150\b")], False),
  ("S1", "OOI-ZOT-103", "How many low-frequency and broadband hydrophones does the OOI network have, and at what sample rates do they record?",
   [("5 low-frequency", r"\b(five|5)\b[^.]{0,40}low"), ("6 broadband", r"\b(six|6)\b[^.]{0,40}broadband"), ("200 Hz", r"200\s*Hz"), ("64 kHz", r"64\s*kHz")], True),
  ("S2", "OOI-ZOT-089", "On the OOI broadband hydrophones on the Oregon margin, at what frequency does underwater rain noise correlate best with rain rate, and at what depths were the hydrophones?",

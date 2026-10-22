@@ -40,17 +40,33 @@ export function paperKey(hit) {
 }
 
 export const FULLTEXT_COLLECTION = "literature_fulltext";
-const FULLTEXT_PER_PAPER = 2;
-const FULLTEXT_MAX = 3;
+// Three passages a paper and five in all: on the full-text eval questions that brought 12 of 16 asked facts to the
+// model, against 6 with two and three, and more brought none.
+const FULLTEXT_PER_PAPER = 3;
+const FULLTEXT_MAX = 5;
+const isLayer = (hit) => hit.layer === true || hit.collection_id === FULLTEXT_COLLECTION;
 
-// Full-text passages for the papers already in the evidence, best first: at most two per paper and three in all,
+// The keys the passage search knows a paper by: its DOI (no resolver prefix) and its catalog or document ID.
+export function paperKeys(hits) {
+  const keys = [];
+  for (const hit of hits) {
+    if (!paperKey(hit)) continue;
+    for (const c of hit.citations || []) {
+      if (DOI_URL.test(c.url || "")) keys.push(String(c.url).toLowerCase().replace(DOI_URL, ""));
+      if (c.source_id) keys.push(String(c.source_id));
+    }
+  }
+  return [...new Set(keys)].slice(0, 12);
+}
+
+// Full-text passages for the papers already in the evidence, best first: at most three per paper and five in all,
 // so the layer adds to a paper's evidence and never displaces another source.
 export function fullTextFor(hits, passages) {
   const papers = new Set(hits.map(paperKey).filter(Boolean));
   const perPaper = new Map();
   const chosen = [];
   for (const passage of passages || []) {
-    const key = passage.collection_id === FULLTEXT_COLLECTION ? paperKey(passage) : null;
+    const key = isLayer(passage) ? paperKey(passage) : null;
     if (!key || !papers.has(key) || (perPaper.get(key) || 0) >= FULLTEXT_PER_PAPER) continue;
     perPaper.set(key, (perPaper.get(key) || 0) + 1);
     chosen.push(passage);
@@ -172,7 +188,7 @@ export function withRouteCitations(hit) {
 // literature collection and its full-text layer, and any record cited by a DOI (the papers RCA Information carries).
 export function sourceKind(hit) {
   const collection = String(hit.collection_id || "").toLowerCase();
-  if (collection === "literature" || collection === FULLTEXT_COLLECTION || hit.metadata?.source_row_type === "paper"
+  if (collection === "literature" || isLayer(hit) || hit.metadata?.source_row_type === "paper"
       || (hit.citations || []).some((c) => DOI_URL.test(c.url || ""))) return "scientific literature";
   if (collection === "websites") return "website";
   return null;
@@ -181,13 +197,12 @@ export function sourceKind(hit) {
 export function evidencePackage(hits, sourceNumbers) {
   const sections = [];
   // Full-text passages come last; they bring their own room, so they never shorten the main evidence.
-  const fullText = hits.filter((hit) => hit.collection_id === FULLTEXT_COLLECTION)
-    .reduce((n, hit) => n + String(hit.text || "").length + 120, 0);
-  let remaining = MAX_EVIDENCE_CHARS + Math.min(fullText, 4_500);
+  const fullText = hits.filter(isLayer).reduce((n, hit) => n + String(hit.text || "").length + 120, 0);
+  let remaining = MAX_EVIDENCE_CHARS + Math.min(fullText, 7_000);
   for (const hit of hits) {
     if (remaining <= 0) break;
     const refs = [...new Set((hit.citations || []).map((c) => sourceNumbers.get(sourceKey(c.source_id || hit.chunk_id, c.url))).filter(Boolean))];
-    const kind = hit.collection_id === FULLTEXT_COLLECTION ? "scientific literature, full text" : sourceKind(hit);
+    const kind = isLayer(hit) ? "scientific literature, full text" : sourceKind(hit);
     const header = `${hit.title}${kind ? ` (${kind})` : ""}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
     const text = String(hit.text || "").slice(0, Math.max(0, remaining - header.length));
     sections.push(`${header}${text}`);
@@ -291,4 +306,42 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
   return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "State clearly what the evidence does not establish."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Do not quote scientific literature word for word; state its findings in your own words and cite the paper, whose link lets the reader read it in full. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+}
+
+// The map places a paper by the atlas sites its full text names most (the passage search returns them): they are
+// added to the paper's hits, where the map looks for site names.
+export function withPlaces(hits, passages) {
+  const places = new Map();
+  for (const p of passages || []) {
+    const key = paperKey(p), names = p.metadata?.places;
+    if (key && Array.isArray(names) && names.length && !places.has(key)) places.set(key, names);
+  }
+  return hits.map((hit) => {
+    const names = places.get(paperKey(hit));
+    return names ? { ...hit, metadata: { ...(hit.metadata || {}), places: names } } : hit;
+  });
+}
+
+const COPY_RUN = 12;
+const words = (text) => String(text || "").toLowerCase().replace(/[\u2010-\u2013]/g, "-").replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+
+// How many 12-word runs of the answer appear word for word in the given texts (the papers in its evidence).
+export function copiedRuns(answer, texts) {
+  const runs = new Set();
+  for (const text of texts) {
+    const w = words(text);
+    for (let i = 0; i + COPY_RUN <= w.length; i += 1) runs.add(w.slice(i, i + COPY_RUN).join(" "));
+  }
+  const a = words(answer);
+  let n = 0;
+  for (let i = 0; i + COPY_RUN <= a.length; i += 1) if (runs.has(a.slice(i, i + COPY_RUN).join(" "))) n += 1;
+  return n;
+}
+
+const citationsIn = (text) => [...new Set((String(text || "").match(/\[(\d+(?:\s*,\s*\d+)*)\]/g) || [])
+  .flatMap((m) => m.slice(1, -1).split(",").map((x) => x.trim())))].sort();
+export const sameCitations = (a, b) => citationsIn(a).join(",") === citationsIn(b).join(",");
+
+export function rewritePrompt(answer) {
+  return `Rewrite the answer below in your own words. Keep every fact, number, unit and bracketed citation such as [2] or [1, 3] exactly, and keep its plain-text structure (labels on their own lines and hyphen bullets, no Markdown hashes or asterisks). Do not reproduce any run of more than eight words from the papers it cites. Return only the rewritten answer.\n\nAnswer:\n${answer}`;
 }

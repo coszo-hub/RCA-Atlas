@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,6 +21,13 @@ class ContextRequest(SearchRequest):
     graph_hops: int = Field(default=1, ge=0, le=3)
     neighbors_per_seed: int = Field(default=8, ge=1, le=25)
     tool_limit: int = Field(default=3, ge=0, le=10)
+
+
+class PassagesRequest(StrictModel):
+    """A question asked of the full-text layer, within the papers the main evidence found."""
+    query: str = Field(min_length=2, max_length=1_000)
+    paper_keys: list[Annotated[str, Field(min_length=1, max_length=300)]] = Field(min_length=1, max_length=12)
+    limit: int = Field(default=12, ge=1, le=30)
 
 
 class NodeSeed(StrictModel):

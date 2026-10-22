@@ -290,15 +290,30 @@ its literature-catalog ID and DOI link, so a passage cites the same source, by
 the same number, as the paper's abstract.
 
 It is a layer, not a peer of the other collections. The search leaves any
-`*_fulltext` collection out unless a request names it
-(`migrations/003_retrieval_layers.sql`), so the main evidence for every
-question is unchanged by it. The Worker asks the layer only when that evidence
-already holds a paper, and keeps at most two passages of that paper, three in
-all, after the main evidence and with their own room in the prompt.
+`*_fulltext` collection, and any chunk marked `retrieval_layer`, out unless a
+request names it (`migrations/003_retrieval_layers.sql`, `004_paper_passages.sql`).
+RCA Information's 18 full-text papers keep one chunk each in the main search;
+their other 475 chunks are marked as layer passages at normalization
+(`src/graphrag_runtime/retrieval_layers.py`), so one long paper no longer fills
+a literature answer's evidence. When the main evidence holds a paper, the
+Worker asks `paper_passages` for that paper's passages only (by DOI or catalog
+ID, the passage's `paper_keys`), ranked by the question's meaning and by its
+words weighted by how rare they are among those passages. It keeps three
+passages a paper and five in all, after the main evidence and with their own
+room in the prompt: on the full-text eval questions (T1-T8) that brings 12 of
+16 asked facts to the model.
+
+Map: each paper carries `places`, the atlas sites (or reference designators)
+its passages name most, specific sites first; a paper on Axial or Hydrate Ridge
+as a whole is placed at the summit caldera or Southern Hydrate Ridge. The
+Worker adds them to the paper's hits, where the map finds site names.
 
 Passages are never shown to readers. The Worker sends no excerpt for any paper
 (abstract or full text) and does not quote papers; the answer states findings
 in its own words and cites the paper, whose DOI link leads to the full text.
+An answer that still copies a 12-word run from a paper in its evidence is
+rewritten once, and the rewrite is kept if it copies less and keeps every
+citation.
 
 Graph: each paper `HAS_FULLTEXT_PASSAGE` its passages, and a passage `MENTIONS`
 the RCA sites, named systems (COVIS, BOTPT, the Regional Cabled Array) and

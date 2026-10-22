@@ -147,6 +147,14 @@ describe("resolveEvidence: resolution rules", () => {
     expect(ev.documents.map(d => d.n)).toEqual([3]);
   });
 
+  it("a paper is placed at the site its full text names most, from the places the Worker adds; no places, no pin", () => {
+    const ev = resolveEvidence({ answer_citations: [cite("P", "Stacked sills beneath a volcano"), cite("Q", "Slow slip in Japan")],
+      hits: [hit("P", "Stacked sills beneath a volcano", { metadata: { node_local_id: "P", places: ["Axial Seamount Central Caldera", "Axial Seamount summit caldera"] } }),
+        hit("Q", "Slow slip in Japan", { metadata: { node_local_id: "Q" } })] }, bundle);
+    expect(ev.located.map(x => [x.n, x.kind, x.id])).toEqual([[1, "site", "axial-seamount-central-caldera"]]);
+    expect(ev.documents.map(d => d.n)).toEqual([2]);
+  });
+
   it("a malformed response resolves to nothing", () => {
     expect(resolveEvidence({}, bundle)).toEqual({ located: [], documents: [], downloads: [], events: null, count: null });
     expect(resolveEvidence(null, bundle).located).toEqual([]);

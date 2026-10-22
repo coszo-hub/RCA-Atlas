@@ -15,7 +15,7 @@ from .answering import AnsweringError, GeminiAnswerer
 from .config import Settings
 from .embeddings import BGE384Provider, EmbeddingProvider, checked_embedding
 from .models import (AnswerRequest, AnswerResponse, ContextRequest, ContextResponse, NeighborsRequest, NeighborsResponse,
-                     SearchRequest, SearchResponse, ToolsRequest, ToolsResponse)
+                     PassagesRequest, SearchRequest, SearchResponse, ToolsRequest, ToolsResponse)
 from .repository import PostgresRepository, Repository
 
 LOGGER = logging.getLogger(__name__)
@@ -78,6 +78,18 @@ def create_app(*, settings: Settings | None = None, repository: Repository | Non
         except Exception:
             LOGGER.exception("search failed")
             raise HTTPException(503, "search temporarily unavailable") from None
+
+    @app.post("/v1/passages", response_model=SearchResponse)
+    def passages(body: PassagesRequest, _: None = Depends(authorize)) -> dict[str, Any]:
+        try:
+            vector = checked_embedding(embedder, body.query)
+            return {"query": body.query,
+                    "hits": repo.passages(body.query, vector, paper_keys=body.paper_keys, limit=body.limit)}
+        except HTTPException:
+            raise
+        except Exception:
+            LOGGER.exception("passage lookup failed")
+            raise HTTPException(503, "passages temporarily unavailable") from None
 
     @app.post("/v1/neighbors", response_model=NeighborsResponse)
     def neighbors(body: NeighborsRequest, _: None = Depends(authorize)) -> dict[str, Any]:

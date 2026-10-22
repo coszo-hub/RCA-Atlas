@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from retrieval_layers import LAYER, assign as assign_layer
+
 
 PRIMARY_ID_BY_FILE = {
     "capabilities.jsonl": "capability_id",
@@ -267,11 +269,14 @@ def normalize(project_root: Path, catalog_path: Path, output: Path) -> dict[str,
                 "byte_size": descriptor["byte_size"], "record_count": descriptor.get("records"),
             })
             if path.suffix == ".jsonl" and relative in node_paths:
+                layer_chunks = assign_layer(cid, [r for _, r in rows(path)]) if relative in embedding_paths else {}
                 for line_no, record in rows(path):
                     local_id = primary_id(cid, path.name, record)
                     if relative in embedding_paths and local_id in errata:
                         record = apply_errata(record, errata[local_id], f"{cid}/{local_id}")
                         corrected.add(local_id)
+                    if relative in embedding_paths and local_id in layer_chunks:
+                        record = {**record, "retrieval_layer": LAYER, "paper_keys": layer_chunks[local_id]}
                     kind = path.stem
                     payload = canonical_json(record)
                     node_record_rows.append({

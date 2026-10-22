@@ -12,6 +12,8 @@ class Repository(Protocol):
     def search(self, query: str, embedding: Sequence[float], *, limit: int,
                lexical_weight: float, vector_weight: float,
                collection_ids: Sequence[str]) -> list[dict[str, Any]]: ...
+    def passages(self, query: str, embedding: Sequence[float], *, paper_keys: Sequence[str],
+                 limit: int) -> list[dict[str, Any]]: ...
     def neighbors(self, seeds: Sequence[dict[str, str]], *, hops: int, limit: int) -> list[dict[str, Any]]: ...
     def route_tools(self, query: str, *, limit: int) -> list[dict[str, Any]]: ...
     def close(self) -> None: ...
@@ -100,6 +102,29 @@ class PostgresRepository:
                 "url": source_url,
             }]
             row["metadata"] = {"node_local_id": row.pop("node_local_id"), "locator": row.pop("locator")}
+            row["collection_label"] = COLLECTION_LABELS.get(row["collection_id"], row["collection_id"])
+            result.append(row)
+        return result
+
+    def passages(self, query: str, embedding: Sequence[float], *, paper_keys: Sequence[str],
+                 limit: int) -> list[dict[str, Any]]:
+        """Full-text passages of the named papers (DOI or document ID), best first, with the papers' map places."""
+        with self._cursor() as cursor:
+            cursor.execute("SELECT * FROM graphrag_api.paper_passages(%s,%s,%s,%s,%s)",
+                           (query, self._vector_type(embedding), list(paper_keys), limit, self.embedding_model))
+            rows = self._dict_rows(cursor)
+        result = []
+        for row in rows:
+            vector_rank, lexical_rank = row.pop("vector_rank"), row.pop("lexical_rank")
+            row["text"] = row.pop("body")
+            row["lexical_score"] = 0.0 if lexical_rank is None else 1.0 / (60.0 + lexical_rank)
+            row["vector_score"] = 0.0 if vector_rank is None else 1.0 / (60.0 + vector_rank)
+            citation_url, chunk_source_url = row.pop("citation_url"), row.pop("source_url")
+            row["citations"] = [{"source_id": row.pop("citation_source_id"), "title": row.pop("citation_title"),
+                                 "url": citation_url or chunk_source_url}]
+            row["metadata"] = {"node_local_id": row.pop("node_local_id"), "locator": row.pop("locator"),
+                               "places": row.pop("places") or []}
+            row.pop("chunk_pk", None)
             row["collection_label"] = COLLECTION_LABELS.get(row["collection_id"], row["collection_id"])
             result.append(row)
         return result

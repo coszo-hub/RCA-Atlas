@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, FULLTEXT_COLLECTION, fullTextFor, isInstrumentInventoryQuestion, namedDas, paperKey, publicHit, searchText, sourceKey, sourceKind, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, isInstrumentInventoryQuestion, namedDas, paperKey, paperKeys, publicHit, searchText, copiedRuns, rewritePrompt, sameCitations, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -229,12 +229,14 @@ function selectedEvidenceHits(context, question) {
 // The full-text layer, asked only when the evidence already holds a paper, and only for that paper's passages
 // (fullTextFor). A failure here leaves the answer to the main evidence.
 async function fullTextPassages(context, query, env) {
-  if (!selectedEvidenceHits(context, query).some(paperKey)) return [];
+  const keys = paperKeys(selectedEvidenceHits(context, query));
+  if (!keys.length) return [];
   try {
-    const layer = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/context`, {
-      query: searchText(query), limit: 12, collection_ids: [FULLTEXT_COLLECTION], graph_hops: 0, tool_limit: 0,
+    // Searched within those papers only, so another paper's passages never compete with theirs.
+    const layer = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/passages`, {
+      query: searchText(query), paper_keys: keys, limit: 12,
     }, { "x-api-key": env.ATLAS_API_KEY });
-    return layer.hits || [];
+    return (layer.hits || []).map((hit) => ({ ...hit, layer: true }));
   } catch (error) {
     console.error("full-text layer failed", error instanceof Error ? error.message : "unknown");
     return [];
@@ -378,6 +380,26 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   // have several routes, which the model lists.
   const mode = answerMode(question);
   const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product: product && namedDas(question).about });
+  const result = await completePrompt(prompt, mode, env, requestedModel);
+  return withoutCopiedPapers(result, evidenceHits, mode, env, requestedModel);
+}
+
+// Papers are cited, never reproduced: an answer that copies a 12-word run from a paper in its evidence is rewritten
+// once in its own words, and the rewrite is used if it copies less and keeps every citation.
+async function withoutCopiedPapers(result, evidenceHits, mode, env, requestedModel) {
+  const papers = evidenceHits.filter((hit) => sourceKind(hit) === "scientific literature").map((hit) => hit.text || "");
+  const copied = copiedRuns(result.answer, papers);
+  if (!copied) return result;
+  try {
+    const rewritten = await completePrompt(rewritePrompt(result.answer), mode, env, requestedModel);
+    if (copiedRuns(rewritten.answer, papers) < copied && sameCitations(rewritten.answer, result.answer)) return rewritten;
+  } catch (error) {
+    console.warn("rewrite of a copied answer failed", error instanceof Error ? error.message : "unknown");
+  }
+  return result;
+}
+
+async function completePrompt(prompt, mode, env, requestedModel = "auto") {
   if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
   const model = ["gemini-2.5-flash", "gemini-3.5-flash-lite"].includes(requestedModel)
@@ -498,6 +520,7 @@ export default {
       }, { "x-api-key": env.ATLAS_API_KEY });
       context.hits = (context.hits || []).map(withRouteCitations);
       context.fulltext = await fullTextPassages(context, query, env);
+      context.hits = withPlaces(context.hits, context.fulltext);
       const evidenceHits = selectedEvidenceHits(context, query);
       const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
       const multiSpanSource = isDownloadQuestion(query) && isMultiSpanQuestion(query)

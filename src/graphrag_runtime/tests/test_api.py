@@ -29,6 +29,12 @@ class FakeRepository:
         self.calls.append(("neighbors", ids, kwargs))
         return [{"collection_id": "axial_earthquakes", "local_id": "e2", "name": "Station", "depth": 1,
                  "direction": "out", "predicate": "OBSERVES", "source_url": None}]
+    def passages(self, query, embedding, **kwargs):
+        self.calls.append(("passages", query, kwargs))
+        return [{"chunk_id": "p1", "collection_id": "literature_fulltext", "collection_label": "literature_fulltext",
+                 "title": "Paper", "text": "Passage", "score": .5, "lexical_score": .4, "vector_score": .5,
+                 "citations": [{"source_id": "REF-1", "title": "Paper", "url": "https://doi.org/10.1/x"}],
+                 "metadata": {"node_local_id": "p1", "locator": "page 3", "places": ["Oregon Slope Base"]}}]
     def route_tools(self, query, **kwargs):
         self.calls.append(("tools", query, kwargs))
         return [{"name": "count_events", "description": "Exact count", "score": .8,
@@ -72,6 +78,14 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["hits"][0]["chunk_id"], "c1")
         self.assertEqual(response.json()["neighbors"], [])
+
+    def test_passages_are_asked_within_the_named_papers(self):
+        response = self.client.post("/v1/passages", headers=self.headers,
+                                    json={"query": "which echosounder", "paper_keys": ["10.1/x", "REF-1"], "limit": 8})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["hits"][0]["metadata"]["places"], ["Oregon Slope Base"])
+        self.assertEqual(self.repo.calls[-1], ("passages", "which echosounder", {"paper_keys": ["10.1/x", "REF-1"], "limit": 8}))
+        self.assertEqual(self.client.post("/v1/passages", headers=self.headers, json={"query": "q?", "paper_keys": []}).status_code, 422)
 
     def test_bounds_and_unknown_fields(self):
         response = self.client.post("/v1/neighbors", headers=self.headers,
