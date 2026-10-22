@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -470,26 +470,41 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
 async function liveAxialCount(question, tz) {
   const window = axialDayWindow(question, { tz });
   if (!window) return null;
-  if (window.future) return {
-    query: question, answer: `${window.label}, ${window.day.slice(0, 4)} has not happened yet, so the live Axial catalog has no earthquakes for it.`,
-    answer_model: "axial_count_events (live catalog)", answer_citations: [{ id: "axial-live-catalog", title: "Axial Seamount Earthquake Catalog", url: AXIAL_CATALOG }],
-    hits: [], neighbors: [], events: [], tool_hints: [],
-  };
+  const home = { id: "axial-live-catalog", title: "Axial Seamount Earthquake Catalog", url: AXIAL_CATALOG };
+  const notCounted = (answer) => ({ query: question, answer, answer_model: "axial_count_events (live catalog)",
+    answer_citations: [home], hits: [], neighbors: [], events: [], tool_hints: [] });
+  if (window.future) return notCounted(`${window.label}, ${window.day.slice(0, 4)} has not happened yet, so the live Axial catalog has no earthquakes for it.`);
+  // How far the catalog's locations reach; a failed read leaves the count as the files give it.
+  const coverage = fetch(AXIAL_CATALOG, { signal: AbortSignal.timeout(10_000) })
+    .then((r) => (r.ok ? r.text() : "")).then(locatedUntil).catch(() => null);
   const urls = window.stamps.map((stamp) => `${AXIAL_CATALOG}/hypo71/hypo71_${stamp}.dat`);
   // A local day can reach into a UTC day the catalog has not started yet; only a day with no file at all fails.
-  const files = (await Promise.all(urls.map(async (url, i) => {
+  const [located, files] = await Promise.all([coverage, Promise.all(urls.map(async (url, i) => {
     const upstream = await fetch(url, { signal: AbortSignal.timeout(20_000) });
     if (upstream.status === 404 && i > 0) return null;
     if (!upstream.ok) throw new Error(`Axial catalog ${upstream.status}`);
     return [await upstream.text(), window.stamps[i], url];
-  }))).filter(Boolean);
-  const events = eventsInWindow(files, window), n = events.length;
+  })).then((all) => all.filter(Boolean))]);
+  const reach = located && `${located.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+  if (located && located <= window.start) {
+    return notCounted(`The live Axial catalog cannot count ${window.label} yet: its earthquake locations reach only ${reach}, and later hours are not located yet. The catalog's site says it backfills locations for intervals when the data were diverted and later released, so the count will appear then.`);
+  }
+  const all = eventsInWindow(files, window);
+  const floor = magnitudeFloor(question);
+  const events = floor ? all.filter((e) => e.mag != null && (floor.inclusive ? e.mag >= floor.value : e.mag > floor.value)) : all;
+  const n = events.length;
+  const one = n === 1, were = one ? "was" : "were", haveBeen = one ? "has been" : "have been";
+  const what = `earthquake${one ? "" : "s"}${floor ? ` of magnitude ${floor.inclusive ? `${floor.value} or more` : `above ${floor.value}`} (of ${all.length} in all)` : ""}`;
   const utc = window.tz === "UTC";
-  const answer = utc
-    ? `There ${window.today ? "have been" : "were"} ${n} Axial Seamount earthquakes in the live catalog for ${window.day} UTC${window.today ? " so far" : ""}.`
+  let answer = utc
+    ? `There ${window.today ? haveBeen : were} ${n} Axial Seamount ${what} in the live catalog for ${window.day} UTC${window.today ? " so far" : ""}.`
     : window.today
-      ? `There have been ${n} Axial Seamount earthquakes so far today, ${window.label} (${window.zoneName}), in the live catalog.`
-      : `There were ${n} Axial Seamount earthquakes on ${window.label} (${window.zoneName}) in the live catalog.`;
+      ? `There ${haveBeen} ${n} Axial Seamount ${what} so far today, ${window.label} (${window.zoneName}), in the live catalog.`
+      : `There ${were} ${n} Axial Seamount ${what} on ${window.label} (${window.zoneName}) in the live catalog.`;
+  // Locations an hour or two behind are the catalog's normal pace; further behind, the day is only partly counted.
+  if (located && located < window.end && Date.now() - located.getTime() > 3 * 3_600_000) {
+    answer += ` The catalog's locations reach only ${reach} so far, so this counts the day only up to then.`;
+  }
   return {
     query: question,
     answer,
@@ -498,7 +513,7 @@ async function liveAxialCount(question, tz) {
       title: files.length > 1 ? `Axial Seamount Earthquake Catalog, ${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6)} UTC` : "Axial Seamount Earthquake Catalog", url })),
     hits: [], neighbors: [], events,
     tool_hints: [{ name: "axial_count_events", description: "Executed against the live daily Axial catalog", score: 1, required_arguments: ["day"],
-      input_schema: { day: window.day, tz: window.tz, label: window.label, today: window.today } }],
+      input_schema: { day: window.day, tz: window.tz, label: window.label, today: window.today, ...(floor ? { min_magnitude: floor.value, inclusive: floor.inclusive } : {}) } }],
   };
 }
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -66,6 +66,7 @@ test("the compact prompt keeps a word limit, lists every route, and names the pr
 test("the Axial count answer carries its events and keeps the count", async (t) => {
   const { default: worker } = await import("../src/index.js");
   t.mock.method(globalThis, "fetch", async (url) => {
+    if (String(url) === "http://axial.ocean.washington.edu") return new Response("with locations up to 24-Sep-2026 21:00:00 UTC");
     assert.equal(String(url), "http://axial.ocean.washington.edu/hypo71/hypo71_20260923.dat");
     return new Response(hypo71, { status: 200 });
   });
@@ -411,4 +412,32 @@ test("an Axial count understands a day as people write it", () => {
   assert.equal(axialDayWindow("How many earthquakes at Axial on February 30 2026?", { now }), null);
   assert.equal(axialDayWindow("How many earthquakes at Axial since 2015?", { now }), null);
   assert.ok(axialDayWindow("How many earthquakes at Axial on December 1 2026?", { now }).future);
+});
+
+test("an Axial count says when the catalog has not located the day yet, or only part of it, and applies a magnitude floor", async (t) => {
+  assert.equal(locatedUntil("Catalog last updated at 22-Oct-2026 22:32:06 UTC with locations up to 08-Oct-2026 11:00:00 UTC").toISOString(), "2026-10-08T11:00:00.000Z");
+  assert.equal(locatedUntil("no such line"), null);
+  assert.deepEqual(magnitudeFloor("How many earthquakes above magnitude 2 at Axial yesterday?"), { value: 2, inclusive: false });
+  assert.deepEqual(magnitudeFloor("Axial earthquakes M2.5+ on 2026-09-23"), { value: 2.5, inclusive: true });
+  assert.equal(magnitudeFloor("How many earthquakes at Axial yesterday?"), null);
+  const { default: worker } = await import("../src/index.js");
+  let reach = "08-Oct-2026 11:00:00";
+  t.mock.method(globalThis, "fetch", async (url) => String(url) === "http://axial.ocean.washington.edu"
+    ? new Response(`Catalog last updated at 22-Oct-2026 22:32:06 UTC with locations up to ${reach} UTC`)
+    : new Response(hypo71, { status: 200 }));
+  const ask = async (query) => (await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" }, body: JSON.stringify({ query }),
+  }), {})).json();
+  const notYet = await ask("How many earthquakes at Axial on 2026-10-21?");
+  assert.match(notYet.answer, /cannot count .* yet: its earthquake locations reach only 2026-10-08 11:00 UTC/);
+  assert.equal(notYet.events.length, 0);
+  reach = "23-Sep-2026 12:00:00";                                                         // the day only half located
+  const partial = await ask("How many earthquakes at Axial on 2026-09-23?");
+  assert.match(partial.answer, /^There were \d+ Axial Seamount earthquakes .* reach only 2026-09-23 12:00 UTC so far, so this counts the day only up to then\.$/);
+  reach = "24-Sep-2026 21:00:00";
+  const all = (await ask("How many earthquakes at Axial on 2026-09-23?")).events;
+  const big = await ask("How many earthquakes above magnitude 1 at Axial on 2026-09-23?");
+  assert.equal(big.events.length, all.filter((e) => e.mag > 1).length);
+  assert.ok(big.events.length < all.length);
+  assert.match(big.answer, new RegExp(`^There were ${big.events.length} Axial Seamount earthquakes of magnitude above 1 \\(of ${all.length} in all\\)`));
 });

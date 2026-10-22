@@ -325,6 +325,26 @@ export function namedDay(question, today) {
   return Number.isNaN(check.getTime()) || check.toISOString().slice(0, 10) !== day ? null : day;
 }
 
+// The catalog's home page says how far its locations reach ("with locations up to 08-Oct-2026 11:00:00 UTC"). Later
+// hours are not located yet (the site backfills them), so their daily files are empty: not quiet, uncounted.
+export function locatedUntil(html) {
+  const m = String(html || "").match(/locations up to\s+(\d{1,2})-([a-z]{3})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s*UTC/i);
+  const month = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1;
+  return month < 0 ? null : new Date(Date.UTC(+m[3], month, +m[1], +m[4], +m[5], +m[6]));
+}
+
+// A magnitude floor in a count question: "above magnitude 2" (more than 2), "M2+", "magnitude 2.5 or larger",
+// "at least M 3" (2.5 and 3 included). Null when the question sets none.
+export function magnitudeFloor(question) {
+  const q = String(question || "").toLowerCase();
+  const strict = q.match(/\b(?:above|over|greater than|larger than|bigger than|more than|exceeding)\s+(?:an?\s+)?(?:magnitude|mag|mw?)\s*(-?\d+(?:\.\d+)?)/);
+  if (strict) return { value: Number(strict[1]), inclusive: false };
+  const inclusive = q.match(/\b(?:at least|minimum)\s+(?:an?\s+)?(?:magnitude|mag|mw?)\s*(-?\d+(?:\.\d+)?)/)
+    || q.match(/\b(?:magnitude|mag|mw?)\s*(-?\d+(?:\.\d+)?)\s*(?:\+|or (?:above|more|greater|larger|bigger|higher))/)
+    || q.match(/(?:≥|>=)\s*(?:magnitude|mag|mw?)?\s*(-?\d+(?:\.\d+)?)/);
+  return inclusive ? { value: Number(inclusive[1]), inclusive: true } : null;
+}
+
 export function axialDayWindow(question, { tz, now = new Date() } = {}) {
   const q = String(question || "").toLowerCase();
   if (!/axial/.test(q) || !/(how many|count|number of)/.test(q) || !/earthquake/.test(q)) return null;
