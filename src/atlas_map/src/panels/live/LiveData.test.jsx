@@ -121,4 +121,26 @@ describe("LiveData", () => {
     await waitFor(() => expect(screen.getByTestId("chart")).toHaveTextContent("3 points"));
     expect(screen.getByText(/HHZ · 200 samples\/s/)).toBeInTheDocument();
   });
+  it("the earthquake filter asks the gateway for 3-20 Hz and shows the band, or why it could not apply it", async () => {
+    const fetchMock = vi.fn(async url => {
+      const filtered = String(url).includes("bandpass=3-20");
+      return { ok: true, status: 200, json: async () => (filtered
+        ? { points: [[1, 0.5], [2, -0.4]], rate: 200, channel: "HHZ", bandpass: { low: 3, high: 20 }, filterNote: null, message: null }
+        : { points: [[1, 5], [2, 6], [3, 4]], rate: 200, channel: "HHZ", bandpass: null, filterNote: null, message: null }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<LiveData sensor={b.sensorById.axcc1} />);
+    await waitFor(() => expect(screen.getByTestId("chart")).toHaveTextContent("3 points"));
+    fireEvent.click(screen.getByRole("button", { name: "Earthquakes 3–20 Hz" }));
+    await waitFor(() => expect(screen.getByText(/bandpass 3–20 Hz/)).toBeInTheDocument());
+    expect(screen.getByTestId("chart")).toHaveTextContent("2 points counts (filtered)");
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes("bandpass=3-20"))).toBe(true);
+  });
+  it("a channel too slow for the band says so", async () => {
+    vi.stubGlobal("fetch", routes([["/api/waveform/OO.AXCC1", { points: [[1, 5], [2, 6]], rate: 8, channel: "MHZ", requestedChannel: "HHZ", bandpass: null,
+      filterNote: "A 3–20 Hz bandpass needs 50 samples/s or more; MHZ has 8, so this is unfiltered.", message: null }]]));
+    render(<LiveData sensor={b.sensorById.axcc1} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Earthquakes 3–20 Hz" }));
+    await waitFor(() => expect(screen.getByText(/MHZ has 8, so this is unfiltered/)).toBeInTheDocument());
+  });
 });

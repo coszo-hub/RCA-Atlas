@@ -198,3 +198,51 @@ class WaveformRouteTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BandpassTest(unittest.TestCase):
+    def test_filter_keeps_the_band_and_removes_the_microseism(self):
+        import math
+        rate, n = 200.0, 12000   # one minute at 200 samples/s
+        t = [i / rate for i in range(n)]
+        microseism = [1000 * math.sin(2 * math.pi * 0.2 * x) for x in t]   # 0.2 Hz, out of band
+        quake = [10 * math.sin(2 * math.pi * 8 * x) for x in t]             # 8 Hz, in band
+        out = seismic.bandpass([a + b for a, b in zip(microseism, quake)], rate, 3, 20)
+        mid = out[n // 4: 3 * n // 4]   # away from the tapered ends
+        rms = lambda v: math.sqrt(sum(x * x for x in v) / len(v))
+        self.assertAlmostEqual(rms(mid), rms(quake[n // 4: 3 * n // 4]), delta=0.5)   # the 8 Hz signal survives, the 1000-count microseism is gone
+
+    def test_route_filters_full_rate_data_and_reports_the_band(self):
+        r = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK)))).get("/waveform/OO.AXCC1", params={"bandpass": "3-20"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["bandpass"], {"low": 3.0, "high": 20.0})
+        self.assertIsNone(r.json()["filterNote"])
+        self.assertLess(abs(sum(p[1] for p in r.json()["points"]) / len(r.json()["points"])), 100)   # the -34,000-count offset is removed
+
+    def test_a_band_beyond_the_channel_rate_is_shown_raw_with_a_note(self):
+        r = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK)))).get("/waveform/OO.AXCC1", params={"bandpass": "80-95"})
+        self.assertIsNone(r.json()["bandpass"])
+        self.assertIn("unfiltered", r.json()["filterNote"])
+        self.assertIn(-35842, [p[1] for p in r.json()["points"]])   # the raw samples
+
+    def test_bad_bands_are_refused(self):
+        app = TestClient(create_app(SETTINGS, deps(earthscope=FakeEarthScope(OK))))
+        for band in ("20-3", "0-5", "3-200", "three-twenty", "3"):
+            with self.subTest(band=band):
+                self.assertEqual(app.get("/waveform/OO.AXCC1", params={"bandpass": band}).status_code, 422)
+
+    def test_too_slow_a_channel_is_not_filtered_to_a_sliver(self):
+        # At 8 samples/s (MHZ during EarthScope's 2026-10-21 stall), 3-20 Hz would leave only 3-3.2 Hz.
+        class Slow(FakeEarthScope):
+            pass
+        es = Slow(OK)
+        app = create_app(SETTINGS, deps(earthscope=es))
+        import atlas_map_gateway.seismic as sm
+        real = sm.decode
+        sm.decode = lambda path: {**real(path), "rate": 8.0}
+        try:
+            r = TestClient(app).get("/waveform/OO.AXCC1", params={"bandpass": "3-20"})
+        finally:
+            sm.decode = real
+        self.assertIsNone(r.json()["bandpass"])
+        self.assertIn("unfiltered", r.json()["filterNote"])

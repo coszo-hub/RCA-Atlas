@@ -24,6 +24,22 @@ def decode(path: Path) -> dict:
     return {"start": start, "startMs": start_ms, "rate": float(seg.samprate), "samples": list(seg.datasamples)}
 
 
+def bandpass(samples: list[float], rate: float, low: float, high: float) -> list[float]:
+    """Zero-phase 4-pole Butterworth bandpass, so arrival times do not shift: remove the mean, taper 5% at each
+    end, filter forward and backward. The caller keeps `high` below the Nyquist frequency (rate / 2)."""
+    import numpy as np
+    from scipy.signal import butter, sosfiltfilt
+    x = np.asarray(samples, dtype=float)
+    x -= x.mean()
+    n = len(x)
+    taper = max(1, int(0.05 * n))
+    ramp = 0.5 * (1 - np.cos(np.linspace(0, np.pi, taper)))
+    x[:taper] *= ramp
+    x[n - taper:] *= ramp[::-1]
+    sos = butter(4, [low, high], btype="bandpass", fs=rate, output="sos")
+    return sosfiltfilt(sos, x).tolist()
+
+
 def discard_request_dir(file: Path, root: Path | None) -> bool:
     """Delete the EarthScope request dir holding `file` (<root>/requests/<request id>/), and nothing else.
 

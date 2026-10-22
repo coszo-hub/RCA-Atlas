@@ -163,7 +163,7 @@ def register(app, settings, deps, cache, limiter) -> None:
         return cache.get_or_set(f"files:{instrument_key}:{endpoint}:{path}", TTL["files"], fetch)
 
     @app.get("/waveform/{station_id}")
-    def waveform(station_id: str, minutes: int = 10, channel: str | None = None):
+    def waveform(station_id: str, minutes: int = 10, channel: str | None = None, bandpass: str | None = None):
         m = re.fullmatch(r"([A-Z0-9]{1,2})\.([A-Z0-9]{1,5})", station_id)
         if not m:
             return _bad("station must look like NET.STA")
@@ -175,10 +175,16 @@ def register(app, settings, deps, cache, limiter) -> None:
             return _bad(f"minutes must be between 1 and {settings.max_waveform_minutes}")
         if channel is not None and not CHANNEL_RE.fullmatch(channel):
             return _bad("channel must be three letters or digits, like HHZ")   # the toolkit would accept wildcards
+        band = None
+        if bandpass is not None:
+            bm = re.fullmatch(r"(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)", bandpass)
+            band = (float(bm.group(1)), float(bm.group(2))) if bm else None
+            if not band or not 0 < band[0] < band[1] <= 100:
+                return _bad("bandpass must be low-high in Hz, like 3-20, with 0 < low < high <= 100")
         cha = channel or known.get("channel") or "HHZ"
         end = deps.now().replace(second=0, microsecond=0) - timedelta(minutes=2)
 
-        def download(window_end: datetime, window_minutes: int, ch: str = cha) -> dict | None:
+        def download(window_end: datetime, window_minutes: int, ch: str = cha, band: tuple | None = None) -> dict | None:
             b = (window_end - timedelta(minutes=window_minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
             e = window_end.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -197,23 +203,38 @@ def register(app, settings, deps, cache, limiter) -> None:
                     seismic.discard_request_dir(file, deps.earthscope_root)
                 if not d["samples"] or not d["rate"]:
                     return None
-                times = [d["startMs"] + i * 1000.0 / d["rate"] for i in range(len(d["samples"]))]
-                tt, vv = thinning.minmax(times, d["samples"], settings.max_points)
-                return {"rate": d["rate"], "points": [[int(t), v] for t, v in zip(tt, vv)], "rawCount": len(d["samples"]),
-                        "endMs": int(times[-1]), "sourceUrl": res.get("source_url")}
-            return cache.get_or_set(f"wave:{station_id}:{ch}:{b}:{e}", TTL["waveform"], fetch)
+                samples, applied, note = d["samples"], None, None
+                if band:
+                    # Filtered on the full-rate samples, before thinning. The high corner stays under 80% of Nyquist;
+                    # a channel too slow for the band is shown raw and says so, rather than as a misleading filter.
+                    # Below 1.5x the low corner, what survives is a sliver, not the band asked for (8 samples/s
+                    # would leave 3-3.2 Hz of 3-20 Hz), so that too is shown raw.
+                    top = 0.4 * d["rate"]
+                    if min(band[1], top) < 1.5 * band[0]:
+                        note = (f"A {band[0]:g}–{band[1]:g} Hz bandpass needs {2.5 * band[1]:g} samples/s or more; "
+                                f"{ch} has {d['rate']:g}, so this is unfiltered.")
+                    else:
+                        applied = {"low": band[0], "high": min(band[1], round(top, 2))}
+                        samples = seismic.bandpass(samples, d["rate"], applied["low"], applied["high"])
+                times = [d["startMs"] + i * 1000.0 / d["rate"] for i in range(len(samples))]
+                tt, vv = thinning.minmax(times, samples, settings.max_points)
+                return {"rate": d["rate"], "points": [[int(t), round(v, 3) if band else v] for t, v in zip(tt, vv)],
+                        "rawCount": len(samples), "endMs": int(times[-1]), "sourceUrl": res.get("source_url"),
+                        "bandpass": applied, "filterNote": note}
+            key = f"wave:{station_id}:{ch}:{b}:{e}" + (f":{band[0]:g}-{band[1]:g}" if band else "")
+            return cache.get_or_set(key, TTL["waveform"], fetch)
 
         def archive_lag() -> int | None:
             # One-minute probes keep the search cheap; the first window holding data bounds the archive's delay.
             return next((lag for lag in ARCHIVE_LAG_PROBES if download(end - timedelta(minutes=lag), 1)), None)
 
-        data, lag, probed = download(end, minutes), 0, False
+        data, lag, probed = download(end, minutes, cha, band), 0, False
         # Probing costs up to eight more EarthScope calls, so it runs only for channels the map itself shows for
         # this station; a caller cycling arbitrary channel codes gets one call per window, as before.
         if data is None and cha in known.get("channels", ()):
             probed = True
             lag = cache.get_or_set(f"wave-lag:{station_id}:{cha}:{end.isoformat()}", TTL["waveform"], archive_lag)
-            data = download(end - timedelta(minutes=lag), minutes) if lag else None
+            data = download(end - timedelta(minutes=lag), minutes, cha, band) if lag else None
         # A stalled or missing channel gives way to a current lower-rate one, only for channels the map shows. A
         # 1 sample/s record spans minutes, so its newest minute may not have arrived: look back up to the stale limit.
         # One-minute probes find the channel, the outcome is cached like the archive lag, and only then is the
@@ -229,7 +250,7 @@ def register(app, settings, deps, cache, limiter) -> None:
             found = cache.get_or_set(f"wave-fallback:{station_id}:{cha}:{end.isoformat()}", TTL["waveform"], fallback)
             if found:
                 alt, back = found
-                alt_data = download(end - timedelta(minutes=back), minutes, alt)
+                alt_data = download(end - timedelta(minutes=back), minutes, alt, band)
                 if alt_data:
                     return {"station": station_id, "channel": alt, "requestedChannel": cha, **alt_data,
                             "requestedDelayMinutes": lag if data else None, "message": None}
