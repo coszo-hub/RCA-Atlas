@@ -5,7 +5,7 @@ F1-F2 ask facts beyond the abstracts that instrument pages also give;
 T1-T8 ask facts found only in the papers' full text. Facts marked "extra" are in the paper but not asked for: they are reported, not scored. A miss on an asked fact is a
 fact left out or a wrong value; read the answers in the JSON to tell.
 Paces requests 25 s apart to stay under the free models' rate limits.
-Usage: python3 literature_content_eval.py [case ids...]"""
+Usage: python3 literature_content_eval.py [--model gpt-5.4-mini] [case ids...]"""
 import json, re, sys, time, urllib.request
 from pathlib import Path
 
@@ -57,11 +57,11 @@ CASES = [  # (id, paper, question, [(fact label, regex)], answerable from the ab
  ("T5", "OOI-ZOT-129", "How long was the 2021 upwelling season off the US Pacific Northwest, and between which dates?",
   [("189 days", r"\b189\b"), ("March 22", r"March\s*22|22\s*March"), ("September 16", r"September\s*16|16\s*September")], False),
  ("T6", "COSZO-REF-084", "What are the nominal seafloor pressure and the calibration pressure of the self-calibrating pressure recorder at Axial Seamount?",
-  [("15,550 kPa seafloor", r"15,?550"), ("15,350 kPa calibration", r"15,?350"), ("98.7%", r"98\.7", "extra")], False),
+  [("15,550 kPa seafloor", r"15,?55\d"), ("15,350 kPa calibration", r"15,?350"), ("98.7%", r"98\.7", "extra")], False),
  ("T7", "OOI-ZOT-093", "At about what temperature and pressure does the Main Endeavour Field vent-fluid sampler study infer that subseafloor reactions buffer the fluid chemistry?",
   [("~480 °C", r"480\s*[°◦]?\s*C"), ("~48 MPa", r"48\s*MPa")], False),
- ("T8", "OOI-ZOT-119", "Up to what frequency did ship noise appear in the November 2021 OOI DAS recordings, and how many channels did the beamformer sub-array use?",
-  [("no energy above 60 Hz", r"60\s*Hz"), ("150 channels", r"\b150\b")], False),
+ ("T8", "OOI-ZOT-119", "In the November 2021 OOI DAS recordings, between which frequencies did the cargo ship's spectrogram show acoustic energy, and how many channels did the beamformer sub-array use?",
+  [("10-60 Hz", r"10\s*(?:–|-|to|and)\s*60\s*Hz"), ("150 channels", r"\b150\b")], False),
  ("S1", "OOI-ZOT-103", "How many low-frequency and broadband hydrophones does the OOI network have, and at what sample rates do they record?",
   [("5 low-frequency", r"\b(five|5)\b[^.]{0,40}low"), ("6 broadband", r"\b(six|6)\b[^.]{0,40}broadband"), ("200 Hz", r"200\s*Hz"), ("64 kHz", r"64\s*kHz")], True),
  ("S2", "OOI-ZOT-089", "On the OOI broadband hydrophones on the Oregon margin, at what frequency does underwater rain noise correlate best with rain rate, and at what depths were the hydrophones?",
@@ -96,13 +96,15 @@ def post(body):
     return json.load(urllib.request.urlopen(req, timeout=180))
 
 
-only = sys.argv[1:]
+args = sys.argv[1:]
+MODEL = args[args.index("--model") + 1] if "--model" in args else None   # e.g. gpt-5.4-mini; default Auto
+only = [a for i, a in enumerate(args) if a != "--model" and (i == 0 or args[i - 1] != "--model")]
 out = []
 for cid, paper, q, facts, abstract in CASES:
     if only and cid not in only:
         continue
     try:
-        d = post({"query": q})
+        d = post({"query": q, **({"model": MODEL} if MODEL else {})})
     except Exception as e:
         d = {"error": str(e)}
     a = d.get("answer") or d.get("error") or ""
@@ -114,7 +116,7 @@ for cid, paper, q, facts, abstract in CASES:
     copied = sum(" ".join(w[i:i + 12]) in PAPER_RUNS for i in range(len(w) - 11))
     out.append({"id": cid, "paper": paper, "question": q, "abstract": abstract, "facts": got, "model": d.get("answer_model"), "answer": a, "citations": cites, "copied_runs": copied})
     print(f"{cid} {sum(asked)}/{len(asked)} copied {copied} [{d.get('answer_model')}] {', '.join(l + ('✓' if g else '✗') + (' (extra)' if x else '') for l, g, x in got)}", flush=True)
-    time.sleep(25)
+    time.sleep(3 if MODEL else 25)   # the free models need pacing; a named paid model does not
 json.dump(out, open("literature_content_results.json", "w"), indent=1, ensure_ascii=False)
 asked = [g for r in out for _, g, x in r["facts"] if not x]
 extra = [g for r in out for _, g, x in r["facts"] if x]

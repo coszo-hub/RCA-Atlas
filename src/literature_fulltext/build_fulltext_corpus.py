@@ -35,6 +35,22 @@ REFERENCE_MARK = re.compile(r"\b(?:Geophys|Res\.|Lett\.|J\. |Sci\.|Bull\.|Seismo
                             r"https?://doi|Vol\.|pp\.|\bv\. \d)")
 CITED_YEAR = re.compile(r"\(\d{4}[a-z]?\)|\b(?:19|20)\d{2}[a-z]?\.")
 REFERENCE_SCORE = 3.0
+# Publisher download stamps printed on every page ("Downloaded from https://www.science.org at University of
+# Washington on September 22, 2026"; Wiley's longer one with its terms of use): noise that matched questions' words.
+STAMPS = (
+    re.compile(r"(?:\d{7,9}[0-9X]?,\s*\d{4},\s*\d+,\s*)?Downloaded from https?://\S+ by [^\[]{0,150}\[\d{2}/\d{2}/\d{4}\]\.?"
+               r"\s*See the Terms and Conditions \(\S+?\) on Wiley Online Library for rules of use; OA articles are governed"
+               r" by the applicable Creative Commons License\.?"),
+    re.compile(r"Downloaded from \S+ (?:at|by) .{0,100}? on (?:[A-Z][a-z]+ \d{1,2}, \d{4}|\d{1,2} [A-Z][a-z]+ \d{4}"
+               r"|\[\d{2}/\d{2}/\d{4}\])\.?"),
+)
+
+
+def unstamped(text: str) -> str:
+    text = text.replace("\u200b", "")                     # zero-width spaces split GeoScienceWorld's stamp URLs
+    for stamp in STAMPS:
+        text = stamp.sub(" ", text)
+    return re.sub(r"\s+", " ", text).strip()
 INSTRUMENTS = ROOT / "data/Instruments/instruments.jsonl"
 REFDES = re.compile(r"\b(?:RS|CE)\d\d[A-Z0-9]{4}-[A-Z0-9]{5}-\d\d-[A-Z0-9]{9}\b")
 # (entity id, name, aliases, needs an Axial mention in the same passage)
@@ -151,7 +167,7 @@ def build(cache: Path = CACHE, catalog: Path = CATALOG, output: Path = OUTPUT) -
         kept = []
         for line in chunk_path.open(encoding="utf-8"):
             c = json.loads(line)
-            text = re.sub(r"\s+", " ", c.get("text") or "").strip()
+            text = unstamped(re.sub(r"\s+", " ", c.get("text") or ""))
             if c["chunk_id"] in seen:              # a page whose text repeats verbatim has the same ID
                 continue
             seen.add(c["chunk_id"])

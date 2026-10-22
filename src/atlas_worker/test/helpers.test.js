@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, copiedRuns, sameCitations, rewritePrompt } from "../src/helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, copiedRuns, sameCitations, rewritePrompt, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -282,14 +282,19 @@ test("one long paper does not crowd out the others: at most two of its sections 
   assert.match(prompt, /^DAS early warning/m);
 });
 
-test("full text joins only papers already in the evidence, three passages a paper, five in all, and is never excerpted", () => {
+test("full text joins only papers already in the evidence, four passages a paper, eight in all, and is never excerpted", () => {
   const paper = (doi, n, collection = "literature_fulltext") => ({ chunk_id: `${doi}-${n}`, collection_id: collection, title: doi, text: `p${n}`,
     citations: [{ source_id: `REF-${doi}`, url: `https://doi.org/${doi}` }] });
   const evidence = [paper("10.1/a", 0, "literature"), { chunk_id: "W", collection_id: "websites", title: "W", citations: [{ source_id: "W", url: "https://x" }] },
     paper("10.1/b", 0, "arcada")];
   const passages = [paper("10.1/a", 1), paper("10.1/c", 1), paper("10.1/a", 2), paper("10.1/a", 3), paper("10.1/a", 4),
-    paper("10.1/b", 1), paper("10.1/b", 2), paper("10.1/b", 3)];
-  assert.deepEqual(fullTextFor(evidence, passages).map((p) => p.chunk_id), ["10.1/a-1", "10.1/a-2", "10.1/a-3", "10.1/b-1", "10.1/b-2"]);
+    paper("10.1/a", 5), paper("10.1/b", 1), paper("10.1/b", 2), paper("10.1/b", 3)];
+  assert.deepEqual(fullTextFor(evidence, passages).map((p) => p.chunk_id), ["10.1/a-1", "10.1/a-2", "10.1/a-3", "10.1/a-4", "10.1/b-1", "10.1/b-2", "10.1/b-3"]);
+  // A passage that mostly repeats the evidence (a first page restating the abstract) is skipped.
+  const abstract = "seafloor pressure gauges monitor vertical deformation with time but inherent instrumental drift complicates and biases geodetic interpretation";
+  const withAbstract = [{ ...evidence[0], text: abstract }];
+  const page1 = { ...paper("10.1/a", 1), text: `Key points. ${abstract}. Introduction follows.` };
+  assert.deepEqual(fullTextFor(withAbstract, [page1, paper("10.1/a", 2)]).map((p) => p.chunk_id), ["10.1/a-2"]);
   // A passage the search marks as layer counts whatever its collection (RCA Information's papers beyond their first chunk).
   assert.deepEqual(fullTextFor(evidence, [{ ...paper("10.1/b", 9, "arcada"), layer: true }]).map((p) => p.chunk_id), ["10.1/b-9"]);
   assert.deepEqual(fullTextFor(evidence, [paper("10.1/b", 9, "arcada")]), []);
@@ -345,4 +350,18 @@ test("the Worker asks the paper's passages, places the paper, and rewrites an an
   assert.equal(data.hits[0].excerpt, "");
   assert.ok(!JSON.stringify(data).includes("288 beams per swath"));                       // no passage text reaches the reader
   assert.equal(data.answer_citations.length, 1);                                         // abstract and passage: one source
+});
+
+test("a two-part question is searched part by part, and a summary's DOI brings in its paper", () => {
+  assert.deepEqual(questionParts("How fast did the dike propagate during the 2015 eruption, and how many earthquakes were relocated before it?"),
+    ["How fast did the dike propagate during the 2015 eruption", "how many earthquakes were relocated before it"]);
+  assert.deepEqual(questionParts("What is the BOTPT and where is it?"), ["What is the BOTPT and where is it?"]);
+  const a = [{ chunk_id: "1" }, { chunk_id: "2" }, { chunk_id: "3" }], b = [{ chunk_id: "9" }, { chunk_id: "2" }];
+  assert.deepEqual(interleave([a, b]).map((h) => h.chunk_id), ["1", "9", "2", "3"]);
+  const site = { chunk_id: "W", collection_id: "websites", title: "Pythias Oasis", text: "Adapted by OOI from Philip, et al., 2023, doi: 10.1126/sciadv.add6688.",
+    citations: [{ source_id: "W", url: "https://oceanobservatories.org/x" }] };
+  assert.deepEqual(paperKeys([site]), ["10.1126/sciadv.add6688"]);
+  const passage = { chunk_id: "P1", collection_id: "literature_fulltext", title: "Fluid sources", text: "flow sustained for about 1500 years",
+    citations: [{ source_id: "COSZO-REF-143", url: "https://doi.org/10.1126/sciadv.add6688" }] };
+  assert.deepEqual(fullTextFor([site], [passage]).map((p) => p.chunk_id), ["P1"]);
 });

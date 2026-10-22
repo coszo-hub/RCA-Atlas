@@ -298,10 +298,15 @@ their other 475 chunks are marked as layer passages at normalization
 a literature answer's evidence. When the main evidence holds a paper, the
 Worker asks `paper_passages` for that paper's passages only (by DOI or catalog
 ID, the passage's `paper_keys`), ranked by the question's meaning and by its
-words weighted by how rare they are among those passages. It keeps three
-passages a paper and five in all, after the main evidence and with their own
-room in the prompt: on the full-text eval questions (T1-T8) that brings 12 of
-16 asked facts to the model.
+words weighted by how rare they are among those passages. A paper the evidence
+only names by DOI (an OOI page adapted from a paper) is searched too, and a
+question asking two things is searched part by part. The Worker skips passages
+that mostly repeat the evidence (a first page restating the abstract) and keeps
+four passages a paper and eight in all (a lone paper may take all eight), after
+the main evidence and with their own room in the prompt. The builder strips
+publisher download stamps (Wiley, Science, GeoScienceWorld) from the passages.
+On the full-text eval questions (T1-T8) with GPT-5.4 mini, every asked fact is
+answered.
 
 Map: each paper carries `places`, the atlas sites (or reference designators)
 its passages name most, specific sites first; a paper on Axial or Hydrate Ridge

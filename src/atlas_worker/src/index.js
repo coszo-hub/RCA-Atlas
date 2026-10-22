@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, isInstrumentInventoryQuestion, namedDas, paperKey, paperKeys, publicHit, searchText, copiedRuns, rewritePrompt, sameCitations, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, copiedRuns, rewritePrompt, sameCitations, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -218,7 +218,9 @@ function answerLinks(question, hits) {
 function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
-  if (product) {
+  // A named DAS dataset keeps only its own records when the question is about getting its data; a science question
+  // about the recordings ("ship noise in the November 2021 DAS") keeps its papers.
+  if (product && (isDownloadQuestion(question) || answerMode(question) === "compact")) {
     const record = namedDas(question).record;
     const productHits = hits.filter((hit) => record.test(`${hit.title || ""}\n${hit.text || ""}`));
     if (productHits.length) hits = productHits;
@@ -232,11 +234,12 @@ async function fullTextPassages(context, query, env) {
   const keys = paperKeys(selectedEvidenceHits(context, query));
   if (!keys.length) return [];
   try {
-    // Searched within those papers only, so another paper's passages never compete with theirs.
-    const layer = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/passages`, {
-      query: searchText(query), paper_keys: keys, limit: 12,
-    }, { "x-api-key": env.ATLAS_API_KEY });
-    return (layer.hits || []).map((hit) => ({ ...hit, layer: true }));
+    // Searched within those papers only, so another paper's passages never compete with theirs, and part by part
+    // for a question asking two things.
+    const lists = await Promise.all(questionParts(query).map((part) => postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/passages`, {
+      query: searchText(part), paper_keys: keys, limit: 20,
+    }, { "x-api-key": env.ATLAS_API_KEY }).then((layer) => layer.hits || [])));
+    return interleave(lists).map((hit) => ({ ...hit, layer: true }));
   } catch (error) {
     console.error("full-text layer failed", error instanceof Error ? error.message : "unknown");
     return [];

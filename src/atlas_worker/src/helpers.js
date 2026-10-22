@@ -40,13 +40,23 @@ export function paperKey(hit) {
 }
 
 export const FULLTEXT_COLLECTION = "literature_fulltext";
-// Three passages a paper and five in all: on the full-text eval questions that brought 12 of 16 asked facts to the
-// model, against 6 with two and three, and more brought none.
-const FULLTEXT_PER_PAPER = 3;
-const FULLTEXT_MAX = 5;
+// Four passages a paper and eight in all (a paper alone may take all eight), skipping passages that mostly repeat
+// the evidence (a paper's first page restates its abstract): with the question searched part by part, that brings
+// every asked fact of the full-text eval questions to the model, against 6 of 16 with two and three passages.
+const FULLTEXT_PER_PAPER = 4;
+const FULLTEXT_MAX = 8;
+const PASSAGE_CHARS = 1_800;
+const REPEAT_RUN = 8;
+const REPEAT_SHARE = 0.2;
 const isLayer = (hit) => hit.layer === true || hit.collection_id === FULLTEXT_COLLECTION;
 
-// The keys the passage search knows a paper by: its DOI (no resolver prefix) and its catalog or document ID.
+// The keys the passage search knows a paper by: its DOI (no resolver prefix) and its catalog or document ID. A
+// paper the evidence only names by DOI (an OOI page "adapted from Philip et al., 2023, doi: 10.1126/...") counts
+// too: its full text answers what the summary leaves out.
+const DOI_IN_TEXT = /\b10\.\d{4,9}\/[^\s"<>,;)\]]+/gi;
+const mentionedDois = (hits) => hits.flatMap((hit) => (String(hit.text || "").match(DOI_IN_TEXT) || [])
+  .map((doi) => doi.toLowerCase().replace(/[.]+$/, "")));
+
 export function paperKeys(hits) {
   const keys = [];
   for (const hit of hits) {
@@ -56,18 +66,45 @@ export function paperKeys(hits) {
       if (c.source_id) keys.push(String(c.source_id));
     }
   }
-  return [...new Set(keys)].slice(0, 12);
+  return [...new Set([...keys, ...mentionedDois(hits)])].slice(0, 12);
+}
+
+// A question asking two things ("how fast ..., and how many ...") is searched part by part: ranked for the whole
+// question, the passage answering its second part fell behind those answering its first.
+const PART_BREAK = /,?\s+and\s+(?=(?:how|what|which|when|where|who|why)\b)|[;?]\s*/i;
+export function questionParts(question) {
+  const parts = String(question || "").split(PART_BREAK).map((p) => p.trim()).filter((p) => p.length > 12);
+  return parts.length > 1 ? parts.slice(0, 3) : [String(question || "")];
+}
+
+// Several ranked lists, alternated: each part's best passage, then each part's next, without repeats.
+export function interleave(lists) {
+  const out = [], seen = new Set();
+  for (let i = 0; lists.some((l) => i < l.length); i += 1) {
+    for (const list of lists) {
+      const hit = list[i];
+      if (hit && !seen.has(hit.chunk_id)) { seen.add(hit.chunk_id); out.push(hit); }
+    }
+  }
+  return out;
 }
 
 // Full-text passages for the papers already in the evidence, best first: at most three per paper and five in all,
 // so the layer adds to a paper's evidence and never displaces another source.
 export function fullTextFor(hits, passages) {
-  const papers = new Set(hits.map(paperKey).filter(Boolean));
+  const papers = new Set([...hits.map(paperKey).filter(Boolean),
+    ...mentionedDois(hits).map((doi) => sourceKey("", `https://doi.org/${doi}`))]);
+  const seen = runsOf(hits.map((hit) => hit.text), REPEAT_RUN);
+  const candidates = (passages || []).filter((p) => isLayer(p) && papers.has(paperKey(p)));
+  // One paper alone may fill every slot; several share them.
+  const cap = new Set(candidates.map(paperKey)).size > 1 ? FULLTEXT_PER_PAPER : FULLTEXT_MAX;
   const perPaper = new Map();
   const chosen = [];
-  for (const passage of passages || []) {
-    const key = isLayer(passage) ? paperKey(passage) : null;
-    if (!key || !papers.has(key) || (perPaper.get(key) || 0) >= FULLTEXT_PER_PAPER) continue;
+  for (const passage of candidates) {
+    const key = paperKey(passage);
+    if ((perPaper.get(key) || 0) >= cap) continue;
+    const own = [...runsOf([passage.text], REPEAT_RUN)];
+    if (own.length && own.filter((run) => seen.has(run)).length / own.length > REPEAT_SHARE) continue;
     perPaper.set(key, (perPaper.get(key) || 0) + 1);
     chosen.push(passage);
     if (chosen.length >= FULLTEXT_MAX) break;
@@ -197,14 +234,15 @@ export function sourceKind(hit) {
 export function evidencePackage(hits, sourceNumbers) {
   const sections = [];
   // Full-text passages come last; they bring their own room, so they never shorten the main evidence.
-  const fullText = hits.filter(isLayer).reduce((n, hit) => n + String(hit.text || "").length + 120, 0);
-  let remaining = MAX_EVIDENCE_CHARS + Math.min(fullText, 7_000);
+  // Eight passages of ~1,500 characters (the median page) each.
+  const fullText = hits.filter(isLayer).reduce((n, hit) => n + Math.min(String(hit.text || "").length, PASSAGE_CHARS) + 120, 0);
+  let remaining = MAX_EVIDENCE_CHARS + Math.min(fullText, 13_000);
   for (const hit of hits) {
     if (remaining <= 0) break;
     const refs = [...new Set((hit.citations || []).map((c) => sourceNumbers.get(sourceKey(c.source_id || hit.chunk_id, c.url))).filter(Boolean))];
     const kind = isLayer(hit) ? "scientific literature, full text" : sourceKind(hit);
     const header = `${hit.title}${kind ? ` (${kind})` : ""}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
-    const text = String(hit.text || "").slice(0, Math.max(0, remaining - header.length));
+    const text = String(hit.text || "").slice(0, isLayer(hit) ? PASSAGE_CHARS : undefined).slice(0, Math.max(0, remaining - header.length));
     sections.push(`${header}${text}`);
     remaining -= header.length + text.length + 2;
   }
@@ -323,15 +361,19 @@ export function withPlaces(hits, passages) {
 }
 
 const COPY_RUN = 12;
+function runsOf(texts, n) {
+  const runs = new Set();
+  for (const text of texts) {
+    const w = words(text);
+    for (let i = 0; i + n <= w.length; i += 1) runs.add(w.slice(i, i + n).join(" "));
+  }
+  return runs;
+}
 const words = (text) => String(text || "").toLowerCase().replace(/[\u2010-\u2013]/g, "-").replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
 
 // How many 12-word runs of the answer appear word for word in the given texts (the papers in its evidence).
 export function copiedRuns(answer, texts) {
-  const runs = new Set();
-  for (const text of texts) {
-    const w = words(text);
-    for (let i = 0; i + COPY_RUN <= w.length; i += 1) runs.add(w.slice(i, i + COPY_RUN).join(" "));
-  }
+  const runs = runsOf(texts, COPY_RUN);
   const a = words(answer);
   let n = 0;
   for (let i = 0; i + COPY_RUN <= a.length; i += 1) if (runs.has(a.slice(i, i + COPY_RUN).join(" "))) n += 1;
