@@ -57,3 +57,4 @@ src/atlas_ui/dist/
 /src/atlas_map/test-results/
 /src/atlas_map/playwright-report/
 /src/atlas_map/e2e/screens/
+/src/atlas_worker/eval/*_results.json
