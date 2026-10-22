@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import access, cable, das, faults, families, paths, sensors, sites, status, terrain, validate
+from . import access, cable, das, faults, families, osu_axial, paths, sensors, sites, status, terrain, validate
 from .corpus import load_jsonl
 
 
@@ -49,6 +49,7 @@ def build(out: Path, runtime: Path, data: Path) -> dict:
     index = status.load_status_index(load_jsonl(data / "Nereus" / "graphrag" / "entities.jsonl"),
                                      load_jsonl(data / "Nereus" / "graphrag" / "instrument_crosswalk.jsonl"))
     external = access.load_external(runtime)
+    external["osu_axial"] = osu_axial.load_figures()
     pi = _pi_endpoints(data)
     channels = _vertical_channels(data)
     for r in records:

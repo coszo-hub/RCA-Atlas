@@ -37,7 +37,7 @@ ALLOWED_HOSTS = {
     "erddap.dataexplorer.oceanobservatories.org", "dataexplorer.oceanobservatories.org",
     "oceanobservatories.org", "ooinet.oceanobservatories.org", "ec2.qaqc.ooi-rca.net",
     "piweb.ooirsn.uw.edu", "service.earthscope.org", "ds.iris.edu", "www.earthscope.org",
-    "interactiveoceans.washington.edu", "coszo.org", "www.coszo.org", "github.com", "doi.org",
+    "interactiveoceans.washington.edu", "axial.ceoas.oregonstate.edu", "coszo.org", "www.coszo.org", "github.com", "doi.org",
 }
 
 
@@ -157,6 +157,8 @@ def build_access(record: dict, external: dict, pi_endpoints: dict[str, list[dict
         if refdes in external["qaqc"]:
             routes.append({"kind": "qaqc", "label": "RCA QA/QC plots", "refdes": refdes,
                            "url": f"{QAQC}/", "how": "Pre-rendered charts of recent data, updated by the RCA team."})
+        if refdes in external.get("osu_axial", {}):
+            routes.append(external["osu_axial"][refdes])
         routes.append({"kind": "ooi_explorer", "label": "OOI Data Explorer", "refdes": refdes,
                        "url": f"{OOI_EXPLORER}/#ooi/search/{urllib.parse.quote(refdes)}",
                        "how": "Browse and request OOI data products for this instrument."})

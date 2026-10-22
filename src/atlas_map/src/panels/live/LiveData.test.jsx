@@ -91,6 +91,34 @@ describe("LiveData", () => {
     await waitFor(() => expect(screen.getByText(/no recent plots for this sensor/)).toBeInTheDocument());
     expect(plotCalls()).toBe(1);
   });
+  it("OSU Axial plots open below the series: plot and span pick one figure, credited to its OSU page", async () => {
+    vi.stubGlobal("fetch", routes([
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301/variables", { variables: [{ name: "t", units: "C" }], coverage: {} }],
+      ["/api/series/RS03AXBS-LJ03A-12-CTDPFB301?", { points: [[1, 7.3]], units: "C", rawCount: 1, downloadUrl: "x", message: null }],
+    ]));
+    const g = "https://axial.ceoas.oregonstate.edu/graphs/";
+    const osu = { kind: "osu_axial", label: "OSU Axial monitoring plots", url: "https://axial.ceoas.oregonstate.edu/mj03f.html", how: "", figures: [
+      { group: "Depth (de-tided pressure)", span: "7 days", url: `${g}MJ03F7DaysDET.png`, caption: "De-tided depth, last 7 days." },
+      { group: "Depth (de-tided pressure)", span: "6 months", url: `${g}MJ03FLast6MonthsDET.png`, caption: "De-tided depth, last 6 months." },
+      { group: "Tilt rate", span: "12 months", url: `${g}MJ03F-RTM-12MO.png`, caption: null },
+    ] };
+    const base = b.sensorById["base-ctd"];
+    const { container } = render(<LiveData sensor={{ ...base, access: [...base.access, osu] }} />);
+    await waitFor(() => expect(screen.getByTestId("chart")).toBeInTheDocument());
+    const details = [...container.querySelectorAll("details")].find(d => d.textContent.includes("OSU Axial monitoring plots"));
+    expect(details.querySelector("img")).toBeNull();
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    const img = await screen.findByAltText("De-tided depth, last 7 days.");
+    expect(img.getAttribute("src")).toMatch(/^https:\/\/axial\.ceoas\.oregonstate\.edu\/graphs\/MJ03F7DaysDET\.png\?t=\d+$/);
+    fireEvent.click(screen.getByRole("button", { name: "6 months" }));
+    expect(screen.getByAltText("De-tided depth, last 6 months.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("OSU plot"), { target: { value: "Tilt rate" } });
+    expect(screen.getByAltText("Tilt rate, 12 months")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "axial.ceoas.oregonstate.edu/mj03f.html" })).toHaveAttribute("href", "https://axial.ceoas.oregonstate.edu/mj03f.html");
+    fireEvent.error(screen.getByAltText("Tilt rate, 12 months"));
+    expect(screen.getByText("OSU's server did not return this plot.")).toBeInTheDocument();
+  });
   it("a seismometer offers its OOI OBS QA/QC plots below the waveform", async () => {
     const obs = "RS03CCAL-MJ03F-06-OBSBBA301";
     const f = routes([

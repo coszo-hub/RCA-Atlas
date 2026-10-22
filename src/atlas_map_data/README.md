@@ -20,6 +20,10 @@ Tests: `PYTHONPATH=src .venv/bin/python -m unittest discover -s src/atlas_map_da
 
     PYTHONPATH=src .venv/bin/python -m atlas_map_data.faults --refresh
 
+## OSU Axial monitoring plots
+
+The four Axial BOTPT pressure/tilt instruments and the four seafloor CTDs beside them get Oregon State University's plots from [axial.ceoas.oregonstate.edu](https://axial.ceoas.oregonstate.edu/) (`osu_axial.py`). OSU redraws them every 15 minutes under fixed file names. The build reads each page's figures and captions from the copy archived under `source_material/original_documents/AxialCEOAS`; the map loads the images from OSU and links each card to its OSU page. If OSU adds or renames a plot, re-archive the pages. The build fails if a figure name matches none of the group or span rules.
+
 ## Axial summit 1 m tiles (optional)
 
 These tiles are built from MBARI's AUV grid, which is supplied by the COSZO project and not stored in git. Place the `.grd` file anywhere, then run:
