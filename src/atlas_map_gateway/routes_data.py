@@ -216,13 +216,23 @@ def register(app, settings, deps, cache, limiter) -> None:
             data = download(end - timedelta(minutes=lag), minutes) if lag else None
         # A stalled or missing channel gives way to a current lower-rate one, only for channels the map shows. A
         # 1 sample/s record spans minutes, so its newest minute may not have arrived: look back up to the stale limit.
-        if probed and (data is None or lag >= STALE_MINUTES):
+        # One-minute probes find the channel, the outcome is cached like the archive lag, and only then is the
+        # requested window downloaded, once: at most 12 small probes per station and minute, never 12 full windows.
+        def fallback():
             for alt in lower_rate_channels(cha):
                 for back in (0, 15, 30, STALE_MINUTES):
-                    alt_data = download(end - timedelta(minutes=back), minutes, alt)
-                    if alt_data:
-                        return {"station": station_id, "channel": alt, "requestedChannel": cha, **alt_data,
-                                "requestedDelayMinutes": lag if data else None, "message": None}
+                    if download(end - timedelta(minutes=back), 1, alt):
+                        return [alt, back]
+            return None
+
+        if probed and (data is None or lag >= STALE_MINUTES):
+            found = cache.get_or_set(f"wave-fallback:{station_id}:{cha}:{end.isoformat()}", TTL["waveform"], fallback)
+            if found:
+                alt, back = found
+                alt_data = download(end - timedelta(minutes=back), minutes, alt)
+                if alt_data:
+                    return {"station": station_id, "channel": alt, "requestedChannel": cha, **alt_data,
+                            "requestedDelayMinutes": lag if data else None, "message": None}
         if data is None:
             return {"station": station_id, "channel": cha, "rate": None, "points": [], "rawCount": 0, "endMs": None,
                     "sourceUrl": None,

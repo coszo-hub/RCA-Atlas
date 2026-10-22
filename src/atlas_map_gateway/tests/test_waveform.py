@@ -1,4 +1,5 @@
 import dataclasses
+from datetime import datetime
 import shutil
 import tempfile
 import unittest
@@ -94,6 +95,13 @@ class WaveformRouteTest(unittest.TestCase):
         self.assertEqual((r.json()["channel"], r.json()["requestedChannel"]), ("MHZ", "HHZ"))
         self.assertEqual(r.json()["rawCount"], 12001)
         self.assertIsNone(r.json()["message"])
+        # BHZ and MHZ were probed with one-minute windows; only the MHZ window that is returned was a full download.
+        span = lambda c: (datetime.fromisoformat(c[4].replace("Z", "+00:00")) - datetime.fromisoformat(c[3].replace("Z", "+00:00"))).seconds // 60
+        lower = [(c[2], span(c)) for c in es.calls if c[2] != "HHZ"]
+        self.assertEqual(lower, [("BHZ", 1), ("BHZ", 1), ("BHZ", 1), ("BHZ", 1), ("MHZ", 1), ("MHZ", 10)])
+        es.calls.clear()
+        app.get("/waveform/OO.AXCC1", params={"minutes": 10})
+        self.assertEqual(es.calls, [])   # the fallback outcome and the window are cached
         h = app.get("/waveform/OO.AXCC1/health").json()
         self.assertTrue(h["recording"])
         self.assertEqual((h["channel"], h["requestedChannel"]), ("MHZ", "HHZ"))
