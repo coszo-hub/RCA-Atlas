@@ -370,6 +370,8 @@ test("a question about the DAS experiments in general is given each experiment's
   assert.ok(isDasOverview("what DAS experiments were done here"));
   assert.ok(!isDasOverview("what did the 2021 DAS experiment record"));                   // names one
   assert.ok(!isDasOverview("How does DAS detect whales?"));
+  assert.ok(!isDasOverview("From the 4-day OOI ocean-bottom DAS experiment, how many oceanic earthquakes per year could the DAS detect?"));
+  assert.ok(isDasOverview("Which DAS datasets are available?"));
   assert.deepEqual(DAS_EXPERIMENTS.map((e) => e.key), ["das21", "das24", "das25"]);
   const { default: worker } = await import("../src/index.js");
   const record = (year) => ({ chunk_id: `PI-${year}`, collection_id: "pi_portal", title: `${year} RCA Distributed Acoustic Sensing experiment data availability and routing`,
@@ -505,4 +507,12 @@ test("Auto answers on the paid fallback only after every free model refuses", as
   assert.equal(asked.at(-1), "api.openai.com");
   assert.ok(asked.indexOf("api.openai.com") > asked.lastIndexOf("openrouter.ai"));          // free models first
   assert.ok(asked.includes("generativelanguage.googleapis.com") && asked.includes("api.groq.com"));
+});
+
+test("a research answer names what is missing only when something is", () => {
+  const prompt = answerPrompt({ question: "Which eruptions were on the south rift?", evidence: "e", sources: [], mode: "research" });
+  assert.match(prompt, /If the evidence leaves part of the question unanswered, say in one short closing section what is missing/);
+  assert.match(prompt, /When the evidence answers the question fully, add no such section/);
+  assert.doesNotMatch(prompt, /State clearly what the evidence does not establish/);
+  assert.match(prompt, /never present a partial sum as the total/);
 });
