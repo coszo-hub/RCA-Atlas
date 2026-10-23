@@ -14,8 +14,8 @@ from pathlib import Path
 ERDDAP = "https://erddap.dataexplorer.oceanobservatories.org/erddap"
 QAQC = "https://ec2.qaqc.ooi-rca.net"
 OOI_EXPLORER = "https://dataexplorer.oceanobservatories.org"
-# Corpus channels.jsonl lists no vertical channel for most OO stations. The EarthScope inventory (cached by
-# --refresh-external) fills them in: broadband stations publish HHZ, the short-period ones (AXAS1, AXEC1, HYS11, ...) EHZ.
+# Corpus channels.jsonl gives each OO station's vertical channel; the EarthScope inventory (cached by
+# --refresh-external) fills in any it lacks: broadband stations publish HHZ, the short-period ones (AXAS1, AXEC1, HYS11, ...) EHZ.
 DEFAULT_VERTICAL_CHANNEL = "HHZ"
 VERTICAL_PREFERENCE = ("HHZ", "EHZ", "BHZ", "SHZ")
 FDSN_STATION = "https://service.earthscope.org/fdsnws/station/1/query"

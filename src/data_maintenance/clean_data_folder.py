@@ -47,6 +47,142 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
     path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 
 
+# The SEED instrument code (a channel code's second letter) says what made the channel.
+INSTRUMENT = {"H": "seismometer (high gain)", "L": "seismometer (low gain)", "N": "accelerometer", "D": "pressure sensor or hydrophone",
+              "A": "tiltmeter", "K": "temperature sensor"}
+SEISMOMETER = {"H", "L"}
+HORIZONTAL = {"N": "north", "1": "north (1)", "E": "east", "2": "east (2)"}
+
+
+def horizontal(channel: dict, instruments=SEISMOMETER | {"N"}) -> bool:
+    """A seismometer's or accelerometer's horizontal component (a BK1 temperature channel is not one)."""
+    code = channel["channel"]
+    return code[1:2] in instruments and code[2:3] in HORIZONTAL
+
+
+def by_azimuth(channels: list[dict]) -> str:
+    """'EHN at 0°; LHN, MHN, SHN at 35°': which channels point where, so disagreeing channels stay visible."""
+    groups: dict[str, list[str]] = defaultdict(list)
+    for x in sorted(channels, key=lambda x: x["channel"]):
+        groups[degrees(x.get("azimuth_deg"))].append(x["channel"])
+    return "; ".join(f"{', '.join(codes)} at {az}" for az, codes in groups.items())
+
+
+def day(value: str | None) -> str:
+    return (value or "")[:10]
+
+
+def is_open(channel: dict) -> bool:
+    return not channel.get("end_time") or channel["end_time"] > datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def degrees(value: float | None) -> str:
+    return "unknown" if value is None else f"{value:g}°"
+
+
+def epoch_groups(channels: list[dict]) -> list[tuple[tuple, list[dict]]]:
+    """Channel epochs that ran together: the same location code, sensor and dates."""
+    groups: dict[tuple, list[dict]] = defaultdict(list)
+    for x in channels:
+        groups[(x["location"], x.get("sensor_description") or "", day(x["start_time"]), day(x["end_time"]))].append(x)
+    return sorted(groups.items(), key=lambda kv: (kv[0][2], kv[0][0], kv[0][1]))
+
+
+def describe_group(key: tuple, channels: list[dict]) -> str:
+    location, sensor, start, end = key
+    rates: dict[float | None, list[str]] = defaultdict(list)
+    for x in sorted(channels, key=lambda x: x["channel"]):
+        rates[x.get("sample_rate_hz")].append(x["channel"])
+    listed = "; ".join(f"{', '.join(codes)} at {rate:g} Hz" if rate is not None else ", ".join(codes) for rate, codes in rates.items())
+    kinds = sorted({INSTRUMENT.get(x["channel"][1:2], "other") for x in channels})
+    text = f"{start} to {end or 'present'}, location code {location or '(blank)'}: {sensor or 'sensor not described'} ({', '.join(kinds)}). Channels {listed}."
+    components = [x for x in channels if horizontal(x)]
+    if components:
+        text += f" Horizontal azimuths: {by_azimuth(components)}."
+    return text
+
+
+def station_chunk(station: dict, channels: list[dict]) -> dict:
+    name = f"{station['network']}.{station['station']}"
+    lines = [f"{name} is {station.get('name') or 'a COSZO station'} at latitude {station.get('latitude')}, longitude "
+             f"{station.get('longitude')}, elevation {station.get('elevation_m')} m, from {day(station.get('start_time'))} to "
+             f"{day(station.get('end_time')) or 'present'}. Its metadata lists {len(channels)} channel epochs. Azimuth is the "
+             "direction of a horizontal component, clockwise from geographic north; dip -90° is a vertical component pointing up."]
+    lines += [describe_group(key, group) for key, group in epoch_groups(channels)]
+    return {
+        "chunk_id": f"station_metadata_{station['network']}_{station['station']}",
+        "title": f"Station metadata for {name}: channels, sensors, sample rates and orientation (azimuth, dip)",
+        "text": "\n".join(lines),
+        "entity_ids": [station["station_id"]] + [x["channel_id"] for x in channels],
+        "source_ids": station["source_ids"],
+    }
+
+
+def orientation_problems(north: list[dict], east: list[dict]) -> list[str]:
+    """What cannot be right for one sensor: its channels at different azimuths, or a north and east component of the
+    same band that are not 90° apart."""
+    problems = []
+    if len({x.get("azimuth_deg") for x in north}) > 1:
+        problems.append(f"its north channels disagree: {by_azimuth(north)}")
+    east_by_band = {x["channel"][:2]: x for x in east}
+    for n in sorted(north, key=lambda x: x["channel"]):
+        e = east_by_band.get(n["channel"][:2])
+        if e and None not in (n.get("azimuth_deg"), e.get("azimuth_deg")) and (e["azimuth_deg"] - n["azimuth_deg"]) % 360 != 90:
+            problems.append(f"{n['channel']} at {degrees(n['azimuth_deg'])} and {e['channel']} at {degrees(e['azimuth_deg'])} are not 90° apart")
+    return problems
+
+
+def orientation_chunk(stations: list[dict], by_station: dict[str, list[dict]]) -> dict:
+    """Every station's seismometer orientation in one place, for questions across the network ("which seismometers
+    are not at 0° azimuth?", "which have orientation issues?"), which no single station's record answers."""
+    rows, rotated_now, north_now, rotated_before, issues_now, issues_before = [], [], [], [], [], []
+    for station in stations:
+        name = f"{station['network']}.{station['station']}"
+        seismic = [x for x in by_station[station["station_id"]] if horizontal(x, SEISMOMETER)]
+        if not seismic:
+            continue
+        for (location, sensor, start, end), group in epoch_groups(seismic):
+            north = [x for x in group if x["channel"][2:3] in "N1"]
+            east = [x for x in group if x["channel"][2:3] in "E2"]
+            angles = {x.get("azimuth_deg") for x in north}
+            current = any(is_open(x) for x in group)
+            rotated = any(v not in (0.0, None) for v in angles)
+            problems = orientation_problems(north, east)
+            code = station["station"]
+            if problems:
+                (issues_now if current else issues_before).append(f"{code} ({'; '.join(problems)})")
+            label = f"{code} ({by_azimuth(north)})" if len(angles) > 1 else f"{code} ({degrees(next(iter(angles), None))})"
+            (rotated_now if rotated and current else north_now if current else rotated_before if rotated else []).append(label)
+            note = ("; orientation issue: " + "; ".join(problems) + ". These channels record one sensor, which has one "
+                    "orientation, so the StationXML is inconsistent; OOI would have to confirm the right azimuth" if problems
+                    else " (not aligned with north)" if rotated else "")
+            rows.append(f"- {name} ({station.get('name') or 'COSZO station'}), {sensor or 'seismometer'}, location code "
+                        f"{location or '(blank)'}, {start} to {end or 'present'}: north component {by_azimuth(north) or 'none'}, "
+                        f"east component {by_azimuth(east) or 'none'}{note}.")
+    listed = lambda items: ", ".join(dict.fromkeys(items)) or "none"
+    text = ["Seismometer orientation of every OO network station, from the stations' StationXML. Azimuth is the direction "
+            "of a horizontal component, clockwise from geographic north; a seismometer is aligned with north when its "
+            "north (N or 1) component is at 0° and its east (E or 2) component at 90°. StationXML gives an azimuth per "
+            "channel, but a station's channels at different sample rates (EH, LH, MH, SH) record one sensor with one "
+            "orientation, and its east component is 90° clockwise of its north component. A seismometer rotated from "
+            "north is not an error: its horizontal components are rotated to north and east with the recorded azimuth. "
+            "An orientation issue (an orientation problem or error) is metadata that cannot be right for one sensor.",
+            f"Seismometers with orientation issues now: {listed(issues_now)}.",
+            f"Earlier seismometer epochs with orientation issues: {listed(issues_before)}.",
+            f"Seismometers not at 0° azimuth now (rotated from north): {listed(rotated_now)}.",
+            f"Seismometers at 0° azimuth now: {listed(north_now)}.",
+            f"Earlier seismometer epochs not at 0°: {listed(rotated_before)}.",
+            "Each station's seismometer epochs:"] + rows
+    return {
+        "chunk_id": "station_metadata_seismometer_orientation",
+        "title": "Seismometer orientation (azimuth) of every OO station: orientation issues in the metadata, and which "
+                 "seismometers are not aligned with north",
+        "text": "\n".join(text),
+        "entity_ids": sorted({x["channel_id"] for chans in by_station.values() for x in chans if horizontal(x, SEISMOMETER)}),
+        "source_ids": sorted({sid for st in stations for sid in st["source_ids"]}),
+    }
+
+
 def station_graph(xml_files: list[Path], output: Path, project: Path) -> dict:
     stations: dict[str, dict] = {}
     channel_by_key: dict[tuple, dict] = {}
@@ -62,7 +198,7 @@ def station_graph(xml_files: list[Path], output: Path, project: Path) -> dict:
             "media_type": "application/xml",
             "sha256": sha256(path),
             "byte_size": path.stat().st_size,
-            "archive_path": f"../../source_material/stationxml/{path.name}",
+            "archive_path": f"../../source_material/stationxml/{path.parent.name + '/' if path.parent.name != 'stationxml' else ''}{path.name}",
             "source": text(root, "s:Source", ns),
             "sender": text(root, "s:Sender", ns),
             "created": text(root, "s:Created", ns),
@@ -124,18 +260,8 @@ def station_graph(xml_files: list[Path], output: Path, project: Path) -> dict:
     relationships = [{"relationship_id": f"{x['channel_id']}_at_{x['station_id']}", "source_id": x["channel_id"], "target_id": x["station_id"], "relationship_type": "CHANNEL_OF"} for x in channel_rows]
     by_station: dict[str, list[dict]] = defaultdict(list)
     for channel in channel_rows: by_station[channel["station_id"]].append(channel)
-    chunks = []
-    for station in station_rows:
-        channels = by_station[station["station_id"]]
-        codes = sorted({x["channel"] for x in channels})
-        sensors = sorted({x["sensor_description"] for x in channels if x.get("sensor_description")})
-        chunks.append({
-            "chunk_id": f"station_metadata_{station['network']}_{station['station']}",
-            "title": f"Station metadata for {station['network']}.{station['station']}",
-            "text": f"{station['network']}.{station['station']} is {station.get('name') or 'an OOI station'} at latitude {station.get('latitude')}, longitude {station.get('longitude')}, elevation {station.get('elevation_m')} m. The archived metadata contains {len(channels)} channel epochs with channel codes {', '.join(codes)}. Sensor descriptions include {', '.join(sensors) if sensors else 'none supplied'}.",
-            "entity_ids": [station["station_id"]] + [x["channel_id"] for x in channels],
-            "source_ids": station["source_ids"],
-        })
+    chunks = [station_chunk(station, by_station[station["station_id"]]) for station in station_rows]
+    chunks.append(orientation_chunk(station_rows, by_station))
     output.mkdir(parents=True, exist_ok=True)
     write_jsonl(output / "stations.jsonl", station_rows)
     write_jsonl(output / "channels.jsonl", channel_rows)

@@ -160,7 +160,7 @@ build can be retained for rollback. Current normalized outputs live under
 | `coszo` | `graphrag/chunks.jsonl` | PDF sources, documents, pages, figures, entities | rebuild from document inbox/originals |
 | `Datasheets` | `graphrag/chunks.jsonl` | PDF sources, pages, figures, products | rebuild from document inbox/originals |
 | `Figures` | `graphrag/chunks.jsonl` | image sources, visual records, entities | rebuild after adding curated images/descriptions |
-| `StationMetadata` | `chunks.jsonl` | stations, channel epochs, source documents | rebuild from StationXML |
+| `StationMetadata` | `chunks.jsonl` | stations, channel epochs, source documents | `build_station_metadata.py` (EarthScope StationXML) |
 | `QAQC` | `graphrag/chunks.jsonl` | capabilities, HITL notes, tool manifest | live public plot lookup; optional plot generation |
 | `Nereus` | `graphrag/chunks.jsonl` | RCA entities, observations, notes, telemetry | live allowlisted GraphQL with snapshot fallback |
 | `AxialEarthquakes` | `graphrag/chunks.jsonl` | summaries, figures, sources; full events in runtime DB | live daily/event/figure queries plus snapshot |
@@ -585,18 +585,26 @@ Builder: `src/figures_datasheets_pipeline/build_figures_graph.py`.
 
 ## Station metadata
 
-**Source and normalization.** Nineteen OOI StationXML files were parsed into
-station records and channel-epoch records. Raw XML is archived under
-`source_material/stationxml`. Station and channel fields retain network,
-station, location, channel code, start/end epoch, coordinates, orientation,
-sample rate, sensor description, instrument sensitivity, units, source file,
-and source hash.
+**Source and normalization.** The RCA stations' (AX*, HY*) channel-level StationXML comes from EarthScope's FDSN
+station service, saved under `source_material/stationxml/earthscope`; the four COSZO stations (CZ*) keep the COSZO
+and Nanometrics StationXML in `source_material/stationxml`. `src/data_maintenance/build_station_metadata.py` rebuilds
+the collection (`--refresh` fetches EarthScope again). Station and channel fields retain network, station, location,
+channel code, start/end epoch, coordinates, orientation (azimuth, dip), sample rate, sensor description, instrument
+sensitivity, units, source file, and source hash. The first build (until 2026-10-23) used 2017 StationXML that held
+only some stations' pressure and tilt channels, so no seismometer channel, sensor or azimuth was in the corpus.
 
 **Deduplication and chunking.** Repeated channel epochs are merged only when
 network, station, location, channel, start time, and end time are identical;
-all contributing source IDs remain attached. The structured layer contains 10
-stations and 388 channel epochs. One summary chunk per station lists its
-location, channel codes, epoch count, and sensor descriptions. Detailed
+all contributing source IDs remain attached. The structured layer contains 18
+stations and 663 channel epochs. One summary chunk per station lists, for each period its channels ran together,
+the sensor, channels with sample rates, and which horizontal components point where. One more chunk sets out every
+station's seismometer orientation for questions across the network that no single station's chunk answers: which
+seismometers are rotated from north (not an error, since the recorded azimuth rotates them back), and which have an
+orientation issue, metadata one sensor cannot have (its channels at different azimuths, or a north and east channel of
+one band not 90° apart). AXID1 and HYS11 list their EHN channel at 0° and their other north
+channels at 35°, as EarthScope gives them. One sensor records all of a station's channels, so this is inconsistent
+metadata, not two orientations (HYS11's EHE is at 125°, which puts its EHN's 0° out of line); the chunks keep each
+channel's value and say so. Detailed
 channel values remain atomic in `channels.jsonl`.
 
 **Graph construction.** Stations and channels become 398 entity nodes, with a
