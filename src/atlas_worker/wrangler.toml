@@ -23,7 +23,13 @@ AUTO_FALLBACK_OPENAI_MODEL = "gpt-5.4-mini"
 #   wrangler secret put ATLAS_API_KEY
 #   wrangler secret put ATLAS_API_ORIGIN
 # Optional, the OOI JupyterHub LLM through its relay (src/ooi_llm_relay); unset, the model is simply unavailable:
-#   wrangler secret put OOI_RELAY_ORIGIN
 #   wrangler secret put OOI_RELAY_TOKEN
 # Optional when Turnstile protection is added:
 #   wrangler secret put TURNSTILE_SECRET
+
+# The OOI LLM relay (src/ooi_llm_relay), reached through its named tunnel "ooi-llm-relay"
+# (a1f09c54-f537-47df-8a28-5d30931f4771) with no public hostname. The VPC service "ooi-llm-relay" points at
+# 127.0.0.1:8787 on the JupyterHub server that runs the tunnel.
+[[vpc_services]]
+binding = "OOI_RELAY"
+service_id = "01a169d3-cc78-7b72-a336-31414354a57e"

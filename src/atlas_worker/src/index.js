@@ -388,8 +388,8 @@ function quickGraphAnswer(context, question) {
   ].join("\n");
 }
 
-async function postJson(url, body, headers = {}, timeoutMs = 55_000) {
-  const result = await fetch(url, {
+async function postJson(url, body, headers = {}, timeoutMs = 55_000, fetcher = (u, init) => fetch(u, init)) {
+  const result = await fetcher(url, {
     method: "POST",
     headers: { "content-type": "application/json", ...headers },
     body: JSON.stringify(body),
@@ -420,18 +420,29 @@ const OPENROUTER_FREE_MODELS = {
   "openrouter-gemma-4-31b": "google/gemma-4-31b-it:free",
 };
 
-// The OOI JupyterHub LLM sits on OOI's private network: OOI_RELAY_ORIGIN is a Cloudflare Tunnel to
-// src/ooi_llm_relay on a JupyterHub server, which holds the OOI key, fixes the model and turns Gemma's thinking off.
-// The tunnel lives only while that server runs, so a down relay fails fast and Auto moves on.
+// The OOI JupyterHub LLM sits on OOI's private network. src/ooi_llm_relay on a JupyterHub server holds the OOI key,
+// fixes the model and turns Gemma's thinking off; a named Cloudflare Tunnel from that server is reached through the
+// Workers VPC binding OOI_RELAY (wrangler.toml), so the relay has no public address. OOI_RELAY_ORIGIN, a public
+// tunnel URL, is the older route, used only without the binding. The tunnel lives only while that server runs, so a
+// down relay fails fast and Auto moves on.
 const OOI_MODEL = "ooi-gemma-4-26b";
 
+function ooiRelay(env) {
+  if (!env.OOI_RELAY_TOKEN) return null;
+  // The VPC service sends every request to the relay's 127.0.0.1:8787 on the JupyterHub server.
+  if (env.OOI_RELAY) return { url: "http://127.0.0.1:8787/v1/chat/completions", fetcher: (u, init) => env.OOI_RELAY.fetch(u, init) };
+  if (env.OOI_RELAY_ORIGIN) return { url: `${env.OOI_RELAY_ORIGIN.replace(/\/$/, "")}/v1/chat/completions` };
+  return null;
+}
+
 async function generateOoiAnswer(prompt, mode, env) {
-  if (!env.OOI_RELAY_ORIGIN || !env.OOI_RELAY_TOKEN) throw new Error("OOI relay is not configured");
-  const upstream = await postJson(`${env.OOI_RELAY_ORIGIN.replace(/\/$/, "")}/v1/chat/completions`, {
+  const relay = ooiRelay(env);
+  if (!relay) throw new Error("OOI relay is not configured");
+  const upstream = await postJson(relay.url, {
     messages: [{ role: "user", content: prompt }],
     temperature: 0.15,
     max_tokens: mode === "compact" ? 1500 : 4000,
-  }, { authorization: `Bearer ${env.OOI_RELAY_TOKEN}` });
+  }, { authorization: `Bearer ${env.OOI_RELAY_TOKEN}` }, undefined, relay.fetcher);
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("OOI model returned no answer");
   return { answer: cleanAnswer(answer), model: "OOI Gemma 4 26B-A4B" };
@@ -524,7 +535,7 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
   // Auto answers with the OOI model first, the project's own: it answers in seconds when its relay is up. A down
   // relay (the JupyterHub server stopped, or a new tunnel URL not yet set) fails and Auto moves on to Gemini.
   let lastError;
-  if (requestedModel === "auto" && env.OOI_RELAY_ORIGIN) {
+  if (requestedModel === "auto" && ooiRelay(env)) {
     try {
       return await generateOoiAnswer(prompt, mode, env);
     } catch (error) {
