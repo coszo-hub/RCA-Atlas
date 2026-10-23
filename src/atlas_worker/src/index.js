@@ -312,15 +312,16 @@ async function typeRecords(inventory, env) {
 
 // OOI asset-management records for a question about serial numbers, deployments, cruises, calibrations or depth
 // (isAssetQuestion), which the main search ranks below web pages on the same instrument: the chunks the directory
-// names for it (assetChunkIds), by id; else the collection's best search matches.
+// names for it (assetChunkIds), by id. A question that names no instrument, type, place, cruise or depth ("what was
+// seen near the end of the deployment?") gets none: a search of the collection would lead its evidence with
+// unrelated instruments.
 async function assetRecords(question, env) {
   const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
   try {
     const ids = assetChunkIds(question, ASSET_DIRECTORY);
-    const found = ids.length
-      ? await postJson(`${api}/v1/chunks`, { collection_id: "ooi_asset_management", chunk_ids: ids }, headers)
-      : await postJson(`${api}/v1/search`, { query: searchText(question) || question, limit: 4, collection_ids: ["ooi_asset_management"] }, headers);
-    return (found.hits || []).slice(0, ids.length || 3).map(withRouteCitations);
+    if (!ids.length) return [];
+    const found = await postJson(`${api}/v1/chunks`, { collection_id: "ooi_asset_management", chunk_ids: ids }, headers);
+    return (found.hits || []).slice(0, ids.length).map(withRouteCitations);
   } catch (error) {
     console.error("asset search failed", error instanceof Error ? error.message : "unknown");
     return [];
