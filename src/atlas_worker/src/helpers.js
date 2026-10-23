@@ -436,6 +436,111 @@ export function typeInventory(question) {
   return i >= 0 && TYPE_SEARCH[i] ? { search: `${TYPE_SEARCH[i]} instrument`, record: INSTRUMENT_TYPES[i][1] } : null;
 }
 
+// "What is the serial number of the SCPR?", "when was the BOTPT last recovered?", "what was deployed on Visions 25?",
+// "which instruments are deeper than 2500 m?": OOI asset-management metadata (the ooi_asset_management collection).
+// Its records are a few hundred among 22,000, so the main search ranks web pages about the same instrument above
+// them; such a question also searches that collection (assetRecords in the Worker).
+const ASSET_WORDS = /\b(?:serial|s\/n|firmware|calibrat\w*|coefficients?|deploy\w*|redeploy\w*|recover\w*|cruises?|visions|manufactur\w*|make and model|(?:what|which)\s+model|deeper|deepest|how deep|shallower|shallowest)\b/i;
+// Makes and models ask the same records: "which CTDs are Sea-Bird SBE 16plus?".
+const MAKERS = /\b(?:sea-?bird|sbe\s?\d+\w*|teledyne|rdi|aanderaa|nortek|sunburst|satlantic|wet ?labs|g[uü]ralp|paroscientific|nobska|kongsberg|simrad|hti|benthos|sonardyne|imagenex|nanometrics|turner)\b/i;
+export const isAssetQuestion = (question) => ASSET_WORDS.test(String(question || "")) || MAKERS.test(String(question || ""));
+
+// The asset-management chunks a question needs, by id, from the directory the asset builder writes
+// (asset_directory.json): the named instrument's record (and its calibrations when asked), else the record of every
+// instrument of the named type, a site's deployment counts, a year's cruises, the depth bands asked about.
+// The RCA's places as questions name them, and the asset-management sites (TOC_L2) each one means.
+const ASSET_PLACES = [
+  [/\baxial (?:seamount )?base\b/i, /^Axial Base/], [/\bcentral caldera\b/i, /^Central Caldera/],
+  [/\beast(?:ern)? caldera\b/i, /^Eastern Caldera/], [/\bashes\b/i, /^ASHES/],
+  [/\binternational district (?:vent field )?1\b|\bint1\b/i, /^International District Vent Field 1/],
+  [/\binternational district (?:vent field )?2\b|\bint2\b/i, /^International District Vent Field 2/],
+  [/\binternational district\b(?!\s*(?:vent field\s*)?[12])/i, /^International District/],
+  [/\bslope base\b|\bosb\b/i, /^Oregon Slope Base/], [/\bsouthern hydrate\b|\bhydrate ridge\b|\bhydrate summit\b|\bshr\b/i, /^Southern Hydrate/],
+  [/\boregon offshore\b|\boffshore\b/i, /^Oregon Offshore/], [/\boregon shelf\b|\bshelf\b/i, /^Oregon Shelf/],
+  [/\baxial\b/i, /^(?:Axial|Central Caldera|Eastern Caldera|ASHES|International District)/],
+];
+// Within a place, the platform a question names.
+const ASSET_PLATFORMS = [[/\bshallow profiler\b|\b200 m platform\b/i, /Shallow Profiler/], [/\bdeep profiler\b/i, /Deep Profiler/],
+  [/\bseafloor\b|\bbenthic\b/i, /Seafloor|Benthic|Caldera|ASHES|International District/]];
+// Instrument words and the asset-management instrument types (vocab "Instrument") they mean.
+const ASSET_TYPES = [
+  [/\bctds?\b/i, /^CTD$/], [/\badcps?\b|\bcurrent profilers?\b|\bvelocity profilers?\b/i, /ADCP|Velocity Profiler/],
+  [/\bbotpts?\b|\bbpts?\b|bottom pressure and tilt|\btilt\b/i, /^Bottom Pressure and Tilt$/],
+  [/\bscprs?\b|self[- ]calibrating pressure/i, /^Self-Calibrating Pressure Recorder$/],
+  [/\baccelerometers?\b|\bscta\b/i, /Accelerometer/], [/\ba-0-a\b|\ba0a\b/i, /^A-0-A/],
+  [/broadband hydrophones?/i, /^Broadband Acoustic Receiver/], [/low[- ]frequency hydrophones?/i, /^Low Frequency Acoustic Receiver/],
+  [/\bhydrophones?\b/i, /Hydrophone/], [/broadband (?:ocean bottom )?seismometers?|\bobsbb\b/i, /^Broadband Ocean Bottom Seismometer$/],
+  [/short[- ]period (?:ocean bottom )?seismometers?|\bobssp\b/i, /^Short-Period Ocean Bottom Seismometer$/],
+  [/\bseismometers?\b|\bobs\b/i, /Seismometer/], [/\boxygen\b|\boptodes?\b|\bdosta\b/i, /^Dissolved Oxygen$/],
+  [/\bph\b/i, /pH/], [/\bpco2\b/i, /pCO2/], [/fluorometers?|chlorophyll|\bcdom\b/i, /Fluorometer/],
+  [/\bhd (?:video )?camera\b|\bcamhd\b/i, /^HD Digital Video Camera$/], [/\bcameras?\b/i, /Camera/],
+  [/\bcovis\b|vent imaging sonar/i, /^Vent Imaging Sonar$/], [/\bsonars?\b|echosounders?/i, /Sonar/],
+  [/\b(?:tidal |tide )?pressure (?:sensors?|gauges?)\b|\bprest\b/i, /^Tidal Seafloor Pressure$|^A-0-A Pressure Sensor$/],
+  [/temperature arrays?|\btmpsf\b|diffuse vent/i, /Temperature Array/], [/\btemperature sensors?\b/i, /^Temperature Sensor$/],
+  [/spectrophotometers?|\boptaa\b|\bac-s\b/i, /^Spectrophotometer$/], [/mass spectrometers?/i, /^Mass Spectrometer$/],
+  [/current meters?|velocity meters?|\bvel3d\b/i, /3-D Single Point Velocity Meter/], [/\bhpies\b|inverted echo/i, /Inverted Echo Sounder/],
+  [/osmo\w*/i, /^Osmosis-Based Water Sampler$/], [/dna sampler|\bppsdn\b/i, /DNA Sampler/],
+  [/transponders?|\bfetch\b/i, /^Acoustic Transponders$/], [/\btrhph\b|resistivity/i, /Temperature and Resistivity/],
+  [/\bthsph\b|in[- ]situ chemistry|vent fluid chemistry/i, /In-situ Chemistry/], [/\brasfl\b|interactive sampler|fluid sampler/i, /Interactive Sampler/],
+  [/benthic fluid flow|\bflobn\b/i, /^Benthic Fluid Flow$/], [/\bprofilers?\b(?!\s+\w*\s*(?:ctd|oxygen|fluorometer|ph|par))/i, /^Profiler vehicle/],
+];
+const CALIBRATION_WORDS = /\bcalibrat\w*|\bcoefficients?\b/i;
+const CRUISE_WORDS = /\bcruises?\b|\bvisions\b|\bexpeditions?\b|\b(?:deployed|recovered|installed) (?:on|during|in)\b/i;
+const SITE_COUNT_WORDS = /\b(?:most|often|how many (?:times|deployments)|number of deployments|redeploy\w*)\b/i;
+const MAX_ASSET_CHUNKS = 6;
+
+export function assetChunkIds(question, directory) {
+  const q = String(question || "");
+  if (!directory || !isAssetQuestion(q)) return [];
+  const places = ASSET_PLACES.find(([asked]) => asked.test(q));
+  const platform = ASSET_PLATFORMS.find(([asked]) => asked.test(q));
+  const atPlace = (site) => (!places || places[1].test(site)) && (!platform || platform[1].test(site));
+  const types = ASSET_TYPES.filter(([asked]) => asked.test(q)).map(([, type]) => type);
+  const named = new Set(q.match(new RegExp(REFDES_SOURCE, "g")) || []);
+  const codes = new Set((q.match(/\b[A-Z][A-Z0-9]{3,4}\b/g) || []));
+  const ofType = (i) => types.some((type) => type.test(i.instrument)) || i.codes.some((code) => codes.has(code));
+  let instruments = directory.instruments.filter((i) => named.has(i.refdes));
+  if (!instruments.length && (types.length || codes.size)) instruments = directory.instruments.filter((i) => ofType(i) && atPlace(i.site));
+  // "The Axial Base CTD", with no platform named, is the seafloor one when there is one; the profilers' CTDs are
+  // asked for as the shallow or deep profiler's.
+  if (places && !platform && instruments.length > 1) {
+    const fixed = instruments.filter((i) => !/Profiler/.test(i.site));
+    if (fixed.length) instruments = fixed;
+  }
+  const ids = [];
+  if (instruments.length && instruments.length <= 3) {
+    for (const i of instruments) {
+      ids.push(`ooi_assets_${i.refdes}`);
+      if (i.calibration && CALIBRATION_WORDS.test(q)) ids.push(`ooi_assets_calibration_${i.refdes}`);
+    }
+  } else if (instruments.length && places) {
+    // Several at a named place ("the Axial Base ADCP": the seafloor and both profiler ones): each one's record.
+    ids.push(...instruments.map((i) => `ooi_assets_${i.refdes}`));
+  } else if (instruments.length) {
+    // A type across the network ("which CTDs are SBE 16plusV2?"): the record of every instance of each type.
+    ids.push(...[...new Set(instruments.map((i) => directory.types[i.instrument]).filter(Boolean))].slice(0, 3));
+  }
+  if (places && !instruments.length && SITE_COUNT_WORDS.test(q)) {
+    ids.push(...Object.entries(directory.sites).filter(([site]) => atPlace(site)).map(([, id]) => id));
+  }
+  if (CRUISE_WORDS.test(q)) {
+    const years = [...q.matchAll(/\b(20\d\d)\b/g)].map((m) => m[1])
+      .concat([...q.matchAll(/\bvisions\s*['’]?\s*(\d\d)\b/gi)].map((m) => `20${m[1]}`));
+    ids.push(...[...new Set(years)].map((year) => directory.cruise_years[year]).filter(Boolean));
+  }
+  if (!instruments.length || instruments.length > 3) {
+    const deeper = q.match(/\b(?:deeper|below|more) than\s+(\d[\d,]*)/i), shallower = q.match(/\b(?:shallower|less) than\s+(\d[\d,]*)/i);
+    const overlaps = (band, low, high) => (band.high == null || band.high > low) && (band.low == null || band.low < high);
+    let bands = [];
+    if (deeper) bands = directory.depth_bands.filter((b) => overlaps(b, Number(deeper[1].replace(/,/g, "")), Infinity));
+    else if (shallower) bands = directory.depth_bands.filter((b) => overlaps(b, -Infinity, Number(shallower[1].replace(/,/g, ""))));
+    else if (/\bdeepest\b/i.test(q)) bands = directory.depth_bands.slice(0, 1);
+    else if (/\bshallowest\b/i.test(q)) bands = directory.depth_bands.slice(-1);
+    ids.push(...bands.map((b) => b.id));
+  }
+  return [...new Set(ids)].slice(0, MAX_ASSET_CHUNKS);
+}
+
 // "What papers used AXEC1 and AXEC2?", "which studies used the Slope Base pressure gauge?": papers that used a sensor.
 // No abstract names a sensor; the papers' full text does (by station code, reference designator or instrument code)
 // or describes it in words. Such a question asks the whole full-text layer (papersFor in the Worker).

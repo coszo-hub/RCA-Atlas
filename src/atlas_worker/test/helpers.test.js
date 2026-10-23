@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -643,4 +643,69 @@ test("a question about the papers that used a sensor finds the codes papers name
   assert.deepEqual(questionCodes("Which papers used the BOTPT at Axial?"), ["BOTPT"]);
   assert.deepEqual(questionCodes("Which OOI RCA papers used AXEC2?"), ["AXEC2"]);
   assert.equal(askedPlace("Which papers used the BOTPT at Axial?"), "Axial");
+});
+
+const ASSETS = {
+  instruments: [
+    { refdes: "RS03CCAL-MJ03F-05-BOTPTA301", name: "Axial Seamount Central Caldera Seafloor Pressure", instrument: "Bottom Pressure and Tilt", site: "Central Caldera", codes: ["BOTPT", "BOTP"], calibration: false },
+    { refdes: "RS03CCAL-MJ03F-09-SCPRAA301", name: "Central Caldera Self-Calibrating Pressure Recorder", instrument: "Self-Calibrating Pressure Recorder", site: "Central Caldera", codes: ["SCPRA", "SCPR"], calibration: false },
+    { refdes: "RS03AXBS-LJ03A-12-CTDPFB301", name: "Axial Seamount Base Seafloor CTD", instrument: "CTD", site: "Axial Base Seafloor", codes: ["CTDPF", "CTDP"], calibration: true },
+    { refdes: "RS03AXPD-DP03A-01-CTDPFL304", name: "Axial Seamount Deep Profiler CTD Profiler", instrument: "CTD", site: "Axial Base Deep Profiler Mooring", codes: ["CTDPF", "CTDP"], calibration: true },
+    { refdes: "RS01SLBS-LJ01A-12-CTDPFB101", name: "Oregon Slope Base Seafloor CTD", instrument: "CTD", site: "Oregon Slope Base Seafloor", codes: ["CTDPF", "CTDP"], calibration: true },
+    { refdes: "RS01SUM1-LJ01B-12-VEL3DB104", name: "Southern Hydrate Ridge Flank 3D Current Meter", instrument: "3-D Single Point Velocity Meter", site: "Southern Hydrate Summit 1 Seafloor", codes: ["VEL3D", "VEL3"], calibration: false },
+  ],
+  sites: { "Central Caldera": "ooi_assets_site_Central_Caldera", "Southern Hydrate Summit 1 Seafloor": "ooi_assets_site_Southern_Hydrate_Summit_1_Seafloor" },
+  types: { CTD: "ooi_assets_type_CTD" },
+  cruise_years: { 2025: "ooi_assets_cruises_2025" },
+  depth_bands: [{ low: 2000, high: null, id: "deep" }, { low: 1000, high: 2000, id: "mid" }, { low: 200, high: 1000, id: "upper" }, { low: null, high: 200, id: "shallow" }],
+};
+
+test("an asset-metadata question asks for the records the directory names: the instrument, its calibrations, a type, cruise year or depth band", () => {
+  assert.deepEqual(assetChunkIds("what is the serial number of the SCPR at axial seamount?", ASSETS), ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301"]);
+  assert.deepEqual(assetChunkIds("When was the BOTPT at Central Caldera last recovered?", ASSETS), ["ooi_assets_RS03CCAL-MJ03F-05-BOTPTA301"]);
+  assert.deepEqual(assetChunkIds("What are the calibration coefficients of the Axial Base CTD?", ASSETS),
+    ["ooi_assets_RS03AXBS-LJ03A-12-CTDPFB301", "ooi_assets_calibration_RS03AXBS-LJ03A-12-CTDPFB301"]);
+  // Up to three instances, each one's record; more, the type's record (twelve CTDs in the real directory).
+  assert.deepEqual(assetChunkIds("Which CTDs are Sea-Bird SBE 16plus?", ASSETS),
+    ["ooi_assets_RS03AXBS-LJ03A-12-CTDPFB301", "ooi_assets_RS03AXPD-DP03A-01-CTDPFL304", "ooi_assets_RS01SLBS-LJ01A-12-CTDPFB101"]);
+  assert.deepEqual(assetChunkIds("How many deployments has the Axial Base deep profiler CTD had?", ASSETS), ["ooi_assets_RS03AXPD-DP03A-01-CTDPFL304"]);
+  const many = { ...ASSETS, instruments: [...ASSETS.instruments, ...["A", "B"].map((x) => ({ ...ASSETS.instruments[2], refdes: `RS03ECAL-MJ03E-12-CTDPFB30${x}`, site: "Eastern Caldera" }))] };
+  assert.deepEqual(assetChunkIds("Which CTDs are Sea-Bird SBE 16plus?", many), ["ooi_assets_type_CTD"]);
+  assert.deepEqual(assetChunkIds("Which instruments were deployed on Visions 25?", ASSETS), ["ooi_assets_cruises_2025"]);
+  assert.deepEqual(assetChunkIds("Which instruments are deeper than 2500 m?", ASSETS), ["deep"]);
+  assert.deepEqual(assetChunkIds("Which instruments are deeper than 1500 m?", ASSETS), ["deep", "mid"]);
+  assert.deepEqual(assetChunkIds("Which instruments at Southern Hydrate Ridge have been redeployed most often?", ASSETS),
+    ["ooi_assets_site_Southern_Hydrate_Summit_1_Seafloor"]);
+  assert.deepEqual(assetChunkIds("serial number of RS01SLBS-LJ01A-12-CTDPFB101", ASSETS), ["ooi_assets_RS01SLBS-LJ01A-12-CTDPFB101"]);
+});
+
+test("other questions ask for no asset records", () => {
+  for (const q of ["which seismometers doesnt have 0 degree azimuth orientation", "what is the model of the 2015 eruption", "how many earthquakes today"]) {
+    assert.deepEqual(assetChunkIds(q, ASSETS), [], q);
+  }
+  assert.equal(isAssetQuestion("When was the BOTPT last recovered?"), true);
+  assert.equal(isAssetQuestion("Which CTDs are Sea-Bird?"), true);
+});
+
+test("an asset question fetches the directory's records by id and leads the evidence with them", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  let asked;
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    const u = String(url);
+    if (u.endsWith("/v1/context")) return Response.json({ hits: [{ chunk_id: "W", collection_id: "websites", title: "Central Caldera", text: "A page." }], neighbors: [], tool_hints: [] });
+    if (u.endsWith("/v1/passages")) return Response.json({ hits: [] });
+    if (u.endsWith("/v1/chunks")) {
+      asked = JSON.parse(init.body);
+      return Response.json({ hits: [{ chunk_id: asked.chunk_ids[0], collection_id: "ooi_asset_management", title: "SCPR", text: "serial number 001/C",
+        citations: [{ source_id: "S", title: "Deploy", url: "https://github.com/oceanobservatories/asset-management" }] }] });
+    }
+    return Response.json({ candidates: [{ content: { parts: [{ text: "Serial 001/C [1]." }] } }] });
+  });
+  const env = { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g" };
+  const res = await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "What is the serial number of the SCPR at Axial Seamount?", model: "gemini-2.5-flash" }),
+  }), env).then((r) => r.json());
+  assert.deepEqual(asked, { collection_id: "ooi_asset_management", chunk_ids: ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301"] });
+  assert.equal(res.answer_citations[0].url, "https://github.com/oceanobservatories/asset-management");
 });

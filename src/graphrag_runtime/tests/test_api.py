@@ -42,6 +42,12 @@ class FakeRepository:
                  "citations": [{"source_id": "REF-2", "title": "Paper", "url": "https://doi.org/10.1/y"}],
                  "metadata": {"node_local_id": "p2", "locator": "page 4", "places": [], "paper_key": "10.1/y",
                               "passages_naming": 3, "terms_named": ["AXEC2"]}}]
+    def chunks_by_id(self, collection_id, chunk_ids):
+        self.calls.append(("chunks_by_id", collection_id, list(chunk_ids)))
+        return [{"chunk_id": chunk_ids[0], "collection_id": collection_id, "collection_label": collection_id,
+                 "title": "BOTPT", "text": "Deployment 1", "score": 1.0, "lexical_score": 0.0, "vector_score": 0.0,
+                 "citations": [{"source_id": "S", "title": "Deploy", "url": "https://github.com/x"}],
+                 "metadata": {"node_local_id": chunk_ids[0], "locator": None, "places": []}}]
     def route_tools(self, query, **kwargs):
         self.calls.append(("tools", query, kwargs))
         return [{"name": "count_events", "description": "Exact count", "score": .8,
@@ -93,6 +99,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.repo.calls[-1], ("papers_naming", ["AXEC1", "AXEC2"], {"limit": 5}))
         for bad in ({"terms": []}, {"terms": ["AX"]}, {"terms": ["x'); DROP"]}):
             self.assertEqual(self.client.post("/v1/papers-naming", headers=self.headers, json=bad).status_code, 422)
+
+    def test_chunks_are_fetched_by_id_within_one_collection(self):
+        ids = ["ooi_assets_RS03CCAL-MJ03F-05-BOTPTA301", "ooi_assets_depth_deeper_than_2000_m"]
+        response = self.client.post("/v1/chunks", headers=self.headers, json={"collection_id": "ooi_asset_management", "chunk_ids": ids})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["hits"][0]["chunk_id"], ids[0])
+        self.assertEqual(self.repo.calls[-1], ("chunks_by_id", "ooi_asset_management", ids))
+        for bad in ({"collection_id": "ooi_asset_management", "chunk_ids": []},
+                    {"collection_id": "Bad Collection", "chunk_ids": ["x_1"]},
+                    {"collection_id": "ooi_asset_management", "chunk_ids": ["x'); DROP"]},
+                    {"collection_id": "ooi_asset_management", "chunk_ids": [f"id_{i}" for i in range(13)]}):
+            self.assertEqual(self.client.post("/v1/chunks", headers=self.headers, json=bad).status_code, 422)
 
     def test_passages_are_asked_within_the_named_papers(self):
         response = self.client.post("/v1/passages", headers=self.headers,

@@ -36,6 +36,7 @@ COLLECTION_NAMES = {
     "LiteratureFullText": ("literature_fulltext", "Scientific literature full text"),
     "Nereus/graphrag": ("nereus", "Nereus operational data"),
     "OOIDASGeometry": ("ooi_das_geometry", "OOI RCA OptaSense DAS channel geometry"),
+    "OOIAssetManagement": ("ooi_asset_management", "OOI asset-management (deployments, serial numbers, calibrations)"),
     "PIPortal": ("pi_portal", "RCA PI data portal"),
     "QAQC/graphrag": ("qaqc", "RCA QA/QC capabilities"),
     "StationMetadata": ("station_metadata", "OOI StationXML metadata"),

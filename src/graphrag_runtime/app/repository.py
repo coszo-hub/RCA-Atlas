@@ -15,6 +15,7 @@ class Repository(Protocol):
     def passages(self, query: str, embedding: Sequence[float], *, paper_keys: Sequence[str],
                  limit: int) -> list[dict[str, Any]]: ...
     def papers_naming(self, terms: Sequence[str], *, limit: int) -> list[dict[str, Any]]: ...
+    def chunks_by_id(self, collection_id: str, chunk_ids: Sequence[str]) -> list[dict[str, Any]]: ...
     def neighbors(self, seeds: Sequence[dict[str, str]], *, hops: int, limit: int) -> list[dict[str, Any]]: ...
     def route_tools(self, query: str, *, limit: int) -> list[dict[str, Any]]: ...
     def close(self) -> None: ...
@@ -120,6 +121,25 @@ class PostgresRepository:
             row["text"] = row.pop("body")
             row["lexical_score"] = 0.0 if lexical_rank is None else 1.0 / (60.0 + lexical_rank)
             row["vector_score"] = 0.0 if vector_rank is None else 1.0 / (60.0 + vector_rank)
+            citation_url, chunk_source_url = row.pop("citation_url"), row.pop("source_url")
+            row["citations"] = [{"source_id": row.pop("citation_source_id"), "title": row.pop("citation_title"),
+                                 "url": citation_url or chunk_source_url}]
+            row["metadata"] = {"node_local_id": row.pop("node_local_id"), "locator": row.pop("locator"),
+                               "places": row.pop("places") or []}
+            row.pop("chunk_pk", None)
+            row["collection_label"] = COLLECTION_LABELS.get(row["collection_id"], row["collection_id"])
+            result.append(row)
+        return result
+
+    def chunks_by_id(self, collection_id: str, chunk_ids: Sequence[str]) -> list[dict[str, Any]]:
+        """The collection's chunks with these ids, in the order asked; ids it lacks are left out."""
+        with self._cursor() as cursor:
+            cursor.execute("SELECT * FROM graphrag_api.chunks_by_id(%s,%s)", (collection_id, list(chunk_ids)))
+            rows = self._dict_rows(cursor)
+        result = []
+        for row in rows:
+            row["text"] = row.pop("body")
+            row["score"], row["lexical_score"], row["vector_score"] = 1.0, 0.0, 0.0
             citation_url, chunk_source_url = row.pop("citation_url"), row.pop("source_url")
             row["citations"] = [{"source_id": row.pop("citation_source_id"), "title": row.pop("citation_title"),
                                  "url": citation_url or chunk_source_url}]

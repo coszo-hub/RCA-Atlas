@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from .answering import AnsweringError, GeminiAnswerer
 from .config import Settings
 from .embeddings import BGE384Provider, EmbeddingProvider, checked_embedding
-from .models import (AnswerRequest, AnswerResponse, ContextRequest, ContextResponse, NeighborsRequest, NeighborsResponse,
+from .models import (AnswerRequest, AnswerResponse, ChunksByIdRequest, ContextRequest, ContextResponse, NeighborsRequest, NeighborsResponse,
                      PapersNamingRequest, PassagesRequest, SearchRequest, SearchResponse, ToolsRequest, ToolsResponse)
 from .repository import PostgresRepository, Repository
 
@@ -98,6 +98,14 @@ def create_app(*, settings: Settings | None = None, repository: Repository | Non
         except Exception:
             LOGGER.exception("papers-naming lookup failed")
             raise HTTPException(503, "paper lookup temporarily unavailable") from None
+
+    @app.post("/v1/chunks", response_model=SearchResponse)
+    def chunks_by_id(body: ChunksByIdRequest, _: None = Depends(authorize)) -> dict[str, Any]:
+        try:
+            return {"query": " ".join(body.chunk_ids), "hits": repo.chunks_by_id(body.collection_id, body.chunk_ids)}
+        except Exception:
+            LOGGER.exception("chunk lookup failed")
+            raise HTTPException(503, "chunk lookup temporarily unavailable") from None
 
     @app.post("/v1/neighbors", response_model=NeighborsResponse)
     def neighbors(body: NeighborsRequest, _: None = Depends(authorize)) -> dict[str, Any]:

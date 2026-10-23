@@ -36,6 +36,12 @@ class PapersNamingRequest(StrictModel):
     limit: int = Field(default=10, ge=1, le=20)
 
 
+class ChunksByIdRequest(StrictModel):
+    """Chunks of one collection by id, in the order asked (the OOI asset-management chunks the Worker knows by name)."""
+    collection_id: str = Field(pattern=r"^[a-z0-9_]{2,60}$")
+    chunk_ids: list[Annotated[str, Field(pattern=r"^[A-Za-z0-9_.:-]{3,120}$")]] = Field(min_length=1, max_length=12)
+
+
 class NodeSeed(StrictModel):
     collection_id: str = Field(min_length=1, max_length=100)
     local_id: str = Field(min_length=1, max_length=500)

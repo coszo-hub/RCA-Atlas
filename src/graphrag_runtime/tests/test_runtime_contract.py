@@ -12,19 +12,19 @@ class RuntimeContractTests(unittest.TestCase):
     def test_real_normalized_build_has_audited_counts(self):
         manifest = json.loads((NORMALIZED / "build_manifest.json").read_text())
         self.assertTrue(manifest["passed"])
-        self.assertEqual(manifest["counts"]["collections"], 17)
-        self.assertEqual(manifest["counts"]["source_files"], 117)
-        self.assertEqual(manifest["counts"]["node_records"], 39_726)
-        self.assertEqual(manifest["counts"]["nodes"], 37_974)
-        self.assertEqual(manifest["counts"]["chunks"], 21_819)
-        self.assertEqual(manifest["counts"]["edge_records"], 47_217)
-        self.assertEqual(manifest["counts"]["edge_facts"], 46_513)
+        self.assertEqual(manifest["counts"]["collections"], 18)
+        self.assertEqual(manifest["counts"]["source_files"], 121)
+        self.assertEqual(manifest["counts"]["node_records"], 42_542)
+        self.assertEqual(manifest["counts"]["nodes"], 40_790)
+        self.assertEqual(manifest["counts"]["chunks"], 22_163)
+        self.assertEqual(manifest["counts"]["edge_records"], 51_303)
+        self.assertEqual(manifest["counts"]["edge_facts"], 50_599)
         self.assertEqual(manifest["counts"]["structured_records"], 154_948)
 
     def test_each_embedding_file_retains_both_roles(self):
         rows = [json.loads(line) for line in (NORMALIZED / "source_files.jsonl").read_text().splitlines()]
         chunks = [row for row in rows if "embedding" in row["roles"]]
-        self.assertEqual(len(chunks), 17)
+        self.assertEqual(len(chunks), 18)   # one chunks file per collection
         for row in chunks:
             self.assertIn("embedding", row["roles"])
             self.assertIn("graph_node", row["roles"])

@@ -2,7 +2,10 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+// Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
+// src/ooi_asset_management/build_asset_metadata.py).
+import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -221,7 +224,8 @@ function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
   // Live status checks lead a status question; each DAS experiment's own record leads a question about them all.
-  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.inventory || []), ...(context.papers || [])];
+  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.assets || []), ...(context.inventory || []),
+    ...(context.papers || [])];
   if (lead.length) {
     const ids = new Set(lead.map((hit) => hit.chunk_id));
     hits = [...lead, ...hits.filter((hit) => !ids.has(hit.chunk_id))];
@@ -302,6 +306,23 @@ async function typeRecords(inventory, env) {
       .slice(0, 30).map(withRouteCitations);
   } catch (error) {
     console.error("instrument type search failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
+}
+
+// OOI asset-management records for a question about serial numbers, deployments, cruises, calibrations or depth
+// (isAssetQuestion), which the main search ranks below web pages on the same instrument: the chunks the directory
+// names for it (assetChunkIds), by id; else the collection's best search matches.
+async function assetRecords(question, env) {
+  const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
+  try {
+    const ids = assetChunkIds(question, ASSET_DIRECTORY);
+    const found = ids.length
+      ? await postJson(`${api}/v1/chunks`, { collection_id: "ooi_asset_management", chunk_ids: ids }, headers)
+      : await postJson(`${api}/v1/search`, { query: searchText(question) || question, limit: 4, collection_ids: ["ooi_asset_management"] }, headers);
+    return (found.hits || []).slice(0, ids.length || 3).map(withRouteCitations);
+  } catch (error) {
+    console.error("asset search failed", error instanceof Error ? error.message : "unknown");
     return [];
   }
 }
@@ -640,6 +661,7 @@ export default {
       context.hits = (context.hits || []).map(withRouteCitations);
       // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
       if (isPaperUsageQuestion(query)) context.papers = await papersFor(query, env);
+      if (isAssetQuestion(query)) context.assets = await assetRecords(query, env);
       const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);
       if (isDasOverview(query)) context.experiments = await dasExperimentRecords(env);

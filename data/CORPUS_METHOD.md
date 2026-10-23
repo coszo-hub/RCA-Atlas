@@ -161,6 +161,7 @@ build can be retained for rollback. Current normalized outputs live under
 | `Datasheets` | `graphrag/chunks.jsonl` | PDF sources, pages, figures, products | rebuild from document inbox/originals |
 | `Figures` | `graphrag/chunks.jsonl` | image sources, visual records, entities | rebuild after adding curated images/descriptions |
 | `StationMetadata` | `chunks.jsonl` | stations, channel epochs, source documents | `build_station_metadata.py` (EarthScope StationXML) |
+| `OOIAssetManagement` | `chunks.jsonl` | instruments, deployments, cruises, calibrations | `build_asset_metadata.py` (OOI asset-management) |
 | `QAQC` | `graphrag/chunks.jsonl` | capabilities, HITL notes, tool manifest | live public plot lookup; optional plot generation |
 | `Nereus` | `graphrag/chunks.jsonl` | RCA entities, observations, notes, telemetry | live allowlisted GraphQL with snapshot fallback |
 | `AxialEarthquakes` | `graphrag/chunks.jsonl` | summaries, figures, sources; full events in runtime DB | live daily/event/figure queries plus snapshot |
@@ -611,6 +612,35 @@ channel values remain atomic in `channels.jsonl`.
 `CHANNEL_OF` edge for each channel epoch. Source-document nodes record the
 archived XML and SHA-256. The normalizer is part of
 `src/data_maintenance/clean_data_folder.py`.
+
+## OOI asset-management
+
+**Source.** OOI's public asset-management repository on GitHub (sparse clone in
+`source_material/repositories/asset-management`, commit `279ace5`, 2026-10-20): the deployment sheets of the RCA's
+cabled sites (`RS*`, `CE02SHBP`, `CE04OSBP`, `CE04OSPS`, `CE04OSPD`), the asset records (make, model, serial number,
+firmware), the cruise list, the vocabulary, and the calibration files of every sensor those deployments name.
+`src/ooi_asset_management/build_asset_metadata.py` builds the collection; its README gives the clone commands.
+
+**Records.** 166 instruments and 1,413 deployments. Each instrument's chunk gives its make and model, every
+deployment (dates, sensor asset, serial number, firmware, deploy and recovery cruise, position, depth) and when it
+was last recovered; a second chunk gives the calibration coefficients in force for each deployment (the sensor's
+latest calibration dated on or before the deployment's start; long arrays are summarized). Summary chunks answer
+questions across instruments: each type's instances by make and model, each site's instruments by how often they
+were redeployed, each year's cruises with what they deployed and recovered, and depth bands. OOI seldom records a
+recovery cruise; a deployment that ended during a cabled-array cruise is said to have been recovered on it, marked
+as inferred. Firmware is recorded for 8 of the 369 sensor assets, so most records say it is not recorded.
+
+**Retrieval.** These few hundred chunks rank below web pages on the same instrument, and search's lexical half does
+not match hyphenated reference designators. The builder writes a directory (`src/atlas_worker/src/asset_directory.json`)
+that the Worker bundles; a question about serial numbers, deployments, recoveries, cruises, calibrations, makes or
+depth gets the named instrument's chunks, or the type, site, cruise-year or depth chunks, by id (`/v1/chunks`,
+migration 006) at the head of its evidence. A place named without a platform means its seafloor instrument when it
+has one ("the Axial Base CTD"); the profilers' are asked for as the shallow or deep profiler's.
+
+**Catalog mismatches.** Thirteen reference designators in the instrument catalog, all from RCA Information, are not
+in OOI asset-management, among them `RS03AXBS-LJ03A-12-HYDLFA301` (OOI: `RS03AXBS-MJ03A-05-HYDLFA301`),
+`RS03ASHS-MJ03B-15-OBSSPA301` (OOI: `RS03ASHS-MJ03B-06-OBSSPA301`), `RS01SBPD-DP01A-03-FLCDRA104` and `-04-FLNTUA104`
+(OOI: `…102`), and BOTPTs at Axial Base and Southern Hydrate Ridge that OOI does not list.
 
 ## QA/QC
 
