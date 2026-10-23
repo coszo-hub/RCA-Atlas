@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -515,4 +515,13 @@ test("a research answer names what is missing only when something is", () => {
   assert.match(prompt, /When the evidence answers the question fully, add no such section/);
   assert.doesNotMatch(prompt, /State clearly what the evidence does not establish/);
   assert.match(prompt, /never present a partial sum as the total/);
+});
+
+test("a network-wide question about one instrument type is given every record of that type", () => {
+  assert.equal(typeInventory("which CTD sensors are in the network").search, "CTD instrument");
+  assert.equal(typeInventory("Which seismometers are on the RCA?").search, "seismometer seismic station instrument");
+  assert.equal(typeInventory("which CTDs are at Axial?"), null);                 // a site: the inventory search keeps to it
+  assert.equal(typeInventory("What does a CTD measure?"), null);                  // not a listing
+  assert.equal(typeInventory("what DAS experiments were done here"), null);       // the DAS experiments have their own
+  assert.ok(typeInventory("which CTD sensors are in the network").record.test("Oregon Shelf Benthic Package CTD"));
 });

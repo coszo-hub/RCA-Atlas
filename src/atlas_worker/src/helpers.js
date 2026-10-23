@@ -418,6 +418,20 @@ export function askedType(question) {
   return INSTRUMENT_TYPES.filter(([asked]) => asked.test(q)).map(([, record]) => record);
 }
 
+// "Which CTD sensors are in the network?": one instrument type across the whole array. The search found web pages
+// about the cruise CTD rosette and none of the 16 CTD records; such a question gets every record of the type
+// (typeRecords in the Worker). A question naming a site is left to the inventory search, which keeps to the site.
+const SPECIFIC_PLACE = /southern hydrate ridge|hydrate ridge|axial|caldera|ashes|international district|oregon shelf|oregon offshore|slope base|summit|mid slope|endurance|newport|\bshr\b|\bosb\b/i;
+const TYPE_SEARCH = ["CTD", "seismometer seismic station", "pressure", "hydrophone", "ADCP current", "camera", "fluorometer", "oxygen",
+  "tilt", "temperature", "sonar", "pH", "spectrometer", "profiler", null];   // in INSTRUMENT_TYPES order; DAS has its own (isDasOverview)
+export function typeInventory(question) {
+  const q = String(question || "");
+  const listing = /\b(?:which|list|all|every|how many|where are)\b/i.test(q) || /\bwhat\s+(?:[a-z-]+\s+)?[a-z]+s\s+(?:are|exist)\b/i.test(q);
+  if (SPECIFIC_PLACE.test(q) || !listing || isDasOverview(q)) return null;
+  const i = INSTRUMENT_TYPES.findIndex(([asked]) => asked.test(q));
+  return i >= 0 && TYPE_SEARCH[i] ? { search: `${TYPE_SEARCH[i]} instrument`, record: INSTRUMENT_TYPES[i][1] } : null;
+}
+
 const REFDES = /\b[A-Z]{2}\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}\b/;
 const STATION = /\b(?:AX[A-Z]{2}|HYS[A-Z0-9])\d\b/;
 export const refdesOf = (hit) => `${hit.title || ""}\n${hit.text || ""}`.match(REFDES)?.[0] ?? null;

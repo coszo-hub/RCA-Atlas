@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -223,7 +223,7 @@ function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
   // Live status checks lead a status question; each DAS experiment's own record leads a question about them all.
-  const lead = [...(context.live || []), ...(context.experiments || [])];
+  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.inventory || [])];
   if (lead.length) {
     const ids = new Set(lead.map((hit) => hit.chunk_id));
     hits = [...lead, ...hits.filter((hit) => !ids.has(hit.chunk_id))];
@@ -290,6 +290,22 @@ async function liveStatuses(hits, question, env, allHits = hits) {
       return liveStatusHit(hit, target.id, null);
     }
   }));
+}
+
+// Every instrument record of the type a network-wide question names (typeInventory), from a search among instrument
+// records only. Records are kept by ID, not title: the two Axial shallow-profiler CTDs share one. A failed search
+// leaves the question to the main evidence.
+async function typeRecords(inventory, env) {
+  try {
+    const found = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/search`,
+      { query: inventory.search, limit: 50, collection_ids: ["instruments"] }, { "x-api-key": env.ATLAS_API_KEY });
+    const seen = new Set();
+    return (found.hits || []).filter((hit) => inventory.record.test(hit.title || "") && !seen.has(hit.chunk_id) && seen.add(hit.chunk_id))
+      .slice(0, 30).map(withRouteCitations);
+  } catch (error) {
+    console.error("instrument type search failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
 }
 
 // The full-text layer, asked only when the evidence already holds a paper, and only for that paper's passages
@@ -591,6 +607,8 @@ export default {
       }, { "x-api-key": env.ATLAS_API_KEY });
       context.hits = (context.hits || []).map(withRouteCitations);
       // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
+      const inventory = typeInventory(query);
+      if (inventory) context.inventory = await typeRecords(inventory, env);
       if (isDasOverview(query)) context.experiments = await dasExperimentRecords(env);
       else context.fulltext = await fullTextPassages(context, query, env);
       if (isStatusQuestion(query)) context.live = await liveStatuses(selectedEvidenceHits(context, query), query, env, context.hits);
