@@ -7,7 +7,7 @@ export const ASK_URL = import.meta.env.PROD ? `${ATLAS_WORKER}/v1/answer` : "/ap
 // The models the Worker accepts; anything else it answers with Auto (the OOI model first, then Gemini, then Groq).
 export const MODELS = [
   ["auto", "Auto"], ["gemini-2.5-flash", "Gemini 2.5 Flash"], ["gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite"],
-  ["groq-gpt-oss-120b", "GPT-OSS 120B"], ["groq-gpt-oss-20b", "GPT-OSS 20B"], ["groq-qwen3-8-27b", "Qwen3 27B"], ["ooi-gemma-4-26b", "OOI Gemma 4 26B"], ["gpt-5.4-mini", "GPT-5.4 mini"],
+  ["groq-gpt-oss-120b", "GPT-OSS 120B"], ["groq-qwen3-8-27b", "Qwen3 27B"], ["ooi-gemma-4-26b", "OOI Gemma 4 26B"], ["gpt-5.4-mini", "GPT-5.4 mini"],
 ];
 
 const LABELS = { "axial_count_events (live catalog)": "live catalog", "RCA Atlas graph route": "graph route",

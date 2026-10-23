@@ -408,7 +408,6 @@ const OPENAI_MODELS = new Set([
 ]);
 const GROQ_MODELS = {
   "groq-gpt-oss-120b": { id: "openai/gpt-oss-120b", label: "Groq GPT-OSS 120B" },
-  "groq-gpt-oss-20b": { id: "openai/gpt-oss-20b", label: "Groq GPT-OSS 20B" },
   "groq-qwen3-8-27b": { id: "qwen/qwen3.8-27b", label: "Groq Qwen 3.8 27B" },
 };
 // The OOI JupyterHub LLM sits on OOI's private network. src/ooi_llm_relay on a JupyterHub server holds the OOI key,
