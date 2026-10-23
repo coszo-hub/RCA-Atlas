@@ -198,7 +198,7 @@ original text hash in `source_row_repair` and `build_audit.json`.
 not double checked. `audit_arcada.py` checks it against sources it did not
 produce and writes `corrections.json`, which the build applies, keeping each
 row's original text hash and listing every change in `build_audit.json`
-(428 rows):
+(433 rows):
 
 - Titles: nine papers take the publisher's title from the literature catalog
   (PDF imports cut titles at ~100 characters; one repeated its title, one
@@ -223,10 +223,18 @@ row's original text hash and listing every change in `build_audit.json`
   says where it is (the 200 m platform; the profilers move through the water
   column), while `depth_m` stays the site's water depth, as the atlas reads it.
   The DAS experiments' placeholder position (45.0, -128.0) is cleared.
+- Site pages and guides: the three site-context records held only the OOI
+  website's navigation menu, cut before the page's text; each now says what it
+  is (the page's text is in the Websites collection). The seismic guide's
+  station list (HYSB1 is at Oregon Slope Base) and sample rates (HH* 200 Hz,
+  EH*/SH* at the short-period stations) follow EarthScope's metadata; the PI
+  portal guide's folders (2021 DAS OptaSense and Silixa, 2025-26 MultiDAS and
+  OptoDAS, SCPR) and layouts follow the PI portal audit.
 
 Not changed: Southern Hydrate Ridge Summit's 775 m (OOI's page gives 772, 775
 and 811 m), a historical deep-profiler designator absent from today's
-inventory, and two papers without a DOI.
+inventory, two papers without a DOI, and the M2M guide's method for
+deep-profiler streams, which no local source confirms or contradicts.
 
 **Normalization and chunking.** Original Arcada chunk text and its overlapping
 paper boundaries were preserved rather than rechunked. IDs were namespaced,

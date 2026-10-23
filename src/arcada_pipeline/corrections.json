@@ -145,8 +145,8 @@
     "EARTHSCOPE-OO-AXEC2"
    ],
    "evidence": {
-    "EARTHSCOPE-OO-AXEC2": "named by code",
     "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "named by code",
     "EARTHSCOPE-OO-AXBA1": "named by code"
    },
    "removed": [
@@ -521,8 +521,8 @@
     "EARTHSCOPE-OO-HYS14"
    ],
    "evidence": {
-    "EARTHSCOPE-OO-HYS14": "named by code",
     "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-HYS14": "named by code",
     "EARTHSCOPE-OO-AXBA1": "named by code"
    },
    "removed": [
@@ -597,8 +597,8 @@
    ],
    "evidence": {
     "EARTHSCOPE-OO-AXID1": "named by code",
-    "EARTHSCOPE-OO-AXEC2": "type and site named in one passage",
     "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "type and site named in one passage",
     "EARTHSCOPE-OO-AXAS1": "named by code",
     "EARTHSCOPE-OO-AXAS2": "named by code"
    },
@@ -645,8 +645,8 @@
    ],
    "evidence": {
     "EARTHSCOPE-OO-AXID1": "named by code",
-    "EARTHSCOPE-OO-AXEC2": "named by code",
     "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "named by code",
     "EARTHSCOPE-OO-AXAS1": "named by code",
     "EARTHSCOPE-OO-AXAS2": "named by code",
     "EARTHSCOPE-OO-AXEC1": "named by code",
@@ -1015,8 +1015,8 @@
     "EARTHSCOPE-OO-AXEC2"
    ],
    "evidence": {
-    "EARTHSCOPE-OO-AXEC2": "named by code",
-    "EARTHSCOPE-OO-AXCC1": "named by code"
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "named by code"
    },
    "removed": [
     "EARTHSCOPE-OO-AXID1",
@@ -1388,8 +1388,8 @@
     "EARTHSCOPE-OO-AXEC2"
    ],
    "evidence": {
-    "EARTHSCOPE-OO-AXEC2": "named by code",
-    "EARTHSCOPE-OO-AXCC1": "named by code"
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "named by code"
    },
    "removed": [
     "EARTHSCOPE-OO-AXID1",
@@ -1672,8 +1672,8 @@
    ],
    "evidence": {
     "EARTHSCOPE-OO-AXID1": "type and site named in one passage",
-    "EARTHSCOPE-OO-AXEC2": "type and site named in one passage",
-    "EARTHSCOPE-OO-AXCC1": "type and site named in one passage"
+    "EARTHSCOPE-OO-AXCC1": "type and site named in one passage",
+    "EARTHSCOPE-OO-AXEC2": "type and site named in one passage"
    },
    "removed": [
     "PI-MASSP-ASHES",
@@ -2486,6 +2486,75 @@
    "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
    "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
    "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  }
+ ],
+ "texts": [
+  {
+   "id": "rca::axial-seamount-array",
+   "text": "Cabled Axial Seamount Array: the OOI website's page for this part of the Regional Cabled Array (Axial Seamount, Juan de Fuca Ridge). Arcada's copy held only the site's navigation menu; the page's text is in the Websites collection.",
+   "reason": "the record held only the OOI website's navigation menu, cut before the page's text",
+   "authority": "https://oceanobservatories.org/regional-cabled-array/"
+  },
+  {
+   "id": "rca::continental-margin-array",
+   "text": "Cabled Continental Margin Array: the OOI website's page for this part of the Regional Cabled Array (Southern Hydrate Ridge, Oregon Margin). Arcada's copy held only the site's navigation menu; the page's text is in the Websites collection.",
+   "reason": "the record held only the OOI website's navigation menu, cut before the page's text",
+   "authority": "https://oceanobservatories.org/regional-cabled-array/"
+  },
+  {
+   "id": "rca::rca-overview",
+   "text": "OOI Regional Cabled Array Overview: the OOI website's page for this part of the Regional Cabled Array (Northeast Pacific Ocean). Arcada's copy held only the site's navigation menu; the page's text is in the Websites collection.",
+   "reason": "the record held only the OOI website's navigation menu, cut before the page's text",
+   "authority": "https://oceanobservatories.org/regional-cabled-array/"
+  },
+  {
+   "id": "script::earthscope-fdsn",
+   "wrong": "Seismometer stations: AXAS1, AXAS2 (Axial), AXCC1, AXEC2, AXEC3, HYSB1 (Hydrate Ridge), and others.",
+   "right": "Seismometer stations: AXAS1, AXAS2, AXBA1, AXCC1, AXEC1, AXEC2, AXEC3 and AXID1 (Axial Seamount); HYS11-HYS14 (Southern Hydrate Ridge); HYSB1 (Oregon Slope Base).",
+   "reason": "HYSB1 is the Oregon Slope Base station; the list named only some stations",
+   "authority": "data/Instruments (EarthScope station records)"
+  },
+  {
+   "id": "script::earthscope-fdsn",
+   "wrong": "Seismic channels: BH* (broadband, 40 Hz), HH* (high-gain, 100 Hz), EH* (short-period).",
+   "right": "Seismic channels: HH* (200 Hz) and BH* (40 Hz) at the broadband stations (AXBA1, AXCC1, AXEC2, HYS14, HYSB1); EH* (200 Hz) and SH* (40 Hz) at the short-period stations.",
+   "reason": "HH* channels record 200 samples/s, not 100 Hz, and the short-period stations have EH*/SH* channels",
+   "authority": "EarthScope channel metadata (src/arcada_pipeline/earthscope_stations.json)"
+  },
+  {
+   "id": "script::pi-portal",
+   "wrong": "Data is served via Apache directory listings organized by date: {base_url}/{YYYY}/{MM}/{timestamp}/data/",
+   "right": "Data is served via Apache directory listings; the folder layout differs by instrument (the PI data portal records give each one's).",
+   "reason": "the layouts differ by instrument (the MARUM CTD has year/month folders of daily files)",
+   "authority": "the PI data portal directory audit (data/PIPortal)"
+  },
+  {
+   "id": "script::pi-portal",
+   "wrong": "Instruments and their base URLs (confirmed active):",
+   "right": "Instruments and their base URLs:",
+   "reason": "not every route is active (the MARUM CTD archive holds 2018-2023)",
+   "authority": "the PI data portal directory audit (data/PIPortal)"
+  },
+  {
+   "id": "script::pi-portal",
+   "wrong": "- DAS (Optasense): http://piweb.ooirsn.uw.edu/das/data/Optasense/",
+   "right": "- DAS 2021 (OptaSense and Silixa): http://piweb.ooirsn.uw.edu/das/data/ (Optasense and Silixa folders)",
+   "reason": "the 2021 DAS dataset has OptaSense and Silixa folders under /das/data/",
+   "authority": "the PI data portal directory audit (data/PIPortal)"
+  },
+  {
+   "id": "script::pi-portal",
+   "wrong": "- DAS 2025 (multi-span): http://piweb.ooirsn.uw.edu/das25/data/",
+   "right": "- DAS 2025-26 (MultiDAS and OptoDAS): http://piweb.ooirsn.uw.edu/das25/data/MultiDAS/ and http://piweb.ooirsn.uw.edu/das25/data/OptoDAS/",
+   "reason": "the 2025-26 experiment has two datasets, MultiDAS and OptoDAS",
+   "authority": "the PI data portal directory audit (data/PIPortal)"
+  },
+  {
+   "id": "script::pi-portal",
+   "wrong": "- SCPR pressure: http://piweb.ooirsn.uw.edu/scpr/",
+   "right": "- SCPR pressure: http://piweb.ooirsn.uw.edu/scpr/data/",
+   "reason": "the SCPR data folders are under /scpr/data/",
+   "authority": "the PI data portal directory audit (data/PIPortal)"
   }
  ]
 }

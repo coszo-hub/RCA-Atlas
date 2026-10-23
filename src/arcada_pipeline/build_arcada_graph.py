@@ -215,6 +215,9 @@ def apply_corrections(rows: list[dict], catalog: dict[str, dict], corrections: d
     papers = {c["doi"]: c for c in corrections.get("papers", [])}
     links = {c["doi"]: c for c in corrections.get("links", [])}
     instruments = {c["id"]: c for c in corrections.get("instruments", [])}
+    texts = collections.defaultdict(list)
+    for c in corrections.get("texts", []):
+        texts[c["id"]].append(c)
     done, first_chunk = [], set()
     for row in rows:
         original, changes = row.get("text") or "", []
@@ -257,14 +260,22 @@ def apply_corrections(rows: list[dict], catalog: dict[str, dict], corrections: d
             if inst.get("depth_text"):
                 text = re.sub(r"^Depth: .*$", f"Depth: {inst['depth_text']}", text, flags=re.M)
             changes.append("position and depth" if "latitude" in inst else "depth")
+        for t in texts.get(row["id"], []):
+            if "text" in t:
+                text = t["text"]
+            elif text.count(t["wrong"]) == 1:
+                text = text.replace(t["wrong"], t["right"])
+            else:
+                raise ValueError(f"text correction for {row['id']} does not match exactly once: {t['wrong']!r}")
+            changes.append("text")
         if text != original:
             row["text"] = text
         if changes:
             row["_repair"] = {**(row.get("_repair") or {}), "reason": "corrected_from_independent_source",
                               "corrected": changes, "original_text_sha256": hashlib.sha256(original.encode()).hexdigest()}
             done.append({"source_chunk_id": row["id"], "source_row_index": row["_source_row_index"], "corrected": changes,
-                         "reason": "; ".join(x["reason"] for x in (fix, link, inst) if x),
-                         "authority": next((x["authority"] for x in (fix, inst) if x and x.get("authority")), "the paper's own text"),
+                         "reason": "; ".join(x["reason"] for x in (fix, link, inst, *texts.get(row["id"], [])) if x),
+                         "authority": next((x["authority"] for x in (fix, inst, *texts.get(row["id"], [])) if x and x.get("authority")), "the paper's own text"),
                          **({"removed_links": link["removed"], "link_evidence": link["evidence"]} if link else {})})
     for refdes, inst in instruments.items():
         meta = catalog.get(refdes)

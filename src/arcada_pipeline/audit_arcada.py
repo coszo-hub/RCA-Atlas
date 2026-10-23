@@ -12,7 +12,9 @@ Arcada was a preliminary database, not double checked. Each correction names its
   an instrument the text names by code is added;
 - instrument positions and depths: OOI's site pages (positions over 1.5 km from the site, depths over 20 m off;
   the shallow-profiler platform is at 200 m, and profilers move through the water column); a placeholder position
-  (45.0, -128.0) is cleared.
+  (45.0, -128.0) is cleared;
+- site pages and data-access guides: the three site pages held only the OOI website's menu; the guides' station
+  list, sample rates and portal folders are corrected from EarthScope's metadata and the PI portal audit.
 
 Usage: python3 audit_arcada.py --repo <arcada checkout>   (writes corrections.json beside this file)
 """
@@ -51,6 +53,48 @@ MANUAL_ABSTRACTS = {
         "reason": "Arcada gives this paper the abstract of an AMOC observing review (Frajka-Williams et al., 2019); this is the paper's own, from its first page.",
     },
 }
+
+# Arcada's three site pages hold only the OOI website's navigation menu (each cut at ~3,000 characters before the
+# page's text); its data-access guides misstate stations, sample rates and portal folders. Each fix is exact.
+SITE_PAGES_MENU_ONLY = {"rca::rca-overview", "rca::axial-seamount-array", "rca::continental-margin-array"}
+TEXT_FIXES = [
+    ("script::earthscope-fdsn", "Seismometer stations: AXAS1, AXAS2 (Axial), AXCC1, AXEC2, AXEC3, HYSB1 (Hydrate Ridge), and others.",
+     "Seismometer stations: AXAS1, AXAS2, AXBA1, AXCC1, AXEC1, AXEC2, AXEC3 and AXID1 (Axial Seamount); HYS11-HYS14 (Southern Hydrate Ridge); HYSB1 (Oregon Slope Base).",
+     "HYSB1 is the Oregon Slope Base station; the list named only some stations", "data/Instruments (EarthScope station records)"),
+    ("script::earthscope-fdsn", "Seismic channels: BH* (broadband, 40 Hz), HH* (high-gain, 100 Hz), EH* (short-period).",
+     "Seismic channels: HH* (200 Hz) and BH* (40 Hz) at the broadband stations (AXBA1, AXCC1, AXEC2, HYS14, HYSB1); EH* (200 Hz) and SH* (40 Hz) at the short-period stations.",
+     "HH* channels record 200 samples/s, not 100 Hz, and the short-period stations have EH*/SH* channels", "EarthScope channel metadata (src/arcada_pipeline/earthscope_stations.json)"),
+    ("script::pi-portal", "Data is served via Apache directory listings organized by date: {base_url}/{YYYY}/{MM}/{timestamp}/data/",
+     "Data is served via Apache directory listings; the folder layout differs by instrument (the PI data portal records give each one's).",
+     "the layouts differ by instrument (the MARUM CTD has year/month folders of daily files)", "the PI data portal directory audit (data/PIPortal)"),
+    ("script::pi-portal", "Instruments and their base URLs (confirmed active):", "Instruments and their base URLs:",
+     "not every route is active (the MARUM CTD archive holds 2018-2023)", "the PI data portal directory audit (data/PIPortal)"),
+    ("script::pi-portal", "- DAS (Optasense): http://piweb.ooirsn.uw.edu/das/data/Optasense/",
+     "- DAS 2021 (OptaSense and Silixa): http://piweb.ooirsn.uw.edu/das/data/ (Optasense and Silixa folders)",
+     "the 2021 DAS dataset has OptaSense and Silixa folders under /das/data/", "the PI data portal directory audit (data/PIPortal)"),
+    ("script::pi-portal", "- DAS 2025 (multi-span): http://piweb.ooirsn.uw.edu/das25/data/",
+     "- DAS 2025-26 (MultiDAS and OptoDAS): http://piweb.ooirsn.uw.edu/das25/data/MultiDAS/ and http://piweb.ooirsn.uw.edu/das25/data/OptoDAS/",
+     "the 2025-26 experiment has two datasets, MultiDAS and OptoDAS", "the PI data portal directory audit (data/PIPortal)"),
+    ("script::pi-portal", "- SCPR pressure: http://piweb.ooirsn.uw.edu/scpr/", "- SCPR pressure: http://piweb.ooirsn.uw.edu/scpr/data/",
+     "the SCPR data folders are under /scpr/data/", "the PI data portal directory audit (data/PIPortal)"),
+]
+
+
+def text_corrections(rows: list[dict]) -> list[dict]:
+    by_id = {row["id"]: row for row in rows}
+    out = []
+    for sid in sorted(SITE_PAGES_MENU_ONLY):
+        row = by_id[sid]
+        out.append({"id": sid, "text": f"{row['title']}: the OOI website's page for this part of the Regional Cabled Array "
+                    f"({row.get('location')}). Arcada's copy held only the site's navigation menu; the page's text is in the "
+                    "Websites collection.", "reason": "the record held only the OOI website's navigation menu, cut before the page's text",
+                    "authority": "https://oceanobservatories.org/regional-cabled-array/"})
+    for sid, wrong, right, reason, authority in TEXT_FIXES:
+        if (by_id[sid].get("text") or "").count(wrong) != 1:
+            raise ValueError(f"text fix for {sid} no longer matches: {wrong!r}")
+        out.append({"id": sid, "wrong": wrong, "right": right, "reason": reason, "authority": authority})
+    return out
+
 
 TYPE_WORDS = [
     (r"seismomet|broadband|ocean_bottom_seismic|seismic", r"seismomet|seismic station|seismic network|\bOBS\b|broadband|short-period|stations?\b"),
@@ -233,7 +277,8 @@ def main() -> int:
         if isinstance(row.get("linked_instruments"), str):
             row["linked_instruments"] = json.loads(row["linked_instruments"].replace("'", '"'))
     catalog = json.loads((args.repo / "catalog/instruments.json").read_text(encoding="utf-8"))["instruments"]
-    corrections = {"papers": paper_corrections(rows), "links": link_corrections(rows), "instruments": instrument_corrections(catalog)}
+    corrections = {"papers": paper_corrections(rows), "links": link_corrections(rows), "instruments": instrument_corrections(catalog),
+                   "texts": text_corrections(rows)}
     OUTPUT.write_text(json.dumps(corrections, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({k: len(v) for k, v in corrections.items()}))
     return 0
