@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
@@ -237,7 +237,30 @@ function selectedEvidenceHits(context, question) {
     const productHits = hits.filter((hit) => record.test(`${hit.title || ""}\n${hit.text || ""}`));
     if (productHits.length) hits = productHits;
   }
+  // Papers found for a question whose main evidence held none (literatureFallback) come after it, so their full text
+  // is asked (fullTextFor) without their abstracts taking the main evidence's place.
+  if (context.literature?.length) {
+    const ids = new Set(hits.map((hit) => hit.chunk_id));
+    hits = [...hits, ...context.literature.filter((hit) => !ids.has(hit.chunk_id))];
+  }
   return [...hits, ...fullTextFor(hits, context.fulltext)];
+}
+
+// The papers for a research question whose main evidence holds none: web pages can outrank the paper that answers
+// it ("How long was the 2021 upwelling season…", all VISIONS'21 pages). The question's distinctive words, OR'd,
+// search the paper abstracts; the best three join the evidence and their full text is asked as usual. A failure
+// (the search can time out) leaves the main evidence alone.
+async function literatureFallback(question, env) {
+  const words = distinctiveWords(question);
+  if (words.length < 2) return [];
+  try {
+    const found = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/search`,
+      { query: words.join(" or "), limit: 3, collection_ids: ["literature"] }, { "x-api-key": env.ATLAS_API_KEY });
+    return (found.hits || []).map(withRouteCitations);
+  } catch (error) {
+    console.error("literature fallback failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
 }
 
 // The first record of each DAS experiment, from a search in that experiment's own words (isDasOverview). A failed
@@ -665,6 +688,10 @@ export default {
       if (isAssetQuestion(query)) context.assets = await assetRecords(query, env);
       const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);
+      const routed = isDasOverview(query) || isStatusQuestion(query) || context.assets?.length || context.inventory?.length || context.papers?.length;
+      if (!routed && answerMode(query) !== "compact" && !paperKeys(selectedEvidenceHits(context, query)).length) {
+        context.literature = await literatureFallback(query, env);
+      }
       if (isDasOverview(query)) context.experiments = await dasExperimentRecords(env);
       else context.fulltext = await fullTextPassages(context, query, env);
       if (isStatusQuestion(query)) context.live = await liveStatuses(selectedEvidenceHits(context, query), query, env, context.hits);

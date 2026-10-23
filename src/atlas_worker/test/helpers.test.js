@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -730,4 +730,36 @@ test("an asset question fetches the directory's records by id and leads the evid
   assert.equal(asked.chunk_ids[0], "ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301");
   assert.ok(asked.chunk_ids.includes("ooi_assets_sourced_scpr_cabled_gauges"));   // the gauges' serials, cited to the 2023 paper
   assert.equal(res.answer_citations[0].url, "https://github.com/oceanobservatories/asset-management");
+});
+
+test("a paper search with no paper in the evidence keys on the question's numbers, names and long words", () => {
+  assert.deepEqual(distinctiveWords("How long was the 2021 upwelling season off the US Pacific Northwest, and between which dates?"),
+    ["2021", "US", "Pacific", "Northwest", "upwelling"]);
+  assert.deepEqual(distinctiveWords("What is it?"), []);
+});
+
+test("a research question whose evidence holds no paper asks the paper abstracts, then those papers' full text", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  const calls = [];
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    const u = String(url), body = init?.body ? JSON.parse(init.body) : {};
+    calls.push([new URL(u).pathname, body]);
+    if (u.endsWith("/v1/context")) return Response.json({ hits: [{ chunk_id: "W", collection_id: "websites", title: "VISIONS'21 Live Video", text: "Live video from 2021." }], neighbors: [], tool_hints: [] });
+    if (u.endsWith("/v1/search")) return Response.json({ hits: [{ chunk_id: "L", collection_id: "literature", title: "Widespread and increasing near-bottom hypoxia",
+      text: "The 2021 summer upwelling season was unusually strong.", citations: [{ source_id: "OOI-ZOT-129", title: "Barth et al.", url: "https://doi.org/10.1038/s41598-024-54476-0" }] }] });
+    if (u.endsWith("/v1/passages")) return Response.json({ hits: [{ chunk_id: "P", collection_id: "literature_fulltext", title: "Widespread and increasing near-bottom hypoxia",
+      text: "The 2021 upwelling season lasted 189 days, from March 22 to September 16.", citations: [{ source_id: "OOI-ZOT-129", title: "Barth et al.", url: "https://doi.org/10.1038/s41598-024-54476-0" }] }] });
+    return Response.json({ candidates: [{ content: { parts: [{ text: "189 days, March 22 to September 16 [1]." }] } }] });
+  });
+  const env = { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g" };
+  await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "How long was the 2021 upwelling season off the US Pacific Northwest, and between which dates?", model: "gemini-2.5-flash" }),
+  }), env);
+  const search = calls.find(([path, body]) => path === "/v1/search" && body.collection_ids?.includes("literature"));
+  assert.equal(search[1].query, "2021 or US or Pacific or Northwest or upwelling");
+  const passages = calls.find(([path]) => path === "/v1/passages");
+  assert.ok(passages[1].paper_keys.includes("10.1038/s41598-024-54476-0"));
+  const prompt = calls.find(([path]) => path.includes("generateContent"))[1].contents[0].parts[0].text;
+  assert.match(prompt, /189 days/);
 });

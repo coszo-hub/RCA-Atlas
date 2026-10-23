@@ -95,6 +95,20 @@ export function interleave(lists) {
 
 // Full-text passages for the papers already in the evidence, best first: at most four per paper and eight in all,
 // so the layer adds to a paper's evidence and never displaces another source.
+// The words a search for papers keys on when the main search found none: numbers, names and long words
+// ("2021 upwelling US Pacific Northwest"), at most six, OR'd. The main search's lexical half asks for every word of
+// the question, which a long question rarely matches, so its vector half alone ranked web pages ("VISIONS'21 Live
+// Video") above the paper; any six distinctive words find it, and more common words make the search too slow.
+const QUESTION_WORDS = new Set(["a", "an", "and", "are", "at", "be", "between", "by", "did", "do", "does", "for", "from", "has", "have",
+  "how", "in", "is", "it", "its", "of", "off", "on", "or", "than", "that", "the", "their", "there", "these", "this", "to", "was",
+  "were", "what", "when", "where", "which", "who", "why", "with", "long", "many", "much", "about", "during", "since", "show"]);
+export function distinctiveWords(question) {
+  const words = (String(question || "").match(/[A-Za-z0-9][A-Za-z0-9-]*/g) || []).filter((w) => !QUESTION_WORDS.has(w.toLowerCase()));
+  const first = words[0];
+  const rank = (w) => (/\d/.test(w) ? 0 : /^[A-Z]/.test(w) && w !== first ? 1 : w.length >= 7 ? 2 : 3);
+  return [...new Set(words.filter((w) => rank(w) < 3))].sort((a, b) => rank(a) - rank(b)).slice(0, 6);
+}
+
 export function fullTextFor(hits, passages) {
   const papers = new Set([...hits.map(paperKey).filter(Boolean),
     ...mentionedDois(hits).map((doi) => sourceKey("", `https://doi.org/${doi}`))]);
