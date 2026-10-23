@@ -59,4 +59,4 @@ npx wrangler deploy
 ```
 
 The Worker tries the VPC binding first, then `OOI_RELAY_ORIGIN` if it is set. The model id is `ooi-gemma-4-26b`.
-Auto tries it first, then Gemini, Groq, OpenRouter and GPT-5.4 mini.
+Auto tries it first, then Gemini, Groq and GPT-5.4 mini.

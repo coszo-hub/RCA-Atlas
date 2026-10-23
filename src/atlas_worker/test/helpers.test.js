@@ -486,7 +486,7 @@ test("a status question is searched for its instrument, and only that type's rec
   assert.equal(wave.text, "Station AXEC1 (OO.AXEC1) is recording, checked live at EarthScope: its newest waveform (EHZ, 200 samples/s) is from 2026-10-22 23:12 UTC, 2 min behind real time.");
 });
 
-test("Auto answers on the paid fallback only after every free model refuses", async (t) => {
+test("Auto answers on the paid fallback only after Gemini and Groq refuse, and never asks OpenRouter", async (t) => {
   const { default: worker } = await import("../src/index.js");
   const asked = [];
   t.mock.method(globalThis, "fetch", async (url) => {
@@ -498,15 +498,15 @@ test("Auto answers on the paid fallback only after every free model refuses", as
     return Response.json({ error: "rate limited" }, { status: 429 });
   });
   const env = { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g", GROQ_API_KEY: "q",
-    OPENROUTER_API_KEY: "o", OPENROUTER_FREE_MODEL: "a:free,b:free", OPENAI_API_KEY: "p", AUTO_FALLBACK_OPENAI_MODEL: "gpt-5.4-mini" };
+    OPENROUTER_API_KEY: "o", OPENAI_API_KEY: "p", AUTO_FALLBACK_OPENAI_MODEL: "gpt-5.4-mini" };
   const res = await worker.fetch(new Request("https://w.example/v1/answer", {
     method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" }, body: JSON.stringify({ query: "What does the gauge measure?" }),
   }), env);
   const data = await res.json();
   assert.equal(data.answer_model, "OpenAI gpt-5.4-mini");
   assert.equal(asked.at(-1), "api.openai.com");
-  assert.ok(asked.indexOf("api.openai.com") > asked.lastIndexOf("openrouter.ai"));          // free models first
   assert.ok(asked.includes("generativelanguage.googleapis.com") && asked.includes("api.groq.com"));
+  assert.ok(!asked.includes("openrouter.ai"));          // OpenRouter is no longer a route, even with a key
 });
 
 test("the OOI model answers through its relay with the relay token, picked or first in Auto", async (t) => {

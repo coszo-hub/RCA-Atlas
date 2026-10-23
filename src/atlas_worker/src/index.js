@@ -7,8 +7,6 @@ import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullText
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
 const MAX_GRAPH_HOPS = 2;
-const OPENROUTER_TIMEOUT_MS = 110_000;
-const DEFAULT_OPENROUTER_MODELS = "nvidia/nemotron-3-ultra-550b-a55b:free,google/gemma-4-31b-it:free";
 const AXIAL_CATALOG = "http://axial.ocean.washington.edu";
 
 function corsHeaders(env, origin) {
@@ -413,13 +411,6 @@ const GROQ_MODELS = {
   "groq-gpt-oss-20b": { id: "openai/gpt-oss-20b", label: "Groq GPT-OSS 20B" },
   "groq-qwen3-8-27b": { id: "qwen/qwen3.8-27b", label: "Groq Qwen 3.8 27B" },
 };
-const OPENROUTER_FREE_MODELS = {
-  "openrouter-glm-5-2": "z-ai/glm-5.2:free",
-  "openrouter-qwen3-8-27b": "qwen/qwen3.8-27b:free",
-  "openrouter-nex-n2-5-pro": "nex-agi/nex-n2.5-pro:free",
-  "openrouter-gemma-4-31b": "google/gemma-4-31b-it:free",
-};
-
 // The OOI JupyterHub LLM sits on OOI's private network. src/ooi_llm_relay on a JupyterHub server holds the OOI key,
 // fixes the model and turns Gemma's thinking off; a named Cloudflare Tunnel from that server is reached through the
 // Workers VPC binding OOI_RELAY (wrangler.toml), so the relay has no public address. OOI_RELAY_ORIGIN is a quick
@@ -469,37 +460,6 @@ async function generateGroqAnswer(prompt, mode, env, selected = GROQ_MODELS["gro
   const answer = upstream.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("Groq model returned no answer");
   return { answer: cleanAnswer(answer), model: selected.label };
-}
-
-// OPENROUTER_FREE_MODEL lists free models, comma-separated, tried in order: OpenRouter retires free models (GLM 5.2
-// went in October 2026) and rate-limits them one by one, so one model's 404 or 429 moves to the next.
-async function generateOpenRouterAnswer(prompt, mode, env) {
-  const models = String(env.OPENROUTER_FREE_MODEL || DEFAULT_OPENROUTER_MODELS).split(",").map((m) => m.trim()).filter(Boolean);
-  let lastError = new Error("OpenRouter has no model configured");
-  for (const model of models) {
-    try {
-      return await generateOpenRouterModelAnswer(prompt, mode, env, model);
-    } catch (error) {
-      lastError = error;
-      console.warn("openrouter model failed", model, error instanceof Error ? error.message : "unknown");
-    }
-  }
-  throw lastError;
-}
-
-async function generateOpenRouterModelAnswer(prompt, mode, env, selectedModel) {
-  if (!env.OPENROUTER_API_KEY) throw new Error("OpenRouter is not configured");
-  const upstream = await postJson("https://openrouter.ai/api/v1/chat/completions", {
-    model: selectedModel,
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.15,
-    max_tokens: mode === "compact" ? 3000 : 6000,   // free models often reason first, as GPT-OSS does
-  // Free reasoning models answer at ~30 tokens/s here (Nemotron Ultra took 60 s for a full answer); as the last
-  // route, they get the time to finish.
-  }, { authorization: `Bearer ${env.OPENROUTER_API_KEY}` }, OPENROUTER_TIMEOUT_MS);
-  const answer = upstream.choices?.[0]?.message?.content?.trim();
-  if (!answer) throw new Error("OpenRouter model returned no answer");
-  return { answer: cleanAnswer(answer), model: `OpenRouter ${upstream.model || selectedModel}` };
 }
 
 async function generateOpenAIAnswer(prompt, requestedModel, mode, env) {
@@ -587,15 +547,8 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
       console.warn("groq answer failed", error instanceof Error ? error.message : "unknown");
     }
   }
-  if (requestedModel === "auto" && env.OPENROUTER_API_KEY) {
-    try {
-      return await generateOpenRouterAnswer(prompt, mode, env);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-  // AUTO_FALLBACK_OPENAI_MODEL (wrangler.toml) lets Auto finish on a paid OpenAI model when every free route is out
-  // of quota, so a visitor still gets an answer. Unset, Auto stays free.
+  // AUTO_FALLBACK_OPENAI_MODEL (wrangler.toml) lets Auto finish on a paid OpenAI model when OOI, Gemini and Groq
+  // all refuse, so a visitor still gets an answer. Unset, Auto stays free.
   if (requestedModel === "auto" && env.AUTO_FALLBACK_OPENAI_MODEL && env.OPENAI_API_KEY) {
     try {
       return await generateOpenAIAnswer(prompt, env.AUTO_FALLBACK_OPENAI_MODEL, mode, env);
