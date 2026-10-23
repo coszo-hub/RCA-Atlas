@@ -686,6 +686,19 @@ test("an asset-metadata question asks for the records the directory names: the i
   assert.deepEqual(assetChunkIds("serial number of RS01SLBS-LJ01A-12-CTDPFB101", ASSETS), ["ooi_assets_RS01SLBS-LJ01A-12-CTDPFB101"]);
 });
 
+test("the most specific instrument a question names wins: a code, a plural code, an instrument on a profiler", () => {
+  const dir = { ...ASSETS, instruments: [...ASSETS.instruments,
+    { refdes: "RS03ASHS-PN03B-06-CAMHDA301", name: "ASHES HD Camera", instrument: "HD Digital Video Camera", site: "ASHES Vent Field", codes: ["CAMHD", "CAMH"], calibration: false },
+    { refdes: "RS03ASHS-MJ03B-07-CAMDSB303", name: "ASHES Still Camera", instrument: "Digital Still Camera", site: "ASHES Vent Field", codes: ["CAMDS", "CAMD"], calibration: false },
+    { refdes: "RS01SBPD-DP01A-00-ENG000000", name: "Slope Base Deep Profiler", instrument: "Profiler vehicle (engineering)", site: "Oregon Slope Base Deep Profiler Mooring", codes: ["ENG00", "ENG0"], calibration: false },
+    { refdes: "RS01SBPD-DP01A-02-VEL3DA103", name: "Slope Base Deep Profiler 3D Current Meter", instrument: "3-D Single Point Velocity Meter", site: "Oregon Slope Base Deep Profiler Mooring", codes: ["VEL3D", "VEL3"], calibration: false }] };
+  assert.deepEqual(assetChunkIds("What serial numbers has the CAMHD camera had?", dir), ["ooi_assets_RS03ASHS-PN03B-06-CAMHDA301"]);
+  assert.deepEqual(assetChunkIds("What changed between deployments of the Slope Base deep profiler VEL3D?", dir), ["ooi_assets_RS01SBPD-DP01A-02-VEL3DA103"]);
+  assert.deepEqual(assetChunkIds("When was the deep profiler at Slope Base last recovered?", dir), ["ooi_assets_RS01SBPD-DP01A-00-ENG000000"]);
+  assert.deepEqual(assetChunkIds("Which VEL3Ds are there and who makes them?", dir),
+    ["ooi_assets_RS01SUM1-LJ01B-12-VEL3DB104", "ooi_assets_RS01SBPD-DP01A-02-VEL3DA103"]);
+});
+
 test("other questions ask for no asset records", () => {
   for (const q of ["which seismometers doesnt have 0 degree azimuth orientation", "what is the model of the 2015 eruption", "how many earthquakes today"]) {
     assert.deepEqual(assetChunkIds(q, ASSETS), [], q);

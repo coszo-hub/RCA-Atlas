@@ -440,7 +440,7 @@ export function typeInventory(question) {
 // "which instruments are deeper than 2500 m?": OOI asset-management metadata (the ooi_asset_management collection).
 // Its records are a few hundred among 22,000, so the main search ranks web pages about the same instrument above
 // them; such a question also searches that collection (assetRecords in the Worker).
-const ASSET_WORDS = /\b(?:serial|s\/n|firmware|calibrat\w*|coefficients?|deploy\w*|redeploy\w*|recover\w*|cruises?|visions|manufactur\w*|make and model|(?:what|which)\s+model|deeper|deepest|how deep|shallower|shallowest|junction box(?:es)?|j-?box(?:es)?|timeline|history|changes?|changed|swapp?\w*|replaced)\b/i;
+const ASSET_WORDS = /\b(?:serial|s\/n|firmware|calibrat\w*|coefficients?|deploy\w*|redeploy\w*|recover\w*|cruises?|visions|manufactur\w*|make and model|(?:what|which)\s+(?:model|make)|who makes|made by|deeper|deepest|how deep|shallower|shallowest|junction box(?:es)?|j-?box(?:es)?|timeline|history|changes?|changed|swapp?\w*|replaced)\b/i;
 // Makes and models ask the same records: "which CTDs are Sea-Bird SBE 16plus?".
 const MAKERS = /\b(?:sea-?bird|sbe\s?\d+\w*|teledyne|rdi|aanderaa|nortek|sunburst|satlantic|wet ?labs|g[uü]ralp|paroscientific|nobska|kongsberg|simrad|hti|benthos|sonardyne|imagenex|nanometrics|turner)\b/i;
 export const isAssetQuestion = (question) => ASSET_WORDS.test(String(question || "")) || MAKERS.test(String(question || ""));
@@ -498,9 +498,27 @@ export function assetChunkIds(question, directory) {
   const places = ASSET_PLACES.find(([asked]) => asked.test(q));
   const platform = ASSET_PLATFORMS.find(([asked]) => asked.test(q));
   const atPlace = (site) => (!places || places[1].test(site)) && (!platform || platform[1].test(site));
-  const types = ASSET_TYPES.filter(([asked]) => asked.test(q)).map(([, type]) => type);
+  // The most specific type a question names: "the CAMHD camera" is the HD video camera, not every camera; and
+  // "profiler" is the profiler vehicle only when no instrument on it is named ("the deep profiler VEL3D").
+  const family = (type) => (/Camera/.test(type.source) ? "camera" : /Hydrophone|Acoustic Receiver/.test(type.source) ? "hydrophone"
+    : /Seismometer/.test(type.source) ? "seismometer" : /Sonar/.test(type.source) ? "sonar" : null);
+  const types = [], families = new Set();
+  for (const [asked, type] of ASSET_TYPES) {
+    if (!asked.test(q) || (family(type) && families.has(family(type)))) continue;
+    if (/Profiler vehicle/.test(type.source) && types.length) continue;
+    types.push(type);
+    if (family(type)) families.add(family(type));
+  }
+  const codesNamed = [...q.matchAll(/\b([A-Z][A-Z0-9]{3,4})s?\b/g)].map((m) => m[1]);
+  if (codesNamed.length && types.length > 1) {
+    // A code names its type outright ("VEL3D", "CAMHD"): keep the types its instruments have.
+    const byCode = directory.instruments.filter((i) => i.codes.some((c) => codesNamed.includes(c))).map((i) => i.instrument);
+    const kept = types.filter((type) => byCode.some((name) => type.test(name)));
+    if (kept.length) types.splice(0, types.length, ...kept);
+  }
   const named = new Set(q.match(new RegExp(REFDES_SOURCE, "g")) || []);
-  const codes = new Set((q.match(/\b[A-Z][A-Z0-9]{3,4}\b/g) || []));
+  // Codes as written, plural too ("VEL3Ds", "CTDs").
+  const codes = new Set([...q.matchAll(/\b([A-Z][A-Z0-9]{3,4})s?\b/g)].map((m) => m[1]));
   const ofType = (i) => types.some((type) => type.test(i.instrument)) || i.codes.some((code) => codes.has(code));
   let instruments = directory.instruments.filter((i) => named.has(i.refdes));
   if (!instruments.length && (types.length || codes.size)) instruments = directory.instruments.filter((i) => ofType(i) && atPlace(i.site));
