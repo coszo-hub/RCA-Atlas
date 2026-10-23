@@ -20,7 +20,7 @@ bash src/ooi_llm_relay/start.sh     # prints the trycloudflare URL
 ```
 
 The quick-tunnel URL changes whenever the tunnel restarts, and both stop when JupyterHub stops the server; the
-Worker then fails fast and Auto moves on to OpenRouter.
+Worker then fails fast and Auto moves on to Gemini.
 
 ## Worker (the machine with `wrangler login`)
 
@@ -31,4 +31,4 @@ npx wrangler secret put OOI_RELAY_TOKEN    # contents of ~/.config/ooi-llm/relay
 npx wrangler deploy
 ```
 
-The model id is `ooi-gemma-4-26b`. In Auto it is tried after Gemini and Groq, before OpenRouter.
+The model id is `ooi-gemma-4-26b`. Auto tries it first, then Gemini, Groq, OpenRouter and GPT-5.4 mini.

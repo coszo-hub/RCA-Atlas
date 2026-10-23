@@ -521,6 +521,17 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
   if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
   if (requestedModel === OOI_MODEL) return generateOoiAnswer(prompt, mode, env);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
+  // Auto answers with the OOI model first, the project's own: it answers in seconds when its relay is up. A down
+  // relay (the JupyterHub server stopped, or a new tunnel URL not yet set) fails and Auto moves on to Gemini.
+  let lastError;
+  if (requestedModel === "auto" && env.OOI_RELAY_ORIGIN) {
+    try {
+      return await generateOoiAnswer(prompt, mode, env);
+    } catch (error) {
+      lastError = error;
+      console.warn("ooi answer failed", error instanceof Error ? error.message : "unknown");
+    }
+  }
   const model = ["gemini-2.5-flash", "gemini-3.5-flash-lite"].includes(requestedModel)
     ? requestedModel : (env.ANSWER_MODEL || "gemini-2.5-flash");
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
@@ -535,7 +546,6 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
 
   // A temporary upstream 429/5xx must not discard an already-complete evidence
   // package. Retry once inside the Worker before returning an availability error.
-  let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const upstream = await postJson(endpoint, request);
@@ -548,7 +558,7 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
     }
   }
   console.warn("gemini answer failed; trying fallbacks", lastError instanceof Error ? lastError.message : "unknown");
-  // Auto stays Gemini-first for its native evidence handling. Each free route
+  // After OOI, Auto tries Gemini for its native evidence handling. Each free route
   // is attempted independently: a temporary quota or capacity failure moves to
   // the next provider rather than ending the answer request.
   if (requestedModel === "auto" && env.GROQ_API_KEY) {
@@ -557,16 +567,6 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
     } catch (error) {
       lastError = error;
       console.warn("groq answer failed", error instanceof Error ? error.message : "unknown");
-    }
-  }
-  // The OOI model comes before OpenRouter: it answers in seconds when its relay is up, where OpenRouter's free
-  // models are rate-limited and take up to two minutes.
-  if (requestedModel === "auto" && env.OOI_RELAY_ORIGIN) {
-    try {
-      return await generateOoiAnswer(prompt, mode, env);
-    } catch (error) {
-      lastError = error;
-      console.warn("ooi answer failed", error instanceof Error ? error.message : "unknown");
     }
   }
   if (requestedModel === "auto" && env.OPENROUTER_API_KEY) {

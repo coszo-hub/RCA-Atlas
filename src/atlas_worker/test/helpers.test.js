@@ -509,7 +509,7 @@ test("Auto answers on the paid fallback only after every free model refuses", as
   assert.ok(asked.includes("generativelanguage.googleapis.com") && asked.includes("api.groq.com"));
 });
 
-test("the OOI model answers through its relay with the relay token, picked or in Auto before OpenRouter", async (t) => {
+test("the OOI model answers through its relay with the relay token, picked or first in Auto", async (t) => {
   const { default: worker } = await import("../src/index.js");
   const asked = [];
   t.mock.method(globalThis, "fetch", async (url, init) => {
@@ -533,8 +533,28 @@ test("the OOI model answers through its relay with the relay token, picked or in
   assert.deepEqual(asked, ["relay.example"]);
   asked.length = 0;
   assert.equal((await ask("auto")).answer_model, "OOI Gemma 4 26B-A4B");
-  assert.equal(asked.at(-1), "relay.example");
-  assert.ok(!asked.includes("openrouter.ai"));
+  assert.deepEqual(asked, ["relay.example"]);
+});
+
+test("Auto moves on to Gemini when the OOI relay is down", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  const asked = [];
+  t.mock.method(globalThis, "fetch", async (url) => {
+    const u = String(url);
+    if (u.endsWith("/v1/context")) return Response.json({ hits: [{ chunk_id: "I", collection_id: "instruments", title: "Gauge", text: "A gauge." }], neighbors: [], tool_hints: [] });
+    if (u.endsWith("/v1/passages")) return Response.json({ hits: [] });
+    asked.push(new URL(u).hostname);
+    if (u.startsWith("https://relay.example/")) return new Response("tunnel gone", { status: 530 });
+    return Response.json({ candidates: [{ content: { parts: [{ text: "A gauge [1]." }] } }] });
+  });
+  const env = { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g",
+    OOI_RELAY_ORIGIN: "https://relay.example", OOI_RELAY_TOKEN: "r" };
+  const res = await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "What does the gauge measure?", model: "auto" }),
+  }), env).then((r) => r.json());
+  assert.equal(res.answer_model, "gemini-2.5-flash");
+  assert.deepEqual(asked, ["relay.example", "generativelanguage.googleapis.com"]);
 });
 
 test("a research answer names what is missing only when something is", () => {
