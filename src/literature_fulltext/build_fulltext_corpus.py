@@ -52,7 +52,11 @@ def unstamped(text: str) -> str:
         text = stamp.sub(" ", text)
     return re.sub(r"\s+", " ", text).strip()
 INSTRUMENTS = ROOT / "data/Instruments/instruments.jsonl"
-REFDES = re.compile(r"\b(?:RS|CE)\d\d[A-Z0-9]{4}-[A-Z0-9]{5}-\d\d-[A-Z0-9]{9}\b")
+# Reference designators with or without a port, which may carry a letter: RS01SLBS-MJ01A-06-PRESTA101,
+# RS01SBPS-PC01A-4A-CTDPFA103, RS01SUM2-MJ01B-CTDPFA110.
+REFDES = re.compile(r"\b(?:RS|CE)\d\d[A-Z0-9]{4}-[A-Z0-9]{5}-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}\b")
+# The OO seismic stations, which papers name by station code ("AXEC2 recorded..."), not by reference designator.
+STATION_ID = re.compile(r"^EARTHSCOPE-OO-([A-Z0-9]{5})$")
 # (entity id, name, aliases, needs an Axial mention in the same passage)
 SITES = (
     ("SITE-axial-seamount", "Axial Seamount", ("Axial Seamount", "Axial Volcano"), False),
@@ -97,6 +101,14 @@ def entities(instruments: Path = INSTRUMENTS) -> tuple[list[dict], list[tuple]]:
     for code, d in sorted(known.items()):
         records.append({"entity_id": code, "entity_type": "instrument", "name": d.get("name") or code,
                         "aliases": [code, d["instrument_id"]]})
+    # A seismic station is its instrument record's entity (EARTHSCOPE-OO-AXEC2), matched by its code in capitals.
+    for line in instruments.open(encoding="utf-8"):
+        d = json.loads(line)
+        station = STATION_ID.match(d.get("canonical_id") or "")
+        if station:
+            records.append({"entity_id": d["canonical_id"], "entity_type": "instrument", "name": d.get("name") or station[1],
+                            "aliases": [station[1], d["canonical_id"], d["instrument_id"]]})
+            matchers.append((d["canonical_id"], "instrument", _word(station[1]), station[1], False))
     return records, matchers, set(known)
 
 

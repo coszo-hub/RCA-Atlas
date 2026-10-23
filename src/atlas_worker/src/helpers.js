@@ -432,8 +432,50 @@ export function typeInventory(question) {
   return i >= 0 && TYPE_SEARCH[i] ? { search: `${TYPE_SEARCH[i]} instrument`, record: INSTRUMENT_TYPES[i][1] } : null;
 }
 
-const REFDES = /\b[A-Z]{2}\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}\b/;
-const STATION = /\b(?:AX[A-Z]{2}|HYS[A-Z0-9])\d\b/;
+// "What papers used AXEC1 and AXEC2?", "which studies used the Slope Base pressure gauge?": papers that used a sensor.
+// No abstract names a sensor; the papers' full text does (by station code, reference designator or instrument code)
+// or describes it in words. Such a question asks the whole full-text layer (papersFor in the Worker).
+const PAPER_WORDS = /\b(?:papers?|studies|study|publications?|articles?|literature|research)\b/i;
+const USE_WORDS = /\b(?:us(?:e|es|ed|ing)|cit(?:e|es|ed|ing)|mention(?:s|ed)?|based on|analy[sz](?:e|es|ed)|data from|relied|employ(?:s|ed)?|record(?:s|ed)?)\b/i;
+export const isPaperUsageQuestion = (question) => PAPER_WORDS.test(String(question || "")) && USE_WORDS.test(String(question || ""));
+export const instrumentSearch = (question) => String(question || "").replace(PAPER_WORDS, " ").replace(USE_WORDS, " ")
+  .replace(/\b(?:what|which|have|has|had|the|that|any|did|do|does|data|of)\b/gi, " ").replace(/[?]/g, " ").replace(/\s+/g, " ").trim();
+// The codes a paper names an instrument by: its station code (AXEC2), reference designator and that designator's
+// instrument code (CTDPFB304), from the codes in the question and the instrument records found for it.
+// The place a paper-usage question names ("Slope Base" in "the Slope Base pressure gauge"): its instrument words without
+// the type and generic words. A passage found by meaning must name it, or it is about another gauge.
+// The codes a question gives: station codes and designators, and acronyms in capitals (BOTPT, COVIS, MARUM) that
+// papers write as the instrument's name; not the project's own (OOI, RCA, COSZO, NSF).
+const NOT_INSTRUMENTS = new Set(["OOI", "RCA", "COSZO", "NSF", "UTC", "USA", "NOAA", "IRIS", "DAS"]);
+export function questionCodes(question) {
+  const acronyms = String(question || "").match(/\b[A-Z][A-Z0-9]{3,9}\b/g) || [];
+  return [...new Set([...instrumentCodes([question]), ...acronyms.filter((a) => !NOT_INSTRUMENTS.has(a))])].slice(0, 6);
+}
+export function askedPlace(question) {
+  let q = instrumentSearch(question);
+  for (const [asked] of INSTRUMENT_TYPES) q = q.replace(new RegExp(asked.source, "gi"), " ");
+  for (const code of questionCodes(q)) q = q.replace(code, " ");
+  return q.replace(/\b(?:sensors?|gauges?|instruments?|recorders?|stations?|from|and|at|on|in)\b/gi, " ").replace(/\s+/g, " ").trim();
+}
+export function instrumentCodes(texts) {
+  const codes = new Set();
+  for (const text of texts) {
+    const t = String(text || "");
+    for (const m of t.matchAll(/\bEARTHSCOPE-OO-([A-Z0-9]{5})\b/g)) codes.add(m[1]);
+    // A reference designator, its instrument code (CTDPFB304) and its node (MJ01A, the Slope Base node papers name).
+    for (const m of t.matchAll(new RegExp(REFDES_SOURCE, "g"))) { codes.add(m[0]); codes.add(m[0].split("-").at(-1)); codes.add(m[0].split("-")[1]); }
+    for (const m of t.matchAll(/\bCanonical identifier:\s*([A-Z]{6}\d{3})\b/g)) codes.add(m[1]);
+    for (const m of t.matchAll(new RegExp(STATION_SOURCE, "g"))) codes.add(m[0]);
+    // An acronym in a record's title, as papers write it: "Cabled Observatory Vent Imaging Sonar (COVIS)".
+    for (const m of t.split("\n")[0].matchAll(/\(([A-Z][A-Z0-9-]{2,11})\)/g)) codes.add(m[1]);
+  }
+  return [...codes].slice(0, 6);
+}
+
+const REFDES_SOURCE = "\\b[A-Z]{2}\\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}\\b";
+const STATION_SOURCE = "\\b(?:AX[A-Z]{2}|HYS[A-Z0-9])\\d\\b";
+const REFDES = new RegExp(REFDES_SOURCE);
+const STATION = new RegExp(STATION_SOURCE);
 export const refdesOf = (hit) => `${hit.title || ""}\n${hit.text || ""}`.match(REFDES)?.[0] ?? null;
 // One instrument's records under one name: its Arcada copies, OOI record and PI portal routing record.
 export const instrumentKey = (title) => String(title || "").toLowerCase()
@@ -480,6 +522,9 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
   const liveInstruction = isStatusQuestion(question) && /^Live status: /m.test(evidence)
     ? "Records titled \"Live status\" were checked against the live monitor moments ago: say from them whether each instrument is operating now, with the time of its data check, ahead of any older or catalog status in other records."
     : "";
+  const papersInstruction = isPaperUsageQuestion(question)
+    ? "The question asks which papers used an instrument. Full-text passages from papers that name it or describe it are in the evidence. List each paper whose passage shows it used or analyzed that instrument's data, by title with its citation and a few words on how it used it; list papers that only mention the instrument separately as mentions; leave out papers whose passages are about something else."
+    : "";
   const overviewInstruction = isDasOverview(question)
     ? `The RCA's DAS experiments are ${DAS_EXPERIMENTS.map((e) => e.about).join("; ")}. Count and describe these experiments, each once; a dataset within an experiment is part of it, not an experiment of its own.`
     : "";
@@ -494,7 +539,7 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${overviewInstruction} ${liveInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "If the evidence leaves part of the question unanswered, say in one short closing section what is missing. When the evidence answers the question fully, add no such section and do not hedge a supported answer. A total, maximum, ranking or comparison over a period (a year, or since 2015) is complete only if the evidence covers every part of that period: when it covers some months of a year, give the figure for the months covered, name them, and say the others are missing; never present a partial sum as the total."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${overviewInstruction} ${liveInstruction} ${papersInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "If the evidence leaves part of the question unanswered, say in one short closing section what is missing. When the evidence answers the question fully, add no such section and do not hedge a supported answer. A total, maximum, ranking or comparison over a period (a year, or since 2015) is complete only if the evidence covers every part of that period: when it covers some months of a year, give the figure for the months covered, name them, and say the others are missing; never present a partial sum as the total."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }
 
 // The map places a paper by the atlas sites its full text names most (the passage search returns them): they are

@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -223,7 +223,7 @@ function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
   // Live status checks lead a status question; each DAS experiment's own record leads a question about them all.
-  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.inventory || [])];
+  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.inventory || []), ...(context.papers || [])];
   if (lead.length) {
     const ids = new Set(lead.map((hit) => hit.chunk_id));
     hits = [...lead, ...hits.filter((hit) => !ids.has(hit.chunk_id))];
@@ -304,6 +304,40 @@ async function typeRecords(inventory, env) {
       .slice(0, 30).map(withRouteCitations);
   } catch (error) {
     console.error("instrument type search failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
+}
+
+// The papers that used the instrument a question names (isPaperUsageQuestion): its records first (the codes the
+// question gives, else a search among instrument records), then the whole full-text layer, by the codes papers name
+// it by (papers_naming, the passages' MENTIONS of the sensor) and by its name's meaning. One passage a paper, the
+// literal matches first, eight papers at most. A failure leaves the question to the main evidence.
+async function papersFor(question, env) {
+  const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
+  try {
+    const asked = questionCodes(question);
+    const found = (await postJson(`${api}/v1/search`, { query: searchText(instrumentSearch(question)) || question, limit: 8,
+      collection_ids: ["instruments"] }, headers)).hits || [];
+    const types = askedType(question);
+    // Records the question's codes name (AXEC2; BOTPT in their text), else records of the type asked.
+    const byCode = found.filter((hit) => asked.some((code) => new RegExp(`\\b${code}\\b`).test(`${hit.title || ""}\n${hit.text || ""}`)));
+    const records = (byCode.length ? byCode : found.filter((hit) => !types.length || types.some((type) => type.test(hit.title || "")))).slice(0, 3);
+    const codes = [...new Set([...asked, ...instrumentCodes(records.map((hit) => `${hit.title}\n${hit.text}`))])].slice(0, 6);
+    const named = codes.length ? (await postJson(`${api}/v1/papers-naming`, { terms: codes, limit: 12 }, headers)).hits || [] : [];
+    // By meaning: the question's own words for the instrument ("Slope Base pressure gauge") and each record's name.
+    const descriptions = [searchText(instrumentSearch(question)), ...records.map((hit) => String(hit.title || "").replace(/\s*\((?:description|params)\)$/i, ""))];
+    const described = (await Promise.all([...new Set(descriptions.filter(Boolean))].map((query) => postJson(`${api}/v1/search`, {
+      query, limit: 12, collection_ids: ["literature_fulltext"],
+    }, headers).then((r) => r.hits || [])))).flat();
+    const place = askedPlace(question).toLowerCase();
+    const seen = new Set();
+    const papers = [...named, ...described.filter((hit) => !place || String(hit.text || "").toLowerCase().includes(place))].filter((hit) => {
+      const key = paperKey(hit);
+      return key && !seen.has(key) && seen.add(key);
+    }).slice(0, 8).map((hit) => ({ ...hit, layer: true }));
+    return [...records.map(withRouteCitations), ...papers];
+  } catch (error) {
+    console.error("paper lookup failed", error instanceof Error ? error.message : "unknown");
     return [];
   }
 }
@@ -607,7 +641,8 @@ export default {
       }, { "x-api-key": env.ATLAS_API_KEY });
       context.hits = (context.hits || []).map(withRouteCitations);
       // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
-      const inventory = typeInventory(query);
+      if (isPaperUsageQuestion(query)) context.papers = await papersFor(query, env);
+      const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);
       if (isDasOverview(query)) context.experiments = await dasExperimentRecords(env);
       else context.fulltext = await fullTextPassages(context, query, env);

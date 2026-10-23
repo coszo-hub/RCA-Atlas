@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -524,4 +524,22 @@ test("a network-wide question about one instrument type is given every record of
   assert.equal(typeInventory("What does a CTD measure?"), null);                  // not a listing
   assert.equal(typeInventory("what DAS experiments were done here"), null);       // the DAS experiments have their own
   assert.ok(typeInventory("which CTD sensors are in the network").record.test("Oregon Shelf Benthic Package CTD"));
+});
+
+test("a question about the papers that used a sensor finds the codes papers name it by", () => {
+  assert.ok(isPaperUsageQuestion("What papers used AXEC2 and AXEC1?"));
+  assert.ok(isPaperUsageQuestion("Which studies used the Slope Base pressure gauge?"));
+  assert.ok(!isPaperUsageQuestion("What does the AXEC1 seismometer record?"));
+  assert.equal(instrumentSearch("Which studies used the Slope Base pressure gauge?"), "Slope Base pressure gauge");
+  assert.deepEqual(instrumentCodes(["What papers used AXEC2 and AXEC1?"]), ["AXEC2", "AXEC1"]);
+  assert.deepEqual(instrumentCodes(["Axial Seamount Eastern Caldera Seismic Station AXEC2\ncanonical identifier EARTHSCOPE-OO-AXEC2"]), ["AXEC2"]);
+  assert.deepEqual(instrumentCodes(["ASHES Hydrothermal Field CTD\nCanonical identifier: RS03ASHS-MJ03B-10-CTDPFB304"]), ["RS03ASHS-MJ03B-10-CTDPFB304", "CTDPFB304", "MJ03B"]);
+  assert.deepEqual(instrumentCodes(["ASHES Cabled Observatory Vent Imaging Sonar (COVIS)\nsonar"]), ["COVIS"]);
+  assert.deepEqual(instrumentCodes(["Canonical identifier: RS01SLBS-MJ01A-06-PRESTA101"]), ["RS01SLBS-MJ01A-06-PRESTA101", "PRESTA101", "MJ01A"]);
+  assert.equal(askedPlace("Which studies used the Slope Base pressure gauge?"), "Slope Base");
+  assert.equal(askedPlace("What papers used AXEC2 and AXEC1?"), "");
+  assert.equal(askedPlace("What papers used COVIS data?"), "");
+  assert.deepEqual(questionCodes("Which papers used the BOTPT at Axial?"), ["BOTPT"]);
+  assert.deepEqual(questionCodes("Which OOI RCA papers used AXEC2?"), ["AXEC2"]);
+  assert.equal(askedPlace("Which papers used the BOTPT at Axial?"), "Axial");
 });

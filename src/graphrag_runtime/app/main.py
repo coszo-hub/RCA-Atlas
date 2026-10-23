@@ -15,7 +15,7 @@ from .answering import AnsweringError, GeminiAnswerer
 from .config import Settings
 from .embeddings import BGE384Provider, EmbeddingProvider, checked_embedding
 from .models import (AnswerRequest, AnswerResponse, ContextRequest, ContextResponse, NeighborsRequest, NeighborsResponse,
-                     PassagesRequest, SearchRequest, SearchResponse, ToolsRequest, ToolsResponse)
+                     PapersNamingRequest, PassagesRequest, SearchRequest, SearchResponse, ToolsRequest, ToolsResponse)
 from .repository import PostgresRepository, Repository
 
 LOGGER = logging.getLogger(__name__)
@@ -90,6 +90,14 @@ def create_app(*, settings: Settings | None = None, repository: Repository | Non
         except Exception:
             LOGGER.exception("passage lookup failed")
             raise HTTPException(503, "passages temporarily unavailable") from None
+
+    @app.post("/v1/papers-naming", response_model=SearchResponse)
+    def papers_naming(body: PapersNamingRequest, _: None = Depends(authorize)) -> dict[str, Any]:
+        try:
+            return {"query": " ".join(body.terms), "hits": repo.papers_naming(body.terms, limit=body.limit)}
+        except Exception:
+            LOGGER.exception("papers-naming lookup failed")
+            raise HTTPException(503, "paper lookup temporarily unavailable") from None
 
     @app.post("/v1/neighbors", response_model=NeighborsResponse)
     def neighbors(body: NeighborsRequest, _: None = Depends(authorize)) -> dict[str, Any]:

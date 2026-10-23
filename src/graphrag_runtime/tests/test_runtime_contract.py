@@ -13,12 +13,12 @@ class RuntimeContractTests(unittest.TestCase):
         manifest = json.loads((NORMALIZED / "build_manifest.json").read_text())
         self.assertTrue(manifest["passed"])
         self.assertEqual(manifest["counts"]["collections"], 17)
-        self.assertEqual(manifest["counts"]["source_files"], 117)
-        self.assertEqual(manifest["counts"]["node_records"], 39_127)
-        self.assertEqual(manifest["counts"]["nodes"], 37_658)
+        self.assertEqual(manifest["counts"]["source_files"], 118)
+        self.assertEqual(manifest["counts"]["node_records"], 39_141)
+        self.assertEqual(manifest["counts"]["nodes"], 37_672)
         self.assertEqual(manifest["counts"]["chunks"], 21_810)
-        self.assertEqual(manifest["counts"]["edge_records"], 47_459)
-        self.assertEqual(manifest["counts"]["edge_facts"], 46_755)
+        self.assertEqual(manifest["counts"]["edge_records"], 47_626)
+        self.assertEqual(manifest["counts"]["edge_facts"], 46_922)
         self.assertEqual(manifest["counts"]["structured_records"], 154_948)
 
     def test_each_embedding_file_retains_both_roles(self):
@@ -29,7 +29,7 @@ class RuntimeContractTests(unittest.TestCase):
             self.assertIn("embedding", row["roles"])
             self.assertIn("graph_node", row["roles"])
         auxiliary = [row for row in rows if "auxiliary" in row["roles"]]
-        self.assertEqual(len(auxiliary), 3)   # the Axial visual files and the website errata
+        self.assertEqual(len(auxiliary), 4)   # the Axial visual files, and the website and RCA Information errata
 
     def test_api_database_role_has_no_base_table_grants(self):
         schema = (ROOT / "migrations/001_initial.sql").read_text()

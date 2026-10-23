@@ -30,6 +30,12 @@ class PassagesRequest(StrictModel):
     limit: int = Field(default=12, ge=1, le=30)
 
 
+class PapersNamingRequest(StrictModel):
+    """Instrument codes (AXEC1, a reference designator) whose papers are wanted, from the full-text layer."""
+    terms: list[Annotated[str, Field(pattern=r"^[A-Za-z0-9-]{3,40}$")]] = Field(min_length=1, max_length=6)
+    limit: int = Field(default=10, ge=1, le=20)
+
+
 class NodeSeed(StrictModel):
     collection_id: str = Field(min_length=1, max_length=100)
     local_id: str = Field(min_length=1, max_length=500)

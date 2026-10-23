@@ -14,6 +14,7 @@ class Repository(Protocol):
                collection_ids: Sequence[str]) -> list[dict[str, Any]]: ...
     def passages(self, query: str, embedding: Sequence[float], *, paper_keys: Sequence[str],
                  limit: int) -> list[dict[str, Any]]: ...
+    def papers_naming(self, terms: Sequence[str], *, limit: int) -> list[dict[str, Any]]: ...
     def neighbors(self, seeds: Sequence[dict[str, str]], *, hops: int, limit: int) -> list[dict[str, Any]]: ...
     def route_tools(self, query: str, *, limit: int) -> list[dict[str, Any]]: ...
     def close(self) -> None: ...
@@ -124,6 +125,27 @@ class PostgresRepository:
                                  "url": citation_url or chunk_source_url}]
             row["metadata"] = {"node_local_id": row.pop("node_local_id"), "locator": row.pop("locator"),
                                "places": row.pop("places") or []}
+            row.pop("chunk_pk", None)
+            row["collection_label"] = COLLECTION_LABELS.get(row["collection_id"], row["collection_id"])
+            result.append(row)
+        return result
+
+    def papers_naming(self, terms: Sequence[str], *, limit: int) -> list[dict[str, Any]]:
+        """Papers whose full text names the codes, each by its passage naming them most, most-naming papers first."""
+        with self._cursor() as cursor:
+            cursor.execute("SELECT * FROM graphrag_api.papers_naming(%s,%s)", (list(terms), limit))
+            rows = self._dict_rows(cursor)
+        result = []
+        for row in rows:
+            row["text"] = row.pop("body")
+            row["score"] = float(row["passages_naming"])
+            row["lexical_score"] = row["vector_score"] = 0.0
+            citation_url, chunk_source_url = row.pop("citation_url"), row.pop("source_url")
+            row["citations"] = [{"source_id": row.pop("citation_source_id"), "title": row.pop("citation_title"),
+                                 "url": citation_url or chunk_source_url}]
+            row["metadata"] = {"node_local_id": row.pop("node_local_id"), "locator": row.pop("locator"),
+                               "places": row.pop("places") or [], "paper_key": row.pop("paper_key"),
+                               "passages_naming": row.pop("passages_naming"), "terms_named": row.pop("terms_named") or []}
             row.pop("chunk_pk", None)
             row["collection_label"] = COLLECTION_LABELS.get(row["collection_id"], row["collection_id"])
             result.append(row)

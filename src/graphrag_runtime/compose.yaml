@@ -12,6 +12,7 @@ services:
       - ./migrations/002_local_api_role.sql:/docker-entrypoint-initdb.d/002-api-role.sql:ro
       - ./migrations/003_retrieval_layers.sql:/docker-entrypoint-initdb.d/003-retrieval-layers.sql:ro
       - ./migrations/004_paper_passages.sql:/docker-entrypoint-initdb.d/004-paper-passages.sql:ro
+      - ./migrations/005_papers_naming.sql:/docker-entrypoint-initdb.d/005-papers-naming.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U graphrag_owner -d graphrag"]
       interval: 5s

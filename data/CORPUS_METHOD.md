@@ -320,6 +320,22 @@ its passages name most, specific sites first; a paper on Axial or Hydrate Ridge
 as a whole is placed at the summit caldera or Southern Hydrate Ridge. The
 Worker adds them to the paper's hits, where the map finds site names.
 
+Papers that used a sensor ("which papers used AXEC1 and AXEC2?"): no abstract
+names a sensor, and RCA Information's `LINKS_INSTRUMENT` edges are not usage
+(they link 79 papers to AXEC2, among them an imagery paper and a DAS paper,
+where the full text of nine names it). The answer rests on the papers' own
+text. Passages `MENTIONS` the OO seismic stations by station code (167 edges,
+`EARTHSCOPE-OO-AXEC2`) as well as the sites, systems and reference
+designators. The Worker finds the instrument records the question names (its
+codes, its acronyms such as BOTPT, else the type asked), takes the codes papers
+write (station code, reference designator, instrument code such as CTDPFB304,
+node such as MJ01A, a title acronym such as COVIS), and asks
+`graphrag_api.papers_naming` (`migrations/005_papers_naming.sql`) for the
+papers whose full text names them, by whole word, one best passage each. It
+adds passages found by the instrument's name, which must name the place the
+question gives. The model separates papers that used the instrument's data
+from papers that only mention it.
+
 Passages are never shown to readers. The Worker sends no excerpt for any paper
 (abstract or full text); the answer cites the paper, whose DOI link leads to
 the full text. It may use the paper's own wording.
