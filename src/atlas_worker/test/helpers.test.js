@@ -536,7 +536,7 @@ test("the OOI model answers through its relay with the relay token, picked or fi
   assert.deepEqual(asked, ["relay.example"]);
 });
 
-test("the OOI model goes through the VPC binding when there is one, never the public tunnel URL", async (t) => {
+test("the OOI model goes through the VPC binding when it answers, not the quick-tunnel URL", async (t) => {
   const { default: worker } = await import("../src/index.js");
   const asked = [];
   const relayed = [];
@@ -562,6 +562,27 @@ test("the OOI model goes through the VPC binding when there is one, never the pu
   }
   assert.deepEqual(relayed, Array(2).fill(["http://127.0.0.1:8787/v1/chat/completions", "Bearer r"]));
   assert.deepEqual(asked, []);
+});
+
+test("a quick tunnel's URL answers when the named tunnel behind the VPC binding is down", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  const asked = [];
+  t.mock.method(globalThis, "fetch", async (url) => {
+    const u = String(url);
+    if (u.endsWith("/v1/context")) return Response.json({ hits: [{ chunk_id: "I", collection_id: "instruments", title: "Gauge", text: "A gauge." }], neighbors: [], tool_hints: [] });
+    if (u.endsWith("/v1/passages")) return Response.json({ hits: [] });
+    asked.push(u);
+    return Response.json({ choices: [{ message: { content: "A gauge [1]." } }] });
+  });
+  const OOI_RELAY = { fetch: async () => { throw new Error("no tunnel connector"); } };
+  const env = { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", OOI_RELAY,
+    OOI_RELAY_ORIGIN: "https://quick.example/", OOI_RELAY_TOKEN: "r" };
+  const res = await worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "What does the gauge measure?", model: "ooi-gemma-4-26b" }),
+  }), env).then((r) => r.json());
+  assert.equal(res.answer_model, "OOI Gemma 4 26B-A4B");
+  assert.deepEqual(asked, ["https://quick.example/v1/chat/completions"]);
 });
 
 test("Auto moves on to Gemini when the OOI relay is down", async (t) => {
