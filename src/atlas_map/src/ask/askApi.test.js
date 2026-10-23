@@ -29,7 +29,7 @@ describe("askAtlas", () => {
     await expect(askAtlas("q?", { fetchImpl: async () => { throw err; } })).rejects.toBe(err);
   });
   it("offers the models the Worker accepts, Auto first", () => {
-    expect(MODELS.map(m => m[0])).toEqual(["auto", "gemini-2.5-flash", "gemini-3.5-flash-lite", "groq-gpt-oss-120b", "groq-gpt-oss-20b", "groq-qwen3-8-27b", "gpt-5.4-mini"]);
+    expect(MODELS.map(m => m[0])).toEqual(["auto", "gemini-2.5-flash", "gemini-3.5-flash-lite", "groq-gpt-oss-120b", "groq-gpt-oss-20b", "groq-qwen3-8-27b", "ooi-gemma-4-26b", "gpt-5.4-mini"]);
   });
   it("labels answer models briefly", () => {
     expect(modelLabel("gemini-2.5-flash")).toBe("gemini-2.5-flash");

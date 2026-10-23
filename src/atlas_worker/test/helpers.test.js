@@ -509,6 +509,34 @@ test("Auto answers on the paid fallback only after every free model refuses", as
   assert.ok(asked.includes("generativelanguage.googleapis.com") && asked.includes("api.groq.com"));
 });
 
+test("the OOI model answers through its relay with the relay token, picked or in Auto before OpenRouter", async (t) => {
+  const { default: worker } = await import("../src/index.js");
+  const asked = [];
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    const u = String(url);
+    if (u.endsWith("/v1/context")) return Response.json({ hits: [{ chunk_id: "I", collection_id: "instruments", title: "Gauge", text: "A gauge." }], neighbors: [], tool_hints: [] });
+    if (u.endsWith("/v1/passages")) return Response.json({ hits: [] });
+    asked.push(new URL(u).hostname);
+    if (u === "https://relay.example/v1/chat/completions") {
+      assert.equal(init.headers.authorization, "Bearer r");
+      return Response.json({ choices: [{ message: { content: "A gauge [1]." } }] });
+    }
+    return Response.json({ error: "rate limited" }, { status: 429 });
+  });
+  const env = { ATLAS_API_KEY: "k", ATLAS_API_ORIGIN: "https://api.example", GEMINI_API_KEY: "g", GROQ_API_KEY: "q",
+    OPENROUTER_API_KEY: "o", OOI_RELAY_ORIGIN: "https://relay.example/", OOI_RELAY_TOKEN: "r" };
+  const ask = (model) => worker.fetch(new Request("https://w.example/v1/answer", {
+    method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
+    body: JSON.stringify({ query: "What does the gauge measure?", model }),
+  }), env).then((res) => res.json());
+  assert.equal((await ask("ooi-gemma-4-26b")).answer_model, "OOI Gemma 4 26B-A4B");
+  assert.deepEqual(asked, ["relay.example"]);
+  asked.length = 0;
+  assert.equal((await ask("auto")).answer_model, "OOI Gemma 4 26B-A4B");
+  assert.equal(asked.at(-1), "relay.example");
+  assert.ok(!asked.includes("openrouter.ai"));
+});
+
 test("a research answer names what is missing only when something is", () => {
   const prompt = answerPrompt({ question: "Which eruptions were on the south rift?", evidence: "e", sources: [], mode: "research" });
   assert.match(prompt, /If the evidence leaves part of the question unanswered, say in one short closing section what is missing/);

@@ -22,5 +22,8 @@ AUTO_FALLBACK_OPENAI_MODEL = "gpt-5.4-mini"
 #   wrangler secret put OPENAI_API_KEY
 #   wrangler secret put ATLAS_API_KEY
 #   wrangler secret put ATLAS_API_ORIGIN
+# Optional, the OOI JupyterHub LLM through its relay (src/ooi_llm_relay); unset, the model is simply unavailable:
+#   wrangler secret put OOI_RELAY_ORIGIN
+#   wrangler secret put OOI_RELAY_TOKEN
 # Optional when Turnstile protection is added:
 #   wrangler secret put TURNSTILE_SECRET

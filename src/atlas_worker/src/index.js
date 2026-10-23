@@ -420,6 +420,23 @@ const OPENROUTER_FREE_MODELS = {
   "openrouter-gemma-4-31b": "google/gemma-4-31b-it:free",
 };
 
+// The OOI JupyterHub LLM sits on OOI's private network: OOI_RELAY_ORIGIN is a Cloudflare Tunnel to
+// src/ooi_llm_relay on a JupyterHub server, which holds the OOI key, fixes the model and turns Gemma's thinking off.
+// The tunnel lives only while that server runs, so a down relay fails fast and Auto moves on.
+const OOI_MODEL = "ooi-gemma-4-26b";
+
+async function generateOoiAnswer(prompt, mode, env) {
+  if (!env.OOI_RELAY_ORIGIN || !env.OOI_RELAY_TOKEN) throw new Error("OOI relay is not configured");
+  const upstream = await postJson(`${env.OOI_RELAY_ORIGIN.replace(/\/$/, "")}/v1/chat/completions`, {
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.15,
+    max_tokens: mode === "compact" ? 1500 : 4000,
+  }, { authorization: `Bearer ${env.OOI_RELAY_TOKEN}` });
+  const answer = upstream.choices?.[0]?.message?.content?.trim();
+  if (!answer) throw new Error("OOI model returned no answer");
+  return { answer: cleanAnswer(answer), model: "OOI Gemma 4 26B-A4B" };
+}
+
 async function generateGroqAnswer(prompt, mode, env, selected = GROQ_MODELS["groq-gpt-oss-120b"]) {
   if (!env.GROQ_API_KEY) throw new Error("Groq is not configured");
   const upstream = await postJson("https://api.groq.com/openai/v1/chat/completions", {
@@ -502,6 +519,7 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
 
 async function completePrompt(prompt, mode, env, requestedModel = "auto") {
   if (GROQ_MODELS[requestedModel]) return generateGroqAnswer(prompt, mode, env, GROQ_MODELS[requestedModel]);
+  if (requestedModel === OOI_MODEL) return generateOoiAnswer(prompt, mode, env);
   if (OPENAI_MODELS.has(requestedModel)) return generateOpenAIAnswer(prompt, requestedModel, mode, env);
   const model = ["gemini-2.5-flash", "gemini-3.5-flash-lite"].includes(requestedModel)
     ? requestedModel : (env.ANSWER_MODEL || "gemini-2.5-flash");
@@ -539,6 +557,16 @@ async function completePrompt(prompt, mode, env, requestedModel = "auto") {
     } catch (error) {
       lastError = error;
       console.warn("groq answer failed", error instanceof Error ? error.message : "unknown");
+    }
+  }
+  // The OOI model comes before OpenRouter: it answers in seconds when its relay is up, where OpenRouter's free
+  // models are rate-limited and take up to two minutes.
+  if (requestedModel === "auto" && env.OOI_RELAY_ORIGIN) {
+    try {
+      return await generateOoiAnswer(prompt, mode, env);
+    } catch (error) {
+      lastError = error;
+      console.warn("ooi answer failed", error instanceof Error ? error.message : "unknown");
     }
   }
   if (requestedModel === "auto" && env.OPENROUTER_API_KEY) {
@@ -623,7 +651,7 @@ export default {
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
     const quick = body?.answer_mode === "quick";
-    const requestedModel = ["gemini-2.5-flash", "gemini-3.5-flash-lite", ...Object.keys(GROQ_MODELS), ...OPENAI_MODELS].includes(body?.model)
+    const requestedModel = ["gemini-2.5-flash", "gemini-3.5-flash-lite", ...Object.keys(GROQ_MODELS), OOI_MODEL, ...OPENAI_MODELS].includes(body?.model)
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
