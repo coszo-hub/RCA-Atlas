@@ -18,3 +18,10 @@ The conversion:
 The source snapshot contains `public/chunks.json`, the native embeddings, MiniSearch index and embedding hashes, the source catalogs used to enrich the graph, the repository README, and LICENSE. Native retrieval artifacts remain available for provenance but are not mixed into the Graph-RAG runtime because its IDs and normalized text differ.
 
 Arcada's repository is MIT licensed, but extracted paper text and scraped third-party pages retain their original rights. The corpus does not label third-party content as MIT.
+
+## Corrections
+
+Arcada was preliminary and not double checked. `audit_arcada.py --repo <checkout>` checks it against independent
+sources (the publisher's titles and abstracts in the literature catalog, the papers' own full text, OOI's site pages)
+and writes `corrections.json`; `build_arcada_graph.py` applies it, keeps each corrected row's original text hash, and
+lists every change in `build_audit.json`. Rerun the audit when Arcada, the literature catalog or the full text changes.

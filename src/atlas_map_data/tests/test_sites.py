@@ -46,6 +46,15 @@ class SitesTest(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(sorted(result[0]["sensorIds"]), ["a", "b", "c"])
 
+    def test_two_ooi_sites_never_share_a_map_site(self):
+        # International District 1 and 2 are ~100 m apart; an EarthScope station between them (no site code) joins
+        # the nearest and does not bridge them.
+        int1 = s("int1", 45.9257, -129.9780, loc="International District", node="MJ03C", depth=1516, code="RS03INT1")
+        int2 = s("int2", 45.9258, -129.9778, loc="International District 2", node="MJ03D", depth=1526, code="RS03INT2")
+        axid1 = s("axid1", 45.92572, -129.978031, loc="International District", node=None, depth=1527, code=None)
+        result, _ = sites.build_sites([int1, int2, axid1], [], FLAT)
+        self.assertEqual(sorted(sorted(t["sensorIds"]) for t in result), [["axid1", "int1"], ["int2"]])
+
     def test_repeated_labels_get_a_distinguishing_token(self):
         dlat = 1.0 / sites.KZ                      # 1 km apart: four separate sites, all "Summit"
         located = [

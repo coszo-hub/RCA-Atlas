@@ -66,3 +66,32 @@ class CorrectRowsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CorrectionTests(unittest.TestCase):
+    def test_corrections_fix_titles_abstracts_links_and_positions(self):
+        from build_arcada_graph import apply_corrections
+        rows = [
+            {"id": "paper::10.1234/x", "type": "paper", "title": "Cut titl", "_source_row_index": 0, "keywords": ["sonar"],
+             "text": "Cut titl (2020) — J\n\nAnother paper's abstract.\nRelevant instruments: A, B",
+             "linked_instruments": ["A", "B"]},
+            {"id": "RS03AXPS-PC03A-4A-CTDPFA303", "type": "ctd", "_source_row_index": 1,
+             "text": "Name: CTD\nLatitude: 45.9316\nLongitude: -129.9808\nDepth: 2607 m"},
+        ]
+        catalog = {"RS03AXPS-PC03A-4A-CTDPFA303": {"latitude": "45.9316", "longitude": "-129.9808", "depth_m": "2607"}}
+        corrections = {
+            "papers": [{"doi": "10.1234/x", "title": "Cut title in full", "abstract": "The paper's own abstract.", "keywords": [],
+                        "reason": "r", "authority": "https://doi.org/10.1234/x"}],
+            "links": [{"doi": "10.1234/x", "linked_instruments": ["B"], "removed": ["A"], "evidence": {"B": "named by code"}, "reason": "l"}],
+            "instruments": [{"id": "RS03AXPS-PC03A-4A-CTDPFA303", "latitude": 45.8305, "longitude": -129.7535, "depth_m": 2607,
+                             "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)", "reason": "p", "authority": "https://o"}],
+        }
+        done = apply_corrections(rows, catalog, corrections)
+        self.assertEqual(rows[0]["title"], "Cut title in full")
+        self.assertEqual(rows[0]["text"], "Cut title in full (2020) — J\n\nThe paper's own abstract.\nRelevant instruments: B")
+        self.assertEqual(rows[0]["linked_instruments"], ["B"])
+        self.assertEqual(rows[0]["keywords"], [])
+        self.assertIn("Latitude: 45.8305\nLongitude: -129.7535\nDepth: 200 m (shallow-profiler platform", rows[1]["text"])
+        self.assertEqual(catalog["RS03AXPS-PC03A-4A-CTDPFA303"]["latitude"], 45.8305)
+        self.assertEqual(done[0]["removed_links"], ["A"])
+        self.assertTrue(all("original_text_sha256" in r["_repair"] for r in rows))

@@ -24,12 +24,10 @@ src/atlas_ui/dist/
 !/data/README.md
 !/data/CORPUS_METHOD.md
 !/data/cleanup_validation.json
-# Hand-written corrections, where a website misstates the paper it cites, or RCA Information gives a paper
-# another paper's abstract.
+# Hand-written corrections, where a website misstates the paper it cites (RCA Information's are corrected by
+# src/arcada_pipeline/corrections.json when it is built).
 !/data/Websites/
 !/data/Websites/errata.jsonl
-!/data/Arcada/
-!/data/Arcada/errata.jsonl
 
 /source_material/**
 !/source_material/README.md

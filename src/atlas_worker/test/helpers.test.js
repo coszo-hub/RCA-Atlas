@@ -523,6 +523,9 @@ test("a network-wide question about one instrument type is given every record of
   assert.equal(typeInventory("which CTDs are at Axial?"), null);                 // a site: the inventory search keeps to it
   assert.equal(typeInventory("What does a CTD measure?"), null);                  // not a listing
   assert.equal(typeInventory("what DAS experiments were done here"), null);       // the DAS experiments have their own
+  assert.equal(typeInventory("What is Pythia's Oasis, and which fault is thought to drain the overpressured reservoir?"), null);
+  assert.equal(typeInventory("At about what temperature and pressure do subseafloor reactions buffer the fluid?"), null);
+  assert.equal(typeInventory("At what depths were the hydrophones?"), null);
   assert.ok(typeInventory("which CTD sensors are in the network").record.test("Oregon Shelf Benthic Package CTD"));
 });
 
@@ -530,6 +533,7 @@ test("a question about the papers that used a sensor finds the codes papers name
   assert.ok(isPaperUsageQuestion("What papers used AXEC2 and AXEC1?"));
   assert.ok(isPaperUsageQuestion("Which studies used the Slope Base pressure gauge?"));
   assert.ok(!isPaperUsageQuestion("What does the AXEC1 seismometer record?"));
+  assert.ok(!isPaperUsageQuestion("Which multibeam echosounder was used to map bubble plumes in the 2016 time-series study?"));
   assert.equal(instrumentSearch("Which studies used the Slope Base pressure gauge?"), "Slope Base pressure gauge");
   assert.deepEqual(instrumentCodes(["What papers used AXEC2 and AXEC1?"]), ["AXEC2", "AXEC1"]);
   assert.deepEqual(instrumentCodes(["Axial Seamount Eastern Caldera Seismic Station AXEC2\ncanonical identifier EARTHSCOPE-OO-AXEC2"]), ["AXEC2"]);

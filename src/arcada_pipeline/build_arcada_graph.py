@@ -200,6 +200,81 @@ def correct_earthscope_rows(rows: list[dict], snapshot: dict) -> list[dict]:
     return corrections
 
 
+CORRECTIONS = Path(__file__).with_name("corrections.json")
+RELEVANT = re.compile(r"\nRelevant instruments: [^\n]*")
+
+
+def apply_corrections(rows: list[dict], catalog: dict[str, dict], corrections: dict) -> list[dict]:
+    """Correct Arcada where an independent source shows it wrong (corrections.json, from audit_arcada.py).
+
+    Paper titles take the publisher's; an abstract that belongs to another paper is replaced by the paper's own, and
+    PDF front matter is led by the publisher's abstract; a paper's instrument links (its "Relevant instruments" line)
+    are those its own text supports; instrument positions and depths follow OOI's site pages. Each changed row keeps
+    its original text hash, and each change is listed in the audit.
+    """
+    papers = {c["doi"]: c for c in corrections.get("papers", [])}
+    links = {c["doi"]: c for c in corrections.get("links", [])}
+    instruments = {c["id"]: c for c in corrections.get("instruments", [])}
+    done, first_chunk = [], set()
+    for row in rows:
+        original, changes = row.get("text") or "", []
+        text = original
+        doi = normalized_doi(row) if row.get("type") == "paper" else None
+        fix = papers.get(doi or "")
+        if fix:
+            if fix.get("title") and row.get("title") != fix["title"]:
+                head, sep, rest = text.partition("\n")
+                if row.get("title") and row["title"] in head:       # the record's heading line repeats its title
+                    text = head.replace(row["title"], fix["title"], 1) + sep + rest
+                row["title"] = fix["title"]
+                changes.append("title")
+            if fix.get("abstract"):
+                head, _, rest = text.partition("\n\n")
+                tail = RELEVANT.search(rest)
+                text = f"{head}\n\n{fix['abstract']}" + (tail.group(0) if tail else "")
+                changes.append("abstract")
+            if fix.get("keywords") is not None and row.get("keywords") != fix["keywords"]:
+                row["keywords"] = fix["keywords"]
+                changes.append("keywords")
+            if fix.get("prepend_abstract") and doi not in first_chunk and re.search(r"::chunk0$", row["id"]):
+                text = f"Abstract (from the publisher): {fix['prepend_abstract']}\n\n{text}"
+                first_chunk.add(doi)
+                changes.append("abstract added before the front matter")
+        link = links.get(doi or "")
+        if link:
+            row["linked_instruments"] = list(link["linked_instruments"])
+            line = "\nRelevant instruments: " + ", ".join(link["linked_instruments"]) if link["linked_instruments"] else ""
+            text = RELEVANT.sub(line, text)
+            changes.append("instrument links")
+        inst = instruments.get(re.sub(r"::(?:desc|params)$", "", row["id"]))
+        if inst:
+            if inst.get("latitude") is not None:
+                text = re.sub(r"^Latitude: .*$", f"Latitude: {inst['latitude']}", text, flags=re.M)
+                text = re.sub(r"^Longitude: .*$", f"Longitude: {inst['longitude']}", text, flags=re.M)
+            elif "latitude" in inst:                    # a placeholder position, cleared
+                text = re.sub(r"^Latitude: .*\n?", f"Position: {inst['position_text']}\n", text, flags=re.M)
+                text = re.sub(r"^Longitude: .*\n?", "", text, flags=re.M)
+            if inst.get("depth_text"):
+                text = re.sub(r"^Depth: .*$", f"Depth: {inst['depth_text']}", text, flags=re.M)
+            changes.append("position and depth" if "latitude" in inst else "depth")
+        if text != original:
+            row["text"] = text
+        if changes:
+            row["_repair"] = {**(row.get("_repair") or {}), "reason": "corrected_from_independent_source",
+                              "corrected": changes, "original_text_sha256": hashlib.sha256(original.encode()).hexdigest()}
+            done.append({"source_chunk_id": row["id"], "source_row_index": row["_source_row_index"], "corrected": changes,
+                         "reason": "; ".join(x["reason"] for x in (fix, link, inst) if x),
+                         "authority": next((x["authority"] for x in (fix, inst) if x and x.get("authority")), "the paper's own text"),
+                         **({"removed_links": link["removed"], "link_evidence": link["evidence"]} if link else {})})
+    for refdes, inst in instruments.items():
+        meta = catalog.get(refdes)
+        if meta:
+            for key in ("latitude", "longitude", "depth_m"):
+                if key in inst:
+                    meta[key] = inst[key]
+    return done
+
+
 def parent_key(row: dict) -> str:
     source_id = row["id"]
     if row.get("source") == "pdf":
@@ -265,6 +340,7 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
     (output / "text").mkdir()
 
     instrument_catalog = {x["id"]: x for x in read_json(repo / "catalog" / "instruments.json")["instruments"]}
+    corrections = apply_corrections(selected, instrument_catalog, read_json(CORRECTIONS))
     paper_catalog = read_json(repo / "catalog" / "papers.json")["papers"]
     papers_by_doi = {(x.get("doi") or "").casefold(): x for x in paper_catalog if x.get("doi")}
     papers_by_title = {clean_text(x.get("title", "")).casefold(): x for x in paper_catalog if x.get("title")}
@@ -512,6 +588,7 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
             "source revision and SHA recorded", "all 802 source rows retained",
             "six placeholder-only duplicate rows repaired with an explicit audit trail",
             "EarthScope station rows corrected from a dated channel-metadata snapshot",
+            "rows corrected from independent sources (corrections.json) with their original text hashes",
             "unique namespaced node IDs", "relationship endpoint integrity",
             "every document has contiguous chunks", "nonempty normalized chunk text",
             "no undefined placeholders", "no HTML tags", "local text files exist",
@@ -523,6 +600,7 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
     audit_output.write_text(json.dumps({
         "created_at": now(), "source_rows": len(raw_rows), "retained_rows": len(selected),
         "excluded_rows": [], "repaired_rows": repairs, "earthscope_corrected_rows": station_corrections,
+        "corrected_rows": corrections,
         "earthscope_snapshot_retrieved_at": station_snapshot["retrieved_at"],
         "source_sha256": hashlib.sha256(raw_bytes).hexdigest(),
     }, indent=2) + "\n")
@@ -542,6 +620,7 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
         "excluded_source_rows": 0,
         "repaired_placeholder_rows": len(repairs),
         "earthscope_corrected_rows": len(station_corrections),
+        "corrected_rows": len(corrections),
         "earthscope_snapshot": {"file": EARTHSCOPE_SNAPSHOT.name, "retrieved_at": station_snapshot["retrieved_at"]},
         "chunks": len(chunks),
         "documents": len(documents),
@@ -562,6 +641,10 @@ def build(repo: Path, output: Path, audit_output: Path) -> None:
             "Arcada describes every EarthScope OO station as broadband (or high-frequency) with BHZ, BHN and BHE; those "
             "rows' Description and Channels lines are corrected from EarthScope's channel metadata, and the original text "
             "hash is kept in source_row_repair.",
+            "Arcada was preliminary and not double checked. corrections.json (written by audit_arcada.py) corrects "
+            "paper titles to the publisher's, abstracts that belonged to other papers, paper-to-instrument links to those "
+            "the paper's own text supports, and instrument positions and depths to OOI's site pages; each corrected row "
+            "keeps its original text hash and the audit lists every change.",
         ],
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

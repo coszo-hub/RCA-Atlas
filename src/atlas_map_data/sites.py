@@ -32,6 +32,17 @@ def region_for(lon: float) -> str:
     raise ValueError(f"longitude {lon} is outside every region")
 
 
+# Profiler moorings are drawn as the water column of their seafloor site (sensors.json corrections place them there).
+SITE_FAMILY = {"RS03AXPS": "RS03AXBS", "RS03AXPD": "RS03AXBS", "RS01SBPS": "RS01SLBS", "RS01SBPD": "RS01SLBS"}
+
+
+def _same_site(a: dict, b: dict) -> bool:
+    """Sensors of two OOI sites never share a map site, however close (International District 1 and 2 are 100 m
+    apart); a sensor without a site code (an EarthScope station) joins its neighbours."""
+    x, y = a.get("siteCode"), b.get("siteCode")
+    return not x or not y or SITE_FAMILY.get(x, x) == SITE_FAMILY.get(y, y)
+
+
 def _km(a: dict, b: dict) -> float:
     return math.hypot((a["lon"] - b["lon"]) * KX, (a["lat"] - b["lat"]) * KZ)
 
@@ -79,10 +90,13 @@ def build_sites(located: list[dict], unlocated: list[dict],
     clusters: list[list[dict]] = []
     for sensor in sorted(located, key=lambda x: (x["lat"], x["lon"], x["id"])):
         # Transitive: a sensor near several groups merges them into the earliest one.
-        near = [c for c in clusters if any(_km(sensor, m) < SITE_RADIUS_KM for m in c)]
+        near = [c for c in clusters if any(_km(sensor, m) < SITE_RADIUS_KM for m in c) and all(_same_site(sensor, m) for m in c)]
         if not near:
             clusters.append([sensor])
             continue
+        # A sensor without a site code joins the nearest site's group, and never bridges two OOI sites.
+        nearest = min(near, key=lambda c: min(_km(sensor, m) for m in c))
+        near = [c for c in near if c is nearest or all(_same_site(m, n) for m in c for n in nearest)]
         home = near[0]
         for other in near[1:]:
             home.extend(other)

@@ -1,0 +1,2491 @@
+{
+ "papers": [
+  {
+   "doi": "10.1002/rob.21961",
+   "abstract": "Although modern machine learning has the potential to greatly speed up the interpretation of imagery, the varied nature of the seabed and limited availability of expert annotations form barriers to its widespread use in seafloor mapping applications. This motivates research into unsupervised methods that function without large databases of human annotations. This paper develops an unsupervised feature learning method for georeferenced seafloor visual imagery that considers patterns both within the footprint of a single image frame and broader scale spatial characteristics. Features within images are learnt using an autoencoder developed based on the AlexNet deep convolutional neural network. Features larger than each image frame are learnt using a novel loss function that regularises autoencoder training using the Kullback–Leibler divergence function to loosely assume that images captured within a close distance of each other look more similar than those that are far away. The method is used to semantically interpret images taken by an autonomous underwater vehicle at the Southern Hydrates Ridge, an active gas hydrate field and site of a seafloor cabled observatory at a depth of 780 m. The method's performance when applied to clustering and content‐based image retrieval is assessed against a ground truth consisting of more than 18,000 human annotations. The study shows that the location based loss function increases the rate of information retrieval by a factor of two for seafloor mapping applications. The effects of physics‐based colour correction and image rescaling are also investigated, showing that the improved consistency of spatial information achieved by rescaling is beneficial for recognising artificial objects such as cables and infrastructures, but is less effective for natural objects that have greater dimensional variability.",
+   "keywords": [
+    "autoencoder",
+    "computer vision",
+    "mapping",
+    "underwater robotics",
+    "unsupervised learning"
+   ],
+   "reason": "Arcada gives this paper the abstract and keywords of a COVIS paper (acoustic backscatter at ASHES); these are the paper's own, from its first page.",
+   "authority": "https://doi.org/10.1002/rob.21961"
+  },
+  {
+   "doi": "10.1029/2020ea001269",
+   "title": "Acoustic and In‐Situ Observations of Deep Seafloor Hydrothermal Discharge: An OOI Cabled Array ASHES Vent Field Case Study",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.1029/2020ea001269"
+  },
+  {
+   "doi": "10.1029/2020gl087372",
+   "abstract": "Detailed examination of a 32‐year record of high‐resolution bottom pressure measurements at Axial Seamount (and vicinity) in the northeast Pacific identified a total of 41 tsunamis between 1986 and 2018. All of the events were associated with tsunamigenic earthquakes with magnitudes of 7.0 and greater. Statistical analysis of the data reveals that the time series of maximum tsunami amplitude and root‐mean‐square (RMS) tsunami amplitude follow strict power‐law distributions, with considerably less deviation than for coastal tide gauge records. The high statistical reliability of the seamount record is attributable to the long duration of the observations and to the low signal‐to‐noise ratio of digital open‐ocean bottom pressure records. The power law for the RMS tsunami amplitude is especially stable and follows a pure Pareto distribution (with exponent, β = 1.24) even when the minimum threshold is increased to the point that only a few events remain in the time series.",
+   "reason": "Arcada gives this paper the abstract of an AMOC observing review (Frajka-Williams et al., 2019); this is the paper's own, from its first page.",
+   "authority": "https://doi.org/10.1029/2020gl087372"
+  },
+  {
+   "doi": "10.1121/10.0002670",
+   "title": "Compact representation of temporal processes in echosounder time series via matrix decomposition",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.1121/10.0002670"
+  },
+  {
+   "doi": "10.1121/10.0020514",
+   "title": "Basin scale coherence of Kauai-Beacon m-sequence transmissions received at Wake Island and Monterey, CA",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.1121/10.0020514"
+  },
+  {
+   "doi": "10.1121/10.0039811",
+   "title": "Characterizing wind-dependent low-frequency ambient sound with ocean observatories initiative hydrophones",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.1121/10.0039811"
+  },
+  {
+   "doi": "10.1130/g46831.1",
+   "title": "Continuous evolution of oceanic crustal structure following an eruption at Axial Seamount, Juan de Fuca Ridge",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.1130/g46831.1"
+  },
+  {
+   "doi": "10.1785/0120180319",
+   "title": "Stress Drops on the Blanco Oceanic Transform Fault from Interstation Phase Coherence",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.1785/0120180319"
+  },
+  {
+   "doi": "10.3389/fmars.2019.00093",
+   "prepend_abstract": "The ocean knows no political borders. Ocean processes, like summertime wind-driven upwelling, stretch thousands of kilometers along the Northeast Pacific (NEP) coast. This upwelling drives marine ecosystem productivity and is modulated by weather systems and seasonal to interdecadal ocean-atmosphere variability. Major ocean currents in the NEP transport water properties such as heat, fresh water, nutrients, dissolved oxygen, pCO2, and pH close to the shore. The eastward North Pacific Current bifurcates offshore in the NEP, delivering open-ocean signals south into the California Current and north into the Gulf of Alaska. There is a large and growing number of NEP ocean observing elements operated by government agencies, Native American Tribes, First Nations groups, not-for-profit organizations, and private entities. Observing elements include moored and mobile platforms, shipboard repeat cruises, as well as land-based and estuarine stations. A wide range of multidisciplinary ocean sensors are deployed to track, for example, upwelling, downwelling, ocean productivity, harmful algal blooms, ocean acidification and hypoxia, seismic activity and tsunami wave propagation. Data delivery to shore and observatory controls are done through satellite and cell phone communication, and via seafloor cables. Remote sensing from satellites and land-based coastal radar provide broader spatial coverage, while numerical circulation and biogeochemical modeling complement ocean observing efforts. Models span from the deep ocean into the inland Salish Sea and estuaries. NEP ocean observing systems are used to understand regional processes and, together with numerical models, provide ocean forecasts. By sharing data, experiences and lessons learned, the regional ocean observatory is better than the sum of its parts.",
+   "reason": "the first chunk is the PDF's front matter; the publisher's abstract leads it",
+   "authority": "https://doi.org/10.3389/fmars.2019.00093"
+  },
+  {
+   "doi": "10.3389/fmars.2019.00260",
+   "prepend_abstract": "The Atlantic Meridional Overturning Circulation (AMOC) extends from the Southern Ocean to the northern North Atlantic, transporting heat northwards throughout the South and North Atlantic, and sinking carbon and nutrients into the deep ocean. Climate models indicate that changes to the AMOC both herald and drive climate shifts. Intensive trans-basin AMOC observational systems have been put in place to continuously monitor meridional volume transport variability, and in some cases, heat, freshwater and carbon transport. These observational programs have been used to diagnose the magnitude and origins of transport variability, and to investigate impacts of variability on essential climate variables such as sea surface temperature, ocean heat content and coastal sea level. AMOC observing approaches vary between the different systems, ranging from trans-basin arrays (OSNAP, RAPID 26°N, 11°S, SAMBA 34.5°S) to arrays concentrating on western boundaries (e.g., RAPID WAVE, MOVE 16°N). In this paper, we outline the different approaches (aims, strengths and limitations) and summarize the key results to date. We also discuss alternate approaches for capturing AMOC variability including direct estimates (e.g., using sea level, bottom pressure, and hydrography from autonomous profiling floats), indirect estimates applying budgetary approaches, state estimates or ocean reanalyses, and proxies. Based on the existing observations and their results, and the potential of new observational and formal synthesis approaches, we make suggestions as to how to evaluate a comprehensive, future-proof observational network of the AMOC to deepen our understanding of the AMOC and its role in global climate.",
+   "reason": "the first chunk is the PDF's front matter; the publisher's abstract leads it",
+   "authority": "https://doi.org/10.3389/fmars.2019.00260"
+  },
+  {
+   "doi": "10.5194/os-18-233-2022",
+   "title": "Autonomous methane seep site monitoring offshore western Svalbard: hourly to seasonal variability and associated oceanographic parameters",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.5194/os-18-233-2022"
+  },
+  {
+   "doi": "10.5670/oceanog.2017.426",
+   "title": "High-Resolution AUV Mapping and Targeted ROV Observations of Three Historical Lava Flows at Axial Seamount",
+   "reason": "title as the publisher gives it (Arcada's was cut, repeated or altered)",
+   "authority": "https://doi.org/10.5670/oceanog.2017.426"
+  }
+ ],
+ "links": [
+  {
+   "doi": "10.1002/2015gc006144",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/2016ea000190",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/2016gc006250",
+   "linked_instruments": [
+    "PI-OVRSRA101"
+   ],
+   "evidence": {
+    "PI-OVRSRA101": "type and site named in one passage"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-HYS14",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/2016gc006734",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXBA1",
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXEC2": "named by code",
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXBA1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/2016gl071327",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/2016gl071884",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/2016jc012464",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/9781119750925.ch4",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": false,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1002/rob.21961",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "PI-OVRSRA101",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1007/s00792-022-01263-2",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1007/s44267-025-00085-y",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.apor.2022.103193",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.apor.2025.104422",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.dsr.2022.103809",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.dsr2.2018.04.001",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.epsl.2019.01.047",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.epsl.2024.118625",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXID1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXID1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-HYS14",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.esg.2022.100141",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1016/j.margeo.2014.03.010",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXID1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXID1": "type and site named in one passage"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2017jb015131",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXID1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXID1": "type and site named in one passage",
+    "EARTHSCOPE-OO-AXCC1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2017jb015289",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2018ea000418",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-HYSB1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-HYSB1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2018gc007607",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2018gc007802",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2018gc008112",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXBA1",
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-HYS14"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-HYS14": "named by code",
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXBA1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2018gl078233",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2018gl080644",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2019ea000762",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "PI-OVRSRA101",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2019jb017970",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXAS1",
+    "EARTHSCOPE-OO-AXAS2",
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXID1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "type and site named in one passage",
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXAS1": "named by code",
+    "EARTHSCOPE-OO-AXAS2": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-HYS14",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2019jb018053",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2019jb018796",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXAS1",
+    "EARTHSCOPE-OO-AXAS2",
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXEC3",
+    "EARTHSCOPE-OO-AXID1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXID1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "named by code",
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXAS1": "named by code",
+    "EARTHSCOPE-OO-AXAS2": "named by code",
+    "EARTHSCOPE-OO-AXEC1": "named by code",
+    "EARTHSCOPE-OO-AXEC3": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2020gc009085",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2020gc009136",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXEC2"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXEC2": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2020gl087372",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2020gl088447",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC1",
+    "EARTHSCOPE-OO-AXEC3"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC1": "named by code",
+    "EARTHSCOPE-OO-AXEC3": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2020jb019356",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXEC2"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXEC2": "type and site named in one passage"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2020jb020065",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2020jb020912",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2021ea001974",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXID1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXID1": "type and site named in one passage"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "PI-MASSP-ASHES",
+    "PI-OVRSRA101",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2021gc010153",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2022ea002434",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2022gc010426",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2022gl100006",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2022gl100008",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2023cn000225",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2023ef004126",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2023gl105464",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2023jb026413",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": false,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2023jb027799",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-HYS11",
+    "EARTHSCOPE-OO-HYS12",
+    "EARTHSCOPE-OO-HYS13",
+    "EARTHSCOPE-OO-HYS14",
+    "EARTHSCOPE-OO-HYSB1",
+    "RS01SUM1-LJ01B-05-HYDLFA104"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-HYS14": "type and site named in one passage",
+    "EARTHSCOPE-OO-HYS11": "named by code",
+    "EARTHSCOPE-OO-HYSB1": "named by code",
+    "EARTHSCOPE-OO-HYS13": "named by code",
+    "EARTHSCOPE-OO-HYS12": "named by code",
+    "RS01SUM1-LJ01B-05-HYDLFA104": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2024jb029728",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2024jb030481",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXEC2": "named by code",
+    "EARTHSCOPE-OO-AXCC1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1029/2025cn000288",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1038/ismej.2013.113",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1038/ngeo2929",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM1-LJ01B-10-PCO2WA101"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1038/s41467-018-05736-x",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1038/s41467-019-10605-2",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1038/s41598-019-55918-w",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1038/s41598-020-67043-0",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1038/s43017-022-00364-y",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1093/gji/ggaa203",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1093/icesjms/fsae133",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "PI-OVRSRA101"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1109/joe.2024.3521256",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "PI-OVRSRA101",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": false,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0005192",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-HYS14"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-HYS14": "named by code"
+   },
+   "removed": [
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": false,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0005440",
+   "linked_instruments": [
+    "CE02SHBP-LJ01D-11-HYDBBA106",
+    "CE04OSBP-LJ01C-11-HYDBBA105"
+   ],
+   "evidence": {
+    "CE04OSBP-LJ01C-11-HYDBBA105": "named by code",
+    "CE02SHBP-LJ01D-11-HYDBBA106": "named by code"
+   },
+   "removed": [],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0009232",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0015231",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0017104",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0019703",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0023334",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": false,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0036351",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1121/10.0036696",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1126/sciadv.add6688",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1126/science.aah4666",
+   "linked_instruments": [
+    "RS03ECAL-MJ03E-06-BOTPTA302",
+    "RS03INT2-MJ03D-06-BOTPTA303"
+   ],
+   "evidence": {
+    "RS03ECAL-MJ03E-06-BOTPTA302": "named by code",
+    "RS03INT2-MJ03D-06-BOTPTA303": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1126/science.aah5563",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1130/g39978.1",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXEC2": "named by code",
+    "EARTHSCOPE-OO-AXCC1": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1130/g45354.1",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1130/g46831.1",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXCC1": "named by code",
+    "EARTHSCOPE-OO-AXEC2": "named by code"
+   },
+   "removed": [],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1146/annurev-earth-040522-095654",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1155/2022/1316439",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1175/jtech-d-15-0103.1",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1186/s10033-020-00449-z",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1785/0120180319",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.1785/0120210214",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/feart.2021.613234",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "PI-MASSP-ASHES",
+    "PI-OVRSRA101",
+    "RS01SUM2-MJ01B-12-HYDMGA000"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/feart.2021.775544",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/feart.2022.983051",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2019.00074",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-HYS14",
+    "PI-MASSP-ASHES",
+    "PI-OVRSRA101",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2019.00093",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-HYS14"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-HYS14": "type and site named in one passage"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS01SUM1-LJ01B-10-PCO2WA101",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2019.00424",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2022.1018751",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2022.796376",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2022.846701",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2022.866422",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-AXID1": "type and site named in one passage",
+    "EARTHSCOPE-OO-AXEC2": "type and site named in one passage",
+    "EARTHSCOPE-OO-AXCC1": "type and site named in one passage"
+   },
+   "removed": [
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2023.1025464",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2023.1197338",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3389/fmars.2025.1603541",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3390/geosciences9030115",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3390/jmse8030190",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS03ASHS-MJ03B-10-THSPHD000"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.3397/in_2023_1041",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.4031/mtsj.52.3.4",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5670/oceanog.2014.49",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5670/oceanog.2017.426",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5670/oceanog.2018.115",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5670/oceanog.2018.116",
+   "linked_instruments": [
+    "EARTHSCOPE-OO-HYS11",
+    "EARTHSCOPE-OO-HYS12",
+    "EARTHSCOPE-OO-HYS13",
+    "EARTHSCOPE-OO-HYS14",
+    "EARTHSCOPE-OO-HYSB1"
+   ],
+   "evidence": {
+    "EARTHSCOPE-OO-HYS14": "named by code",
+    "EARTHSCOPE-OO-HYS11": "named by code",
+    "EARTHSCOPE-OO-HYSB1": "named by code",
+    "EARTHSCOPE-OO-HYS13": "named by code",
+    "EARTHSCOPE-OO-HYS12": "named by code"
+   },
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "PI-OVRSRA101",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5670/oceanog.2018.117",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5670/oceanog.2018.120",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-14-BOTPTA301",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301",
+    "RS03AXPS-PC03A-4B-CTDPFK301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5670/oceanog.2023.203",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "RS01SUM2-MJ01B-09-THSPHD000",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS03ASHS-MJ03B-10-THSPHD000",
+    "RS03AXBS-LJ03A-12-HYDLFA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.5802/crgeos.119",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "EARTHSCOPE-OO-AXCC1",
+    "EARTHSCOPE-OO-AXEC2",
+    "EARTHSCOPE-OO-AXID1",
+    "EARTHSCOPE-OO-HYS14",
+    "RS01SUM2-MJ01B-12-HYDMGA000",
+    "RS01SUM2-MJ01B-15-OBSBBA102",
+    "RS03ASHS-MJ03B-15-OBSSPA301",
+    "RS03AXBS-LJ03A-12-HYDLFA301",
+    "RS03AXBS-LJ03A-14-BOTPTA301"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  },
+  {
+   "doi": "10.7717/peerj.15119",
+   "linked_instruments": [],
+   "evidence": {},
+   "removed": [
+    "PI-MASSP-ASHES",
+    "RS01SUM2-MJ01B-12-HYDMGA000"
+   ],
+   "full_text": true,
+   "reason": "Arcada's list was assigned by keyword; links are kept or added only where the paper's text names the instrument"
+  }
+ ],
+ "instruments": [
+  {
+   "id": "RS01SBPD-DP01A-01-CTDPFL104",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  },
+  {
+   "id": "RS01SBPD-DP01A-02-VEL3DA103",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  },
+  {
+   "id": "RS01SBPD-DP01A-03-FLCDRA102",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  },
+  {
+   "id": "RS01SBPD-DP01A-04-FLNTUA102",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  },
+  {
+   "id": "RS01SBPD-DP01A-06-DOSTAD104",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-05-ADCPTD102",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-06-VADCPA101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-06-VADCPB101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-08-HYDBBA103",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-4A-CTDPFA103",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-4A-DOSTAD103",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-4B-PHSENA102",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-4C-FLORDD103",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-2A-CTDPFA102",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-2A-DOFSTA102",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-2D-PHSENA101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-3A-FLORTD101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-4A-NUTNRA101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-4B-VELPTD102",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-4F-PCO2WA101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS03AXPD-DP03A-01-CTDPFL304",
+   "latitude": 45.8297,
+   "longitude": -129.759,
+   "depth_m": 2604,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2604 m)",
+   "reason": "position 20.6 km from the RS03AXPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axpd/"
+  },
+  {
+   "id": "RS03AXPD-DP03A-02-VEL3DA303",
+   "latitude": 45.8297,
+   "longitude": -129.759,
+   "depth_m": 2604,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2604 m)",
+   "reason": "position 20.6 km from the RS03AXPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axpd/"
+  },
+  {
+   "id": "RS03AXPD-DP03A-03-FLCDRA302",
+   "latitude": 45.8297,
+   "longitude": -129.759,
+   "depth_m": 2604,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2604 m)",
+   "reason": "position 20.6 km from the RS03AXPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axpd/"
+  },
+  {
+   "id": "RS03AXPD-DP03A-03-FLNTUA302",
+   "latitude": 45.8297,
+   "longitude": -129.759,
+   "depth_m": 2604,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2604 m)",
+   "reason": "position 20.6 km from the RS03AXPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axpd/"
+  },
+  {
+   "id": "RS03AXPD-DP03A-06-DOSTAD304",
+   "latitude": 45.8297,
+   "longitude": -129.759,
+   "depth_m": 2604,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2604 m)",
+   "reason": "position 20.6 km from the RS03AXPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axpd/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-05-ADCPTD302",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-06-VADCPA301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-08-HYDBBA303",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-4A-CTDPFA303",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-4A-DOSTAD303",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-4B-PHSENA302",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-4C-FLORDD303",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-2A-CTDPFA302",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-2A-DOFSTA302",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-2D-PHSENA301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-3A-FLORTD301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-4A-NUTNRA301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-4B-VELPTD302",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-4F-PCO2WA301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03INT1-MJ03C-09-THSPHA301",
+   "depth_m": 1516,
+   "depth_text": "1516 m",
+   "reason": "depth 1555 m, where the RS03INT1 site is at 1516 m",
+   "authority": "https://oceanobservatories.org/site/rs03int1/"
+  },
+  {
+   "id": "RS03INT1-MJ03C-09-TRHPHA302",
+   "depth_m": 1516,
+   "depth_text": "1516 m",
+   "reason": "depth 1555 m, where the RS03INT1 site is at 1516 m",
+   "authority": "https://oceanobservatories.org/site/rs03int1/"
+  },
+  {
+   "id": "RS03INT1-MJ03C-10-TRHPHA301",
+   "depth_m": 1516,
+   "depth_text": "1516 m",
+   "reason": "depth 1555 m, where the RS03INT1 site is at 1516 m",
+   "authority": "https://oceanobservatories.org/site/rs03int1/"
+  },
+  {
+   "id": "RS03INT2-MJ03D-06-BOTPTA303",
+   "latitude": 45.9258,
+   "longitude": -129.9778,
+   "depth_m": 1526,
+   "depth_text": "1526 m",
+   "reason": "position 2.5 km from the RS03INT2 site; depth 1550 m, where the RS03INT2 site is at 1526 m",
+   "authority": "https://oceanobservatories.org/site/rs03int2/"
+  },
+  {
+   "id": "RS03INT2-MJ03D-11-CTDPFB307",
+   "latitude": 45.9258,
+   "longitude": -129.9778,
+   "depth_m": 1526,
+   "depth_text": "1526 m",
+   "reason": "position 2.5 km from the RS03INT2 site; depth 1550 m, where the RS03INT2 site is at 1526 m",
+   "authority": "https://oceanobservatories.org/site/rs03int2/"
+  },
+  {
+   "id": "RS03INT2-MJ03D-12-VEL3DB304",
+   "latitude": 45.9258,
+   "longitude": -129.9778,
+   "depth_m": 1526,
+   "depth_text": "1526 m",
+   "reason": "position 2.5 km from the RS03INT2 site; depth 1550 m, where the RS03INT2 site is at 1526 m",
+   "authority": "https://oceanobservatories.org/site/rs03int2/"
+  },
+  {
+   "id": "PI-DAS-OPTASENSE",
+   "latitude": null,
+   "longitude": null,
+   "position_text": "along the RCA cable (no single position)",
+   "reason": "45.0, -128.0 is a placeholder from the PI pages, about 300 km offshore and away from any RCA node",
+   "authority": "https://oceanobservatories.org/regional-cabled-array/"
+  },
+  {
+   "id": "PI-DAS24",
+   "latitude": null,
+   "longitude": null,
+   "position_text": "along the RCA cable (no single position)",
+   "reason": "45.0, -128.0 is a placeholder from the PI pages, about 300 km offshore and away from any RCA node",
+   "authority": "https://oceanobservatories.org/regional-cabled-array/"
+  },
+  {
+   "id": "PI-DAS25",
+   "latitude": null,
+   "longitude": null,
+   "position_text": "along the RCA cable (no single position)",
+   "reason": "45.0, -128.0 is a placeholder from the PI pages, about 300 km offshore and away from any RCA node",
+   "authority": "https://oceanobservatories.org/regional-cabled-array/"
+  },
+  {
+   "id": "RS01SBPD-DP01A-05-OPTAAC102",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  },
+  {
+   "id": "RS03AXPD-DP03A-05-OPTAAC302",
+   "latitude": 45.8297,
+   "longitude": -129.759,
+   "depth_m": 2604,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2604 m)",
+   "reason": "position 20.6 km from the RS03AXPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axpd/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-3B-OPTAAD101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-3B-OPTAAD301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS01SBPS-PC01A-07-CAMDSC102",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS03AXPS-PC03A-07-CAMDSC302",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "200 m (shallow-profiler platform; water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the instrument's depth",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03INT1-MJ03C-05-CAMDSB303",
+   "depth_m": 1516,
+   "depth_text": "1516 m",
+   "reason": "depth 1555 m, where the RS03INT1 site is at 1516 m",
+   "authority": "https://oceanobservatories.org/site/rs03int1/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-3D-SPKIRA101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-3D-SPKIRA301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS01SBPS-SF01A-3C-PARADA101",
+   "latitude": 44.529,
+   "longitude": -125.3893,
+   "depth_m": 2906,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2906 m)",
+   "reason": "position 2.1 km from the RS01SBPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbps/"
+  },
+  {
+   "id": "RS03AXPS-SF03A-3C-PARADA301",
+   "latitude": 45.8305,
+   "longitude": -129.7535,
+   "depth_m": 2607,
+   "depth_text": "profiles between the 200 m platform and near the surface (water depth 2607 m)",
+   "reason": "position 20.9 km from the RS03AXPS site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs03axps/"
+  },
+  {
+   "id": "RS03INT1-MJ03C-07-PPSDNA301",
+   "depth_m": 1516,
+   "depth_text": "1516 m",
+   "reason": "depth 1555 m, where the RS03INT1 site is at 1516 m",
+   "authority": "https://oceanobservatories.org/site/rs03int1/"
+  },
+  {
+   "id": "RS03INT1-MJ03C-07-RASFLA301",
+   "depth_m": 1516,
+   "depth_text": "1516 m",
+   "reason": "depth 1555 m, where the RS03INT1 site is at 1516 m",
+   "authority": "https://oceanobservatories.org/site/rs03int1/"
+  },
+  {
+   "id": "RS01SBPD-DP01A-03-FLCDRA104",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  },
+  {
+   "id": "RS01SBPD-DP01A-04-FLNTUA104",
+   "latitude": 44.5274,
+   "longitude": -125.3806,
+   "depth_m": 2893,
+   "depth_text": "profiles the water column below the shallow profiler (water depth 2893 m)",
+   "reason": "position 2.1 km from the RS01SBPD site; the water depth was given as the depth of a profiling instrument",
+   "authority": "https://oceanobservatories.org/site/rs01sbpd/"
+  }
+ ]
+}

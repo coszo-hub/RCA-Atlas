@@ -62,10 +62,10 @@ class SensorRecordTest(unittest.TestCase):
         unlocated = sensors.sensor_from_row(dict(ROW, canonical_id="RS03AXPS-PC03A-4B-CTDPFK301", latitude=None, longitude=None))
         recs.append(unlocated)
         fixes = [{"match": {"siteCode": ["RS03AXPS", "RS03AXPD"], "lat": [45.9316]}, "set": {"lat": 45.8168, "lon": -129.754},
-                  "reason": "Inventory places the Axial Base profilers in the caldera."}]
+                  "reason": "Drawn as the water column of Axial Base."}]
         sensors.apply_corrections(recs, fixes)
         self.assertEqual((recs[0]["lat"], recs[0]["lon"]), (45.8168, -129.754))
-        self.assertEqual(recs[0]["corrections"], ["Inventory places the Axial Base profilers in the caldera."])
+        self.assertEqual(recs[0]["corrections"], ["Drawn as the water column of Axial Base."])
         # a sensor with no recorded position is not given one by a position fix
         self.assertIsNone(unlocated["lat"])
         self.assertEqual(unlocated["corrections"], [])
@@ -85,13 +85,12 @@ class SensorRecordTest(unittest.TestCase):
             sensors.apply_corrections(recs, [{"match": {"id": ["NOPE"]}, "set": {"lat": 1}, "reason": "x"}])
 
     def test_shipped_corrections_file_loads(self):
+        # Arcada's own errors (the Axial profilers placed in the caldera, the DAS experiments' placeholder position)
+        # are corrected where Arcada is built; the map keeps only its drawing of the profilers as their base's column.
         fixes = sensors.load_corrections(Path(sensors.__file__).with_name("corrections.json"))
-        self.assertTrue(any("RS03AXPS" in f["match"].get("siteCode", []) for f in fixes))
-        das = [f for f in fixes if "PI-DAS24" in f["match"].get("id", [])]
-        self.assertEqual(len(das), 1)
-        self.assertEqual(sorted(das[0]["match"]["id"]), ["PI-DAS-OPTASENSE", "PI-DAS24", "PI-DAS25"])
-        self.assertEqual(das[0]["match"]["lat"], [45.0])
-        self.assertEqual(das[0]["set"], {"lat": None, "lon": None})
+        self.assertEqual([sorted(f["match"]["siteCode"]) for f in fixes], [["RS03AXPD", "RS03AXPS"], ["RS01SBPD", "RS01SBPS"]])
+        self.assertEqual([f["set"] for f in fixes], [{"lat": 45.8168, "lon": -129.754}, {"lat": 44.5101, "lon": -125.3899}])
+        self.assertTrue(all(f["match"]["lat"] for f in fixes))     # a sensor with no position is not given one
 
 
 if __name__ == "__main__":

@@ -426,9 +426,13 @@ const TYPE_SEARCH = ["CTD", "seismometer seismic station", "pressure", "hydropho
   "tilt", "temperature", "sonar", "pH", "spectrometer", "profiler", null];   // in INSTRUMENT_TYPES order; DAS has its own (isDasOverview)
 export function typeInventory(question) {
   const q = String(question || "");
-  const listing = /\b(?:which|list|all|every|how many|where are)\b/i.test(q) || /\bwhat\s+(?:[a-z-]+\s+)?[a-z]+s\s+(?:are|exist)\b/i.test(q);
-  if (SPECIFIC_PLACE.test(q) || !listing || isDasOverview(q)) return null;
-  const i = INSTRUMENT_TYPES.findIndex(([asked]) => asked.test(q));
+  if (SPECIFIC_PLACE.test(q) || isDasOverview(q)) return null;
+  // The type is what the listing asks for, within a few words of it: "which CTD sensors", "how many pressure sensors",
+  // "list all the hydrophones"; not "which fault drains the overpressured reservoir".
+  // The type is counted as instruments: plural ("seismometers") or followed by "sensors", "gauges"…; not "what
+  // temperature", "what depths were the hydrophones", "papers used COVIS data".
+  const listed = (asked) => new RegExp(`\\b(?:which|what|list|all|every|how many|where are)\\W+(?:[\\w-]+\\W+){0,2}?(?:${asked.source})[\\w-]*?(?:s\\b|\\s+(?:sensors?|instruments?|gauges?|stations?|recorders?|meters?|probes?|packages?|devices?)\\b)`, "i").test(q);
+  const i = INSTRUMENT_TYPES.findIndex(([asked]) => listed(asked));
   return i >= 0 && TYPE_SEARCH[i] ? { search: `${TYPE_SEARCH[i]} instrument`, record: INSTRUMENT_TYPES[i][1] } : null;
 }
 
@@ -437,7 +441,10 @@ export function typeInventory(question) {
 // or describes it in words. Such a question asks the whole full-text layer (papersFor in the Worker).
 const PAPER_WORDS = /\b(?:papers?|studies|study|publications?|articles?|literature|research)\b/i;
 const USE_WORDS = /\b(?:us(?:e|es|ed|ing)|cit(?:e|es|ed|ing)|mention(?:s|ed)?|based on|analy[sz](?:e|es|ed)|data from|relied|employ(?:s|ed)?|record(?:s|ed)?)\b/i;
-export const isPaperUsageQuestion = (question) => PAPER_WORDS.test(String(question || "")) && USE_WORDS.test(String(question || ""));
+// It asks for papers ("which papers used…", "what studies used…", "papers that mention…"), not about one study's
+// methods ("which echosounder was used… in the 2016 study").
+const ASKS_FOR_PAPERS = /\b(?:which|what|list|any|find|show|name)\s+(?:[\w-]+\s+){0,2}(?:papers?|studies|publications?|articles?)\b|\b(?:papers?|studies|publications?|articles?)\s+(?:that|which|have|has)\b/i;
+export const isPaperUsageQuestion = (question) => ASKS_FOR_PAPERS.test(String(question || "")) && USE_WORDS.test(String(question || ""));
 export const instrumentSearch = (question) => String(question || "").replace(PAPER_WORDS, " ").replace(USE_WORDS, " ")
   .replace(/\b(?:what|which|have|has|had|the|that|any|did|do|does|data|of)\b/gi, " ").replace(/[?]/g, " ").replace(/\s+/g, " ").trim();
 // The codes a paper names an instrument by: its station code (AXEC2), reference designator and that designator's

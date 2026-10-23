@@ -194,6 +194,40 @@ Description and Channels lines from `src/arcada_pipeline/earthscope_stations.jso
 a dated snapshot made by `refresh_earthscope_stations.py`, and records each
 original text hash in `source_row_repair` and `build_audit.json`.
 
+**Corrections from independent sources.** Arcada was a preliminary database,
+not double checked. `audit_arcada.py` checks it against sources it did not
+produce and writes `corrections.json`, which the build applies, keeping each
+row's original text hash and listing every change in `build_audit.json`
+(428 rows):
+
+- Titles: nine papers take the publisher's title from the literature catalog
+  (PDF imports cut titles at ~100 characters; one repeated its title, one
+  carried a footnote marker).
+- Abstracts: two papers carried another paper's abstract (the autoencoder
+  imagery paper, 10.1002/rob.21961, a COVIS paper's, with its keywords; the
+  Axial tsunami paper, 10.1029/2020GL087372, an AMOC review's) and take their
+  own, from their first page. Two Frontiers papers whose first chunk is PDF
+  front matter are led by the publisher's abstract.
+- Paper-to-instrument links: the "Relevant instruments" lists were assigned by
+  keyword (a sonar keyword linked every ASHES instrument; the tsunami and
+  imagery papers carried the same list). A link is kept only where the paper's
+  own text (its Arcada chunks and its full text) names the instrument by an
+  unambiguous code, or names its type and site in one passage; instruments the
+  text names by code are added. 709 links were removed across
+  109 papers; 83 remain.
+- Instruments: positions over 1.5 km from their OOI site and depths over 20 m
+  off take OOI's site pages (63 records). All 30 Axial
+  profiler instruments sat 21 km away near the International District; the
+  Slope Base profilers 2 km and International District 2 2.5 km off;
+  International District 1 was at 1,555 m (1,516 m). A profiler's Depth line
+  says where it is (the 200 m platform; the profilers move through the water
+  column), while `depth_m` stays the site's water depth, as the atlas reads it.
+  The DAS experiments' placeholder position (45.0, -128.0) is cleared.
+
+Not changed: Southern Hydrate Ridge Summit's 775 m (OOI's page gives 772, 775
+and 811 m), a historical deep-profiler designator absent from today's
+inventory, and two papers without a DOI.
+
 **Normalization and chunking.** Original Arcada chunk text and its overlapping
 paper boundaries were preserved rather than rechunked. IDs were namespaced,
 text was normalized, and source and normalized hashes were recorded. The 802
@@ -213,7 +247,7 @@ the original source metadata remain attached.
 **Validation.** The build checks that all 802 rows are retained, IDs are unique,
 relationship endpoints resolve, each document has contiguous chunks, chunk
 text is nonempty, placeholders and HTML are removed, and every Markdown review
-copy exists. Current output: 260 documents, 802 chunks, 69 entities, and 3,211
+copy exists. Current output: 260 documents, 802 chunks, 71 entities, and 2,528
 relationships. Builder: `src/arcada_pipeline/build_arcada_graph.py`.
 
 ## Literature
@@ -902,7 +936,7 @@ For future additions, use this sequence:
 
 | Collection | Files | JSONL rows |
 |---|---:|---:|
-| Arcada | 269 | 4,343 |
+| Arcada | 268 | 3,662 |
 | AxialEarthquakes | 58 | 21,968 |
 | COSZOHub | 34 | 76,489 |
 | Datasheets | 764 | 3,629 |
