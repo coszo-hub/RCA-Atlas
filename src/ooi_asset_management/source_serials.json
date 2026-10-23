@@ -1,0 +1,262 @@
+{
+  "_about": "Serial numbers and components of RCA hardware that papers, web pages and documents give, outside OOI asset-management. Each entry was read in its source; every quote must appear word for word in the named corpus chunk, or build_asset_metadata.py stops. Each entry becomes its own chunk, cited to its own source.",
+  "entries": [
+    {
+      "id": "scpr_cabled_gauges",
+      "refdes": "RS03CCAL-MJ03F-09-SCPRAA301",
+      "subject": "Cabled Self-Calibrating Pressure Recorder (CSCPR) at the Central Caldera, as described for 2018-2021",
+      "facts": [
+        "Its two quartz pressure gauges are a Paroscientific model 44.4K, serial number 136576, and a Paroscientific model 46K, serial number 132123.",
+        "The gauges are sampled at 1 Hz by Paroscientific model 1764 logging electronics.",
+        "The cabled system is nearly identical internally to the SCPR of Sasagawa and Zumberge (2013), in a titanium pressure case, powered and connected by the RCA."
+      ],
+      "components": [
+        {
+          "name": "pressure gauge",
+          "manufacturer": "Paroscientific",
+          "model": "44.4K",
+          "serial": "136576"
+        },
+        {
+          "name": "pressure gauge",
+          "manufacturer": "Paroscientific",
+          "model": "46K",
+          "serial": "132123"
+        },
+        {
+          "name": "logging electronics",
+          "manufacturer": "Paroscientific",
+          "model": "1764",
+          "serial": null
+        }
+      ],
+      "quotes": [
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
+          "text": "Two Paroscientific gauges (model 44.4K SN 136576 and model 46K SN132123) are sampled with Paroscientific model 1764 logging electronics at 1 Hz."
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
+          "text": "The CSCPR system is nearly identical internally to the one described in Sasagawa and Zumberge (2013)"
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
+          "text": "The OOI RCA provides power and communications to the CSCPR"
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
+          "text": "The upgraded CSCPR has a titanium pressure case"
+        }
+      ],
+      "source": {
+        "kind": "paper",
+        "id": "doi:10.1029/2022ea002434",
+        "url": "https://doi.org/10.1029/2022EA002434",
+        "citation": "Sasagawa, G. S., Zumberge, M. A., & Cook, M. J. (2023). Drift Corrected Seafloor Pressure Observations of Vertical Deformation at Axial Seamount 2018–2021. Earth and Space Science, 10(2), e2022EA002434."
+      }
+    },
+    {
+      "id": "scpr_unit001_2013",
+      "refdes": "RS03CCAL-MJ03F-09-SCPRAA301",
+      "relation": "earlier instrument",
+      "subject": "SCPR unit 001, deployed at Axial Seamount in 2013-2014 on a short mooring, before the cabled SCPR",
+      "facts": [
+        "SCPR unit 001 had two Paroscientific model 410K pressure gauges, serial numbers 116504 and 118710.",
+        "It was deployed at Axial Seamount on 7 September 2013 with ROV Jason, as a short mooring at a depth of 1541 m, at 45.93438°N, 130.01178°W, in the summit caldera NE of the ASHES vent field (RCA Atlas note: the paper's text reads 130.01178°E; its minus sign was lost in extraction, and the site is west of Greenwich)."
+      ],
+      "components": [
+        {
+          "name": "pressure gauge",
+          "manufacturer": "Paroscientific",
+          "model": "410K",
+          "serial": "116504"
+        },
+        {
+          "name": "pressure gauge",
+          "manufacturer": "Paroscientific",
+          "model": "410K",
+          "serial": "118710"
+        }
+      ],
+      "quotes": [
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-0d80d37d6e5211449b0c",
+          "text": "The SCPR incorporates two Paroscientiﬁc pressure gauges (model 410 K, serial numbers 116504 and 118710)."
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-d70d3a06423edda1dd52",
+          "text": "The SCPR (unit 001) weighs 135 kg."
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-d70d3a06423edda1dd52",
+          "text": "It was deployed at Axial Seamount on 7 September 2013 at 45.93438°N,"
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-d70d3a06423edda1dd52",
+          "text": "and at a depth of 1541 m as a short mooring with ﬂotation with the assistance of the ROV Jason. The deployment site is in the summit caldera NE of the Axial Seamount Hydrothermal Emissions Study (ASHES) hydrothermal"
+        }
+      ],
+      "source": {
+        "kind": "paper",
+        "id": "doi:10.1002/2016ea000190",
+        "url": "https://doi.org/10.1002/2016EA000190",
+        "citation": "Sasagawa, G., Cook, M. J., & Zumberge, M. A. (2016). Drift-corrected seafloor pressure observations of vertical deformation at Axial Seamount 2013–2014. Earth and Space Science, 3(9), 381–385."
+      }
+    },
+    {
+      "id": "scpr_2013_paper_gauges",
+      "refdes": "RS03CCAL-MJ03F-09-SCPRAA301",
+      "relation": "earlier instrument",
+      "subject": "The Self-Calibrating Pressure Recorder described by Sasagawa and Zumberge (2013)",
+      "facts": [
+        "Its two Paroscientific model 410K quartz gauges, S/N 116504 (gauge 1) and S/N 118710 (gauge 2), drifted 0.52 kPa/year and 2.46 kPa/year in the paper's calibration records."
+      ],
+      "components": [
+        {
+          "name": "pressure gauge 1",
+          "manufacturer": "Paroscientific",
+          "model": "410K",
+          "serial": "116504"
+        },
+        {
+          "name": "pressure gauge 2",
+          "manufacturer": "Paroscientific",
+          "model": "410K",
+          "serial": "118710"
+        }
+      ],
+      "quotes": [
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-3ff25a8328dafe9001c4",
+          "text": "is 0.52 kPa/year for gauge 1 (S/N 116504) and 2.46 kPa/year for gauge 2 (S/N 118710)."
+        }
+      ],
+      "source": {
+        "kind": "paper",
+        "id": "doi:10.1109/joe.2012.2233312",
+        "url": "https://doi.org/10.1109/JOE.2012.2233312",
+        "citation": "Sasagawa, G., & Zumberge, M. A. (2013). A self-calibrating pressure recorder for detecting seafloor height change. IEEE Journal of Oceanic Engineering, 38(3), 447–454."
+      }
+    },
+    {
+      "id": "a0a_transducers",
+      "refdes": "RS03CCAL-MJ03F-07-A0ABPA301",
+      "subject": "A-0-A Calibrated Pressure Instrument at the Central Caldera",
+      "facts": [
+        "It has two Paroscientific model 44.4K-302 pressure transducers, P1 and P2; the page prints SN136580 for both. (RCA Atlas note, not the page's: two transducers cannot share a serial number, so one of the two is misprinted.)",
+        "It also has a Paroscientific model 216B-102 barometer, a thermistor temperature sensor, and electronics made by RBR and integrated by UW-APL."
+      ],
+      "components": [
+        {
+          "name": "pressure transducer P1",
+          "manufacturer": "Paroscientific",
+          "model": "44.4K-302",
+          "serial": "136580"
+        },
+        {
+          "name": "pressure transducer P2",
+          "manufacturer": "Paroscientific",
+          "model": "44.4K-302",
+          "serial": "136580 (as printed; the same as P1)"
+        },
+        {
+          "name": "barometer",
+          "manufacturer": "Paroscientific",
+          "model": "216B-102",
+          "serial": null
+        }
+      ],
+      "quotes": [
+        {
+          "collection": "Websites",
+          "chunk_id": "PAGE-05334b26ef3cc13b-CHUNK-001",
+          "text": "This A-0-A instrument includes two Paroscientific model 44.4K-302 pressure transducers (SN136580 is designated P1 and SN136580 is designated P2), a Paroscientific model 216B-102 barometer"
+        },
+        {
+          "collection": "Websites",
+          "chunk_id": "PAGE-05334b26ef3cc13b-CHUNK-001",
+          "text": "a thermistor temperature sensor, and electronics manufactured by RBR and integrated by the UW-APL."
+        }
+      ],
+      "source": {
+        "kind": "web page",
+        "id": "url:oceanobservatories.org/pi-instrument/a-0-a-calibrated-pressure-instrument",
+        "url": "https://oceanobservatories.org/pi-instrument/a-0-a-calibrated-pressure-instrument/",
+        "citation": "Ocean Observatories Initiative. A-0-A Calibrated Pressure Instrument (web page)."
+      }
+    },
+    {
+      "id": "lj03a_2017_swap",
+      "node": "RS03AXBS-LJ03A",
+      "subject": "Axial Base low-power junction box LJ03A, changed out on the 2017 cruise",
+      "facts": [
+        "On the 2017 VISIONS cruise, ROV Jason dived to Axial Base to change out LJ03A, serial numbers SN011 and SN007 (blog of 1 August 2017, about the previous day)."
+      ],
+      "components": [
+        {
+          "name": "low-power junction box",
+          "manufacturer": "UW-APL",
+          "model": "LJ03A",
+          "serial": "SN0011"
+        },
+        {
+          "name": "low-power junction box",
+          "manufacturer": "UW-APL",
+          "model": "LJ03A",
+          "serial": "SN0007"
+        }
+      ],
+      "quotes": [
+        {
+          "collection": "Websites",
+          "chunk_id": "PAGE-5c717352ead6370f-CHUNK-002",
+          "text": "August 1, 2017 Yesterday was a good day. Jason started the day with a dive to Axial Base to change out LJ03A – SN011 with LJ03A – SN007."
+        }
+      ],
+      "source": {
+        "kind": "web page",
+        "id": "url:interactiveoceans.washington.edu/07/2017/willem-weertmans-blog",
+        "url": "https://interactiveoceans.washington.edu/07/2017/willem-weertmans-blog/",
+        "citation": "Weertmans, W. (2017). Willem Weertmans' Blog, VISIONS'17, Interactive Oceans (web page)."
+      }
+    },
+    {
+      "id": "mj_box_024_test_record",
+      "node": "RS01SUM2-MJ01B",
+      "subject": "Medium-power junction box serial number 024, in a COSZO project test record",
+      "facts": [
+        "A secondary-node configuration sheet in the COSZO project's test records gives a Medium Power Junction Box, serial number 024, part number 4812-65244-020, for node MJ01B (the scan reads 'MJ0O1B')."
+      ],
+      "components": [
+        {
+          "name": "medium-power junction box",
+          "manufacturer": "UW-APL",
+          "model": "4812-65244-020",
+          "serial": "024"
+        }
+      ],
+      "quotes": [
+        {
+          "collection": "coszo/graphrag",
+          "chunk_id": "COSZO-CHUNK-1a2101153849eb10",
+          "text": "Model ID Medium Power Junction Box Serial Number 024 Part Number 4812-65244-020 Manufacture Rev # MJ0O1B"
+        }
+      ],
+      "source": {
+        "kind": "document",
+        "id": "coszo:COSZO-DOC-9cb7d9dfd2cfbf4e",
+        "url": null,
+        "citation": "COSZO Project DataMSRI: scanned executed electrical, communications, environmental, corrosion, and pressure test records, page 482."
+      }
+    }
+  ]
+}

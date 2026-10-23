@@ -440,7 +440,7 @@ export function typeInventory(question) {
 // "which instruments are deeper than 2500 m?": OOI asset-management metadata (the ooi_asset_management collection).
 // Its records are a few hundred among 22,000, so the main search ranks web pages about the same instrument above
 // them; such a question also searches that collection (assetRecords in the Worker).
-const ASSET_WORDS = /\b(?:serial|s\/n|firmware|calibrat\w*|coefficients?|deploy\w*|redeploy\w*|recover\w*|cruises?|visions|manufactur\w*|make and model|(?:what|which)\s+model|deeper|deepest|how deep|shallower|shallowest)\b/i;
+const ASSET_WORDS = /\b(?:serial|s\/n|firmware|calibrat\w*|coefficients?|deploy\w*|redeploy\w*|recover\w*|cruises?|visions|manufactur\w*|make and model|(?:what|which)\s+model|deeper|deepest|how deep|shallower|shallowest|junction box(?:es)?|j-?box(?:es)?|timeline|history|changes?|changed|swapp?\w*|replaced)\b/i;
 // Makes and models ask the same records: "which CTDs are Sea-Bird SBE 16plus?".
 const MAKERS = /\b(?:sea-?bird|sbe\s?\d+\w*|teledyne|rdi|aanderaa|nortek|sunburst|satlantic|wet ?labs|g[uü]ralp|paroscientific|nobska|kongsberg|simrad|hti|benthos|sonardyne|imagenex|nanometrics|turner)\b/i;
 export const isAssetQuestion = (question) => ASSET_WORDS.test(String(question || "")) || MAKERS.test(String(question || ""));
@@ -485,6 +485,9 @@ const ASSET_TYPES = [
   [/benthic fluid flow|\bflobn\b/i, /^Benthic Fluid Flow$/], [/\bprofilers?\b(?!\s+\w*\s*(?:ctd|oxygen|fluorometer|ph|par))/i, /^Profiler vehicle/],
 ];
 const CALIBRATION_WORDS = /\bcalibrat\w*|\bcoefficients?\b/i;
+// A node a question names: its code (LJ03A, MJ03F, PC03A, SF03A, DP03A, PN03B) or a junction box at a place.
+const NODE_CODE = /\b(?:LJ|MJ|LV|PN|PC|SF|DP)\d{2}[A-Z]\b/gi;
+const NODE_WORDS = /\bjunction box(?:es)?\b|\bj-?box(?:es)?\b|\bnodes?\b/i;
 const CRUISE_WORDS = /\bcruises?\b|\bvisions\b|\bexpeditions?\b|\b(?:deployed|recovered|installed) (?:on|during|in)\b/i;
 const SITE_COUNT_WORDS = /\b(?:most|often|how many (?:times|deployments)|number of deployments|redeploy\w*)\b/i;
 const MAX_ASSET_CHUNKS = 6;
@@ -512,6 +515,7 @@ export function assetChunkIds(question, directory) {
     for (const i of instruments) {
       ids.push(`ooi_assets_${i.refdes}`);
       if (i.calibration && CALIBRATION_WORDS.test(q)) ids.push(`ooi_assets_calibration_${i.refdes}`);
+      ids.push(...(i.sourced || []));   // its components' serial numbers from papers and pages, each cited to its source
     }
   } else if (instruments.length && places) {
     // Several at a named place ("the Axial Base ADCP": the seafloor and both profiler ones): each one's record.
@@ -520,7 +524,14 @@ export function assetChunkIds(question, directory) {
     // A type across the network ("which CTDs are SBE 16plusV2?"): the record of every instance of each type.
     ids.push(...[...new Set(instruments.map((i) => directory.types[i.instrument]).filter(Boolean))].slice(0, 3));
   }
-  if (places && !instruments.length && SITE_COUNT_WORDS.test(q)) {
+  const nodeCodes = new Set((q.match(NODE_CODE) || []).map((code) => code.toUpperCase()));
+  if (directory.nodes && (nodeCodes.size || (places && NODE_WORDS.test(q) && !instruments.length))) {
+    for (const [node, entry] of Object.entries(directory.nodes)) {
+      const code = node.split("-")[1];
+      if ((nodeCodes.size ? nodeCodes.has(code) : /^(?:LJ|MJ)/.test(code)) && atPlace(entry.site)) ids.push(entry.id, ...(entry.sourced || []));
+    }
+  }
+  if (places && !instruments.length && !nodeCodes.size && SITE_COUNT_WORDS.test(q)) {
     ids.push(...Object.entries(directory.sites).filter(([site]) => atPlace(site)).map(([, id]) => id));
   }
   if (CRUISE_WORDS.test(q)) {

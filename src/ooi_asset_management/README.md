@@ -13,12 +13,31 @@ platforms (`CE02SHBP`, `CE04OSBP`, `CE04OSPS`, `CE04OSPD`).
 | `ooi_assets_site_<site>` | a site's instruments, most often redeployed first |
 | `ooi_assets_cruises_<year>` | a year's cruises and the instruments each deployed and recovered |
 | `ooi_assets_depth_<band>` | instruments by the depth of their latest deployment, deepest first |
+| `ooi_assets_node_<site-node>` | the junction box, profiler pod or platform asset (and serial) on a node over time |
+| `ooi_assets_sourced_<id>` | serial numbers and components a paper, web page or document gives, cited to that source |
+
+Each instrument chunk opens with its timeline: each deployment against the one before (sensor and serial, make,
+model and firmware, node box, calibration, position and depth, and the days out of the water).
 
 Rules the chunks follow:
 - A deployment's calibration is its sensor's latest calibration dated on or before the deployment's start.
 - OOI seldom fills `CUID_Recover`. A deployment that ended during a cabled-array cruise is said to have been recovered
   on it, marked as inferred.
 - A reference designator's latest `versionNumber` of each deployment is used.
+- A node's history is the node.uid of the instruments deployed on it, each asset's period ending where the next
+  begins. When the sheets put one asset on two nodes for more than 30 days, both nodes' chunks say so (four cases).
+- Each chunk is cited by one source named for what it holds ("OOI asset-management: <refdes> deployments, assets and
+  calibrations"), linked to its main file and listing every file it draws on.
+
+## Serial numbers from papers, web pages and documents
+
+`source_serials.json` lists them, curated: each entry was read in its source and names the instrument (or node) it
+belongs to, its components with make, model and serial, and the exact quotes that support them. The build checks
+each quote word for word against the corpus chunk it names and stops if one is missing. Each entry is its own
+chunk, cited to its own source (a paper by its DOI), and the Worker fetches it with the instrument's record. An
+entry states only what its source says; notes of our own (a misprint, a lost minus sign) are marked as RCA Atlas
+notes. Searched for: S/N, SN and serial number(s) in the full text, COSZO documents, datasheets, web pages and RCA
+Information; the rest were chip part numbers, model variables, a manual's example file and laboratory equipment.
 
 It also writes `src/atlas_worker/src/asset_directory.json`, which the Worker bundles: which chunk holds which
 instrument, site, type, cruise year and depth band. A question about serial numbers, deployments, cruises,

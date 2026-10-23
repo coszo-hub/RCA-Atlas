@@ -1,8 +1,9 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from build_asset_metadata import calibration_for, coefficients, cruise_label, recovery_cruise, short_codes
+from build_asset_metadata import calibration_for, changes, coefficients, cruise_label, recovery_cruise, short_codes, source_serials
 
 CRUISES = {
     "AT50-41": {"CUID": "AT50-41", "ShipName": "Atlantis", "cruiseStartDateTime": "2025-08-04T00:00:00",
@@ -39,6 +40,31 @@ class AssetMetadataTests(unittest.TestCase):
             values = ", ".join(str(i / 10) for i in range(83))
             path.write_text(f'serial,name,value,notes\n1,CC_a0,1.2e-03,\n1,CC_taarray,"[{values}]",\n', encoding="utf-8")
             self.assertEqual(coefficients(path), ["CC_a0 = 1.2e-03", "CC_taarray = array of 83 values (0.0, 0.1, 0.2, ...)"])
+
+    def test_the_timeline_names_what_changed_between_deployments(self):
+        assets = {"A": {"Manufacturer's Serial No./Other Identifier": "16-50031", "Model": "SBE 16plus V2"},
+                  "B": {"Manufacturer's Serial No./Other Identifier": "16-50128", "Model": "SBE 16plus V2"},
+                  "N7": {"Manufacturer's Serial No./Other Identifier": "SN0007"}, "N11": {"Manufacturer's Serial No./Other Identifier": "SN0011"}}
+        prev = {"sensor.uid": "A", "node.uid": "N7", "lat": "45.816847", "lon": "-129.754157", "deployment_depth": "2606"}
+        same = dict(prev)
+        self.assertEqual(changes(prev, same, assets, ("2014-05-07", "a"), ("2014-05-07", "a")), [])
+        moved = {"sensor.uid": "B", "node.uid": "N11", "lat": "45.817847", "lon": "-129.754157", "deployment_depth": "2598"}
+        self.assertEqual(changes(prev, moved, assets, ("2014-05-07", "a"), ("2015-05-10", "b")),
+                         ["sensor 16-50031 replaced by 16-50128 (B)", "node box SN0007 to SN0011", "calibration 2015-05-10 (was 2014-05-07)",
+                          "position moved 111 m", "deployment depth 2606 m to 2598 m"])
+
+    def test_a_sourced_serial_whose_quote_is_not_in_its_chunk_stops_the_build(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data, path = Path(tmp) / "data", Path(tmp) / "serials.json"
+            (data / "Websites").mkdir(parents=True)
+            (data / "Websites" / "chunks.jsonl").write_text(json.dumps({"chunk_id": "P", "text": "two transducers (SN136580 is designated P1)"}) + "\n")
+            entry = {"id": "x", "quotes": [{"collection": "Websites", "chunk_id": "P", "text": "SN136580 is designated P1"}]}
+            path.write_text(json.dumps({"entries": [entry]}))
+            self.assertEqual(len(source_serials(path, data)), 1)
+            entry["quotes"][0]["text"] = "SN136581 is designated P1"
+            path.write_text(json.dumps({"entries": [entry]}))
+            with self.assertRaises(ValueError):
+                source_serials(path, data)
 
 
 if __name__ == "__main__":

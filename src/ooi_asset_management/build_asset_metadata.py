@@ -31,6 +31,10 @@ OUTPUT = ROOT / "data" / "OOIAssetManagement"
 CATALOG = ROOT / "data" / "Instruments" / "instruments.jsonl"
 # The Worker bundles this: which chunk holds which instrument, site, type, cruise year and depth band (/v1/chunks).
 WORKER_DIRECTORY = ROOT / "src" / "atlas_worker" / "src" / "asset_directory.json"
+# Serial numbers and components that papers, web pages and documents give (curated; each quote is checked against
+# the corpus chunk it comes from). Each entry becomes a chunk cited to its own source.
+SOURCE_SERIALS = Path(__file__).resolve().parent / "source_serials.json"
+DATA = ROOT / "data"
 GITHUB = "https://github.com/oceanobservatories/asset-management/blob"
 # The RCA's cabled sites: the Axial and Hydrate Ridge sites (RS*) and the Endurance Array's cabled Oregon Shelf and
 # Offshore platforms, which the RCA operates.
@@ -121,6 +125,42 @@ def cruise_label(cuid: str, cruises: dict[str, dict]) -> str:
     return f"{cuid} ({c.get('ShipName')}, {dates}{', ' + name if name else ''})"
 
 
+def distance_m(a: dict, b: dict) -> float | None:
+    """Metres between two deployments' positions (flat-earth, ample at these distances)."""
+    import math
+    try:
+        lat1, lon1, lat2, lon2 = (float(a["lat"]), float(a["lon"]), float(b["lat"]), float(b["lon"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+    k = 111_320.0
+    return math.hypot((lat2 - lat1) * k, (lon2 - lon1) * k * math.cos(math.radians((lat1 + lat2) / 2)))
+
+
+def changes(prev: dict, d: dict, assets: dict, cal_prev, cal) -> list[str]:
+    """What changed from one deployment to the next: sensor, its make, model and firmware, node box, calibration,
+    position and depth. An empty list is the same sensor put back in the same place."""
+    out = []
+    a, b = assets.get(prev.get("sensor.uid", ""), {}), assets.get(d.get("sensor.uid", ""), {})
+    serial = lambda x, uid: x.get("Manufacturer's Serial No./Other Identifier") or uid or "not recorded"
+    if prev.get("sensor.uid") != d.get("sensor.uid"):
+        out.append(f"sensor {serial(a, prev.get('sensor.uid'))} replaced by {serial(b, d.get('sensor.uid'))} ({d.get('sensor.uid') or 'asset not recorded'})")
+    for field, label in (("Manufacturer", "make"), ("Model", "model"), ("Firmware Version", "firmware")):
+        if a.get(field) and b.get(field) and a[field] != b[field]:
+            out.append(f"{label} {a[field]} to {b[field]}")
+    if prev.get("node.uid") and d.get("node.uid") and prev["node.uid"] != d["node.uid"]:
+        na, nb = assets.get(prev["node.uid"], {}), assets.get(d["node.uid"], {})
+        out.append(f"node box {serial(na, prev['node.uid'])} to {serial(nb, d['node.uid'])}")
+    if cal and (not cal_prev or cal[1] != cal_prev[1]):
+        out.append(f"calibration {cal[0]}" + (f" (was {cal_prev[0]})" if cal_prev else ""))
+    moved = distance_m(prev, d)
+    if moved is not None and moved >= 50:
+        out.append(f"position moved {moved:,.0f} m")
+    da, db = number(prev.get("deployment_depth", "")), number(d.get("deployment_depth", ""))
+    if da is not None and db is not None and abs(da - db) >= 5:
+        out.append(f"deployment depth {metres(da)} to {metres(db)}")
+    return out
+
+
 def short_codes(refdes: str) -> list[str]:
     """The instrument class as people write it: RS03CCAL-MJ03F-09-SCPRAA301 is an SCPR (SCPRA), BOTPTA301 a BOTPT."""
     segment = refdes.split("-")[3]
@@ -159,6 +199,32 @@ def coefficients(path: Path) -> list[str]:
     return out
 
 
+def source_serials(path: Path = SOURCE_SERIALS, data: Path = DATA) -> list[dict]:
+    """The curated entries, each quote checked word for word against its corpus chunk; any miss stops the build."""
+    entries = json.loads(path.read_text(encoding="utf-8"))["entries"]
+    texts: dict[str, dict[str, str]] = {}
+    for entry in entries:
+        for quote in entry["quotes"]:
+            collection = quote["collection"]
+            if collection not in texts:
+                texts[collection] = {}
+                for line in (data / collection / "chunks.jsonl").read_text(encoding="utf-8").splitlines():
+                    row = json.loads(line)
+                    texts[collection][row["chunk_id"]] = row.get("text") or ""
+            if quote["text"] not in texts[collection].get(quote["chunk_id"], ""):
+                raise ValueError(f"{entry['id']}: quote not found in {collection} {quote['chunk_id']}: {quote['text'][:60]}")
+    return entries
+
+
+def short_citation(citation: str) -> str:
+    """'Sasagawa, G. S., Zumberge, M. A., & Cook, M. J. (2023). ...' -> 'Sasagawa et al. (2023)'."""
+    match = re.match(r"^([^,(]+),.*?\((\d{4})\)", citation)
+    if not match:
+        return citation.split(".")[0]
+    authors = citation[:citation.find("(")]
+    return f"{match.group(1)}{' et al.' if authors.count('.,') > 1 or ' & ' in authors else ''} ({match.group(2)})"
+
+
 def build(repo_path: Path, output: Path) -> dict:
     repo = Repository(repo_path)
     vocab, assets, cruises, calibrations = repo.vocab(), repo.assets(), repo.cruises(), repo.calibrations()
@@ -183,10 +249,19 @@ def build(repo_path: Path, output: Path) -> dict:
     sources = {}
 
     def source(path: str) -> str:
-        sid = stable_id("OOI-ASSET-MANAGEMENT-SOURCE", path)
-        sources.setdefault(sid, {"source_id": sid, "title": f"OOI asset-management {path}", "path": path,
-                                 "source_url": repo.url(path), "commit": repo.commit, "commit_date": repo.commit_date})
-        return sid
+        """A repository file a chunk draws on; `named` makes the one source a chunk is cited by."""
+        return path
+
+    def named(title: str, url: str, files) -> list[str]:
+        """The source a chunk is cited by, named for what it holds ("OOI asset-management: <refdes> deployments,
+        assets and calibrations"), linked to its main file and listing every file it draws on. A citation shows one
+        source a chunk; a file name such as vocab/vocab.csv says nothing to a reader."""
+        sid = stable_id("OOI-ASSET-MANAGEMENT-SOURCE", title)
+        sources.setdefault(sid, {"source_id": sid, "title": title, "source_url": url, "files": sorted(set(files)),
+                                 "commit": repo.commit, "commit_date": repo.commit_date})
+        return [sid]
+
+    tree = lambda folder: f"https://github.com/oceanobservatories/asset-management/tree/{repo.commit}/{folder}"
 
     for refdes in sorted(by_refdes):
         deployments = sorted(by_refdes[refdes].values(), key=lambda r: (int(r["deploymentNumber"]), r["startDateTime"]))
@@ -198,7 +273,8 @@ def build(repo_path: Path, output: Path) -> dict:
         name = names.get(refdes) or f"{v.get('TOC_L2') or refdes[:8]} {instrument}"
         refdes_id = stable_id("OOI-ASSETS-INSTRUMENT", refdes)
         source_ids = sorted({source(d["_file"]) for d in deployments} | {source("vocab/vocab.csv")})
-        lines, cal_lines, used_cals = [], [], {}
+        lines, cal_lines, used_cals, timeline = [], [], {}, []
+        prev, cal_prev = None, None
         for d in deployments:
             asset = assets.get(d.get("sensor.uid", ""), {})
             serial = asset.get("Manufacturer's Serial No./Other Identifier") or "not recorded"
@@ -206,6 +282,18 @@ def build(repo_path: Path, output: Path) -> dict:
             depth, water = number(d.get("deployment_depth", "")), number(d.get("water_depth", ""))
             ended = bool(d.get("stopDateTime")) and d["stopDateTime"] <= now
             cal = calibration_for(d.get("sensor.uid", ""), d["startDateTime"], calibrations)
+            # The timeline: each deployment against the one before, and the time out of the water between them.
+            if prev is None:
+                timeline.append(f"{day(d['startDateTime'])}: first deployment ({d['deploymentNumber']}), serial number {serial}.")
+            else:
+                gap = ""
+                if prev.get("stopDateTime") and d.get("startDateTime"):
+                    days_out = (datetime.fromisoformat(d["startDateTime"][:10]) - datetime.fromisoformat(prev["stopDateTime"][:10])).days
+                    gap = f", {days_out} days after deployment {prev['deploymentNumber']} ended" if days_out > 1 else ""
+                changed = changes(prev, d, assets, cal_prev, cal)
+                timeline.append(f"{day(d['startDateTime'])}: deployment {d['deploymentNumber']}{gap}: "
+                                + ("; ".join(changed) if changed else "same sensor, node and calibration redeployed") + ".")
+            prev, cal_prev = d, cal
             recovered_on, inferred = recovery_cruise(d, {c: cruises[c] for c in cabled if c in cruises}) if ended else ("", False)
             recovery = (f"; recovered on cruise {cruise_label(recovered_on, cruises)}"
                         f"{' (inferred: the deployment ended during that cruise)' if inferred else ''}" if recovered_on
@@ -258,9 +346,11 @@ def build(repo_path: Path, output: Path) -> dict:
             "chunk_id": f"ooi_assets_{refdes}",
             "title": f"{name} ({refdes}, {'/'.join(codes)} {instrument}): make, model, serial numbers, firmware, deployments, "
                      "recoveries, cruises and depths",
-            "text": "\n".join([head] + lines),
+            "text": "\n".join([head, "Changes over time (each deployment against the one before):"] + [f"- {t}" for t in timeline]
+                               + ["Each deployment in full:"] + lines),
             "entity_ids": [refdes_id] + [stable_id("OOI-ASSETS-DEPLOYMENT", refdes, d["deploymentNumber"]) for d in deployments],
-            "source_ids": sorted(set(source_ids)),
+            "source_ids": named(f"OOI asset-management: {refdes} deployments, assets and calibrations",
+                                repo.url(deployments[0]["_file"]), source_ids),
             "source_urls": [repo.url(deployments[0]["_file"])],
         })
         if used_cals:
@@ -275,7 +365,7 @@ def build(repo_path: Path, output: Path) -> dict:
                         "Each deployment uses the calibration of its sensor dated on or before the deployment's start.\n"
                         + "\n".join(cal_lines),
                 "entity_ids": [refdes_id],
-                "source_ids": sorted({source(rel) for rel in used_cals}),
+                "source_ids": named(f"OOI asset-management: {refdes} calibration files", tree(f"calibration/{refdes.split('-')[3][:6]}"), used_cals),
                 "source_urls": [repo.url(rel) for rel in sorted(used_cals)][:5],
             })
         entities.append({"entity_id": refdes_id, "entity_type": "instrument", "name": name, "reference_designator": refdes,
@@ -294,6 +384,110 @@ def build(repo_path: Path, output: Path) -> dict:
                 if r["deployed_now"] else f"not deployed now (last deployment ended {day(latest['stopDateTime'])})")
 
     every = [source("vocab/vocab.csv")] + sorted({source(d["_file"]) for r in records for d in r["all"]})
+    # Nodes (junction boxes, profiler pods and platforms, deep-profiler vehicles): which node asset was in place when,
+    # from the node.uid of the instruments deployed on each node.
+    on_node: dict[str, list[tuple[str, str, bool]]] = defaultdict(list)
+    node_place: dict[str, dict] = {}
+    for r in records:
+        node = "-".join(r["refdes"].split("-")[:2])
+        node_place.setdefault(node, vocab.get(r["refdes"], {}) | {"_instruments": []})["_instruments"].append(r)
+        for d in r["all"]:
+            if d.get("node.uid"):
+                on_node[node].append((d["startDateTime"], d["node.uid"], not d.get("stopDateTime") or d["stopDateTime"] > now,
+                                      d.get("stopDateTime") or now))
+    node_chunks: dict[str, str] = {}
+    node_assets: set[str] = set()
+    node_runs: dict[str, list[list]] = {}
+    for node, uses in sorted(on_node.items()):
+        uses.sort()
+        runs: list[list] = []   # [first start, uid, still deployed, last stop]
+        for start, uid, open_, stop in uses:
+            if runs and runs[-1][1] == uid:
+                runs[-1][2] = runs[-1][2] or open_
+                runs[-1][3] = max(runs[-1][3], stop)
+            else:
+                runs.append([start, uid, open_, stop])
+        node_runs[node] = runs
+    # One node asset on two nodes at overlapping times: the deployment sheets disagree, and both nodes' chunks say so.
+    # A node asset's period on a node runs until the next node asset there: an instrument left in place for years
+    # (a BOTPT since 2014) keeps the node.uid of its own deployment, so its stop date says nothing about the node.
+    # Periods end at the next instrument deployment, which can be weeks after a swap on a cruise: 30 days of
+    # overlap are allowed.
+    periods = [(uid, node, day(start), day(runs[i + 1][0]) if i + 1 < len(runs) else day(now))
+               for node, runs in node_runs.items() for i, (start, uid, _, _) in enumerate(runs)]
+    overlap_days = lambda a, b: (datetime.fromisoformat(min(a[3], b[3])) - datetime.fromisoformat(max(a[2], b[2]))).days
+    clashes: dict[str, list[str]] = defaultdict(list)
+    for a in periods:
+        for b in periods:
+            if a[0] == b[0] and a[1] < b[1] and overlap_days(a, b) > 30:
+                note = (f"OOI asset-management has node asset {a[0]} on both {a[1]} ({a[2]} to {a[3]}) and {b[1]} ({b[2]} to "
+                        f"{b[3]}): one box cannot be on two nodes at once, so one of the two deployment sheets is wrong there.")
+                clashes[a[1]].append(note)
+                clashes[b[1]].append(note)
+    for node, runs in sorted(node_runs.items()):
+        place = node_place[node]
+        lines = []
+        for i, (start, uid, open_, _) in enumerate(runs):
+            asset = assets.get(uid, {})
+            end = day(runs[i + 1][0]) if i + 1 < len(runs) else ("present" if open_ else "its instruments' last deployment")
+            serial = asset.get("Manufacturer's Serial No./Other Identifier") or "not recorded"
+            lines.append(f"- {day(start)} to {end}: node asset {uid} ({asset.get('DESCRIPTION OF EQUIPMENT') or 'not described'}"
+                         f"{', ' + asset['Manufacturer'] if asset.get('Manufacturer') else ''}), serial number {serial}.")
+        node_id = stable_id("OOI-ASSETS-NODE", node)
+        entities.append({"entity_id": node_id, "entity_type": "node", "name": node, "attributes": {"node": node, "name": place.get("TOC_L3"), "site": place.get("TOC_L2")}})
+        for start, uid, _, _ in runs:
+            asset_id = stable_id("OOI-ASSETS-NODE-ASSET", uid)
+            if asset_id not in node_assets:
+                asset = assets.get(uid, {})
+                node_assets.add(asset_id)
+                entities.append({"entity_id": asset_id, "entity_type": "node_asset", "name": f"{asset.get('DESCRIPTION OF EQUIPMENT') or 'node asset'} {uid}",
+                                 "attributes": {"uid": uid, "serial_number": asset.get("Manufacturer's Serial No./Other Identifier"),
+                                                "manufacturer": asset.get("Manufacturer"), "model": asset.get("Model"),
+                                                "description": asset.get("DESCRIPTION OF EQUIPMENT")}})
+            relationships.append({"relationship_id": f"{node_id}_{uid}_{day(start)}", "source_id": node_id,
+                                  "target_id": stable_id("OOI-ASSETS-NODE-ASSET", uid), "relationship_type": "NODE_ASSET"})
+        chunk_id = f"ooi_assets_node_{node}"
+        node_chunks[node] = chunk_id
+        chunks.append({
+            "chunk_id": chunk_id,
+            "title": f"Node {node} ({place.get('TOC_L3') or 'node'}) at {place.get('TOC_L2') or node[:8]}: junction box or platform assets and serial numbers over time",
+            "text": "\n".join([f"{node} is the {place.get('TOC_L3') or 'node'} at {place.get('TOC_L2') or node[:8]} ({place.get('TOC_L1') or ''}). "
+                               "OOI asset-management names, for each instrument deployment on it, the node asset it was on; "
+                               "in order, the node assets were:"] + lines
+                              + clashes.get(node, [])
+                              + [f"Instruments on {node}: " + "; ".join(f"{r['refdes']} ({r['name']})" for r in place["_instruments"]) + "."]),
+            "entity_ids": [node_id], "source_ids": named(f"OOI asset-management: node {node} deployments",
+                                                        repo.url(place["_instruments"][0]["all"][0]["_file"]),
+                                                        [d["_file"] for r in place["_instruments"] for d in r["all"]]),
+            "source_urls": [repo.url(place["_instruments"][0]["all"][0]["_file"])],
+        })
+    # Serial numbers from papers, web pages and documents: one chunk an entry, cited to its source.
+    sourced: dict[str, list[str]] = defaultdict(list)
+    for entry in source_serials():
+        src = entry["source"]
+        sid = stable_id("SOURCED-SERIALS-SOURCE", src["id"])
+        sources.setdefault(sid, {"source_id": sid, "title": src["citation"], "path": src["id"], "source_url": src.get("url"),
+                                 "kind": src["kind"]})
+        target = entry.get("refdes") or entry.get("node")
+        target_id = stable_id("OOI-ASSETS-INSTRUMENT", target) if entry.get("refdes") else stable_id("OOI-ASSETS-NODE", target)
+        chunk_id = f"ooi_assets_sourced_{entry['id']}"
+        sourced[target].append(chunk_id)
+        for k, component in enumerate(entry["components"]):
+            comp_id = stable_id("SOURCED-COMPONENT", entry["id"], str(k))
+            entities.append({"entity_id": comp_id, "entity_type": "component", "name": f"{component['manufacturer']} {component['model']} {component['name']}",
+                             "attributes": component | {"of": target, "relation": entry.get("relation") or "component", "source": src["citation"]}})
+            relationships.append({"relationship_id": f"{comp_id}_of", "source_id": comp_id, "target_id": target_id,
+                                  "relationship_type": "EARLIER_INSTRUMENT_COMPONENT" if entry.get("relation") else "COMPONENT_OF"})
+        relation = f" ({entry['relation']} of {target})" if entry.get("relation") else f" ({target})"
+        chunks.append({
+            "chunk_id": chunk_id,
+            "title": f"{entry['subject']}{relation}: serial numbers and components, from {short_citation(src['citation'])}",
+            "text": f"{entry['subject']}{relation}. From {src['citation']}" + (f" ({src['url']})" if src.get("url") else "") + ":\n"
+                    + "\n".join(f"- {fact}" for fact in entry["facts"])
+                    + "\nThe source says: " + " ... ".join(f"\u201c{q['text']}\u201d" for q in entry["quotes"]),
+            "entity_ids": [target_id] + [stable_id("SOURCED-COMPONENT", entry["id"], str(k)) for k in range(len(entry["components"]))],
+            "source_ids": [sid], "source_urls": [src["url"]] if src.get("url") else [],
+        })
     # One chunk per instrument type: make, model, serial and deployments of every instance.
     by_type: dict[str, list[dict]] = defaultdict(list)
     for r in records:
@@ -311,7 +505,8 @@ def build(repo_path: Path, output: Path) -> dict:
                 + [f"- {r['refdes']} ({r['name']}), {r['make_model']}: {r['deployments']} deployments since {r['first']}, "
                    f"{state(r)}, deployment depth {metres(r['depth'])}." for r in sorted(rows, key=lambda r: r["refdes"])]),
             "entity_ids": [stable_id("OOI-ASSETS-INSTRUMENT", r["refdes"]) for r in rows],
-            "source_ids": every, "source_urls": [repo.url("vocab/vocab.csv")],
+            "source_ids": named(f"OOI asset-management: the RCA's cabled {instrument} instruments", tree("deployment"), every),
+            "source_urls": [repo.url("vocab/vocab.csv")],
         })
     # One chunk per site: how often each instrument has been deployed, most first.
     by_site: dict[str, list[dict]] = defaultdict(list)
@@ -328,7 +523,8 @@ def build(repo_path: Path, output: Path) -> dict:
                               + [f"- {r['refdes']} ({r['name']}, {r['make_model']}): {r['deployments']} deployments since "
                                  f"{r['first']}, {state(r)}." for r in rows]),
             "entity_ids": [stable_id("OOI-ASSETS-INSTRUMENT", r["refdes"]) for r in rows],
-            "source_ids": every, "source_urls": [repo.url(rows[0]["latest"]["_file"])],
+            "source_ids": named(f"OOI asset-management: {site} deployments", repo.url(rows[0]["latest"]["_file"]), every),
+            "source_urls": [repo.url(rows[0]["latest"]["_file"])],
         })
     # One chunk per cruise: the instruments it deployed and recovered.
     deployed, recovered = defaultdict(list), defaultdict(list)
@@ -358,7 +554,8 @@ def build(repo_path: Path, output: Path) -> dict:
             "text": f"The RCA's {year} cabled-array operations cruise{'s' if len(cuids) > 1 else ''}, from OOI asset-management.\n"
                     + "\n".join(parts),
             "entity_ids": [stable_id("OOI-ASSETS-CRUISE", c) for c in cuids],
-            "source_ids": [source("cruise/CruiseInformation.csv")] + every,
+            "source_ids": named(f"OOI asset-management: the RCA's {year} cruises", repo.url("cruise/CruiseInformation.csv"),
+                                ["cruise/CruiseInformation.csv"] + every),
             "source_urls": [repo.url("cruise/CruiseInformation.csv")],
         })
     # Depth bands of the latest deployment, deepest first.
@@ -373,7 +570,8 @@ def build(repo_path: Path, output: Path) -> dict:
                                "depth is the deployment depth OOI lists."]
                               + [f"- {metres(r['depth'])}: {r['refdes']} ({r['name']}, {r['make_model']})" for r in rows]),
             "entity_ids": [stable_id("OOI-ASSETS-INSTRUMENT", r["refdes"]) for r in rows],
-            "source_ids": every, "source_urls": [repo.url("vocab/vocab.csv")],
+            "source_ids": named("OOI asset-management: the RCA's cabled instruments by depth", tree("deployment"), every),
+            "source_urls": [repo.url("vocab/vocab.csv")],
         })
 
     output.mkdir(parents=True, exist_ok=True)
@@ -381,8 +579,11 @@ def build(repo_path: Path, output: Path) -> dict:
     directory = {
         "commit": repo.commit,
         "instruments": [{"refdes": r["refdes"], "name": r["name"], "instrument": r["instrument"], "site": r["site"],
-                         "codes": short_codes(r["refdes"]), "calibration": f"ooi_assets_calibration_{r['refdes']}" in {c["chunk_id"] for c in chunks}}
+                         "codes": short_codes(r["refdes"]), "calibration": f"ooi_assets_calibration_{r['refdes']}" in {c["chunk_id"] for c in chunks},
+                         "sourced": sourced.get(r["refdes"], [])}
                         for r in records],
+        "nodes": {node: {"id": chunk_id, "name": node_place[node].get("TOC_L3") or "", "site": node_place[node].get("TOC_L2") or "",
+                         "sourced": sourced.get(node, [])} for node, chunk_id in sorted(node_chunks.items())},
         "sites": {site: f"ooi_assets_site_{slug(site)}" for site in sorted(by_site)},
         "types": {instrument: f"ooi_assets_type_{slug(instrument)}" for instrument in sorted(by_type)},
         "cruise_years": {year: f"ooi_assets_cruises_{year}" for year in sorted(by_year)},
@@ -400,7 +601,7 @@ def build(repo_path: Path, output: Path) -> dict:
     write("chunks.jsonl", chunks)
     write("entities.jsonl", entities)
     write("relationships.jsonl", relationships)
-    write("source_documents.jsonl", sorted(sources.values(), key=lambda s: s["path"]))
+    write("source_documents.jsonl", sorted(sources.values(), key=lambda s: s["title"]))
     manifest = {"corpus": "OOI asset-management metadata for the RCA's cabled instruments",
                 "built_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "repository": "https://github.com/oceanobservatories/asset-management", "commit": repo.commit,

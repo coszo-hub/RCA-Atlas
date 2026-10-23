@@ -621,7 +621,7 @@ cabled sites (`RS*`, `CE02SHBP`, `CE04OSBP`, `CE04OSPS`, `CE04OSPD`), the asset 
 firmware), the cruise list, the vocabulary, and the calibration files of every sensor those deployments name.
 `src/ooi_asset_management/build_asset_metadata.py` builds the collection; its README gives the clone commands.
 
-**Records.** 166 instruments and 1,413 deployments. Each instrument's chunk gives its make and model, every
+**Records.** 166 instruments, 1,413 deployments and 25 nodes. Each instrument's chunk gives its make and model, every
 deployment (dates, sensor asset, serial number, firmware, deploy and recovery cruise, position, depth) and when it
 was last recovered; a second chunk gives the calibration coefficients in force for each deployment (the sensor's
 latest calibration dated on or before the deployment's start; long arrays are summarized). Summary chunks answer
@@ -629,6 +629,21 @@ questions across instruments: each type's instances by make and model, each site
 were redeployed, each year's cruises with what they deployed and recovered, and depth bands. OOI seldom records a
 recovery cruise; a deployment that ended during a cabled-array cruise is said to have been recovered on it, marked
 as inferred. Firmware is recorded for 8 of the 369 sensor assets, so most records say it is not recorded.
+
+**Timelines and nodes.** Each instrument chunk opens with its changes over time: each deployment against the one
+before (sensor and serial, make, model and firmware, node box, calibration, position, depth, days out of the water).
+Each node (junction box, profiler pod or platform, deep-profiler vehicle) has a chunk with the asset and serial on it
+over time, from the node.uid of the instruments deployed on it. Four node assets are on two nodes at once for more
+than 30 days in OOI's sheets; both nodes' chunks say so.
+
+**Serial numbers from other sources.** Papers, web pages and documents give serial numbers OOI does not: the
+cabled SCPR's gauges (Paroscientific 44.4K SN 136576 and 46K SN 132123; Sasagawa et al. 2023), SCPR unit 001's gauges
+at Axial in 2013-2014 (410K SN 116504 and 118710; Sasagawa et al. 2016, Sasagawa and Zumberge 2013), the A-0-A's
+transducers (the OOI page prints SN136580 for both), the 2017 change-out of Axial Base's LJ03A (SN011 and SN007, a
+VISIONS'17 blog) and a COSZO test record's medium-power junction box 024. They are curated in
+`src/ooi_asset_management/source_serials.json` with the exact quotes; the build checks each quote against its corpus
+chunk. Each is its own chunk cited to its own source. Nereus's asset serials were compared and agree with OOI for
+141 of the 144 assets both list (the other three are blank in OOI), so they add nothing.
 
 **Retrieval.** These few hundred chunks rank below web pages on the same instrument, and search's lexical half does
 not match hyphenated reference designators. The builder writes a directory (`src/atlas_worker/src/asset_directory.json`)

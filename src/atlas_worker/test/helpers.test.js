@@ -648,12 +648,14 @@ test("a question about the papers that used a sensor finds the codes papers name
 const ASSETS = {
   instruments: [
     { refdes: "RS03CCAL-MJ03F-05-BOTPTA301", name: "Axial Seamount Central Caldera Seafloor Pressure", instrument: "Bottom Pressure and Tilt", site: "Central Caldera", codes: ["BOTPT", "BOTP"], calibration: false },
-    { refdes: "RS03CCAL-MJ03F-09-SCPRAA301", name: "Central Caldera Self-Calibrating Pressure Recorder", instrument: "Self-Calibrating Pressure Recorder", site: "Central Caldera", codes: ["SCPRA", "SCPR"], calibration: false },
+    { refdes: "RS03CCAL-MJ03F-09-SCPRAA301", name: "Central Caldera Self-Calibrating Pressure Recorder", instrument: "Self-Calibrating Pressure Recorder", site: "Central Caldera", codes: ["SCPRA", "SCPR"], calibration: false, sourced: ["ooi_assets_sourced_scpr_cabled_gauges", "ooi_assets_sourced_scpr_unit001_2013"] },
     { refdes: "RS03AXBS-LJ03A-12-CTDPFB301", name: "Axial Seamount Base Seafloor CTD", instrument: "CTD", site: "Axial Base Seafloor", codes: ["CTDPF", "CTDP"], calibration: true },
     { refdes: "RS03AXPD-DP03A-01-CTDPFL304", name: "Axial Seamount Deep Profiler CTD Profiler", instrument: "CTD", site: "Axial Base Deep Profiler Mooring", codes: ["CTDPF", "CTDP"], calibration: true },
     { refdes: "RS01SLBS-LJ01A-12-CTDPFB101", name: "Oregon Slope Base Seafloor CTD", instrument: "CTD", site: "Oregon Slope Base Seafloor", codes: ["CTDPF", "CTDP"], calibration: true },
     { refdes: "RS01SUM1-LJ01B-12-VEL3DB104", name: "Southern Hydrate Ridge Flank 3D Current Meter", instrument: "3-D Single Point Velocity Meter", site: "Southern Hydrate Summit 1 Seafloor", codes: ["VEL3D", "VEL3"], calibration: false },
   ],
+  nodes: { "RS03AXBS-LJ03A": { id: "ooi_assets_node_RS03AXBS-LJ03A", name: "Low-Power JBox (LJ03A)", site: "Axial Base Seafloor", sourced: ["ooi_assets_sourced_lj03a_2017_swap"] },
+    "RS03CCAL-MJ03F": { id: "ooi_assets_node_RS03CCAL-MJ03F", name: "Medium-Power JBox (MJ03F)", site: "Central Caldera", sourced: [] } },
   sites: { "Central Caldera": "ooi_assets_site_Central_Caldera", "Southern Hydrate Summit 1 Seafloor": "ooi_assets_site_Southern_Hydrate_Summit_1_Seafloor" },
   types: { CTD: "ooi_assets_type_CTD" },
   cruise_years: { 2025: "ooi_assets_cruises_2025" },
@@ -661,7 +663,12 @@ const ASSETS = {
 };
 
 test("an asset-metadata question asks for the records the directory names: the instrument, its calibrations, a type, cruise year or depth band", () => {
-  assert.deepEqual(assetChunkIds("what is the serial number of the SCPR at axial seamount?", ASSETS), ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301"]);
+  // The instrument's record, then its components' serials from the papers, each cited to its paper.
+  assert.deepEqual(assetChunkIds("what is the serial number of the SCPR at axial seamount?", ASSETS),
+    ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301", "ooi_assets_sourced_scpr_cabled_gauges", "ooi_assets_sourced_scpr_unit001_2013"]);
+  assert.deepEqual(assetChunkIds("What is the serial number of the junction box at Axial Base?", ASSETS),
+    ["ooi_assets_node_RS03AXBS-LJ03A", "ooi_assets_sourced_lj03a_2017_swap"]);
+  assert.deepEqual(assetChunkIds("When was MJ03F replaced?", ASSETS), ["ooi_assets_node_RS03CCAL-MJ03F"]);
   assert.deepEqual(assetChunkIds("When was the BOTPT at Central Caldera last recovered?", ASSETS), ["ooi_assets_RS03CCAL-MJ03F-05-BOTPTA301"]);
   assert.deepEqual(assetChunkIds("What are the calibration coefficients of the Axial Base CTD?", ASSETS),
     ["ooi_assets_RS03AXBS-LJ03A-12-CTDPFB301", "ooi_assets_calibration_RS03AXBS-LJ03A-12-CTDPFB301"]);
@@ -706,6 +713,8 @@ test("an asset question fetches the directory's records by id and leads the evid
     method: "POST", headers: { origin: "https://coszo.org", "content-type": "application/json" },
     body: JSON.stringify({ query: "What is the serial number of the SCPR at Axial Seamount?", model: "gemini-2.5-flash" }),
   }), env).then((r) => r.json());
-  assert.deepEqual(asked, { collection_id: "ooi_asset_management", chunk_ids: ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301"] });
+  assert.equal(asked.collection_id, "ooi_asset_management");
+  assert.equal(asked.chunk_ids[0], "ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301");
+  assert.ok(asked.chunk_ids.includes("ooi_assets_sourced_scpr_cabled_gauges"));   // the gauges' serials, cited to the 2023 paper
   assert.equal(res.answer_citations[0].url, "https://github.com/oceanobservatories/asset-management");
 });
