@@ -440,14 +440,17 @@ names its chunk, the exact wrong and right text, the authority (title and DOI)
 and the reason. The normalizer and the embedding build both apply them, and the
 build stops if an entry's wrong text no longer appears exactly once in its
 chunk. The corrected chunk's metadata keeps the entry, so the change is
-traceable. There are three entries: the stacked-sills lens spacing on "Discovery
+traceable. There are four entries: the stacked-sills lens spacing on "Discovery
 of the Roots of the Axial Seamount" (Carbotte et al., 2020: 300–450 m, not
 400–500 m), and the Southern Hydrate Ridge plume height on "Explosive Bubble
 Plume Emissions" (Philip et al., 2016: plume tops at 320–620 m below sea level
 over seeps at about 780 m, not ~480 m above the seafloor), and the Axial Base
 shallow profiler mooring's parts on its own site page, which repeats the Slope
 Base mooring's codes (SF01A, PC01A) where its instrument table and OOI's
-vocabulary give SF03A and PC03A. The answer prompt
+vocabulary give SF03A and PC03A, and the International District 2 page's
+sentence on its neighbour, which calls it International District 2 and ASHES
+where OOI's vocabulary puts MJ03C at International District 1 (International
+District 2 is on MJ03D, ASHES on MJ03B). The answer prompt
 also labels evidence as scientific literature or website, and prefers the
 literature where they disagree.
 
