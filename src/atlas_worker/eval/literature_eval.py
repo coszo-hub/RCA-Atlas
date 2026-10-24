@@ -3,7 +3,7 @@ paper, and whether the live chat answer cites it.
 
 Needs the local Graph-RAG API (127.0.0.1:18000, key from the repository's .env) and, with --answers, the deployed
 Worker. --answers paces requests 25 s apart to stay under the free models' rate limits.
-Usage: python3 literature_eval.py [--answers] [question substrings...]"""
+Usage: python3 literature_eval.py [--answers] [--model ooi-gemma-4-26b] [question substrings...]"""
 import json, re, subprocess, sys, time, urllib.request
 
 ROOT = str(__import__("pathlib").Path(__file__).resolve().parents[3])   # the repository
@@ -44,8 +44,10 @@ def expanded(q):
     return subprocess.run(["node", "-e", js], capture_output=True, text=True, check=True).stdout.strip()
 
 
-answers = "--answers" in sys.argv
-only = [a for a in sys.argv[1:] if a != "--answers"]
+args = sys.argv[1:]
+answers = "--answers" in args
+MODEL = args[args.index("--model") + 1] if "--model" in args else None   # e.g. ooi-gemma-4-26b; default Auto
+only = [a for i, a in enumerate(args) if a not in ("--answers", "--model") and (i == 0 or args[i - 1] != "--model")]
 score = {"retrieved": 0, "answered": 0, "n": 0}
 for q, pat in CASES:
     if only and not any(o.lower() in q.lower() for o in only):
@@ -57,7 +59,7 @@ for q, pat in CASES:
     line = f"{'ok' if ranks else '!!'} rank {str(ranks[:3]) if ranks else '-':<10} {q}"
     if answers:
         try:
-            d = post(WORKER, {"query": q}, {"origin": "https://coszo.org"})
+            d = post(WORKER, {"query": q, **({"model": MODEL} if MODEL else {})}, {"origin": "https://coszo.org"})
             a = d.get("answer") or d.get("error") or ""
             named = bool(rx.search(a)) or any(rx.search(c.get("title") or "") for c in d.get("answer_citations", [])
                                               if re.search(rf"\[{d['answer_citations'].index(c) + 1}\b|\b{d['answer_citations'].index(c) + 1}\]", a))
@@ -65,6 +67,6 @@ for q, pat in CASES:
             line += f"\n      answer {'NAMES IT' if named else 'MISSES IT'} [{d.get('answer_model')}]: {a[:160].replace(chr(10), ' ')}"
         except Exception as e:
             line += f"\n      answer ERROR {e}"
-        time.sleep(25)   # stay under the free models' per-minute limits
+        time.sleep(3 if MODEL else 25)   # the free models need pacing; a named model does not
     print(line, flush=True)
 print(f"\nretrieved {score['retrieved']}/{score['n']}" + (f", answer names the paper {score['answered']}/{score['n']}" if answers else ""))
