@@ -83,6 +83,16 @@ def official_ooi_hardware(cache_root: Path) -> dict[str, dict]:
     return result
 
 
+# What each kind of node on the OOI site pages is, so a reader can tell the moving instruments from the fixed ones.
+MOUNT_KINDS = {
+    "Shallow Profiler": ", the science pod that a winch lets rise from the 200 m platform through the water column toward the surface",
+    "200m Platform": ", the Platform Interface Controller, fixed on the mooring platform 200 m below the sea surface",
+    "Wire-Following Profiler": ", the deep profiler, which moves along the mooring cable from 150 m below the sea surface to near the bottom",
+    "Low-Power JBox": ", a seafloor junction box", "Medium-Power JBox": ", a seafloor junction box",
+    "Primary Node": ", a seafloor primary node", "Low-Voltage Node": ", a seafloor low-voltage node",
+}
+
+
 def build(data_root: Path, output: Path) -> None:
     if output.exists():
         shutil.rmtree(output)
@@ -632,6 +642,17 @@ def build(data_root: Path, output: Path) -> None:
             source_system="COSZO deployment-site workbook", source_urls=[], arcada_document_id=None, notes=note,
         )
 
+    # What each instrument is mounted on, from the OOI site page's node column: a profiler mooring holds a fixed 200 m
+    # platform and a moving profiler, whose instruments otherwise share a name ("Shallow Profiler CTD Profiler").
+    # A node keeps its part across deployments, so a record the page no longer lists takes its node's.
+    mounts = {"-".join(c.split("-")[:2]): (h["node_name"], h["source_url"]) for c, h in ooi_hardware.items()}
+    for row in records:
+        mount = mounts.get("-".join(row["canonical_id"].split("-")[:2]))
+        if mount:
+            row["mounted_on"] = mount[0]
+            if mount[1] not in row["source_urls"]:
+                row["source_urls"].append(mount[1])
+
     # Entity and relationship layer.
     entities: dict[str, dict] = {}
     relationships: list[dict] = []
@@ -691,6 +712,8 @@ def build(data_root: Path, output: Path) -> None:
             f"Deployment state: {row['deployment_state']}\nAliases: {aliases}\n"
             f"Sensor components: {components}"
         )
+        if row.get("mounted_on"):
+            text += f"\nMounted on: {row['mounted_on']}{MOUNT_KINDS.get(re.sub(r' [(].*', '', row['mounted_on']), '')}"
         if row.get("measurement_roles"):
             text += f"\nMeasurement roles: {', '.join(row['measurement_roles'])}"
         if row.get("manufacturer"):

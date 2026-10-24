@@ -440,11 +440,14 @@ names its chunk, the exact wrong and right text, the authority (title and DOI)
 and the reason. The normalizer and the embedding build both apply them, and the
 build stops if an entry's wrong text no longer appears exactly once in its
 chunk. The corrected chunk's metadata keeps the entry, so the change is
-traceable. There are two entries: the stacked-sills lens spacing on "Discovery
+traceable. There are three entries: the stacked-sills lens spacing on "Discovery
 of the Roots of the Axial Seamount" (Carbotte et al., 2020: 300–450 m, not
 400–500 m), and the Southern Hydrate Ridge plume height on "Explosive Bubble
 Plume Emissions" (Philip et al., 2016: plume tops at 320–620 m below sea level
-over seeps at about 780 m, not ~480 m above the seafloor). The answer prompt
+over seeps at about 780 m, not ~480 m above the seafloor), and the Axial Base
+shallow profiler mooring's parts on its own site page, which repeats the Slope
+Base mooring's codes (SF01A, PC01A) where its instrument table and OOI's
+vocabulary give SF03A and PC03A. The answer prompt
 also labels evidence as scientific literature or website, and prefers the
 literature where they disagree.
 
@@ -488,6 +491,13 @@ shallow profiler's replacement vertical ADCP `VADCPB301` (August 2024) and the
 International District fluid sampler's temperature probe `D1000A301`, each at
 the position of the Arcada record on its platform port. The OOI page's
 `RS01SBPD-DP01A-03-FLNTUA104` is kept as an alias of Arcada's `04-FLNTUA104`.
+Each record on a node the site inventories list says what it is mounted on,
+from the inventory's node column (a record the page no longer lists takes its
+node's): a profiler mooring's fixed 200 m platform (PC01A, PC03A) and moving
+shallow profiler (SF01A, SF03A) hold instruments that otherwise share a name
+("Shallow Profiler CTD Profiler"), and the deep profilers and seafloor junction
+boxes are named the same way, each with a few words from OOI's site pages on
+whether it moves.
 Current output: 190 instruments, four infrastructure records, 74 entities,
 38 sources, 190 chunks, and 1,312 relationships.
 
