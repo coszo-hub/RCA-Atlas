@@ -1,11 +1,12 @@
 """For each question, find the corpus chunks that answer it (by a spelled-out pattern), then report where the
 Graph-RAG search ranks them for the raw question and for the Worker's expanded searchText.
 
-Needs the local Graph-RAG API (127.0.0.1:18000, key from the repository's .env).
+Needs the local Graph-RAG API (127.0.0.1:18000, or ATLAS_API_URL; key from the repository's .env).
 Usage: python3 shorthand_eval.py [question substrings...]"""
 import glob, json, os, re, subprocess, sys, urllib.request
 
 ROOT = str(__import__("pathlib").Path(__file__).resolve().parents[3])   # the repository
+API = os.environ.get("ATLAS_API_URL", "http://127.0.0.1:18000")
 KEY = next(l.split("=", 1)[1].strip() for l in open(f"{ROOT}/.env") if l.startswith("GRAPHRAG_API_KEY="))
 
 # question, pattern that a relevant chunk's title or text must match
@@ -47,7 +48,7 @@ def chunks():
 
 def search(q):
     body = json.dumps({"query": q, "limit": 10, "graph_hops": 2, "neighbors_per_seed": 8, "tool_limit": 3}).encode()
-    req = urllib.request.Request("http://127.0.0.1:18000/v1/context", body, {"content-type": "application/json", "x-api-key": KEY})
+    req = urllib.request.Request(f"{API}/v1/context", body, {"content-type": "application/json", "x-api-key": KEY})
     return json.load(urllib.request.urlopen(req, timeout=60))["hits"]
 
 

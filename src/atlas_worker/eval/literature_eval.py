@@ -1,12 +1,13 @@
 """Literature questions with a known answer (a paper title in the corpus): where the Worker's search ranks the
 paper, and whether the live chat answer cites it.
 
-Needs the local Graph-RAG API (127.0.0.1:18000, key from the repository's .env) and, with --answers, the deployed
+Needs the local Graph-RAG API (127.0.0.1:18000, or ATLAS_API_URL; key from the repository's .env) and, with --answers, the deployed
 Worker. --answers paces requests 25 s apart to stay under the free models' rate limits.
 Usage: python3 literature_eval.py [--answers] [--model ooi-gemma-4-26b] [question substrings...]"""
-import json, re, subprocess, sys, time, urllib.request
+import json, os, re, subprocess, sys, time, urllib.request
 
 ROOT = str(__import__("pathlib").Path(__file__).resolve().parents[3])   # the repository
+API = os.environ.get("ATLAS_API_URL", "http://127.0.0.1:18000")
 KEY = next(l.split("=", 1)[1].strip() for l in open(f"{ROOT}/.env") if l.startswith("GRAPHRAG_API_KEY="))
 WORKER = "https://rca-atlas.quakehunt.workers.dev/v1/answer"
 
@@ -53,7 +54,7 @@ for q, pat in CASES:
     if only and not any(o.lower() in q.lower() for o in only):
         continue
     rx = re.compile(pat, re.I)
-    hits = post("http://127.0.0.1:18000/v1/context", {"query": expanded(q), "limit": 10, "graph_hops": 2, "neighbors_per_seed": 8, "tool_limit": 3}, {"x-api-key": KEY})["hits"]
+    hits = post(f"{API}/v1/context", {"query": expanded(q), "limit": 10, "graph_hops": 2, "neighbors_per_seed": 8, "tool_limit": 3}, {"x-api-key": KEY})["hits"]
     ranks = [i for i, h in enumerate(hits) if rx.search(h.get("title") or "")]
     score["n"] += 1; score["retrieved"] += bool(ranks)
     line = f"{'ok' if ranks else '!!'} rank {str(ranks[:3]) if ranks else '-':<10} {q}"
