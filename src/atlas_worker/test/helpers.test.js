@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, dataAccessSites, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -762,4 +762,15 @@ test("a research question whose evidence holds no paper asks the paper abstracts
   assert.ok(passages[1].paper_keys.includes("10.1038/s41598-024-54476-0"));
   const prompt = calls.find(([path]) => path.includes("generateContent"))[1].contents[0].parts[0].text;
   assert.match(prompt, /189 days/);
+});
+
+test("a question about getting an instrument's data names the OOI sites whose pages say how", () => {
+  assert.equal(isDataAccessQuestion("How to download data from shallow profiler at slope base"), true);
+  assert.equal(isDataAccessQuestion("how do I download the DAS24 data"), false);   // a named DAS dataset has its own routes
+  assert.equal(isDataAccessQuestion("how do I get to Axial seamount"), false);
+  const sites = { ...ASSETS, instruments: [...ASSETS.instruments,
+    { refdes: "RS01SBPS-SF01A-2A-CTDPFA102", name: "Oregon Slope Base Shallow Profiler CTD Profiler", instrument: "CTD", site: "Oregon Slope Base Shallow Profiler Mooring", codes: ["CTDPF", "CTDP"], calibration: true }] };
+  assert.deepEqual(dataAccessSites("How to download data from shallow profiler at slope base", sites), ["RS01SBPS"]);
+  assert.deepEqual(dataAccessSites("how do I get the CTD data at Axial Base", sites), ["RS03AXBS"]);   // the seafloor one
+  assert.deepEqual(dataAccessSites("how do I download OOI data", sites), []);
 });

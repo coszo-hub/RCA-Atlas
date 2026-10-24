@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
@@ -224,7 +224,7 @@ function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
   // Live status checks lead a status question; each DAS experiment's own record leads a question about them all.
-  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.assets || []), ...(context.inventory || []),
+  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.access || []), ...(context.assets || []), ...(context.inventory || []),
     ...(context.papers || [])];
   if (lead.length) {
     const ids = new Set(lead.map((hit) => hit.chunk_id));
@@ -347,6 +347,28 @@ async function assetRecords(question, env) {
     return (found.hits || []).slice(0, ids.length).map(withRouteCitations);
   } catch (error) {
     console.error("asset search failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
+}
+
+// How to get an instrument's data: OOI's Data Access page (Data Explorer, the Data Portal, THREDDS, IRIS for seismic and
+// low-frequency hydrophone data) and the site page of each platform the question names, whose Data Access section
+// points at its data. The search finds only catalog records for such a question ("how to download data from the
+// shallow profiler at Slope Base"). The Data Access page's chunk ids are fixed by its URL. A failure returns none.
+const DATA_ACCESS_CHUNKS = ["PAGE-3a90d5527a31a30b-CHUNK-001", "PAGE-3a90d5527a31a30b-CHUNK-002", "PAGE-3a90d5527a31a30b-CHUNK-003"];
+
+async function dataAccessRecords(question, env) {
+  const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
+  const sites = dataAccessSites(question, ASSET_DIRECTORY);
+  try {
+    const [pages, ...found] = await Promise.all([
+      postJson(`${api}/v1/chunks`, { collection_id: "websites", chunk_ids: DATA_ACCESS_CHUNKS }, headers),
+      ...sites.map((site) => postJson(`${api}/v1/search`, { query: site, limit: 5, collection_ids: ["websites"] }, headers)),
+    ]);
+    const sitePages = found.flatMap((result, i) => (result.hits || []).filter((hit) => hit.title === sites[i]).slice(0, 1));
+    return [...sitePages, ...(pages.hits || [])].map(withRouteCitations);
+  } catch (error) {
+    console.error("data access search failed", error instanceof Error ? error.message : "unknown");
     return [];
   }
 }
@@ -686,9 +708,10 @@ export default {
       // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
       if (isPaperUsageQuestion(query)) context.papers = await papersFor(query, env);
       if (isAssetQuestion(query)) context.assets = await assetRecords(query, env);
+      if (isDataAccessQuestion(query)) context.access = await dataAccessRecords(query, env);
       const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);
-      const routed = isDasOverview(query) || isStatusQuestion(query) || context.assets?.length || context.inventory?.length || context.papers?.length;
+      const routed = isDasOverview(query) || isStatusQuestion(query) || context.access?.length || context.assets?.length || context.inventory?.length || context.papers?.length;
       if (!routed && answerMode(query) !== "compact" && !paperKeys(selectedEvidenceHits(context, query)).length) {
         context.literature = await literatureFallback(query, env);
       }

@@ -506,6 +506,33 @@ const CRUISE_WORDS = /\bcruises?\b|\bvisions\b|\bexpeditions?\b|\b(?:deployed|re
 const SITE_COUNT_WORDS = /\b(?:most|often|how many (?:times|deployments)|number of deployments|redeploy\w*)\b/i;
 const MAX_ASSET_CHUNKS = 6;
 
+// A question about getting data ("how do I download data from the shallow profiler at Slope Base?"); a named DAS
+// dataset has its own download routes (namedDas).
+export function isDataAccessQuestion(question) {
+  const q = String(question || "");
+  return /\b(?:download|access|get|retrieve|obtain)\b/i.test(q) && /\b(?:data|datasets?|files?|recordings?|time series)\b/i.test(q)
+    && !namedDas(q);
+}
+
+// The OOI sites ("RS01SBPS") whose data a question asks for: those of the instruments at the place and platform it
+// names, of the type it names when it names one. A place with no platform named is its seafloor site when it has
+// one, as for asset questions ("the Axial Base CTD"). At most three.
+export function dataAccessSites(question, directory) {
+  const q = String(question || "");
+  const places = ASSET_PLACES.find(([asked]) => asked.test(q));
+  const platform = ASSET_PLATFORMS.find(([asked]) => asked.test(q));
+  if (!directory || (!places && !platform)) return [];
+  let instruments = directory.instruments.filter((i) => (!places || places[1].test(i.site)) && (!platform || platform[1].test(i.site)));
+  const types = ASSET_TYPES.filter(([asked]) => asked.test(q)).map(([, type]) => type);
+  const typed = instruments.filter((i) => types.some((type) => type.test(i.instrument)));
+  if (typed.length) instruments = typed;
+  if (places && !platform) {
+    const fixed = instruments.filter((i) => !/Profiler/.test(i.site));
+    if (fixed.length) instruments = fixed;
+  }
+  return [...new Set(instruments.map((i) => i.refdes.slice(0, 8)))].slice(0, 3);
+}
+
 export function assetChunkIds(question, directory) {
   const q = String(question || "");
   if (!directory || !isAssetQuestion(q)) return [];
