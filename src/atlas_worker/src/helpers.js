@@ -517,20 +517,30 @@ export function isDataAccessQuestion(question) {
 // The OOI sites ("RS01SBPS") whose data a question asks for: those of the instruments at the place and platform it
 // names, of the type it names when it names one. A place with no platform named is its seafloor site when it has
 // one, as for asset questions ("the Axial Base CTD"). At most three.
-export function dataAccessSites(question, directory) {
+// The instruments a data access question points at: those at the place and platform it names, of the type it names
+// if any (a place alone means its seafloor instruments, not its moorings' profilers). typed says a type was named.
+function accessInstruments(question, directory) {
   const q = String(question || "");
   const places = ASSET_PLACES.find(([asked]) => asked.test(q));
   const platform = ASSET_PLATFORMS.find(([asked]) => asked.test(q));
-  if (!directory || (!places && !platform)) return [];
+  if (!directory || (!places && !platform)) return { instruments: [], typed: false };
   let instruments = directory.instruments.filter((i) => (!places || places[1].test(i.site)) && (!platform || platform[1].test(i.site)));
   const types = ASSET_TYPES.filter(([asked]) => asked.test(q)).map(([, type]) => type);
   const typed = instruments.filter((i) => types.some((type) => type.test(i.instrument)));
   if (typed.length) instruments = typed;
-  if (places && !platform) {
-    const fixed = instruments.filter((i) => !/Profiler/.test(i.site));
-    if (fixed.length) instruments = fixed;
-  }
-  return [...new Set(instruments.map((i) => i.refdes.slice(0, 8)))].slice(0, 3);
+  if (places && !platform) { const fixed = instruments.filter((i) => !/Profiler/.test(i.site)); if (fixed.length) instruments = fixed; }
+  return { instruments, typed: typed.length > 0 };
+}
+
+export function dataAccessSites(question, directory) {
+  return [...new Set(accessInstruments(question, directory).instruments.map((i) => i.refdes.slice(0, 8)))].slice(0, 3);
+}
+
+// The reference designators of the instrument type a data access question names at its site ("the CTD on the 200 m
+// platform at Axial Base"): every one of them, so the records' Mounted on lines tell the user which is which.
+export function dataAccessInstruments(question, directory) {
+  const { instruments, typed } = accessInstruments(question, directory);
+  return typed ? instruments.map((i) => i.refdes).slice(0, 4) : [];
 }
 
 export function assetChunkIds(question, directory) {
@@ -700,7 +710,7 @@ export function liveStatusHit(hit, refdes, live) {
   return { chunk_id: `LIVE-${refdes}`, collection_id: "live_status", title: `Live status: ${name}`, text, citations: hit.citations || [], live: true };
 }
 
-export function answerPrompt({ question, evidence, sources, mode, product = null }) {
+export function answerPrompt({ question, evidence, sources, mode, product = null, access = false }) {
   const liveInstruction = isStatusQuestion(question) && /^Live status: /m.test(evidence)
     ? "Records titled \"Live status\" were checked against the live monitor moments ago: say from them whether each instrument is operating now, with the time of its data check, ahead of any older or catalog status in other records."
     : "";
@@ -714,7 +724,11 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
   const namedProductInstruction = product
     ? `The user specifically named ${product}; answer only about it. Do not include other experiments, routes, file formats, instruments, or data types unless the evidence assigns them to it.`
     : "";
-  const compactInstruction = mode === "compact"
+  // How to get a platform's data: its site page leads, then only the OOI routes that serve that kind of data.
+  const accessInstruction = access
+    ? "The question asks how to get an OOI platform's or instrument's data. Lead with the platform's own site page: its Data Access links (the data on the platform and its subcomponents in Data Explorer) and its DOI for citing the data. When the platform has parts, such as a shallow profiler mooring's moving shallow profiler and fixed 200 m platform, name each part with the code this platform's own records give it (the site page and the instrument records' Mounted on lines; codes differ between sites) and the asked instruments on it, citing those records, so the user knows which part's data to open. Then give at most three other routes from the Data Access and M2M pages that serve this kind of instrument data (such as ERDDAP, THREDDS or the M2M API, with an M2M example for this platform if the evidence has one; for seismometer or hydrophone data, IRIS first, where the Data Access page says the RCA's seismic and hydrophone data are deposited), one line each. Leave out routes for other data, such as cruise data, community datasets, water samples, imagery and partner sites. Do not list the instrument records one by one."
+    : "";
+  const compactInstruction = access ? accessInstruction : mode === "compact"
     ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it by its source's title, with its years, coverage and file formats, cited with its source number; when one dataset has several numbered sources (download routes), add one hyphen bullet per source, giving its name and only what the evidence ties to that source itself. Sub-folders that the evidence names inside one source (such as the 2021 dataset's OptaSense and Silixa folders) are described in one bullet of that dataset, not bullets of their own. Add one bullet for the folder layout or a caveat (such as very many files per day) when the evidence gives one. Include every numbered download source; never drop one. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
     : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
   const formatInstruction = mode === "compact"

@@ -270,6 +270,37 @@ def c_a30():
     return [(m, lit(m.split(",")[0]))]
 
 
+
+# Getting a platform's data, and which part of a profiler mooring holds what: the parts' codes come from VOCAB (OOI
+# names a mooring's parts in TOC_L3, "Shallow Profiler (SF01A)", "200m Platform (PC01A)").
+def parts(site):
+    return sorted({r.split("-")[1] for r in VOCAB if r.startswith(site + "-") and r.count("-") == 3})
+
+
+def c_a31():
+    return [("Data Explorer", r"Data Explorer"), ("DOI", r"10\.58046/OOI-RS01SBPS")] + [(p, p) for p in parts("RS01SBPS")]
+
+
+def c_a32():
+    kinds = {"CAMDS": r"camera", "HYDBB": r"hydrophone", "NUTNR": r"nitrate", "PCO2W": r"pCO2|carbon dioxide", "SPKIR": r"irradiance"}
+    here = {r.split("-")[3][:5] for r in VOCAB if r.startswith("RS01SBPS-") and r.count("-") == 3}
+    return [("fixed 200 m platform", r"200[ -]?m|PC01A"), ("moving profiler", r"profiler|SF01A")] + [(k, rx) for k, rx in kinds.items() if k in here]
+
+
+def c_a33():
+    ctd = next(r for r in VOCAB if r.startswith("RS03AXPS-PC") and "-CTDPF" in r)
+    return [(ctd.split("-")[1], ctd.split("-")[1]), (ctd.split("-")[3], ctd.split("-")[3] + "|200[ -]?m"),
+            ("no Slope Base codes", r"\A(?![\s\S]*(?:PC01A|SF01A))")]
+
+
+def c_a34():
+    return [("IRIS", r"IRIS|EarthScope"), ("DOI", r"10\.58046/OOI-RS03AXBS")]
+
+
+def c_a35():
+    return [(r.split("-")[1], r.split("-")[1]) for r in sorted(VOCAB) if r.startswith("RS01SBPS-") and "-PHSEN" in r]
+
+
 CASES = [
     ("A1", "What is the serial number of the broadband seismometer at Oregon Slope Base?", c_a1, None),
     ("A2", "What make and model is the broadband ocean bottom seismometer at Axial Base?", c_a2, None),
@@ -301,6 +332,11 @@ CASES = [
     ("A28", "How many deployments has the International District 2 CTD had, and when was it first deployed?", c_a28, None),
     ("A29", "How many times was COVIS deployed at ASHES, and from when to when?", c_a29, None),
     ("A30", "Who makes the osmotic fluid sampler at Southern Hydrate Ridge?", c_a30, None),
+    ("A31", "How to download data from shallow profiler at slope base", c_a31, r"RS01SBPS"),
+    ("A32", "Which instruments at the Slope Base shallow profiler mooring are on the moving profiler and which are on the fixed 200 m platform?", c_a32, None),
+    ("A33", "How do I get the CTD data from the 200 m platform at Axial Base shallow profiler", c_a33, r"RS03AXPS"),
+    ("A34", "How do I download seismometer data from Axial Base", c_a34, r"Data Access"),
+    ("A35", "How can I get pH data from the Slope Base shallow profiler", c_a35, None),
 ]
 
 

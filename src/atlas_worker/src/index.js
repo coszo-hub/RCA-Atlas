@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
@@ -351,22 +351,41 @@ async function assetRecords(question, env) {
   }
 }
 
-// How to get an instrument's data: OOI's Data Access page (Data Explorer, the Data Portal, THREDDS, IRIS for seismic and
-// low-frequency hydrophone data) and the site page of each platform the question names, whose Data Access section
-// points at its data. The search finds only catalog records for such a question ("how to download data from the
-// shallow profiler at Slope Base"). The Data Access page's chunk ids are fixed by its URL. A failure returns none.
-const DATA_ACCESS_CHUNKS = ["PAGE-3a90d5527a31a30b-CHUNK-001", "PAGE-3a90d5527a31a30b-CHUNK-002", "PAGE-3a90d5527a31a30b-CHUNK-003"];
+// How to get an instrument's data: the site page of each platform the question names, whose Data Access section
+// points at its data, then OOI's Data Access page (Data Explorer, the Data Portal, ERDDAP, THREDDS, M2M) and the M2M
+// page's examples, one of which requests a Slope Base shallow profiler CTD's data. The search finds only catalog
+// records for such a question ("how to download data from the shallow profiler at Slope Base"). The Data Access
+// page's direct downloads (community and cruise datasets, IRIS) are added only for seismic and hydrophone data, as
+// its long sections otherwise filled the evidence ahead of the instrument records that say which part of a mooring
+// holds the asked instrument. The pages' chunk ids are fixed by their URLs. A failure returns none.
+const DATA_ACCESS_CHUNKS = ["PAGE-3a90d5527a31a30b-CHUNK-001", "PAGE-3a90d5527a31a30b-CHUNK-003", "PAGE-b958bdd26aa21ce3-CHUNK-002"];
+const DIRECT_DOWNLOADS_CHUNK = "PAGE-3a90d5527a31a30b-CHUNK-002";
+
+// Instrument inventory records by reference designator: the inventory names each record's chunk by its designator's
+// SHA-256 (build_instrument_inventory.py hid).
+async function instrumentRecords(refdes, env) {
+  if (!refdes.length) return [];
+  const ids = await Promise.all(refdes.map(async (r) => {
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(r)));
+    return `INSTRUMENT-CHUNK-${[...digest].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 18)}`;
+  }));
+  const found = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/chunks`, { collection_id: "instruments", chunk_ids: ids },
+    { "x-api-key": env.ATLAS_API_KEY });
+  return found.hits || [];
+}
 
 async function dataAccessRecords(question, env) {
   const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
   const sites = dataAccessSites(question, ASSET_DIRECTORY);
   try {
-    const [pages, ...found] = await Promise.all([
-      postJson(`${api}/v1/chunks`, { collection_id: "websites", chunk_ids: DATA_ACCESS_CHUNKS }, headers),
+    const [pages, instruments, ...found] = await Promise.all([
+      postJson(`${api}/v1/chunks`, { collection_id: "websites",
+        chunk_ids: /\b(?:seism\w*|OBS|hydrophones?|ground motion)\b/i.test(question) ? [...DATA_ACCESS_CHUNKS, DIRECT_DOWNLOADS_CHUNK] : DATA_ACCESS_CHUNKS }, headers),
+      instrumentRecords(dataAccessInstruments(question, ASSET_DIRECTORY), env),
       ...sites.map((site) => postJson(`${api}/v1/search`, { query: site, limit: 5, collection_ids: ["websites"] }, headers)),
     ]);
     const sitePages = found.flatMap((result, i) => (result.hits || []).filter((hit) => hit.title === sites[i]).slice(0, 1));
-    return [...sitePages, ...(pages.hits || [])].map(withRouteCitations);
+    return [...sitePages, ...instruments, ...(pages.hits || [])].map(withRouteCitations);
   } catch (error) {
     console.error("data access search failed", error instanceof Error ? error.message : "unknown");
     return [];
@@ -557,7 +576,8 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   // A single-route product (MultiDAS, OptoDAS, DAS24) was answered from its route before this; DAS21 and DAS25
   // have several routes, which the model lists.
   const mode = answerMode(question);
-  const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product: product && namedDas(question).about });
+  const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product: product && namedDas(question).about,
+    access: Boolean(context.access?.length) });
   return completePrompt(prompt, mode, env, requestedModel);
 }
 
@@ -712,8 +732,11 @@ export default {
       const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);
       const routed = isDasOverview(query) || isStatusQuestion(query) || context.access?.length || context.assets?.length || context.inventory?.length || context.papers?.length;
-      if (!routed && answerMode(query) !== "compact" && !paperKeys(selectedEvidenceHits(context, query)).length) {
-        context.literature = await literatureFallback(query, env);
+      if (!routed && answerMode(query) !== "compact") {
+        // Evidence that already holds papers gets only the best one more: near-tied papers can fill the main search
+        // (a dataset's DOI counts too) without the one that answers, and three more took the answering paper's passages.
+        const found = await literatureFallback(query, env);
+        context.literature = paperKeys(selectedEvidenceHits(context, query)).length ? found.slice(0, 1) : found;
       }
       if (isDasOverview(query)) context.experiments = await dasExperimentRecords(env);
       else context.fulltext = await fullTextPassages(context, query, env);

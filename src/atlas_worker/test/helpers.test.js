@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, dataAccessSites, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, dataAccessSites, dataAccessInstruments, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -773,4 +773,22 @@ test("a question about getting an instrument's data names the OOI sites whose pa
   assert.deepEqual(dataAccessSites("How to download data from shallow profiler at slope base", sites), ["RS01SBPS"]);
   assert.deepEqual(dataAccessSites("how do I get the CTD data at Axial Base", sites), ["RS03AXBS"]);   // the seafloor one
   assert.deepEqual(dataAccessSites("how do I download OOI data", sites), []);
+});
+
+test("a data access answer leads with the platform's site page, names its parts, and leaves out other data's routes", () => {
+  const prompt = answerPrompt({ question: "How to download data from shallow profiler at slope base", evidence: "e", sources: [], mode: "compact", access: true });
+  assert.match(prompt, /Lead with the platform's own site page/);
+  assert.match(prompt, /Mounted on lines/);
+  assert.match(prompt, /Leave out routes for other data/);
+  assert.doesNotMatch(prompt, /for each dataset or experiment/);   // not the DAS datasets' layout
+  assert.doesNotMatch(answerPrompt({ question: "How do I get the DAS data?", evidence: "e", sources: [], mode: "compact" }), /site page/);
+});
+
+test("a data access question names its site's instruments of the type it asks for, both a mooring's parts", () => {
+  const sites = { ...ASSETS, instruments: [...ASSETS.instruments,
+    { refdes: "RS03AXPS-SF03A-2A-CTDPFA302", name: "Axial Seamount Shallow Profiler CTD Profiler", instrument: "CTD", site: "Axial Base Shallow Profiler Mooring", codes: ["CTDPF"] },
+    { refdes: "RS03AXPS-PC03A-4A-CTDPFA303", name: "Axial Seamount Shallow Profiler CTD Profiler", instrument: "CTD", site: "Axial Base Shallow Profiler Mooring", codes: ["CTDPF"] }] };
+  assert.deepEqual(dataAccessInstruments("How do I get the CTD data from the 200 m platform at Axial Base shallow profiler", sites),
+    ["RS03AXPS-SF03A-2A-CTDPFA302", "RS03AXPS-PC03A-4A-CTDPFA303"]);
+  assert.deepEqual(dataAccessInstruments("How to download data from shallow profiler at axial base", sites), []);   // no type named
 });

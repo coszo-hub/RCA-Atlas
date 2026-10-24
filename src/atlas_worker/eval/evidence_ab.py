@@ -24,7 +24,8 @@ def cases():
     import asset_eval
     out = []
     for cid, q, facts_of, _ in asset_eval.CASES:
-        out.append(("asset", cid, q, [(label, rx) for label, rx, *extra in facts_of() if not extra]))
+        # A fact that something is absent ("no Slope Base codes") is about the answer; the evidence may hold it.
+        out.append(("asset", cid, q, [(label, rx) for label, rx, *extra in facts_of() if not extra and not label.startswith("no ")]))
     for cid, _paper, q, facts, _abstract in literal_cases(HERE / "literature_content_eval.py"):
         out.append(("content", cid, q, [(label, rx) for label, rx, *extra in facts if not extra]))
     for i, (q, title_rx) in enumerate(literal_cases(HERE / "literature_eval.py"), 1):
