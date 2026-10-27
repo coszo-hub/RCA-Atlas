@@ -177,6 +177,8 @@ export function readableExcerpt(text) {
 }
 
 function locate(cite, hits, idx, bundle) {
+  // A download recipe's type overview lists every instrument of a type, across sites: no one place is its location.
+  if (/^RECIPE-SOURCE-recipe_type_/.test(cite.id ?? "")) return null;
   // 1. Instrument ids: the source itself, or the instrument chunk behind it.
   for (const id of [cite.id, ...hits.flatMap(h => [h.chunk_id, ...(h.citations ?? []).map(c => c.source_id)])]) {
     const m = /^(ARCADA-)?INSTRUMENT-(?:CHUNK-)?([0-9a-f]+)$/i.exec(id ?? "");

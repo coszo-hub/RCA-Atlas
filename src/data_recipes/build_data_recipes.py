@@ -662,16 +662,20 @@ def recipe(sensor: dict, src: dict, retrieved: str, results: dict | None = None)
         if info and info.get("channel") and info["check"]["status"] == 200:
             route = {**a, "channel": a.get("channel") or info["channel"]}
             routes.append((0, *earthscope_route(f"{a['network']}.{a['station']}", info, route),
-                           {"kind": "earthscope", "start": info["window"][0], "end": info["window"][1]}))
+                           {"kind": "earthscope", "start": info["window"][0], "end": info["window"][1],
+                            "summary": f"EarthScope station {a['network']}.{a['station']}, channel {route['channel']}"}))
     code = (refdes or "").split("-")[-1][:5]
     raw = src["raw"].get(refdes) if refdes else None
     if raw and raw["sample"] and raw["check"].get("status") == 200 and (made := raw_route(raw)):
-        routes.append((1 if code in FILE_CLASSES else 5, *made, {"kind": "raw", **raw_window(raw), "file_sizes": raw["sample_sizes"]}))
+        routes.append((1 if code in FILE_CLASSES else 5, *made, {"kind": "raw", **raw_window(raw), "file_sizes": raw["sample_sizes"],
+                                                                 "summary": "the OOI raw-data archive (original files)"}))
     ds_id = f"ooi-{refdes.lower()}" if refdes else None
     if ds_id in src["erddap"] and src["erddap"][ds_id]["check"]["status"] == 200:
         last = datetime.fromisoformat(src["erddap"][ds_id]["max_time"].replace("Z", "+00:00"))
-        routes.append((2, *erddap_route(ds_id, src["erddap"][ds_id], refdes),
-                       {"kind": "erddap", "start": f"{last - timedelta(days=1):%Y-%m-%dT%H:%M:%SZ}", "end": f"{last:%Y-%m-%dT%H:%M:%SZ}"}))
+        ds = src["erddap"][ds_id]
+        routes.append((2, *erddap_route(ds_id, ds, refdes),
+                       {"kind": "erddap", "start": f"{last - timedelta(days=1):%Y-%m-%dT%H:%M:%SZ}", "end": f"{last:%Y-%m-%dT%H:%M:%SZ}",
+                        "summary": f"OOI ERDDAP dataset {ds_id}, {day(ds['min_time'])} to {day(ds['max_time'])}", "until": day(ds["max_time"])}))
     streams = sorted(((n, g) for n, g in src["gold"].items() if g["refdes"] == refdes and g["files"]),
                      key=lambda x: (-x[1]["files"], x[0]))
     if streams:
@@ -679,13 +683,14 @@ def recipe(sensor: dict, src: dict, retrieved: str, results: dict | None = None)
         last = datetime.strptime(g["last"], "%Y%m%dT%H%M%S")
         routes.append((3, *gold_route(streams, refdes),
                        {"kind": "gold", "start": f"{last - timedelta(hours=1):%Y-%m-%dT%H:%M:%S}", "end": f"{last:%Y-%m-%dT%H:%M:%S}",
-                        "newest_size": g["newest_size"]}))
+                        "newest_size": g["newest_size"],
+                        "summary": f"OOI Gold Copy stream {streams[0][0]}, {day(g['first'])} to {day(g['last'])}", "until": day(g["last"])}))
     for a in access:
         if a["kind"] == "pi_portal" and a["url"] in src["portal"] and src["portal"][a["url"]]["sample"]:
             routes.append((4, *portal_route(a["url"], a["label"], src["portal"][a["url"]]),
-                           {"kind": "portal", "file_sizes": src["portal"][a["url"]]["sample_sizes"]}))
+                           {"kind": "portal", "file_sizes": src["portal"][a["url"]]["sample_sizes"], "summary": f"the RCA PI data portal, {a['url']}"}))
         if a["kind"] == "repository" and a["url"] in src["github"] and src["github"][a["url"]]["files"]:
-            routes.append((4, *github_route(a["url"], a["label"], src["github"][a["url"]]), {"kind": "github"}))
+            routes.append((4, *github_route(a["url"], a["label"], src["github"][a["url"]]), {"kind": "github", "summary": f"GitHub, {a['url']}"}))
     for i, r in enumerate(routes):
         r[3]["id"] = f"{sensor['id']}#{r[3]['kind']}#{hashlib.sha256(r[2].encode()).hexdigest()[:8]}"
         r[3]["code"] = re.search(r"```python\n(.*?)```", r[1], re.S).group(1) if "```python" in r[1] else None
@@ -715,9 +720,59 @@ def recipe(sensor: dict, src: dict, retrieved: str, results: dict | None = None)
     return {"chunk_id": f"recipe_{sensor['id']}", "title": f"How to download {name} ({label}) data: recipes",
             "text": "\n\n".join(parts), "ids": [i for i in dict.fromkeys(ids) if i], "sources": sources,
             "routes": [r[1].split(":", 1)[0] for r in routes] + (["OOI M2M"] if refdes and not routes else []),
+            "type": sensor.get("type"), "name": name, "label": label, "place": sensor.get("location"),
+            "depth": sensor.get("depthRange") or sensor.get("depth"),
+            "easiest": routes[0][3]["summary"] if routes else "OOI M2M only (a free OOI account; no public route has its data)",
+            "easiest_kind": routes[0][3]["kind"] if routes else "m2m", "until": routes[0][3].get("until", "") if routes else "",
             "tests": [r[3] for r in routes] + ([{"id": f"{sensor['id']}#m2m", "kind": "m2m", "code": re.search(
                 r"```python\n(.*?)```", m2m_route(refdes, streams), re.S).group(1), "needs_account": True}]
                 if refdes and not routes else [])}
+
+
+# What a reference designator's node (RS03AXPS-SF03A-...) says the instrument is on: a shallow profiler mooring carries
+# instruments both on its 200 m platform (PC) and on the profiler that rises from it (SF).
+MOUNTED_ON = {"LJ": "on a seafloor junction box", "MJ": "on a seafloor junction box", "LV": "on a seafloor junction box",
+              "PN": "on a seafloor node", "PC": "fixed on the 200 m platform", "SF": "on the shallow profiler (moves 200 m to near the surface)",
+              "DP": "on the deep profiler (moves through the water column)"}
+
+
+ACRONYMS = {"ctd": "CTD", "adcp": "ADCP", "par": "PAR", "pco2": "pCO2", "ph": "pH", "hpies": "HPIES", "das": "DAS"}
+
+
+def type_overviews(recipes: list[dict]) -> list[dict]:
+    """For each instrument type, one chunk listing every instrument of it, where it is and its
+    easiest route, for a download question that names the type and no place ("how do I download oxygen data?"). Its
+    example is the recipe of a Regional Cabled Array instrument whose easiest route is the type's commonest, fixed (on a
+    junction box or platform) before on a profiler, its data running latest."""
+    groups = {}
+    for r in recipes:
+        if r.get("type"):
+            groups.setdefault(r["type"], []).append(r)
+    out = []
+    for kind, members in sorted(groups.items()):
+        members.sort(key=lambda r: (not r["label"].startswith("RS"), r["label"]))
+        common = max({m["easiest_kind"] for m in members}, key=lambda k: sum(m["easiest_kind"] == k for m in members))
+        example = min((m for m in members if m["easiest_kind"] == common),
+                      key=lambda m: (not m["label"].startswith("RS"), m["label"][9:11] in ("SF", "DP"), "".join(chr(255 - ord(c)) for c in m["until"])))
+        label = " ".join(ACRONYMS.get(w, w) for w in kind.split("_"))
+        count = f"the {len(members)} {label} instruments" if len(members) > 1 else f"the one {label} instrument"
+        lines = [f"Where to download {label} data: {count} the atlas maps, each with its place "
+                 f"and its easiest route. Each has its own recipe with a tested Python script; the scripts of instruments "
+                 f"with the same route differ only in their dataset ID or stream and variable names. The example recipe is "
+                 f"{example['name']} ({example['label']})."]
+        for m in members:
+            d = m["depth"] if isinstance(m["depth"], list) else [m["depth"]] * 2 if isinstance(m["depth"], (int, float)) else None
+            depth = "" if not d else f"{d[0]:g} m" if d[0] == d[1] else f"{d[0]:g}-{d[1]:g} m"
+            mount = MOUNTED_ON.get(m["label"][9:11], "")
+            lines.append(f"- {m['name']} ({m['label']}){', ' + m['place'] if m.get('place') else ''}"
+                         f"{', ' + mount if mount else ''}{', ' + depth if depth else ''}: {m['easiest']}.")
+        out.append({"chunk_id": f"recipe_type_{kind}", "title": f"Where to download {label} data: every {label} instrument",
+                    "text": "\n".join(lines), "type": kind, "members": [m["chunk_id"] for m in members],
+                    "example": example["chunk_id"],
+                    # it lists many instruments, so it links to ERDDAP's list of the type's datasets, not one of them
+                    "source_url": (f"{ERDDAP}/search/index.html?searchFor={urllib.parse.quote_plus(label)}&itemsPerPage=100"
+                                   if common == "erddap" else example["sources"][0]["source_url"])})
+    return out
 
 
 def catalogued(sensors: list[dict]) -> list[dict]:
@@ -732,21 +787,30 @@ def build() -> None:
     sensors = catalogued(json.loads(BUNDLE.read_text())["sensors"])
     results = json.loads(RESULTS.read_text())["results"] if RESULTS.exists() else {}
     recipes = [r for s in sensors if (r := recipe(s, src, src["retrieved_at"], results))]
-    TESTS.write_text(json.dumps([t for r in recipes for t in r["tests"]], indent=1))
+    TESTS.write_text(json.dumps([{k: v for k, v in t.items() if k not in ("summary", "until")} for r in recipes for t in r["tests"]], indent=1))
+    overviews = type_overviews(recipes)
     OUT.mkdir(parents=True, exist_ok=True)
     sources = {s["source_id"]: {**s, "kind": "data_service"} for r in recipes for s in r["sources"]}
     # A recipe is cited as itself, linking to its easiest route; its routes' services are its graph neighbours.
     for r in recipes:
         sources[f"RECIPE-SOURCE-{r['chunk_id']}"] = {"source_id": f"RECIPE-SOURCE-{r['chunk_id']}", "title": r["title"],
                                                      "source_url": r["sources"][0]["source_url"], "kind": "data_recipe"}
+    for o in overviews:
+        sources[f"RECIPE-SOURCE-{o['chunk_id']}"] = {"source_id": f"RECIPE-SOURCE-{o['chunk_id']}", "title": o["title"],
+                                                     "source_url": o["source_url"], "kind": "data_recipe"}
     chunks = [{"chunk_id": r["chunk_id"], "title": r["title"], "text": r["text"], "entity_ids": [f"RECIPE-{r['chunk_id']}"],
                "source_ids": [f"RECIPE-SOURCE-{r['chunk_id']}"], "source_urls": [r["sources"][0]["source_url"]]}
-              for r in recipes]
+              for r in recipes] + [{"chunk_id": o["chunk_id"], "title": o["title"], "text": o["text"], "entity_ids": [f"RECIPE-{o['chunk_id']}"],
+                                    "source_ids": [f"RECIPE-SOURCE-{o['chunk_id']}"], "source_urls": [o["source_url"]]} for o in overviews]
     entities = [{"entity_id": f"RECIPE-{r['chunk_id']}", "entity_type": "data_recipe", "name": r["title"],
                  "attributes": {"ids": r["ids"], "routes": r["routes"]}} for r in recipes]
+    relationships_overview = [{"relationship_id": f"RECIPE-{o['chunk_id']}-LISTS-RECIPE-{c}", "source_id": f"RECIPE-{o['chunk_id']}",
+                               "target_id": f"RECIPE-{c}", "relationship_type": "LISTS"} for o in overviews for c in o["members"]]
+    entities += [{"entity_id": f"RECIPE-{o['chunk_id']}", "entity_type": "data_recipe_overview", "name": o["title"],
+                  "attributes": {"type": o["type"], "members": o["members"], "example": o["example"]}} for o in overviews]
     relationships = [{"relationship_id": f"{e['entity_id']}-SOURCE-{src['source_id']}", "source_id": e["entity_id"],
                       "target_id": src["source_id"], "relationship_type": "DOWNLOADS_FROM"}
-                     for e, r in zip(entities, recipes) for src in r["sources"]]
+                     for e, r in zip(entities, recipes) for src in r["sources"]] + relationships_overview
     for name, rows in (("chunks", chunks), ("entities", entities), ("relationships", relationships),
                        ("source_documents", list(sources.values()))):
         (OUT / f"{name}.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
@@ -756,15 +820,21 @@ def build() -> None:
             counts[route] = counts.get(route, 0) + 1
     (OUT / "manifest.json").write_text(json.dumps({
         "corpus": "RCA Atlas data download recipes", "built_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "services_checked_at_utc": src["retrieved_at"], "recipe_count": len(recipes), "routes": counts,
+        "services_checked_at_utc": src["retrieved_at"], "recipe_count": len(recipes), "type_overview_count": len(overviews), "routes": counts,
         "chunk_count": len(chunks), "entity_count": len(entities), "relationship_count": len(relationships),
         "source_document_count": len(sources)}, indent=2))
     ids = {}
     for r in recipes:
         for i in r["ids"]:
             ids.setdefault(i, r["chunk_id"])
+    # TYPE:<id> is the overview of the instrument's type, EXAMPLE:<id> the recipe it gives as the type's example script.
+    for o in overviews:
+        for c in o["members"]:
+            for i in next(r for r in recipes if r["chunk_id"] == c)["ids"]:
+                ids.setdefault(f"TYPE:{i}", o["chunk_id"])
+                ids.setdefault(f"EXAMPLE:{i}", o["example"])
     WORKER_IDS.write_text(json.dumps(dict(sorted(ids.items())), indent=0) + "\n")
-    print(f"{len(recipes)} recipes; routes {counts}")
+    print(f"{len(recipes)} recipes, {len(overviews)} type overviews; routes {counts}")
 
 
 if __name__ == "__main__":

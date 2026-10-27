@@ -553,6 +553,21 @@ function accessInstruments(question, directory) {
   return { instruments, typed: typed.length > 0 };
 }
 
+// Every instrument of the type a data access question names when it names no place, platform, node or site ("how do I
+// download oxygen sensor data?"): the type's overview recipe lists them all, where each is and its easiest route.
+export function typeOnlyInstruments(question, directory) {
+  const q = String(question || "");
+  if (!directory || ASSET_PLACES.some(([asked]) => asked.test(q)) || ASSET_PLATFORMS.some(([asked]) => asked.test(q))
+      || (q.match(NODE_CODE) || []).length || /\b(?:RS|CE)\d{2}[A-Z0-9]{4}\b/i.test(q)) return [];
+  const types = ASSET_TYPES.filter(([asked]) => asked.test(q)).map(([, type]) => type);
+  if (types.length) return directory.instruments.filter((i) => types.some((type) => type.test(i.instrument))).map((i) => i.refdes);
+  // Else the classes that match most of its words ("pressure" is the BOTPT, the tidal gauges, the HPIES, A-0-A and SCPR).
+  const words = (q.toLowerCase().match(/\b[a-z]{5,}\b/g) || []).filter((w) => !/^(?:download\w*|access|retrieve|obtain|where|which|there|sensors?|instruments?|datasets?|files|script|python|between|could|would|about|their)$/.test(w));
+  const matched = (i) => words.filter((w) => new RegExp(`\\b${w}\\b`, "i").test(i.instrument)).length;
+  const best = Math.max(0, ...directory.instruments.map(matched));
+  return best ? directory.instruments.filter((i) => matched(i) === best).map((i) => i.refdes) : [];
+}
+
 export function dataAccessSites(question, directory) {
   return [...new Set(accessInstruments(question, directory).instruments.map((i) => i.refdes.slice(0, 8)))].slice(0, 3);
 }
@@ -733,6 +748,7 @@ export function liveStatusHit(hit, refdes, live) {
 
 export function answerPrompt({ question, evidence, sources, mode, product = null, access = false }) {
   const recipes = /\(download recipe\) \| sources:/.test(evidence);
+  const typeOverview = /^Where to download .* data: every .* \(download recipe\) \| sources:/m.test(evidence);
   const liveInstruction = isStatusQuestion(question) && /^Live status: /m.test(evidence)
     ? "Records titled \"Live status\" were checked against the live monitor moments ago: say from them whether each instrument is operating now, with the time of its data check, ahead of any older or catalog status in other records."
     : "";
@@ -754,12 +770,13 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
   // recipe's tested code, changing only the timeframe and variables.
   const recipeInstruction = recipes
     ? "Records marked (download recipe) give, for one instrument, its tested routes to the data, easiest first, each with a Python script. Answer with the route that best fits what was asked: the one marked Easiest unless the question wants something it does not give (every sample or a variable only another route has; the original files; waveforms). Say in one sentence why that route. Then write one complete Python script for the asked instrument, variables and timeframe, in a single ```python fenced block: copy that route's script from the recipe and change only its START and END (and its VARIABLES or e.variables to the asked ones, using only variable names the recipe lists). Times are UTC; when the question gives no timeframe, use the last day before the recipe's coverage ends and say so. Never invent a dataset ID, stream, variable, URL or file name the recipe does not give, and never put a password, username or token in a script. After the script, one line each for at most two other routes the recipe gives. Cite the recipe. "
+    + (typeOverview ? "The question names no place, and the record headed Where to download ... data: every ... lists every instrument of that type. Begin by saying how many there are and, in one hyphen bullet each, where each one is and what it is on (seafloor, the 200 m platform, or a profiler), with its dataset ID or other easiest route, as that record gives them. Then give the script from the example recipe for its instrument, saying which instrument it is for, and say in one sentence that for another instrument the script changes only the dataset ID (and the variable names, which that instrument's own recipe lists). Ask no question back. " : "")
     : "";
   const compactInstruction = recipes ? recipeInstruction : access ? accessInstruction : mode === "compact"
     ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it by its source's title, with its years, coverage and file formats, cited with its source number; when one dataset has several numbered sources (download routes), add one hyphen bullet per source, giving its name and only what the evidence ties to that source itself. Sub-folders that the evidence names inside one source (such as the 2021 dataset's OptaSense and Silixa folders) are described in one bullet of that dataset, not bullets of their own. Add one bullet for the folder layout or a caveat (such as very many files per day) when the evidence gives one. Include every numbered download source; never drop one. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
     : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
   const formatInstruction = recipes
-    ? "Use plain text outside the one ```python block, with no Markdown headings or asterisks. Keep the words outside the script under 150."
+    ? `Use plain text outside the one \`\`\`python block, with no Markdown headings or asterisks. Keep the words outside the script under ${typeOverview ? 400 : 150}.`
     : mode === "compact"
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";

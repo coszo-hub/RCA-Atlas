@@ -3,6 +3,8 @@
 For every instrument the atlas maps, the easiest way to get its data, then the other ways, each with the facts a
 script needs and a Python script that has been run. Ask Atlas uses them to answer "how do I download …" with one
 script for the asked instrument and timeframe (`data_recipes` collection, `src/atlas_worker/src/recipe_ids.json`).
+For a question that names a type and no place, each type has an overview of every instrument of it (place, mount,
+depth, easiest route and dataset ID) and one example recipe (`TYPE:<id>` and `EXAMPLE:<id>` in `recipe_ids.json`).
 
 ## Routes, easiest first for what most people want
 

@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
@@ -385,11 +385,24 @@ export function recipeChunkIds(question, picked) {
   return [...new Set([...named, ...picked].map((id) => RECIPE_IDS[id]).filter(Boolean))].slice(0, 2);
 }
 
+// A question naming a type and no place gets the type's overview (every instrument of it: where, its easiest route)
+// and the recipe the overview of the most instruments gives as its example; five types at most ("pressure" is the
+// BOTPT, the tidal gauges, the HPIES, A-0-A and SCPR).
+export function typeRecipeIds(refdes) {
+  const counts = new Map();
+  for (const r of refdes) if (RECIPE_IDS[`TYPE:${r}`]) counts.set(RECIPE_IDS[`TYPE:${r}`], (counts.get(RECIPE_IDS[`TYPE:${r}`]) || 0) + 1);
+  const overviews = [...counts].sort((a, b) => b[1] - a[1]).map(([id]) => id).slice(0, 5);
+  const example = refdes.filter((r) => RECIPE_IDS[`TYPE:${r}`] === overviews[0]).map((r) => RECIPE_IDS[`EXAMPLE:${r}`]).find(Boolean);
+  return [...overviews, ...(example ? [example] : [])];
+}
+
 async function dataAccessRecords(question, env) {
   const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
   const sites = dataAccessSites(question, ASSET_DIRECTORY);
-  const picked = dataAccessInstruments(question, ASSET_DIRECTORY);
-  const recipeIds = recipeChunkIds(question, picked);
+  const named = recipeChunkIds(question, []);
+  const everywhere = named.length ? [] : typeOnlyInstruments(question, ASSET_DIRECTORY);
+  const picked = everywhere.length ? [] : dataAccessInstruments(question, ASSET_DIRECTORY);
+  const recipeIds = everywhere.length ? typeRecipeIds(everywhere) : recipeChunkIds(question, picked);
   try {
     const [recipes, pages, instruments, ...found] = await Promise.all([
       recipeIds.length ? postJson(`${api}/v1/chunks`, { collection_id: "data_recipes", chunk_ids: recipeIds }, headers) : { hits: [] },

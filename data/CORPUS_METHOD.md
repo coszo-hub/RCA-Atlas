@@ -167,7 +167,7 @@ build can be retained for rollback. Current normalized outputs live under
 | `AxialEarthquakes` | `graphrag/chunks.jsonl` | summaries, figures, sources; full events in runtime DB | live daily/event/figure queries plus snapshot |
 | `COSZOHub` | `chunks.jsonl` | repositories, tools, metrics, diagnostics, artifacts | live rescan of growing output directories |
 | `PIPortal` | `chunks.jsonl` | PI instruments, physical sites, download endpoints, tools, routing policy | corpus-first availability answer; user-invoked live browse/download |
-| `DataRecipes` | `chunks.jsonl` | one download recipe per instrument, its routes and their services | `build_data_recipes.py --refresh`, then `test_recipes.py` in the sandbox |
+| `DataRecipes` | `chunks.jsonl` | one download recipe per instrument, its routes and their services; one overview per instrument type | `build_data_recipes.py --refresh`, then `test_recipes.py` in the sandbox |
 
 The `manifest.json` in each collection is authoritative for the node files,
 edge file, embedding input, record counts, source revision, and known
@@ -975,6 +975,10 @@ fails is left out and one that passes says when. Routes whose files exceed 1 GB 
 2021 DAS) are not run and say so. Names read from remote listings are kept only when plain, and enter scripts through
 `repr()`. Ask Atlas fetches an instrument's recipe for a download question (`recipe_ids.json`, every ID the instrument
 goes by) and writes one script for the asked timeframe from its code; recipes are kept out of general search results.
+Each instrument type also has an overview record (31), listing every instrument of the type with its place, what it
+is mounted on (seafloor junction box, the 200 m platform, a profiler), its depth and its easiest route with the
+dataset ID, and naming one recipe as its example: a download question that names a type and no place ("how do I
+download oxygen sensor data?") gets the overview and the example's recipe.
 Builder: `src/data_recipes/build_data_recipes.py`.
 
 ## Network-information exclusion

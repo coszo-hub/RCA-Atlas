@@ -217,4 +217,11 @@ describe("resolveEvidence: any ID the corpus names an instrument by", () => {
     // a named sensor beside it still wins
     expect(cited("RS01SBPD-DP01A-01-CTDPFL104 and RS01SBPD-DP01A-00-ENG000000")).toMatchObject({ kind: "sensor", id: "RS01SBPD-DP01A-01-CTDPFL104" });
   });
+  it("a recipe overview of every instrument of a type is a document, not one of their places", () => {
+    const title = "Where to download CTD data: every CTD instrument";
+    const r = resolveEvidence({ answer: "a [1]", answer_citations: [{ id: "RECIPE-SOURCE-recipe_type_ctd", title, url: "" }],
+      hits: [{ chunk_id: "recipe_type_ctd", title, excerpt: "- RS01SBPD-DP01A-01-CTDPFL104, sbpd", citations: [{ source_id: "RECIPE-SOURCE-recipe_type_ctd", url: "" }] }] }, b);
+    expect(r.located).toEqual([]);
+    expect(r.documents[0]).toMatchObject({ n: 1, title });
+  });
 });

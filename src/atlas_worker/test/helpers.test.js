@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, dataAccessSites, dataAccessInstruments, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -813,4 +813,24 @@ test("a recipe is found by the instrument a question picks, the designator or st
   // the SCPR is catalogued as SCPRAAA301; OOI's designator reaches it
   assert.deepEqual(recipeChunkIds("pressure at MJ03F", ["RS03CCAL-MJ03F-09-SCPRAA301"]), ["recipe_SCPRAAA301"]);
   assert.equal(recipeChunkIds("x", ["RS03CCAL-MJ03F-05-BOTPTA301", "RS03CCAL-MJ03F-07-A0ABPA301", "RS03CCAL-MJ03F-09-SCPRAA301"]).length, 2);
+});
+
+test("a download question naming a type and no place gets every instrument of it: the type's overview and its example", async () => {
+  const { typeRecipeIds } = await import("../src/index.js");
+  const DIRECTORY = (await import("../src/asset_directory.json", { with: { type: "json" } })).default;
+  const oxygen = typeOnlyInstruments("How to download the oxygen sensor data", DIRECTORY);
+  assert.equal(oxygen.length, 13);
+  assert.deepEqual(typeRecipeIds(oxygen), ["recipe_type_dissolved_oxygen", "recipe_RS01SBPS-PC01A-4A-DOSTAD103"]);
+  // no type word: the classes its words name; "pressure" is the BOTPT, the tidal gauges, the HPIES, A-0-A and SCPR
+  const pressure = typeRecipeIds(typeOnlyInstruments("how can I download pressure data", DIRECTORY));
+  assert.ok(pressure.includes("recipe_type_self_calibrating_pressure_recorder") && pressure.includes("recipe_type_pressure"));
+  // a place, node or designator keeps the question to its instruments
+  assert.deepEqual(typeOnlyInstruments("download oxygen data at Axial Base", DIRECTORY), []);
+  assert.deepEqual(typeOnlyInstruments("download oxygen data from MJ03F", DIRECTORY), []);
+  assert.deepEqual(typeOnlyInstruments("how do I download data", DIRECTORY), []);
+  const evidence = "Where to download dissolved oxygen data: every dissolved oxygen instrument (download recipe) | sources: [1]\n- ...";
+  const prompt = answerPrompt({ question: "How to download the oxygen sensor data", evidence, sources: [], mode: "compact", access: true });
+  assert.match(prompt, /how many there are/);
+  assert.match(prompt, /under 400/);
+  assert.doesNotMatch(answerPrompt({ question: "q", evidence: "X data: recipes (download recipe) | sources: [1]", sources: [], mode: "compact", access: true }), /how many there are/);
 });
