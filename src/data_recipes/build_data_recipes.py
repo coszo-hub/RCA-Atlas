@@ -277,26 +277,41 @@ def refresh_raw(refdes_list: list[str]) -> dict:
     return out
 
 
-def refresh_earthscope(routes: list[dict]) -> dict:
+def main_channel(channels: list[dict]) -> str | None:
+    """A station's main channel for a recipe: a vertical, at the highest rate, of its latest epoch."""
+    vertical = [c for c in channels if c["channel"].endswith("Z")] or channels
+    if not vertical:
+        return None
+    return max(vertical, key=lambda c: (c["end"] or "9999", float(c["rate"] or 0)))["channel"]
+
+
+def refresh_earthscope(stations: list[dict]) -> dict:
+    """Each EarthScope station's channels, and a one-minute request on its main channel: a day ago for a station that
+    is open, its last day for one that closed (AXCC2, 2018-2021)."""
     out = {}
-    for route in routes:
+    for route in stations:
         net, sta = route["network"], route["station"]
-        if f"{net}.{sta}" in out or not (re.fullmatch(r"[A-Z0-9]{1,2}", net) and re.fullmatch(r"[A-Z0-9]{1,5}", sta)
-                                         and re.fullmatch(r"[A-Z0-9]{3}", route.get("channel") or "HHZ")):
+        if f"{net}.{sta}" in out or not (re.fullmatch(r"[A-Z0-9]{1,2}", net) and re.fullmatch(r"[A-Z0-9]{1,5}", sta)):
             continue
         status, text, _ = get(f"{FDSN}/fdsnws/station/1/query?net={net}&sta={sta}&level=channel&format=text")
         channels = []
         for line in text.splitlines()[1:]:
             p = line.split("|")
-            if len(p) >= 17:
+            if len(p) >= 17 and re.fullmatch(r"[A-Z0-9]{3}", p[3]) and re.fullmatch(r"[A-Z0-9]{0,2}", p[2]):
                 channels.append({"location": p[2], "channel": p[3], "rate": p[14], "sensor": p[10],
                                  "start": p[15][:10], "end": (p[16] or "")[:10]})
-        end = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(days=1)
-        cha = route.get("channel") or "HHZ"
+        cha = route.get("channel") if re.fullmatch(r"[A-Z0-9]{3}", route.get("channel") or "") else main_channel(channels)
+        if not channels or not cha:
+            out[f"{net}.{sta}"] = {"channels": channels, "channel": None, "closed": None, "check": {"status": status}}
+            continue
+        ends = [c["end"] for c in channels if c["channel"] == cha]
+        closed = None if any(not e for e in ends) else max(ends)
+        end = (datetime.fromisoformat(closed) if closed else datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)) - timedelta(days=1)
         url = (f"{FDSN}/fdsnws/dataselect/1/query?net={net}&sta={sta}&cha={cha}"
                f"&starttime={end - timedelta(minutes=1):%Y-%m-%dT%H:%M:%S}&endtime={end:%Y-%m-%dT%H:%M:%S}")
         status, body, headers = get(url, timeout=120)
-        out[f"{net}.{sta}"] = {"channels": channels,
+        out[f"{net}.{sta}"] = {"channels": channels, "channel": cha, "closed": closed,
+                               "window": [f"{end - timedelta(minutes=1):%Y-%m-%dT%H:%M:%S}", f"{end:%Y-%m-%dT%H:%M:%S}"],
                                "check": {"url": url, "status": status, "bytes": len(body) or headers.get("Content-Length")}}
         time.sleep(0.3)
     return out
@@ -367,6 +382,17 @@ def refresh_github(urls: list[str]) -> dict:
     return out
 
 
+def earthscope_stations(sensors: list[dict]) -> list[dict]:
+    """The EarthScope stations to read: each route that names one, and each EarthScope station the atlas maps (a closed
+    one is listed only as documentation)."""
+    out = [a for s in sensors for a in s.get("access", []) if a["kind"] == "earthscope"]
+    for s in sensors:
+        m = re.fullmatch(r"EARTHSCOPE-([A-Z0-9]{1,2})-([A-Z0-9]{1,5})", s["id"])
+        if m:
+            out.append({"network": m.group(1), "station": m.group(2), "sensor": s["id"]})
+    return out
+
+
 def refresh(sensors: list[dict]) -> None:
     routes = lambda kind: [a for s in sensors for a in s.get("access", []) if a["kind"] == kind]
     refdes = sorted({c for s in sensors for c in [s.get("refdes"), *(s.get("aliases") or [])]
@@ -375,7 +401,7 @@ def refresh(sensors: list[dict]) -> None:
     print("ERDDAP ...", flush=True); erddap = refresh_erddap()
     print("Gold Copy ...", flush=True); gold = refresh_gold()
     print("raw archive ...", flush=True); raw = refresh_raw(refdes)
-    print("EarthScope ...", flush=True); earthscope = refresh_earthscope(routes("earthscope"))
+    print("EarthScope ...", flush=True); earthscope = refresh_earthscope(earthscope_stations(sensors))
     print("PI portal ...", flush=True); portal = refresh_portal([a["url"] for a in routes("pi_portal")])
     print("GitHub ...", flush=True); github = refresh_github([a["url"] for a in routes("repository")])
     CACHE.parent.mkdir(parents=True, exist_ok=True)
@@ -518,18 +544,21 @@ def raw_route(raw: dict) -> tuple[str, str] | None:
 
 def earthscope_route(station: str, info: dict, route: dict) -> tuple[str, str]:
     net, sta = station.split(".")
-    current = [c for c in info["channels"] if not c["end"] or c["end"] >= datetime.now(timezone.utc).strftime("%Y-%m-%d")]
+    current = [c for c in info["channels"] if not c["end"] or c["end"] >= (info.get("closed") or datetime.now(timezone.utc).strftime("%Y-%m-%d"))]
     groups = {}
     for c in current or info["channels"]:
         groups.setdefault((c["location"] or "--", c["sensor"]), []).append(f"{c['channel']} {float(c['rate']):g} Hz")
     channels = "; ".join(f"location {loc}: {', '.join(dict.fromkeys(chs))} ({sensor})" for (loc, sensor), chs in groups.items())
     first = min((c["start"] for c in info["channels"]), default="?")
+    span = f"from {first} to {info['closed']} (the station has closed)" if info.get("closed") else f"since {first}"
+    recorded = "Channels it recorded" if info.get("closed") else "Channels now"
+    example = (datetime.fromisoformat(info["closed"]) - timedelta(days=1)).strftime("%Y-%m-%d") if info.get("closed") else "2025-03-01"
     cha = route.get("channel") or "HHZ"
     text = (f"EarthScope FDSN web services (formerly IRIS): seismic and hydrophone waveforms as MiniSEED, with the "
-            f"instrument response; public, no login. Network {net}, station {sta}, since {first}. Channels now: {channels}.\n"
+            f"instrument response; public, no login. Network {net}, station {sta}, {span}. {recorded}: {channels}.\n"
             f"```python\n# pip install obspy\nfrom obspy import UTCDateTime\nfrom obspy.clients.fdsn import Client\n\n"
             f'client = Client({FDSN!r})\n'
-            f't1, t2 = UTCDateTime("2025-03-01T00:00:00"), UTCDateTime("2025-03-01T01:00:00")   # the timeframe, UTC\n'
+            f't1, t2 = UTCDateTime("{example}T00:00:00"), UTCDateTime("{example}T01:00:00")   # the timeframe, UTC\n'
             f'st = client.get_waveforms({net!r}, {sta!r}, "*", {cha!r}, t1, t2)\n'
             f'inv = client.get_stations(network={net!r}, station={sta!r}, channel={cha!r}, starttime=t1, endtime=t2, level="response")\n'
             f'st.remove_response(inventory=inv, output="VEL")   # ground velocity in m/s; leave out for raw counts\n'
@@ -624,14 +653,16 @@ def recipe(sensor: dict, src: dict, retrieved: str, results: dict | None = None)
     refdes = next((i for i in ids if i and re.fullmatch(r"(?:RS|CE)\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-[A-Z0-9]{2}-[A-Z0-9]{9}", i)), None)
     routes = []                                           # (rank, text, source url, test)
     access = sensor.get("access", [])
-    for a in access:
-        if a["kind"] == "earthscope" and f"{a['network']}.{a['station']}" in src["earthscope"]:
-            info = src["earthscope"][f"{a['network']}.{a['station']}"]
-            if info["check"]["status"] in (200, 204) and info["channels"]:
-                end = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(days=1)
-                routes.append((0, *earthscope_route(f"{a['network']}.{a['station']}", info, a),
-                               {"kind": "earthscope", "start": f"{end - timedelta(minutes=1):%Y-%m-%dT%H:%M:%S}",
-                                "end": f"{end:%Y-%m-%dT%H:%M:%S}"}))
+    station_routes = [a for a in access if a["kind"] == "earthscope"]
+    own = re.fullmatch(r"EARTHSCOPE-([A-Z0-9]{1,2})-([A-Z0-9]{1,5})", sensor["id"])
+    if own and not station_routes:
+        station_routes = [{"network": own.group(1), "station": own.group(2)}]
+    for a in station_routes:
+        info = src["earthscope"].get(f"{a['network']}.{a['station']}")
+        if info and info.get("channel") and info["check"]["status"] == 200:
+            route = {**a, "channel": a.get("channel") or info["channel"]}
+            routes.append((0, *earthscope_route(f"{a['network']}.{a['station']}", info, route),
+                           {"kind": "earthscope", "start": info["window"][0], "end": info["window"][1]}))
     code = (refdes or "").split("-")[-1][:5]
     raw = src["raw"].get(refdes) if refdes else None
     if raw and raw["sample"] and raw["check"].get("status") == 200 and (made := raw_route(raw)):
@@ -743,6 +774,7 @@ if __name__ == "__main__":
     parser.add_argument("--refresh-gold", action="store_true", help="re-read only the Gold Copy")
     parser.add_argument("--refresh-erddap", action="store_true", help="re-read only ERDDAP")
     parser.add_argument("--refresh-portal", action="store_true", help="re-read only the PI data portal")
+    parser.add_argument("--refresh-earthscope", action="store_true", help="re-read only EarthScope")
     args = parser.parse_args()
     if args.refresh:
         refresh(catalogued(json.loads(BUNDLE.read_text())["sensors"]))
@@ -753,6 +785,10 @@ if __name__ == "__main__":
     elif args.refresh_gold:
         cache = json.loads(CACHE.read_text())
         cache["gold"] = refresh_gold()
+        CACHE.write_text(json.dumps(cache, indent=1))
+    elif args.refresh_earthscope:
+        cache, sensors = json.loads(CACHE.read_text()), catalogued(json.loads(BUNDLE.read_text())["sensors"])
+        cache["earthscope"] = refresh_earthscope(earthscope_stations(sensors))
         CACHE.write_text(json.dumps(cache, indent=1))
     elif args.refresh_portal:
         cache, sensors = json.loads(CACHE.read_text()), catalogued(json.loads(BUNDLE.read_text())["sensors"])
