@@ -42,6 +42,18 @@ function stats(e) {
   return [`${ev.located.filter(x => (x.lead ?? x.n) === x.n).length} on the map`, plural(ev.documents.length, "document"), secs, model].filter(Boolean).join(" · ");
 }
 
+// A script in an answer (a download recipe's), shown as written, with a button that copies it.
+function CodeBlock({ lang, text }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="ask-code">
+      <div className="ask-code-head"><span className="mono">{lang || "code"}</span>
+        <button type="button" onClick={() => { navigator.clipboard?.writeText(text); setCopied(true); }}>{copied ? "Copied" : "Copy"}</button></div>
+      <pre className="mono"><code>{text}</code></pre>
+    </div>
+  );
+}
+
 // Ask Atlas: the left sidebar. The thread of questions and answers; the shown answer's evidence is on the map
 // (App owns which, and the active and hovered numbers, shared with the evidence layer). ← / → tour that evidence
 // once one item is active, also while a side panel is open (each step opens the next station). Escape clears the
@@ -217,7 +229,8 @@ function Entry({ e, shown, hl, activeN, tour, onShow, onHover, onSelect, onStep,
       {e.status === "ok" && (
         <>
           <div className="ask-answer">
-            {blocks.map((b, i) => (b.type === "h" ? <h3 key={i}>{inline(b.parts)}</h3>
+            {blocks.map((b, i) => (b.type === "code" ? <CodeBlock key={i} lang={b.lang} text={b.text} />
+              : b.type === "h" ? <h3 key={i}>{inline(b.parts)}</h3>
               : b.type === "li" ? <p key={i} className={`li l${b.level}`}>{inline(b.parts)}</p> : <p key={i}>{inline(b.parts)}</p>))}
           </div>
           {ev.downloads?.length > 0 && (

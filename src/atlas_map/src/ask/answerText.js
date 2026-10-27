@@ -1,5 +1,6 @@
-// The answer's plain text as blocks for rendering: paragraphs, bullets (nested by indent), and section labels,
-// with inline **bold** and [n] citations (a run like [1-15] is one { n, to }). Numbers the evidence does not know stay as plain text.
+// The answer's plain text as blocks for rendering: paragraphs, bullets (nested by indent), section labels, and fenced
+// code (a download recipe's script, ```python ... ```, kept line for line), with inline **bold** and [n] citations (a
+// run like [1-15] is one { n, to }). Numbers the evidence does not know stay as plain text.
 
 const LIST = /^(\s*)[-*•]\s+(.*)$/;
 // Ranges take any hyphen: Groq's GPT-OSS writes [1‑6] with U+2011, a non-breaking hyphen.
@@ -44,7 +45,15 @@ export function parseAnswer(text, known = new Set()) {
     return Math.min(2, indents.length - 1);
   };
   const nextLine = i => lines.slice(i + 1).find(l => l.trim());
+  let code = null;   // the open fenced block: { lang, lines }
   lines.forEach((raw, i) => {
+    const fence = /^\s*```\s*([\w+-]*)\s*$/.exec(raw);
+    if (code) {
+      if (fence) { blocks.push({ type: "code", lang: code.lang, text: code.lines.join("\n") }); code = null; }
+      else code.lines.push(raw);
+      return;
+    }
+    if (fence) { close(); indents = []; code = { lang: fence[1] || "", lines: [] }; return; }
     const line = raw.trim();
     if (!line || /^-{3,}$/.test(line)) { indents = []; return close(); }
     const li = LIST.exec(raw);
@@ -56,5 +65,6 @@ export function parseAnswer(text, known = new Set()) {
     (para ??= []).push(line);
   });
   close();
+  if (code) blocks.push({ type: "code", lang: code.lang, text: code.lines.join("\n") });   // an unclosed fence runs to the end
   return blocks;
 }

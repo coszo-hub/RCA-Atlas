@@ -33,3 +33,15 @@ describe("parseAnswer", () => {
     expect(parseAnswer("", known)).toEqual([]);
   });
 });
+
+describe("parseAnswer: a script in a fenced block", () => {
+  it("keeps it line for line, its bullets and brackets untouched", () => {
+    const text = "ERDDAP is the easiest route [1].\n```python\nimport requests\n\n- not a bullet\n    x = [1]\n```\nAlso: the Gold Copy [2].";
+    const blocks = parseAnswer(text, new Set([1, 2]));
+    expect(blocks.map(b => b.type)).toEqual(["p", "code", "p"]);
+    expect(blocks[1]).toEqual({ type: "code", lang: "python", text: "import requests\n\n- not a bullet\n    x = [1]" });
+  });
+  it("runs an unclosed block to the end", () => {
+    expect(parseAnswer("```\nprint(1)", new Set()).at(-1)).toEqual({ type: "code", lang: "", text: "print(1)" });
+  });
+});

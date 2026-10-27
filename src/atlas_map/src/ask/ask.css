@@ -94,3 +94,9 @@
 .ask-downloads li > span:last-child { min-width: 0; }
 .ask-downloads a { color: var(--text-primary); text-decoration: underline; text-decoration-color: var(--hairline-strong); text-underline-offset: 3px; }
 .ask-downloads .url { display: block; text-align: left; font-size: 10px; color: var(--text-muted); overflow-wrap: anywhere; margin-top: 1px; }
+
+/* A script in an answer: kept line for line, scrolling sideways rather than wrapping code. */
+.ask-code { margin: 8px 0; background: var(--surface-0); border: 1px solid var(--hairline); border-radius: 4px; }
+.ask-code-head { display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; font-size: 10.5px; color: var(--text-muted); border-bottom: 1px solid var(--hairline); }
+.ask-code-head button { background: transparent; border: 0; cursor: pointer; color: var(--text-secondary); font-size: 11px; }
+.ask-code pre { margin: 0; padding: 8px; font-size: 10.5px; line-height: 1.45; overflow-x: auto; white-space: pre; max-height: 420px; }
