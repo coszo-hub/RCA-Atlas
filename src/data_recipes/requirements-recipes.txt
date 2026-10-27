@@ -1,0 +1,7 @@
+# What a user needs to run the download recipes, and what test_recipes.py installs in its sandbox.
+erddapy==3.3.1
+pandas
+xarray
+netCDF4
+obspy==1.5.1
+requests

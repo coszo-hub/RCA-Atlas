@@ -20,6 +20,7 @@ identity. It must preserve every JSONL row in `node_records` or
 | pi_portal | instruments->instrument_id; endpoints->endpoint_id; sites->site_id; sources->source_id; tools->tool_id; entities->entity_id; chunks->chunk_id | document_id, parent_id, source_ids[] | relationship_id; source_id, predicate, target_id |
 | qaqc | sources->source_id; entities->entity_id; capabilities->capability_id; chunks->chunk_id | document_id, parent_id | relationship_id; source_id, predicate, target_id |
 | station_metadata | chunks->chunk_id; entities->entity_id; channels->channel_id; stations->station_id; source_documents->source_id | entity_ids[], source_ids[] | relationship_id; source_id, relationship_type, target_id |
+| data_recipes | chunks->chunk_id; entities->entity_id; source_documents->source_id | entity_ids[], source_ids[] | relationship_id; source_id, relationship_type, target_id |
 | websites | chunks->chunk_id; entities->entity_id; figures->figure_id; pages->page_id | page_id | source_id, predicate, target_id; no raw edge ID |
 
 Chunk text is `text`; COSZO Hub uses `id`, not `chunk_id`. Search title uses

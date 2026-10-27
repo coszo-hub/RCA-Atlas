@@ -27,6 +27,7 @@ COLLECTION_NAMES = {
     "AxialMonitoring": ("axial_monitoring", "OSU Axial monitoring"),
     "AxialEarthquakes/graphrag": ("axial_earthquakes", "Axial Seamount earthquakes"),
     "COSZOHub": ("coszo_hub", "COSZO Hub computational outputs"),
+    "DataRecipes": ("data_recipes", "Data download recipes"),
     "Datasheets/graphrag": ("datasheets", "Instrument datasheets"),
     "Figures/graphrag": ("figures", "Curated figures"),
     "FETCH": ("fetch", "FETCH acoustic ranging stations"),

@@ -167,6 +167,7 @@ build can be retained for rollback. Current normalized outputs live under
 | `AxialEarthquakes` | `graphrag/chunks.jsonl` | summaries, figures, sources; full events in runtime DB | live daily/event/figure queries plus snapshot |
 | `COSZOHub` | `chunks.jsonl` | repositories, tools, metrics, diagnostics, artifacts | live rescan of growing output directories |
 | `PIPortal` | `chunks.jsonl` | PI instruments, physical sites, download endpoints, tools, routing policy | corpus-first availability answer; user-invoked live browse/download |
+| `DataRecipes` | `chunks.jsonl` | one download recipe per instrument, its routes and their services | `build_data_recipes.py --refresh`, then `test_recipes.py` in the sandbox |
 
 The `manifest.json` in each collection is authoritative for the node files,
 edge file, embedding input, record counts, source revision, and known
@@ -954,6 +955,26 @@ python3 src/coszo_hub_tools/build_pi_portal_graph.py \
   --instrument-corpus data/Instruments/instruments.jsonl \
   --output data/PIPortal
 ```
+
+## Data download recipes (`data/DataRecipes`)
+
+One record per instrument the atlas maps (171 recipes), giving the easiest way to get its data and then
+the other ways, each with the facts a script needs, read from the services themselves on
+2026-10-27, and a Python script: EarthScope FDSN for seismometers and low-frequency
+hydrophones (18); the OOI raw-data archive for the original
+files (97: broadband hydrophone MiniSEED, camera stills and video, sonar); OOI ERDDAP
+for processed tables with QARTOD flags (93, with every variable's name and units and the
+sampling a one-day request measured); OOI's Gold Copy THREDDS for every sample of every stream
+(110, read through OPeNDAP, so an hour of a deployment-long file arrives in seconds);
+the RCA PI data portal (26 directories, crawled to their newest files); FETCH on GitHub;
+and OOI M2M, which needs an account and queues each request, given as a script only where no public route has the
+data (14). Every script was run in a sandbox (`src/data_recipes/test_recipes.py`: a fresh
+container per recipe with no host folder and a 1.5 GB work folder) for a short window of its data; a route that
+fails is left out and one that passes says when. Routes whose files exceed 1 GB (the HD camera's 14 GB videos, the
+2021 DAS) are not run and say so. Names read from remote listings are kept only when plain, and enter scripts through
+`repr()`. Ask Atlas fetches an instrument's recipe for a download question (`recipe_ids.json`, every ID the instrument
+goes by) and writes one script for the asked timeframe from its code; recipes are kept out of general search results.
+Builder: `src/data_recipes/build_data_recipes.py`.
 
 ## Network-information exclusion
 
