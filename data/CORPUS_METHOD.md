@@ -962,13 +962,14 @@ One record per instrument the atlas maps (171 recipes), giving the easiest way t
 the other ways, each with the facts a script needs, read from the services themselves on
 2026-10-27, and a Python script: EarthScope FDSN for seismometers and low-frequency
 hydrophones (18); the OOI raw-data archive for the original
-files (97: broadband hydrophone MiniSEED, camera stills and video, sonar); OOI ERDDAP
+files (99: broadband hydrophone MiniSEED, camera stills and video, sonar); OOI ERDDAP
 for processed tables with QARTOD flags (93, with every variable's name and units and the
 sampling a one-day request measured); OOI's Gold Copy THREDDS for every sample of every stream
 (110, read through OPeNDAP, so an hour of a deployment-long file arrives in seconds);
 the RCA PI data portal (26 directories, crawled to their newest files); FETCH on GitHub;
 and OOI M2M, which needs an account and queues each request, given as a script only where no public route has the
-data (14). Every script was run in a sandbox (`src/data_recipes/test_recipes.py`: a fresh
+data (13: none of them is in ERDDAP or the Gold Copy). Where the Gold Copy has an instrument,
+its recipe says the date its newest file ends instead of pointing to M2M. Every script was run in a sandbox (`src/data_recipes/test_recipes.py`: a fresh
 container per recipe with no host folder and a 1.5 GB work folder) for a short window of its data; a route that
 fails is left out and one that passes says when. Routes whose files exceed 1 GB (the HD camera's 14 GB videos, the
 2021 DAS) are not run and say so. Names read from remote listings are kept only when plain, and enter scripts through

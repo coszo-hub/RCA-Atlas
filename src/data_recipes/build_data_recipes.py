@@ -241,10 +241,12 @@ def refresh_raw(refdes_list: list[str]) -> dict:
         base = f"{RAW}/{key}/{code}"
         years = [y.rstrip("/") for y in links(get(f"{base}/")[1]) if re.fullmatch(r"\d{4}/", y)]
         newest, layout, files, file_sizes = None, None, [], {}
-        recent = []                                  # the four newest months, newest first
-        for year in reversed(years[-2:]):
+        recent = []                                  # the newest months, newest first: four, then up to twelve back
+        for year in reversed(years):                 # for an instrument whose newest months are empty (MASSPA301)
             recent += [(year, m.rstrip("/")) for m in reversed(links(get(f"{base}/{year}/")[1])) if re.fullmatch(r"\d{2}/", m)]
-        for year, month in recent[:4]:
+            if len(recent) >= 12:
+                break
+        for year, month in recent[:12]:
             status, page, _ = get(f"{base}/{year}/{month}/")
             entries = links(page)
             here = [f for f in entries if not f.endswith("/")]
@@ -671,9 +673,11 @@ def recipe(sensor: dict, src: dict, retrieved: str, results: dict | None = None)
     if refdes and not routes:
         done = results.get(f"{sensor['id']}#m2m")
         parts.append("Only route: " + m2m_route(refdes, streams) + (tested_note(done) if done and done["passed"] else ""))
-    elif refdes:
-        parts.append("Data newer than the newest public file: OOI M2M (a free ooinet.oceanobservatories.org account's "
-                     "API Username and Token) delivers the same streams, prepared on request, which can take up to 20 minutes.")
+    # Where the Gold Copy has the instrument, it is current to its newest file: say how far the data run, not M2M.
+    if streams:
+        newest = max(g["last"] for _, g in streams)
+        parts.append(f"How recent: the Gold Copy's newest file for this instrument ends {day(newest)} "
+                     f"{newest[9:11]}:{newest[11:13]} UTC (as of {retrieved[:10]}); it holds nothing later than that.")
     sources = [{"source_id": "RECIPE-SOURCE-" + hashlib.sha256(url.encode()).hexdigest()[:20], "title": title, "source_url": url}
                for title, url in [(f"{name}: {r[1].split(':', 1)[0]}", r[2]) for r in routes]
                + ([(f"OOI M2M sensor inventory for {refdes}", f"{M2M}/{'/'.join(refdes.split('-', 2))}")] if refdes else [])]
