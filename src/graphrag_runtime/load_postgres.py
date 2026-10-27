@@ -27,7 +27,8 @@ def batches(values: Iterable[Any], size: int = 1000) -> Iterable[list[Any]]:
         yield batch
 
 
-def load_build(dsn: str, normalized: Path, *, activate: bool, embeddings: Path | None = None) -> dict[str, int]:
+def load_build(dsn: str, normalized: Path, *, activate: bool, embeddings: Path | None = None,
+               keep_builds: int = 2) -> dict[str, int]:
     try:
         import psycopg
         from psycopg.types.json import Jsonb
@@ -190,6 +191,15 @@ def load_build(dsn: str, normalized: Path, *, activate: bool, embeddings: Path |
             cursor.execute("UPDATE graphrag.corpus_builds SET validation_passed=true WHERE build_id=%s", (build_id,))
             if activate:
                 cursor.execute("SELECT graphrag.activate_build(%s)", (build_id,))
+                # Superseded builds are never read (every API function reads the active build) but every load added
+                # one, and the vector index spans them all: 35 builds made searches time out. The newest keep_builds
+                # stay, the active one always, so the previous build remains for a rollback.
+                cursor.execute(
+                    "DELETE FROM graphrag.corpus_builds WHERE build_id NOT IN (SELECT build_id FROM graphrag.active_corpus) "
+                    "AND build_id NOT IN (SELECT build_id FROM graphrag.corpus_builds ORDER BY created_at_utc DESC LIMIT %s)",
+                    (keep_builds,),
+                )
+                counts["pruned_builds"] = cursor.rowcount
     return counts
 
 
@@ -199,8 +209,10 @@ def main() -> int:
     parser.add_argument("--normalized", type=Path, required=True)
     parser.add_argument("--embeddings", type=Path)
     parser.add_argument("--activate", action="store_true")
+    parser.add_argument("--keep-builds", type=int, default=2, help="builds kept after activation, the active one included")
     args = parser.parse_args()
-    print(json.dumps(load_build(args.dsn, args.normalized, activate=args.activate, embeddings=args.embeddings), indent=2))
+    print(json.dumps(load_build(args.dsn, args.normalized, activate=args.activate, embeddings=args.embeddings,
+                                keep_builds=max(1, args.keep_builds)), indent=2))
     return 0
 
 

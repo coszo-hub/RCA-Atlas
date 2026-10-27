@@ -14,6 +14,7 @@ services:
       - ./migrations/004_paper_passages.sql:/docker-entrypoint-initdb.d/004-paper-passages.sql:ro
       - ./migrations/005_papers_naming.sql:/docker-entrypoint-initdb.d/005-papers-naming.sql:ro
       - ./migrations/006_chunks_by_id.sql:/docker-entrypoint-initdb.d/006-chunks-by-id.sql:ro
+      - ./migrations/007_foreign_key_indexes.sql:/docker-entrypoint-initdb.d/007-foreign-key-indexes.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U graphrag_owner -d graphrag"]
       interval: 5s
