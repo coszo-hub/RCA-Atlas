@@ -568,6 +568,40 @@ export function typeOnlyInstruments(question, directory) {
   return best ? directory.instruments.filter((i) => matched(i) === best).map((i) => i.refdes) : [];
 }
 
+// A question about which way a seismometer's horizontal components point ("how are the seismometers at Axial
+// oriented?", "the azimuth of AXEC3", "orientation issues").
+export function isOrientationQuestion(question) {
+  const q = String(question || "");
+  return /\b(?:orient\w*|azimuths?|aligned|alignment|misaligned|rotated from north|which way)\b/i.test(q)
+    && /\b(?:seism\w*|obs|stations?|components?|channels?|horizontals?|geophones?|(?:AX|HY|CZ)[A-Z]{1,3}\d)\b/i.test(q);
+}
+
+// The OO stations an orientation question names (AXEC3) or that are at the place it names (Southern Hydrate Ridge):
+// a place's seismometers by reference designator, each to its EarthScope station through instrument_ids.json, where
+// both go to one instrument record.
+export function orientationStations(question, directory, instrumentIds) {
+  const { named, atPlace } = orientationStationParts(question, directory, instrumentIds);
+  return [...new Set([...named, ...atPlace])];
+}
+
+// The stations an orientation question asks about by the place it names (none when it names no place).
+export function placeStations(question, directory, instrumentIds) {
+  return isOrientationQuestion(question) ? orientationStationParts(question, directory, instrumentIds).atPlace : [];
+}
+
+function orientationStationParts(question, directory, instrumentIds) {
+  const q = String(question || "");
+  const stationOf = new Map(Object.entries(instrumentIds || {}).filter(([id]) => /^EARTHSCOPE-OO-/.test(id))
+    .map(([id, chunk]) => [chunk, id.slice("EARTHSCOPE-OO-".length)]));
+  const known = new Set(stationOf.values());
+  const named = (q.match(/\b(?:AX|HY|CZ)[A-Z]{1,3}\d?\b/gi) || []).map((c) => c.toUpperCase()).filter((c) => known.has(c));
+  const places = ASSET_PLACES.find(([asked]) => asked.test(q));
+  const atPlace = !places || !directory ? [] : directory.instruments
+    .filter((i) => /Seismometer/.test(i.instrument) && places[1].test(i.site))
+    .map((i) => stationOf.get(instrumentIds[i.refdes])).filter(Boolean);
+  return { named, atPlace: [...new Set(atPlace)].sort() };
+}
+
 export function dataAccessSites(question, directory) {
   return [...new Set(accessInstruments(question, directory).instruments.map((i) => i.refdes.slice(0, 8)))].slice(0, 3);
 }
@@ -746,7 +780,7 @@ export function liveStatusHit(hit, refdes, live) {
   return { chunk_id: `LIVE-${refdes}`, collection_id: "live_status", title: `Live status: ${name}`, text, citations: hit.citations || [], live: true };
 }
 
-export function answerPrompt({ question, evidence, sources, mode, product = null, access = false }) {
+export function answerPrompt({ question, evidence, sources, mode, product = null, access = false, stations = [] }) {
   const recipes = /\(download recipe\) \| sources:/.test(evidence);
   const typeOverview = /^Where to download .* data: every .* \(download recipe\) \| sources:/m.test(evidence);
   const liveInstruction = isStatusQuestion(question) && /^Live status: /m.test(evidence)
@@ -754,6 +788,10 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     : "";
   const papersInstruction = isPaperUsageQuestion(question)
     ? "The question asks which papers used an instrument. Full-text passages from papers that name it or describe it are in the evidence. List each paper whose passage shows it used or analyzed that instrument's data, by title with its citation and a few words on how it used it; list papers that only mention the instrument separately as mentions; leave out papers whose passages are about something else."
+    : "";
+  // The orientation summary lists every OO station; a question about one place is answered for that place's stations.
+  const stationInstruction = stations.length
+    ? ` The question asks about one place, whose OO seismometer stations are ${stations.join(", ")}. Answer for those stations only, each with its azimuth and any orientation issue the evidence gives it; leave every other station out, without remarking on it.`
     : "";
   const overviewInstruction = isDasOverview(question)
     ? `The RCA's DAS experiments are ${DAS_EXPERIMENTS.map((e) => e.about).join("; ")}. Count and describe these experiments, each once; a dataset within an experiment is part of it, not an experiment of its own.`
@@ -781,7 +819,7 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction} ${overviewInstruction} ${liveInstruction} ${papersInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "If the evidence leaves part of the question unanswered, say in one short closing section what is missing. When the evidence answers the question fully, add no such section and do not hedge a supported answer. A total, maximum, ranking or comparison over a period (a year, or since 2015) is complete only if the evidence covers every part of that period: when it covers some months of a year, give the figure for the months covered, name them, and say the others are missing; never present a partial sum as the total."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction}${stationInstruction} ${overviewInstruction} ${liveInstruction} ${papersInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "If the evidence leaves part of the question unanswered, say in one short closing section what is missing. When the evidence answers the question fully, add no such section and do not hedge a supported answer. A total, maximum, ranking or comparison over a period (a year, or since 2015) is complete only if the evidence covers every part of that period: when it covers some months of a year, give the figure for the months covered, name them, and say the others are missing; never present a partial sum as the total."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }
 
 // The map places a paper by the atlas sites its full text names most (the passage search returns them): they are

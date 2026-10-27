@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, placeStations, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -833,4 +833,32 @@ test("a download question naming a type and no place gets every instrument of it
   assert.match(prompt, /how many there are/);
   assert.match(prompt, /under 400/);
   assert.doesNotMatch(answerPrompt({ question: "q", evidence: "X data: recipes (download recipe) | sources: [1]", sources: [], mode: "compact", access: true }), /how many there are/);
+});
+
+test("an orientation question gets every station's orientation summary, and the records of the few stations it means", async () => {
+  const { orientationChunkIds } = await import("../src/index.js");
+  for (const q of ["What is the azimuth of AXEC3?", "What seismometers have orientation issues?", "How are the seismometers at Axial Seamount oriented?",
+    "What is the orientation of the seismometer at Southern Hydrate Ridge?", "Which way is the Slope Base OBS pointing? what is its orientation"]) {
+    assert.ok(isOrientationQuestion(q), q);
+    assert.equal(orientationChunkIds(q)[0], "station_metadata_seismometer_orientation");
+  }
+  assert.ok(!isOrientationQuestion("What is the orientation of the ADCP at Axial Base?"));
+  assert.ok(!isOrientationQuestion("What seismometers are at Axial?"));
+  assert.deepEqual(orientationChunkIds("What is the azimuth of AXEC3?"), ["station_metadata_seismometer_orientation", "station_metadata_OO_AXEC3"]);
+  assert.deepEqual(orientationChunkIds("Which way is the Slope Base OBS pointing? what is its orientation"), ["station_metadata_seismometer_orientation", "station_metadata_OO_HYSB1"]);
+  // Axial's eight stations are in the summary; their own records would crowd it
+  assert.deepEqual(orientationChunkIds("How are the seismometers at Axial Seamount oriented?"), ["station_metadata_seismometer_orientation"]);
+});
+
+test("an orientation question about a place is answered for that place's stations only", async () => {
+  const DIRECTORY = (await import("../src/asset_directory.json", { with: { type: "json" } })).default;
+  const IDS = (await import("../src/instrument_ids.json", { with: { type: "json" } })).default;
+  assert.deepEqual(placeStations("What is the orientation of the seismometer at Southern Hydrate Ridge?", DIRECTORY, IDS), ["HYS11", "HYS12", "HYS13", "HYS14"]);
+  assert.deepEqual(placeStations("How are the seismometers at Axial Seamount oriented?", DIRECTORY, IDS),
+    ["AXAS1", "AXAS2", "AXBA1", "AXCC1", "AXEC1", "AXEC2", "AXEC3", "AXID1"]);
+  assert.deepEqual(placeStations("What seismometers have orientation issues?", DIRECTORY, IDS), []);
+  assert.deepEqual(placeStations("What seismometers are at Axial?", DIRECTORY, IDS), []);   // not about orientation
+  const prompt = answerPrompt({ question: "q", evidence: "e", sources: [], mode: "full", stations: ["HYS11", "HYS12"] });
+  assert.match(prompt, /stations are HYS11, HYS12\. Answer for those stations only/);
+  assert.doesNotMatch(answerPrompt({ question: "q", evidence: "e", sources: [], mode: "full" }), /Answer for those stations only/);
 });

@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, orientationStations, placeStations, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
@@ -228,7 +228,7 @@ function selectedEvidenceHits(context, question) {
   const product = namedDataProduct(question);
   let hits = prioritizedHits(context, question, isInstrumentInventoryQuestion(question) ? 16 : answerMode(question) === "compact" ? 8 : 6);
   // Live status checks lead a status question; each DAS experiment's own record leads a question about them all.
-  const lead = [...(context.live || []), ...(context.experiments || []), ...(context.access || []), ...(context.assets || []), ...(context.inventory || []),
+  const lead = [...(context.orientation || []), ...(context.live || []), ...(context.experiments || []), ...(context.access || []), ...(context.assets || []), ...(context.inventory || []),
     ...(context.papers || [])];
   if (lead.length) {
     const ids = new Set(lead.map((hit) => hit.chunk_id));
@@ -342,6 +342,29 @@ async function typeRecords(inventory, env) {
 // names for it (assetChunkIds), by id. A question that names no instrument, type, place, cruise or depth ("what was
 // seen near the end of the deployment?") gets none: a search of the collection would lead its evidence with
 // unrelated instruments.
+// An orientation question's evidence: the StationXML summary of every OO station's seismometer orientation (which
+// are rotated from north, which have metadata issues), then the records of the stations it names or that are at the
+// place it names when they are three at most (the summary has every station; Axial's eight would crowd it). The search
+// ranked a place's instrument records above them ("how are the seismometers at Axial Seamount oriented?" found no
+// azimuth). A failure returns none.
+const ORIENTATION_CHUNK = "station_metadata_seismometer_orientation";
+export function orientationChunkIds(question) {
+  const stations = orientationStations(question, ASSET_DIRECTORY, INSTRUMENT_IDS);
+  return [ORIENTATION_CHUNK, ...(stations.length <= 3 ? stations.map((s) => `station_metadata_OO_${s}`) : [])];
+}
+
+async function orientationRecords(question, env) {
+  const ids = orientationChunkIds(question);
+  try {
+    const found = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/chunks`, { collection_id: "station_metadata", chunk_ids: ids },
+      { "x-api-key": env.ATLAS_API_KEY });
+    return ids.map((id) => (found.hits || []).find((hit) => hit.chunk_id === id)).filter(Boolean).map(withRouteCitations);
+  } catch (error) {
+    console.error("orientation lookup failed", error instanceof Error ? error.message : "unknown");
+    return [];
+  }
+}
+
 async function assetRecords(question, env) {
   const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
   try {
@@ -606,7 +629,7 @@ async function generateAnswer(question, context, env, requestedModel = "auto") {
   // have several routes, which the model lists.
   const mode = answerMode(question);
   const prompt = answerPrompt({ question, evidence, sources: sourceList, mode, product: product && namedDas(question).about,
-    access: Boolean(context.access?.length) });
+    access: Boolean(context.access?.length), stations: context.orientation?.length ? placeStations(question, ASSET_DIRECTORY, INSTRUMENT_IDS) : [] });
   return completePrompt(prompt, mode, env, requestedModel);
 }
 
@@ -757,6 +780,7 @@ export default {
       // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
       if (isPaperUsageQuestion(query)) context.papers = await papersFor(query, env);
       if (isAssetQuestion(query)) context.assets = await assetRecords(query, env);
+      if (isOrientationQuestion(query)) context.orientation = await orientationRecords(query, env);
       // Download recipes reach the evidence only through the data access lookup: in the general results they named
       // other instruments' routes beside an answer ("AXBA1" brought the HPIES and current meter recipes).
       context.hits = (context.hits || []).filter((hit) => hit.collection_id !== RECIPE_COLLECTION);

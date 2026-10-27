@@ -179,8 +179,18 @@ def orientation_chunk(stations: list[dict], by_station: dict[str, list[dict]]) -
                  "seismometers are not aligned with north",
         "text": "\n".join(text),
         "entity_ids": sorted({x["channel_id"] for chans in by_station.values() for x in chans if horizontal(x, SEISMOMETER)}),
-        "source_ids": sorted({sid for st in stations for sid in st["source_ids"]}),
+        # Cited as itself: as one of its 27 station files' sources it was cited as OO_HYSB1.xml, a single station.
+        "source_ids": [ORIENTATION_SOURCE["source_id"]],
+        "source_urls": [ORIENTATION_SOURCE["source_url"]],
     }
+
+
+ORIENTATION_SOURCE = {
+    "source_id": "STATIONXML-OO-ORIENTATION",
+    "title": "Seismometer orientation of every OO station (from the OO network StationXML)",
+    "media_type": "text/plain",
+    "source_url": "https://service.earthscope.org/fdsnws/station/1/query?network=OO&level=channel&format=text",
+}
 
 
 def station_graph(xml_files: list[Path], output: Path, project: Path) -> dict:
@@ -262,6 +272,7 @@ def station_graph(xml_files: list[Path], output: Path, project: Path) -> dict:
     for channel in channel_rows: by_station[channel["station_id"]].append(channel)
     chunks = [station_chunk(station, by_station[station["station_id"]]) for station in station_rows]
     chunks.append(orientation_chunk(station_rows, by_station))
+    sources.append(ORIENTATION_SOURCE)
     output.mkdir(parents=True, exist_ok=True)
     write_jsonl(output / "stations.jsonl", station_rows)
     write_jsonl(output / "channels.jsonl", channel_rows)
