@@ -792,3 +792,25 @@ test("a data access question names its site's instruments of the type it asks fo
     ["RS03AXPS-SF03A-2A-CTDPFA302", "RS03AXPS-PC03A-4A-CTDPFA303"]);
   assert.deepEqual(dataAccessInstruments("How to download data from shallow profiler at axial base", sites), []);   // no type named
 });
+
+test("a download recipe in the evidence: the easiest route, one script from its code, nothing invented, no credentials", () => {
+  const evidence = "How to download X (RS03CCAL-MJ03F-05-BOTPTA301) data: recipes (download recipe) | sources: [1]\nEasiest: OOI ERDDAP ...";
+  const prompt = answerPrompt({ question: "Download bottom pressure at the Central Caldera for March 2025", evidence, sources: [], mode: "compact", access: true });
+  assert.match(prompt, /single ```python fenced block/);
+  assert.match(prompt, /change only its START and END/);
+  assert.match(prompt, /Never invent a dataset ID/);
+  assert.match(prompt, /never put a password, username or token/);
+  assert.doesNotMatch(prompt, /Lead with the platform's own site page/);   // not the platform-level answer
+  assert.doesNotMatch(prompt, /no Markdown hashes/);                          // a script's comments are hashes
+  // without a recipe, the platform answer stands
+  assert.match(answerPrompt({ question: "q", evidence: "e", sources: [], mode: "compact", access: true }), /Lead with the platform's own site page/);
+});
+
+test("a recipe is found by the instrument a question picks, the designator or station it names, two at most", async () => {
+  const { recipeChunkIds } = await import("../src/index.js");
+  assert.deepEqual(recipeChunkIds("download RS03CCAL-MJ03F-05-BOTPTA301 data", []), ["recipe_RS03CCAL-MJ03F-05-BOTPTA301"]);
+  assert.deepEqual(recipeChunkIds("a script for AXBA1 waveforms", []), ["recipe_EARTHSCOPE-OO-AXBA1"]);
+  // the SCPR is catalogued as SCPRAAA301; OOI's designator reaches it
+  assert.deepEqual(recipeChunkIds("pressure at MJ03F", ["RS03CCAL-MJ03F-09-SCPRAA301"]), ["recipe_SCPRAAA301"]);
+  assert.equal(recipeChunkIds("x", ["RS03CCAL-MJ03F-05-BOTPTA301", "RS03CCAL-MJ03F-07-A0ABPA301", "RS03CCAL-MJ03F-09-SCPRAA301"]).length, 2);
+});

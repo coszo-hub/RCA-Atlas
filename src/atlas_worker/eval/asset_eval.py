@@ -271,6 +271,12 @@ def c_a30():
 
 
 
+# A download script: the answer holds one fenced Python script using the recipe's own dataset, station or folder, with
+# the asked timeframe, and no credentials.
+SCRIPT = ("python script", r"```python")
+NO_SECRET = ("no credentials", r"\A(?![\s\S]*(?:API_TOKEN\s*=\s*['\"][^'\"]|password\s*=))")
+
+
 # Getting a platform's data, and which part of a profiler mooring holds what: the parts' codes come from VOCAB (OOI
 # names a mooring's parts in TOC_L3, "Shallow Profiler (SF01A)", "200m Platform (PC01A)").
 def parts(site):
@@ -294,11 +300,28 @@ def c_a33():
 
 
 def c_a34():
-    return [("IRIS", r"IRIS|EarthScope"), ("DOI", r"10\.58046/OOI-RS03AXBS")]
+    # A seismometer's data are its EarthScope waveforms: the recipe's script for the Axial Base station.
+    return [("EarthScope", r"IRIS|EarthScope"), ("station AXBA1", r"AXBA1"), SCRIPT]
 
 
 def c_a35():
     return [(r.split("-")[1], r.split("-")[1]) for r in sorted(VOCAB) if r.startswith("RS01SBPS-") and "-PHSEN" in r]
+
+
+
+def c_a36():
+    return [SCRIPT, ("ERDDAP dataset or Gold Copy stream", r"ooi-rs03ccal-mj03f-05-botpta301|RS03CCAL-MJ03F-05-BOTPTA301-streamed"),
+            ("asked from 1 March 2025", r"2025-03-01"), ("asked to 7 March 2025", r"2025-03-0[78]"), NO_SECRET]
+
+
+def c_a37():
+    return [SCRIPT, ("EarthScope client", r"service\.earthscope\.org"), ("station AXBA1", r"['\"]AXBA1['\"]"),
+            ("asked 2025-04-01", r"2025-04-01"), NO_SECRET]
+
+
+def c_a38():
+    return [SCRIPT, ("raw archive folder", r"rawdata\.oceanobservatories\.org/files/RS01SLBS/LJ01A/HYDBBA102"),
+            ("asked 20 October 2026", r"2026, 10, 20|2026-10-20"), NO_SECRET]
 
 
 CASES = [
@@ -335,8 +358,11 @@ CASES = [
     ("A31", "How to download data from shallow profiler at slope base", c_a31, r"RS01SBPS"),
     ("A32", "Which instruments at the Slope Base shallow profiler mooring are on the moving profiler and which are on the fixed 200 m platform?", c_a32, None),
     ("A33", "How do I get the CTD data from the 200 m platform at Axial Base shallow profiler", c_a33, r"RS03AXPS"),
-    ("A34", "How do I download seismometer data from Axial Base", c_a34, r"Data Access"),
+    ("A34", "How do I download seismometer data from Axial Base", c_a34, r"How to download"),
     ("A35", "How can I get pH data from the Slope Base shallow profiler", c_a35, None),
+    ("A36", "How can I download bottom pressure data from the Central Caldera for March 1-7 2025?", c_a36, r"How to download"),
+    ("A37", "Write a Python script to get one hour of AXBA1 seismometer data on 2025-04-01", c_a37, r"How to download"),
+    ("A38", "How do I download broadband hydrophone data at Oregon Slope Base for 2026-10-20 between 01:00 and 01:30?", c_a38, r"How to download"),
 ]
 
 

@@ -2,11 +2,12 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
 import INSTRUMENT_IDS from "./instrument_ids.json" with { type: "json" };
+import RECIPE_IDS from "./recipe_ids.json" with { type: "json" };
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -92,8 +93,10 @@ function cleanAnswer(answer) {
   // bullets so compact replies retain the same minimal visual language.
   // Groq's GPT-OSS writes its bullets with U+2011 (non-breaking hyphen) or an en dash, which the panel would not read as bullets.
   // It also cites with full-width brackets (【3】, 【1, 2】), which the panel would not read as citations.
-  return String(answer || "").replace(/^\s*[*•\u2010\u2011\u2012\u2013]\s+/gm, "- ")
-    .replace(/【\s*(\d+(?:\s*[,，–\u2010-\u2012-]\s*\d+)*)\s*】/g, (_, inner) => `[${inner.replace(/，/g, ",")}]`).trim();
+  // A fenced code block (a download recipe's script) is left as written.
+  return String(answer || "").split(/(```[\s\S]*?```)/).map((part, i) => (i % 2 ? part : part
+    .replace(/^\s*[*•\u2010\u2011\u2012\u2013]\s+/gm, "- ")
+    .replace(/【\s*(\d+(?:\s*[,，–\u2010-\u2012-]\s*\d+)*)\s*】/g, (_, inner) => `[${inner.replace(/，/g, ",")}]`))).join("").trim();
 }
 
 // Short words that say nothing about the record wanted; three-letter terms such as "das" or "ctd" still count.
@@ -372,18 +375,33 @@ async function instrumentRecords(refdes, env) {
   return ids.map((id) => (found.hits || []).find((hit) => hit.chunk_id === id)).filter(Boolean);
 }
 
+// The download recipes (data_recipes, build_data_recipes.py) of the instruments a data access question asks for: those
+// dataAccessInstruments picks, and any reference designator or station it names (RS03CCAL-MJ03F-05-BOTPTA301, AXBA1).
+// Two at most: one instrument's recipe runs to ~7,000 characters.
+export function recipeChunkIds(question, picked) {
+  const q = String(question || "");
+  const named = [...(q.match(/\b(?:RS|CE)\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-[A-Z0-9]{2}-[A-Z0-9]{9}\b/gi) || []),
+    ...(q.match(/\b[A-Z]{2,4}\d{1,2}\b/g) || []).map((code) => `EARTHSCOPE-OO-${code}`)].map((c) => c.toUpperCase());
+  return [...new Set([...named, ...picked].map((id) => RECIPE_IDS[id]).filter(Boolean))].slice(0, 2);
+}
+
 async function dataAccessRecords(question, env) {
   const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
   const sites = dataAccessSites(question, ASSET_DIRECTORY);
+  const picked = dataAccessInstruments(question, ASSET_DIRECTORY);
+  const recipeIds = recipeChunkIds(question, picked);
   try {
-    const [pages, instruments, ...found] = await Promise.all([
+    const [recipes, pages, instruments, ...found] = await Promise.all([
+      recipeIds.length ? postJson(`${api}/v1/chunks`, { collection_id: "data_recipes", chunk_ids: recipeIds }, headers) : { hits: [] },
       postJson(`${api}/v1/chunks`, { collection_id: "websites",
         chunk_ids: /\b(?:seism\w*|OBS|hydrophones?|ground motion)\b/i.test(question) ? [...DATA_ACCESS_CHUNKS, DIRECT_DOWNLOADS_CHUNK] : DATA_ACCESS_CHUNKS }, headers),
-      instrumentRecords(dataAccessInstruments(question, ASSET_DIRECTORY), env),
+      instrumentRecords(picked, env),
       ...sites.map((site) => postJson(`${api}/v1/search`, { query: site, limit: 5, collection_ids: ["websites"] }, headers)),
     ]);
     const sitePages = found.flatMap((result, i) => (result.hits || []).filter((hit) => hit.title === sites[i]).slice(0, 1));
-    return [...sitePages, ...instruments, ...(pages.hits || [])].map(withRouteCitations);
+    // With recipes, OOI's general Data Access pages give way to them: the recipes name each route for this instrument.
+    const foundRecipes = recipeIds.map((id) => (recipes.hits || []).find((hit) => hit.chunk_id === id)).filter(Boolean);
+    return [...foundRecipes, ...sitePages, ...instruments, ...(foundRecipes.length ? [] : pages.hits || [])].map(withRouteCitations);
   } catch (error) {
     console.error("data access search failed", error instanceof Error ? error.message : "unknown");
     return [];
@@ -726,6 +744,9 @@ export default {
       // An overview of the DAS experiments is answered from their records; one paper's pages would crowd them.
       if (isPaperUsageQuestion(query)) context.papers = await papersFor(query, env);
       if (isAssetQuestion(query)) context.assets = await assetRecords(query, env);
+      // Download recipes reach the evidence only through the data access lookup: in the general results they named
+      // other instruments' routes beside an answer ("AXBA1" brought the HPIES and current meter recipes).
+      context.hits = (context.hits || []).filter((hit) => hit.collection_id !== RECIPE_COLLECTION);
       if (isDataAccessQuestion(query)) context.access = await dataAccessRecords(query, env);
       const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);

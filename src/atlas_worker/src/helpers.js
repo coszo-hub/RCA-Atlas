@@ -53,6 +53,11 @@ const MAIN_WITH_FULLTEXT_CHARS = 12_000;
 const REPEAT_RUN = 8;
 const REPEAT_SHARE = 0.2;
 const isLayer = (hit) => hit.layer === true || hit.collection_id === FULLTEXT_COLLECTION;
+// Download recipes (data/DataRecipes) have room of their own too: one instrument's runs to ~7,000 characters, and the
+// site page and instrument records still lead the main evidence.
+export const RECIPE_COLLECTION = "data_recipes";
+const RECIPE_CHARS = 16_000;
+const isRecipe = (hit) => hit.collection_id === RECIPE_COLLECTION;
 
 // The keys the passage search knows a paper by: its DOI (no resolver prefix) and its catalog or document ID. A
 // paper the evidence only names by DOI (an OOI page "adapted from Philip et al., 2023, doi: 10.1126/...") counts
@@ -266,12 +271,12 @@ export function evidencePackage(hits, sourceNumbers) {
   const sections = [];
   // Full-text passages come last, in room of their own (eight passages of ~1,300 characters, the median page):
   // the main evidence and the passages never take each other's room.
-  const room = { main: hits.some(isLayer) ? MAIN_WITH_FULLTEXT_CHARS : MAX_EVIDENCE_CHARS, layer: FULLTEXT_CHARS };
+  const room = { main: hits.some(isLayer) ? MAIN_WITH_FULLTEXT_CHARS : MAX_EVIDENCE_CHARS, layer: FULLTEXT_CHARS, recipe: RECIPE_CHARS };
   for (const hit of hits) {
-    const budget = isLayer(hit) ? "layer" : "main";
+    const budget = isLayer(hit) ? "layer" : isRecipe(hit) ? "recipe" : "main";
     if (room[budget] <= 0) continue;
     const refs = [...new Set((hit.citations || []).map((c) => sourceNumbers.get(sourceKey(c.source_id || hit.chunk_id, c.url))).filter(Boolean))];
-    const kind = isLayer(hit) ? "scientific literature, full text" : sourceKind(hit);
+    const kind = isLayer(hit) ? "scientific literature, full text" : isRecipe(hit) ? "download recipe" : sourceKind(hit);
     const header = `${hit.title}${kind ? ` (${kind})` : ""}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
     const text = String(hit.text || "").slice(0, isLayer(hit) ? PASSAGE_CHARS : undefined).slice(0, Math.max(0, room[budget] - header.length));
     sections.push(`${header}${text}`);
@@ -510,8 +515,10 @@ const MAX_ASSET_CHUNKS = 6;
 // dataset has its own download routes (namedDas).
 export function isDataAccessQuestion(question) {
   const q = String(question || "");
-  return /\b(?:download|access|get|retrieve|obtain)\b/i.test(q) && /\b(?:data|datasets?|files?|recordings?|time series)\b/i.test(q)
-    && !namedDas(q);
+  // Or a request for code ("a Python script for the Axial Base CTD temperature in March 2025"), which may name no data.
+  return ((/\b(?:download|access|get|retrieve|obtain|fetch)\b/i.test(q)
+    && /\b(?:data|datasets?|files?|recordings?|time series|waveforms?|images?|videos?)\b/i.test(q))
+    || /\b(?:scripts?|code|python|matlab)\b/i.test(q)) && !namedDas(q);
 }
 
 // The OOI sites ("RS01SBPS") whose data a question asks for: those of the instruments at the place and platform it
@@ -531,13 +538,16 @@ function accessInstruments(question, directory) {
   let instruments = directory.instruments.filter((i) => (!places || places[1].test(i.site)) && (!platform || platform[1].test(i.site))
     && (!nodes.size || nodes.has(i.refdes.split("-")[1])) && (!sites.size || sites.has(i.refdes.split("-")[0])));
   const types = ASSET_TYPES.filter(([asked]) => asked.test(q)).map(([, type]) => type);
+  // The question's own words, less those naming the place or platform ("shallow profiler" is no "Velocity Profiler").
+  const rest = [places, platform].reduce((text, found) => (found ? text.replace(new RegExp(found[0].source, "gi"), " ") : text), q);
+  const words = (rest.toLowerCase().match(/\b[a-z]{5,}\b/g) || []).filter((w) => !/^(?:download|access|retrieve|obtain|where|which|there|profilers?|platforms?|moorings?|seafloor|script|python|between)$/.test(w));
+  const matched = (i) => words.filter((w) => new RegExp(`\\b${w}\\b`, "i").test(i.instrument)).length;
   let typed = instruments.filter((i) => types.some((type) => type.test(i.instrument)));
-  if (!typed.length) {
-    // Not the words that name the place or platform ("shallow profiler" is no "Velocity Profiler").
-    const rest = [places, platform].reduce((text, found) => (found ? text.replace(new RegExp(found[0].source, "gi"), " ") : text), q);
-    const words = (rest.toLowerCase().match(/\b[a-z]{5,}\b/g) || []).filter((w) => !/^(?:download|access|retrieve|obtain|where|which|there|profilers?|platforms?|moorings?|seafloor)$/.test(w));
-    typed = instruments.filter((i) => words.some((w) => new RegExp(`\\b${w}\\b`, "i").test(i.instrument)));
-  }
+  if (!typed.length) typed = instruments.filter((i) => matched(i) > 0);
+  // The classes that match most of its words: "bottom pressure" is the Bottom Pressure and Tilt, not the Ocean Bottom
+  // Seismometer; "broadband hydrophone" is not the low-frequency one.
+  const best = Math.max(0, ...typed.map(matched));
+  if (best > 0) typed = typed.filter((i) => matched(i) === best);
   if (typed.length) instruments = typed;
   if (places && !platform && !nodes.size) { const fixed = instruments.filter((i) => !/Profiler/.test(i.site)); if (fixed.length) instruments = fixed; }
   return { instruments, typed: typed.length > 0 };
@@ -722,6 +732,7 @@ export function liveStatusHit(hit, refdes, live) {
 }
 
 export function answerPrompt({ question, evidence, sources, mode, product = null, access = false }) {
+  const recipes = /\(download recipe\) \| sources:/.test(evidence);
   const liveInstruction = isStatusQuestion(question) && /^Live status: /m.test(evidence)
     ? "Records titled \"Live status\" were checked against the live monitor moments ago: say from them whether each instrument is operating now, with the time of its data check, ahead of any older or catalog status in other records."
     : "";
@@ -739,10 +750,17 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
   const accessInstruction = access
     ? "The question asks how to get an OOI platform's or instrument's data. Lead with the platform's own site page: its Data Access links (the data on the platform and its subcomponents in Data Explorer) and its DOI for citing the data. When the platform has parts, such as a shallow profiler mooring's moving shallow profiler and fixed 200 m platform, name each part with the code this platform's own records give it (the site page and the instrument records' Mounted on lines; codes differ between sites) and the asked instruments on it, citing those records, so the user knows which part's data to open. Then give at most three other routes from the Data Access and M2M pages that serve this kind of instrument data (such as ERDDAP, THREDDS or the M2M API, with an M2M example for this platform if the evidence has one; for seismometer or hydrophone data, IRIS first, where the Data Access page says the RCA's seismic and hydrophone data are deposited), one line each. Leave out routes for other data, such as cruise data, community datasets, water samples, imagery and partner sites. Do not list the instrument records one by one."
     : "";
-  const compactInstruction = access ? accessInstruction : mode === "compact"
+  // A download recipe: the easiest route for what was asked, then a script for this dataset and timeframe from the
+  // recipe's tested code, changing only the timeframe and variables.
+  const recipeInstruction = recipes
+    ? "Records marked (download recipe) give, for one instrument, its tested routes to the data, easiest first, each with a Python script. Answer with the route that best fits what was asked: the one marked Easiest unless the question wants something it does not give (every sample or a variable only another route has; the original files; waveforms). Say in one sentence why that route. Then write one complete Python script for the asked instrument, variables and timeframe, in a single ```python fenced block: copy that route's script from the recipe and change only its START and END (and its VARIABLES or e.variables to the asked ones, using only variable names the recipe lists). Times are UTC; when the question gives no timeframe, use the last day before the recipe's coverage ends and say so. Never invent a dataset ID, stream, variable, URL or file name the recipe does not give, and never put a password, username or token in a script. After the script, one line each for at most two other routes the recipe gives. Cite the recipe. "
+    : "";
+  const compactInstruction = recipes ? recipeInstruction : access ? accessInstruction : mode === "compact"
     ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it by its source's title, with its years, coverage and file formats, cited with its source number; when one dataset has several numbered sources (download routes), add one hyphen bullet per source, giving its name and only what the evidence ties to that source itself. Sub-folders that the evidence names inside one source (such as the 2021 dataset's OptaSense and Silixa folders) are described in one bullet of that dataset, not bullets of their own. Add one bullet for the folder layout or a caveat (such as very many files per day) when the evidence gives one. Include every numbered download source; never drop one. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
     : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
-  const formatInstruction = mode === "compact"
+  const formatInstruction = recipes
+    ? "Use plain text outside the one ```python block, with no Markdown headings or asterisks. Keep the words outside the script under 150."
+    : mode === "compact"
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
