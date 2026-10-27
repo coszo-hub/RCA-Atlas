@@ -7,6 +7,7 @@ import collections
 import hashlib
 import html
 import json
+import math
 import re
 import shutil
 from datetime import datetime, timezone
@@ -91,6 +92,9 @@ MOUNT_KINDS = {
     "Low-Power JBox": ", a seafloor junction box", "Medium-Power JBox": ", a seafloor junction box",
     "Primary Node": ", a seafloor primary node", "Low-Voltage Node": ", a seafloor low-voltage node",
 }
+
+
+WORKER_IDS = Path(__file__).resolve().parents[1] / "atlas_worker" / "src" / "instrument_ids.json"
 
 
 def build(data_root: Path, output: Path) -> None:
@@ -432,8 +436,9 @@ def build(data_root: Path, output: Path) -> None:
         "confirmed_PI_instrument", "installed_2018_deployment_extended_to_2024",
         [ev("SOURCE-WEB-AXIAL-SCPR", "PAGE-9a8362401e5b983a-CHUNK-001"),
          ev("SOURCE-LITERATURE", "COSZO-REF-084", "DOI 10.1029/2022EA002434")],
-        coszo_role=None, aliases=[], site="RS03CCAL", node="MJ03F", station=None, network=None,
-        instrument_code="SCPRAAA301", latitude=45.954833, longitude=-130.009333, depth_m=1535,
+        # OOI's pages write SCPRAAA301; its vocabulary and asset management, which the answers cite, RS03CCAL-MJ03F-09-SCPRAA301.
+        coszo_role=None, aliases=["SCPRAA301", "RS03CCAL-MJ03F-09-SCPRAA301"], site="RS03CCAL", node="MJ03F", station=None, network=None,
+        instrument_code="09-SCPRAA301", latitude=45.954833, longitude=-130.009333, depth_m=1535,
         manufacturer="Scripps Institution of Oceanography", model="SCPR",
         sensor_components=["two quartz pressure gauges", "piston-gauge calibrator"], source_system="OOI PI instrument page",
         source_urls=[sources["SOURCE-WEB-AXIAL-SCPR"]["source_url"]], arcada_document_id=None, notes=None,
@@ -642,12 +647,130 @@ def build(data_root: Path, output: Path) -> None:
             source_system="COSZO deployment-site workbook", source_urls=[], arcada_document_id=None, notes=note,
         )
 
-    # What each instrument is mounted on, from the OOI site page's node column: a profiler mooring holds a fixed 200 m
+    # Every ID the corpus knows an instrument by, so a record citing any of them finds it. OOI asset management and
+    # Nereus name instruments by their full reference designator, which can differ from the record's: a PI instrument
+    # catalogued by its bare code (CTDPFA110, PI-CAMPIA101), a page's spelling (SCPRAAA301 for SCPRAA301; A-0-A's
+    # AOABPA301 with a letter O for A0ABPA301), an OBS that EarthScope names as a station (AXBA1), or a code
+    # written without its port (RS03CCAL-MJ03F-BOTPTA301).
+    assets = read_jsonl(data_root / "OOIAssetManagement" / "entities.jsonl")
+    nereus = read_jsonl(data_root / "Nereus" / "graphrag" / "entities.jsonl")
+    ooi_refdes = sorted({e["reference_designator"] for e in assets + nereus
+                         if e.get("entity_type") == "instrument" and e.get("reference_designator")})
+    refdes_like = re.compile(r"^(?:RS|CE)\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}$")
+    fold = lambda code: code.upper().replace("O", "0")      # A0ABPA301 and AOABPA301 are one code
+    def own_ids(row):
+        ids = {row["canonical_id"], *(row.get("aliases") or [])}
+        if row.get("site") and row.get("node") and row.get("instrument_code"):
+            ids.add(f"{row['site']}-{row['node']}-{row['instrument_code']}")
+        return ids
+    def codes_of(row):
+        return {fold(i.split("-")[-1]) for i in own_ids(row) if re.fullmatch(r"[A-Z0-9-]+", i)}
+    known_ids = {i for row in records for i in own_ids(row)}
+    for refdes in ooi_refdes:
+        if refdes in known_ids:
+            continue
+        site, code = refdes.split("-")[0], fold(refdes.split("-")[-1])
+        owners = [row for row in records if code in codes_of(row) and (not row.get("site") or row["site"] == site)
+                  and row["record_status"] != "reference_only"]
+        if len(owners) == 1:
+            owners[0]["aliases"] = [*owners[0]["aliases"], refdes]
+    # An OBS is the EarthScope station at its position: OOI asset management deploys it within 25 m (AXBA1: 25.4 m) of the station
+    # metadata's coordinates; each OBS is its nearest station.
+    latest = {}
+    for e in assets:
+        a = e.get("attributes") or {}
+        r = a.get("Reference Designator") or ""
+        if e.get("entity_type") == "deployment" and re.search(r"-OBS[A-Z0-9]+$", r) and a.get("lat") and a.get("lon"):
+            if r not in latest or a.get("startDateTime", "") > latest[r][0]:
+                latest[r] = (a.get("startDateTime", ""), float(a["lat"]), float(a["lon"]))
+    stations = [row for row in records if row["canonical_id"].startswith("EARTHSCOPE-OO-") and row.get("latitude") is not None]
+    for r, (_, lat, lon) in latest.items():
+        dist = lambda row: math.hypot((lat - row["latitude"]) * 111_320, (lon - row["longitude"]) * 111_320 * math.cos(math.radians(lat)))
+        nearest = min(stations, key=dist, default=None)    # AXCC2's tilt station is 40 m from AXCC1's OBS
+        if nearest and dist(nearest) < 50 and r not in nearest["aliases"]:
+            nearest["aliases"] = [*nearest["aliases"], r]
+    # Instruments OOI asset management lists that no source above catalogues (the Central Caldera's Pinnacle ADCP and
+    # acoustic transponders, the Oregon Offshore cabled profiler moorings the RCA powers), so a record citing one has
+    # an instrument to show: named as asset management names them, at their latest deployment's position and depth.
+    # A code on the port of a catalogued instrument of the same class (the benthic package's test hydrophone
+    # HYDBBA110 beside HYDBBA105) is that instrument's alias instead. Engineering streams (ENG000000) are not instruments.
+    asset_nodes = {e["name"]: e["attributes"] for e in assets if e.get("entity_type") == "node"}
+    last_deployment = {}
+    for e in assets:
+        a = e.get("attributes") or {}
+        r = a.get("Reference Designator")
+        if e.get("entity_type") == "deployment" and r and a.get("startDateTime", "") >= last_deployment.get(r, {}).get("startDateTime", ""):
+            last_deployment[r] = a
+    type_of_class = collections.Counter()
+    for row in records:
+        code = (row.get("instrument_code") or "").split("-")[-1]
+        if re.fullmatch(r"[A-Z][A-Z0-9]{4}", code[:5]):
+            type_of_class[(code[:5], row["instrument_type"])] += 1
+    def class_type(cls):
+        found = [t for (c, t), _ in type_of_class.most_common() if c == cls]
+        return found[0] if found else {"PADCP": "adcp", "FETCH": "acoustic_ranging_station"}.get(cls, "instrument")
+    def refdes_of(row):
+        return f"{row['site']}-{row['node']}-{row['instrument_code']}" if row.get("site") and row.get("node") and row.get("instrument_code") else None
+    catalogued = {i for row in records for i in (row["canonical_id"], refdes_of(row), *(row.get("aliases") or [])) if i}
+    by_port = collections.defaultdict(list)
+    for row in records:
+        r = refdes_of(row) or row["canonical_id"]
+        if r.count("-") == 3:
+            site, node, port, code = r.split("-")
+            by_port[(site, node, port, code[:5])].append(row)
+    for e in sorted((e for e in assets if e.get("entity_type") == "instrument"), key=lambda e: e["reference_designator"]):
+        refdes = e["reference_designator"]
+        site, node, port, code = refdes.split("-")
+        if refdes in catalogued or code.startswith("ENG"):
+            continue
+        same_port = by_port.get((site, node, port, code[:5]), [])
+        if len(same_port) == 1:
+            same_port[0]["aliases"] = [*same_port[0]["aliases"], refdes]
+            continue
+        a, d = e.get("attributes") or {}, last_deployment.get(refdes) or {}
+        # A profiler mooring's instruments carry the water depth, as the RS records do (their range follows from the node).
+        order = ("water_depth",) if node[:2] in ("SF", "PC", "DP") else ("deployment_depth", "water_depth")
+        depth = next((float(d[k]) for k in order if re.fullmatch(r"\d+(?:\.\d+)?", str(d.get(k) or ""))), None)
+        place = asset_nodes.get(f"{site}-{node}", {}).get("site") or site
+        # OOI's class wording, as the RCA's own records name the same classes; two of a class at one node by model.
+        name = re.sub(r"\b(pCO2 Water|Seawater pH|Photosynthetically Available Radiation|3-D Single Point Velocity Meter|Single Point Velocity Meter|Nitrate|Bio-acoustic Sonar \(Coastal\))$",
+                      lambda m: {"pCO2 Water": "pCO2 Sensor", "Seawater pH": "pH Sensor", "Photosynthetically Available Radiation": "PAR Sensor",
+                                 "3-D Single Point Velocity Meter": "3D Current Meter", "Single Point Velocity Meter": "Current Meter",
+                                 "Nitrate": "Nitrate Sensor", "Bio-acoustic Sonar (Coastal)": "Bio-acoustic Sonar"}[m.group(1)], e["name"])
+        twins = [x for x in assets if x.get("entity_type") == "instrument" and x.get("name") == e["name"]
+                 and x["reference_designator"].split("-")[:2] == [site, node]]
+        if len(twins) > 1 and a.get("model"):
+            name += f" ({a['model']})"
+        add(
+            refdes, name, class_type(code[:5]), place,
+            ["Coastal Endurance Array", "Regional Cabled Array"] if site.startswith("CE") else ["Regional Cabled Array"],
+            "ooi_asset_instance", "deployed_now" if a.get("deployed_now") else "recovered",
+            [ev("SOURCE-OOI-ASSET-MANAGEMENT", refdes, f"deployment/{site}_Deploy.csv")],
+            coszo_role=None, aliases=[e["name"]] if name != e["name"] else [], site=site, node=node, station=None, network=None, instrument_code=f"{port}-{code}",
+            latitude=float(d["lat"]) if d.get("lat") else None, longitude=float(d["lon"]) if d.get("lon") else None,
+            depth_m=depth, manufacturer=(a.get("manufacturer") or "").removeprefix("PI ") or None, model=a.get("model") or None,
+            sensor_components=[], source_system="OOI asset management",
+            source_urls=[sources["SOURCE-OOI-ASSET-MANAGEMENT"]["source_url"]], arcada_document_id=None,
+            notes=f"OOI asset management lists {a.get('deployments')} deployment(s); {'deployed now' if a.get('deployed_now') else 'none current'}.",
+        )
+
+    # A COSZO station's EarthScope name (EARTHSCOPE-OO-CZMID) is each instrument the station holds; a reference
+    # designator is also written without its port.
+    for row in records:
+        extra = [f"EARTHSCOPE-OO-{row['station']}"] if row["canonical_id"].startswith("COSZO-OO-") and row.get("station") else []
+        for i in sorted(own_ids(row)):
+            if refdes_like.match(i) and i.count("-") == 3:
+                site, node, _, code = i.split("-")
+                extra.append(f"{site}-{node}-{code}")
+        row["aliases"] = [*row["aliases"], *[x for x in dict.fromkeys(extra) if x not in own_ids(row)]]
+
+    # What each instrument is mounted on, from the OOI site page's node column (else asset management's node names): a profiler mooring holds a fixed 200 m
     # platform and a moving profiler, whose instruments otherwise share a name ("Shallow Profiler CTD Profiler").
     # A node keeps its part across deployments, so a record the page no longer lists takes its node's.
-    mounts = {"-".join(c.split("-")[:2]): (h["node_name"], h["source_url"]) for c, h in ooi_hardware.items()}
+    mounts = {node: (a["name"], sources["SOURCE-OOI-ASSET-MANAGEMENT"]["source_url"]) for node, a in asset_nodes.items() if a.get("name")}
+    mounts |= {"-".join(c.split("-")[:2]): (h["node_name"], h["source_url"]) for c, h in ooi_hardware.items()}
     for row in records:
-        mount = mounts.get("-".join(row["canonical_id"].split("-")[:2]))
+        mount = mounts.get(f"{row['site']}-{row['node']}" if row.get("site") and row.get("node") else "-".join(row["canonical_id"].split("-")[:2]))
         if mount:
             row["mounted_on"] = mount[0]
             if mount[1] not in row["source_urls"]:
@@ -740,6 +863,17 @@ def build(data_root: Path, output: Path) -> None:
 
     write_jsonl(output / "instruments.jsonl", records)
     write_jsonl(output / "chunks.jsonl", chunks)
+    # Every reference designator or station id a record goes by -> its chunk, for the Worker to fetch an instrument's
+    # record by whichever id a question or record gives (instrument_ids.json, beside asset_directory.json).
+    id_pattern = re.compile(r"^(?:(?:RS|CE)\d{2}[A-Z0-9]{4}-[A-Z0-9]{5}-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}|EARTHSCOPE-OO-[A-Z0-9]{3,6})$")
+    instrument_ids = {}
+    for c in chunks:
+        row = next(r for r in records if r["canonical_id"] == c["canonical_id"])
+        for i in (row["canonical_id"], *(row.get("aliases") or [])):
+            if id_pattern.match(i) and not (i in instrument_ids and i != row["canonical_id"]):
+                instrument_ids[i] = c["chunk_id"]
+    if WORKER_IDS.parent.exists():
+        WORKER_IDS.write_text(json.dumps(dict(sorted(instrument_ids.items())), indent=0) + "\n")
     write_jsonl(output / "entities.jsonl", entity_rows)
     write_jsonl(output / "sources.jsonl", source_rows)
     write_jsonl(output / "relationships.jsonl", relationships)

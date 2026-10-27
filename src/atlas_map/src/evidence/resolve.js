@@ -29,7 +29,13 @@ function indexOf(bundle) {
   for (const s of bundle.sensors ?? []) {
     byInstrument.set(s.instrumentId, s);
     if (s.arcadaId) byArcada.set(s.arcadaId, s);
-    for (const code of [s.id, s.refdes]) if (code) byCode.set(code.toUpperCase(), s);
+    // Its own id and refdes, and every alias the corpus names it by (OOI's reference designator for a PI instrument,
+    // an OBS's EarthScope station, a COSZO station's EarthScope name, which several of its instruments share).
+    for (const code of new Set([s.id, s.refdes, ...(s.aliases ?? [])])) {
+      if (!code) continue;
+      const k = code.toUpperCase();
+      byCode.set(k, [...(byCode.get(k) ?? []), s]);
+    }
     for (const u of new Set([...(s.sources ?? []), ...(s.access ?? []).map(a => a.url)])) {
       if (!u) continue;
       const k = normUrl(u); byUrl.set(k, [...(byUrl.get(k) ?? []), s]);
@@ -46,7 +52,15 @@ function indexOf(bundle) {
     }
   }
   const siteNames = [...names].sort((a, b) => b[0].length - a[0].length);
-  const idx = { byInstrument, byArcada, byCode, byUrl, siteNames };
+  // Sensors by their reference designator's site and node (RS01SBPD-DP01A), for a code no sensor carries.
+  const byNode = new Map();
+  for (const s of bundle.sensors ?? []) {
+    for (const code of [s.refdes, ...(s.aliases ?? [])]) {
+      const m = /^([A-Z0-9]{8}-[A-Z0-9]{5})-/i.exec(code ?? "");
+      if (m && !(byNode.get(m[1].toUpperCase()) ?? []).includes(s)) byNode.set(m[1].toUpperCase(), [...(byNode.get(m[1].toUpperCase()) ?? []), s]);
+    }
+  }
+  const idx = { byInstrument, byArcada, byCode, byUrl, byNode, siteNames };
   cache.set(bundle, idx);
   return idx;
 }
@@ -66,10 +80,28 @@ function sensorsIn(text, idx) {
   const found = [];
   const add = s => { if (s && !found.includes(s)) found.push(s); };
   for (const m of text.matchAll(/station_([A-Z0-9]{2})_([A-Z0-9]{3,6})\b|\/mda\/([A-Z0-9]{2})\/([A-Z0-9]{3,6})\b|[A-Z0-9]+(?:-[A-Z0-9]+){1,4}/gi)) {
-    if (m[1] || m[3]) add(idx.byCode.get(`EARTHSCOPE-${m[1] ?? m[3]}-${m[2] ?? m[4]}`.toUpperCase()));
-    else add(idx.byCode.get(m[0].toUpperCase()));
+    const code = m[1] || m[3] ? `EARTHSCOPE-${m[1] ?? m[3]}-${m[2] ?? m[4]}` : m[0];
+    for (const s of idx.byCode.get(code.toUpperCase()) ?? []) add(s);
   }
   return found;
+}
+
+// A reference designator no sensor carries (a profiler's engineering stream RS01SBPD-DP01A-00-ENG000000, an instrument
+// only Nereus lists) stands for its node's sensors, so its site; used only when the text names no sensor at all.
+function nodeSensorsIn(text, idx) {
+  const found = [];
+  for (const m of text.matchAll(/\b((?:RS|CE)\d{2}[A-Z0-9]{4}-[A-Z0-9]{5})-(?:[A-Z0-9]{2}-)?[A-Z0-9]{9}\b/gi)) {
+    for (const s of idx.byNode.get(m[1].toUpperCase()) ?? []) if (!found.includes(s)) found.push(s);
+  }
+  return found;
+}
+
+// A node's site: the one holding most of its sensors (ASHES's node spans two map sites).
+function nodeSite(sensors, bundle) {
+  const count = new Map();
+  for (const s of sensors) if (s.site) count.set(s.site, (count.get(s.site) ?? 0) + 1);
+  const best = [...count].sort((a, b) => b[1] - a[1])[0];
+  return best ? siteItem(bundle.siteById[best[0]]) : null;
 }
 
 // One sensor is that sensor; several at one site are the site; spread over sites, the first named.
@@ -155,7 +187,8 @@ function locate(cite, hits, idx, bundle) {
   const titles = [cite.title, ...hits.map(h => h.title)].filter(Boolean);
   const texts = [...titles, ...hits.flatMap(h => [JSON.stringify(h.metadata ?? {}), h.excerpt])].filter(Boolean);
   // 2. A refdes, canonical id, or EarthScope station in the titles, metadata, excerpts or URL.
-  const named = oneOf(sensorsIn([...texts, ...urls].join("\n"), idx), bundle);
+  const all = [...texts, ...urls].join("\n");
+  const named = oneOf(sensorsIn(all, idx), bundle) ?? nodeSite(nodeSensorsIn(all, idx), bundle);
   if (named) return named;
   // 3. A DAS experiment's portal route: the cited route's own URL first. Its record also cites its other routes, and
   // matching those first put every 2021 route (south cable, Silixa) on the north cable.

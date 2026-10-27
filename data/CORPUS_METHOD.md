@@ -501,8 +501,33 @@ shallow profiler (SF01A, SF03A) hold instruments that otherwise share a name
 ("Shallow Profiler CTD Profiler"), and the deep profilers and seafloor junction
 boxes are named the same way, each with a few words from OOI's site pages on
 whether it moves.
-Current output: 190 instruments, four infrastructure records, 74 entities,
-38 sources, 190 chunks, and 1,312 relationships.
+Instruments OOI asset management lists that no other source catalogues are
+added from it with status `ooi_asset_instance`, named as it names them (with
+the RCA's own class wording, OOI's kept as an alias), at their latest
+deployment's position and water depth: the Oregon Offshore cabled shallow and
+deep profiler moorings the RCA powers (CE04OSPS, 16; CE04OSPD, 5) and the
+Central Caldera's Pinnacle ADCP `PADCPA301` and acoustic transponders
+`FETCHA301`. A code on the port of a catalogued instrument of the same class
+(the Oregon Offshore package's test hydrophone `HYDBBA110`) is that
+instrument's alias instead.
+
+**Every ID an instrument goes by.** Each record lists, as aliases, every other
+ID the corpus names it by, so that a record citing any of them reaches it: the
+reference designator OOI asset management and Nereus use where it differs from
+the record's (a PI instrument catalogued by its bare code, `CTDPFA110` or
+`PI-CAMPIA101`; a page's spelling, `SCPRAAA301` for `SCPRAA301`, A-0-A's
+`AOABPA301` for `A0ABPA301`), matched by instrument code at the same site; an
+OBS's reference designator on its EarthScope station, the station nearest its
+latest deployment (all within 26 m, one to one); a COSZO station's EarthScope
+name on each instrument it holds; and each reference designator without its
+port. The map indexes them all, and a reference designator no sensor carries
+(a profiler's engineering stream) stands for its node's site. Of the 392
+records in the asset-management, Nereus, inventory, station and RCA
+Information collections that name one instrument in their title, all reach
+that instrument on the map (385) or, for the engineering streams and two
+instruments only Nereus lists, their site (7).
+Current output: 213 instruments, four infrastructure records, 78 entities,
+38 sources, 213 chunks, and 1,448 relationships.
 
 **Validation.** The builder checks ID and endpoint integrity, one chunk per
 instrument, retention of all 120 Arcada instrument/deployment records, all 25

@@ -186,3 +186,35 @@ describe("helpers", () => {
     expect(readableExcerpt("http://piweb.ooirsn.uw.edu/das/")).toEqual({ excerpt: "", quote: false });
   });
 });
+
+describe("resolveEvidence: any ID the corpus names an instrument by", () => {
+  const site = (id, lon) => ({ id, name: id, label: id, lon, lat: 45.95, seafloor: 1530, sensorIds: [] });
+  const sensor = (id, siteId, extra = {}) => ({ id, name: id, site: siteId, lon: -130, lat: 45.95, family: "pressure", ...extra });
+  const sensors = [
+    sensor("SCPRAAA301", "ccal", { refdes: "RS03CCAL-MJ03F-09-SCPRAA301", aliases: ["SCPRAA301", "RS03CCAL-MJ03F-SCPRAA301"] }),
+    sensor("EARTHSCOPE-OO-AXCC1", "ccal", { aliases: ["RS03CCAL-MJ03F-06-OBSBBA301"] }),
+    sensor("RS03CCAL-MJ03F-05-BOTPTA301", "ccal", { refdes: "RS03CCAL-MJ03F-05-BOTPTA301" }),
+    sensor("COSZO-OO-CZMID-APG", "mid", { aliases: ["EARTHSCOPE-OO-CZMID"] }),
+    sensor("COSZO-OO-CZMID-COBSO", "mid", { aliases: ["EARTHSCOPE-OO-CZMID"] }),
+    sensor("RS01SBPD-DP01A-01-CTDPFL104", "sbpd", { refdes: "RS01SBPD-DP01A-01-CTDPFL104" }),
+  ];
+  const sites = [site("ccal", -130), site("mid", -125), site("sbpd", -125.4)];
+  const b = { sensors, sensorById: Object.fromEntries(sensors.map(s => [s.id, s])), sites, siteById: Object.fromEntries(sites.map(s => [s.id, s])) };
+  const cited = title => resolveEvidence({ answer: "a [1]", answer_citations: [{ id: "S1", title, url: "" }],
+    hits: [{ chunk_id: "C1", title, citations: [{ source_id: "S1", url: "" }] }] }, b).located[0];
+
+  it("an asset-management record names the sensor by OOI's reference designator, not the page's spelling it is catalogued by", () => {
+    expect(cited("OOI asset-management: RS03CCAL-MJ03F-09-SCPRAA301 deployments, assets and calibrations")).toMatchObject({ kind: "sensor", id: "SCPRAAA301" });
+  });
+  it("an OBS's reference designator is its EarthScope station", () => {
+    expect(cited("Central Caldera Broadband Ocean Bottom Seismometer (RS03CCAL-MJ03F-06-OBSBBA301)")).toMatchObject({ kind: "sensor", id: "EARTHSCOPE-OO-AXCC1" });
+  });
+  it("a COSZO station's EarthScope name, which its instruments share, is their site", () => {
+    expect(cited("Station metadata for station_OO_CZMID")).toMatchObject({ kind: "site", id: "mid" });
+  });
+  it("a code no sensor carries (a profiler's engineering stream) is its node's site", () => {
+    expect(cited("RS01SBPD-DP01A-00-ENG000000 deployments")).toMatchObject({ kind: "site", id: "sbpd" });
+    // a named sensor beside it still wins
+    expect(cited("RS01SBPD-DP01A-01-CTDPFL104 and RS01SBPD-DP01A-00-ENG000000")).toMatchObject({ kind: "sensor", id: "RS01SBPD-DP01A-01-CTDPFL104" });
+  });
+});

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from .families import family_for
@@ -40,6 +41,8 @@ def sensor_from_row(row: dict) -> dict:
         "siteCode": site,
         "node": node,
         "refdes": refdes,
+        # Every other ID the corpus names it by (OOI's reference designator, an OBS's EarthScope station, a page's spelling).
+        "aliases": [a for a in row.get("aliases") or [] if re.fullmatch(r"[A-Z0-9]+(?:[-.][A-Z0-9]+){1,4}", a)],
         "location": row.get("location"),
         "projects": row.get("projects") or [],
         "coszoRole": row.get("coszo_role"),

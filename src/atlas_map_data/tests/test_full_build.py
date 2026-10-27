@@ -18,17 +18,23 @@ class FullBuildTest(unittest.TestCase):
             out = Path(d)
             summary = build_atlas_bundle.build(out, paths.RUNTIME, paths.DATA)
             self.assertEqual(summary["errors"], [])
-            self.assertEqual(summary["total"], 193)   # 171 + 9 CE04OSBP + 11 CE02SHBP + VADCPB301, D1000A301
-            self.assertEqual(summary["located"], 177)
+            # 171 + 9 CE04OSBP + 11 CE02SHBP + VADCPB301, D1000A301 + 23 from OOI asset management (16 CE04OSPS,
+            # 5 CE04OSPD, the Central Caldera's PADCPA301 and FETCHA301)
+            self.assertEqual(summary["total"], 216)
+            self.assertEqual(summary["located"], 200)
             self.assertEqual(summary["unlocated"], 16)
             self.assertEqual(summary["unplaced"], 5)
-            self.assertEqual(summary["sites"], 32)
+            self.assertEqual(summary["sites"], 34)    # + the Oregon Offshore shallow and deep profiler moorings
             self.assertTrue(summary["corpusSnapshot"])          # data/Instruments/manifest.json created_at
             bundle = json.loads((out / "sensors.json").read_text())
             by_id = {s["id"]: s for s in bundle["sensors"]}
             profiler = [s for s in bundle["sensors"] if s["siteCode"] == "RS03AXPS"][0]
             self.assertEqual((profiler["lat"], profiler["lon"]), (45.8168, -129.754))
             self.assertEqual(by_id["EARTHSCOPE-OO-AXCC1"]["family"], "seismic")
+            # Every ID the corpus names an instrument by: OOI's reference designator for a page's spelling, an OBS's station.
+            self.assertEqual(by_id["SCPRAAA301"]["refdes"], "RS03CCAL-MJ03F-09-SCPRAA301")
+            self.assertIn("RS03CCAL-MJ03F-06-OBSBBA301", by_id["EARTHSCOPE-OO-AXCC1"]["aliases"])
+            self.assertNotIn("RS03CCAL-MJ03F-06-OBSBBA301", by_id["EARTHSCOPE-OO-AXCC2"]["aliases"])
             self.assertEqual(by_id["FETCH-2504"]["family"], "acoustic")
             self.assertEqual(len(by_id["FETCH-2504"]["access"]), 2)
             for das in ("PI-DAS24", "PI-DAS25", "PI-DAS-OPTASENSE"):   # placeholder 45.0, -128.0 cleared
