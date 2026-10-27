@@ -6,6 +6,7 @@ import { answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullText
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
+import INSTRUMENT_IDS from "./instrument_ids.json" with { type: "json" };
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -361,17 +362,14 @@ async function assetRecords(question, env) {
 const DATA_ACCESS_CHUNKS = ["PAGE-3a90d5527a31a30b-CHUNK-001", "PAGE-3a90d5527a31a30b-CHUNK-003", "PAGE-b958bdd26aa21ce3-CHUNK-002"];
 const DIRECT_DOWNLOADS_CHUNK = "PAGE-3a90d5527a31a30b-CHUNK-002";
 
-// Instrument inventory records by reference designator: the inventory names each record's chunk by its designator's
-// SHA-256 (build_instrument_inventory.py hid).
+// Instrument inventory records by reference designator, through instrument_ids.json: every id a record goes by (the
+// SCPR's SCPRAA301 though it is catalogued as SCPRAAA301, an OBS's designator on its EarthScope station) to its chunk.
 async function instrumentRecords(refdes, env) {
-  if (!refdes.length) return [];
-  const ids = await Promise.all(refdes.map(async (r) => {
-    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(r)));
-    return `INSTRUMENT-CHUNK-${[...digest].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 18)}`;
-  }));
+  const ids = [...new Set(refdes.map((r) => INSTRUMENT_IDS[r]).filter(Boolean))];
+  if (!ids.length) return [];
   const found = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/chunks`, { collection_id: "instruments", chunk_ids: ids },
     { "x-api-key": env.ATLAS_API_KEY });
-  return found.hits || [];
+  return ids.map((id) => (found.hits || []).find((hit) => hit.chunk_id === id)).filter(Boolean);
 }
 
 async function dataAccessRecords(question, env) {

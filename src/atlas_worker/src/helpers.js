@@ -517,18 +517,29 @@ export function isDataAccessQuestion(question) {
 // The OOI sites ("RS01SBPS") whose data a question asks for: those of the instruments at the place and platform it
 // names, of the type it names when it names one. A place with no platform named is its seafloor site when it has
 // one, as for asset questions ("the Axial Base CTD"). At most three.
-// The instruments a data access question points at: those at the place and platform it names, of the type it names
-// if any (a place alone means its seafloor instruments, not its moorings' profilers). typed says a type was named.
+// The instruments a data access question points at: those at the place, platform, node (MJ03F) or site code
+// (RS03CCAL) it names, of the type it names if any, else of the OOI classes its words name ("pressure" is the bottom
+// pressure and tilt, A-0-A and SCPR); a place alone means its seafloor instruments, not its moorings' profilers.
+// typed says a type was named.
 function accessInstruments(question, directory) {
   const q = String(question || "");
   const places = ASSET_PLACES.find(([asked]) => asked.test(q));
   const platform = ASSET_PLATFORMS.find(([asked]) => asked.test(q));
-  if (!directory || (!places && !platform)) return { instruments: [], typed: false };
-  let instruments = directory.instruments.filter((i) => (!places || places[1].test(i.site)) && (!platform || platform[1].test(i.site)));
+  const nodes = new Set((q.match(NODE_CODE) || []).map((code) => code.toUpperCase()));
+  const sites = new Set((q.match(/\b(?:RS|CE)\d{2}[A-Z0-9]{4}\b/gi) || []).map((code) => code.toUpperCase()));
+  if (!directory || (!places && !platform && !nodes.size && !sites.size)) return { instruments: [], typed: false };
+  let instruments = directory.instruments.filter((i) => (!places || places[1].test(i.site)) && (!platform || platform[1].test(i.site))
+    && (!nodes.size || nodes.has(i.refdes.split("-")[1])) && (!sites.size || sites.has(i.refdes.split("-")[0])));
   const types = ASSET_TYPES.filter(([asked]) => asked.test(q)).map(([, type]) => type);
-  const typed = instruments.filter((i) => types.some((type) => type.test(i.instrument)));
+  let typed = instruments.filter((i) => types.some((type) => type.test(i.instrument)));
+  if (!typed.length) {
+    // Not the words that name the place or platform ("shallow profiler" is no "Velocity Profiler").
+    const rest = [places, platform].reduce((text, found) => (found ? text.replace(new RegExp(found[0].source, "gi"), " ") : text), q);
+    const words = (rest.toLowerCase().match(/\b[a-z]{5,}\b/g) || []).filter((w) => !/^(?:download|access|retrieve|obtain|where|which|there|profilers?|platforms?|moorings?|seafloor)$/.test(w));
+    typed = instruments.filter((i) => words.some((w) => new RegExp(`\\b${w}\\b`, "i").test(i.instrument)));
+  }
   if (typed.length) instruments = typed;
-  if (places && !platform) { const fixed = instruments.filter((i) => !/Profiler/.test(i.site)); if (fixed.length) instruments = fixed; }
+  if (places && !platform && !nodes.size) { const fixed = instruments.filter((i) => !/Profiler/.test(i.site)); if (fixed.length) instruments = fixed; }
   return { instruments, typed: typed.length > 0 };
 }
 
