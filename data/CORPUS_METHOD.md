@@ -639,9 +639,10 @@ all contributing source IDs remain attached. The structured layer contains 18
 stations and 663 channel epochs. One summary chunk per station lists, for each period its channels ran together,
 the sensor, channels with sample rates, and which horizontal components point where. One more chunk sets out every
 station's seismometer orientation for questions across the network that no single station's chunk answers: which
-seismometers are rotated from north (not an error, since the recorded azimuth rotates them back), and which have an
-orientation issue, metadata one sensor cannot have (its channels at different azimuths, or a north and east channel of
-one band not 90° apart). AXID1 and HYS11 list their EHN channel at 0° and their other north
+seismometers are misoriented (not aligned with north; misaligned, rotated and an orientation or alignment issue mean
+the same, and the recorded azimuth rotates their data back), and, apart from that, which have inconsistent orientation
+metadata, azimuths one sensor cannot have (its channels at different azimuths, or a north and east channel of one band
+not 90° apart). AXID1 and HYS11 list their EHN channel at 0° and their other north
 channels at 35°, as EarthScope gives them. One sensor records all of a station's channels, so this is inconsistent
 metadata, not two orientations (HYS11's EHE is at 125°, which puts its EHN's 0° out of line); the chunks keep each
 channel's value and say so. Detailed

@@ -134,7 +134,9 @@ def orientation_problems(north: list[dict], east: list[dict]) -> list[str]:
 
 def orientation_chunk(stations: list[dict], by_station: dict[str, list[dict]]) -> dict:
     """Every station's seismometer orientation in one place, for questions across the network ("which seismometers
-    are not at 0° azimuth?", "which have orientation issues?"), which no single station's record answers."""
+    are misoriented?", "which are not at 0° azimuth?"), which no single station's record answers. Misoriented,
+    misaligned, rotated and an orientation issue all mean not aligned with north; StationXML that cannot be right for
+    one sensor is listed apart as inconsistent metadata."""
     rows, rotated_now, north_now, rotated_before, issues_now, issues_before = [], [], [], [], [], []
     for station in stations:
         name = f"{station['network']}.{station['station']}"
@@ -153,9 +155,9 @@ def orientation_chunk(stations: list[dict], by_station: dict[str, list[dict]]) -
                 (issues_now if current else issues_before).append(f"{code} ({'; '.join(problems)})")
             label = f"{code} ({by_azimuth(north)})" if len(angles) > 1 else f"{code} ({degrees(next(iter(angles), None))})"
             (rotated_now if rotated and current else north_now if current else rotated_before if rotated else []).append(label)
-            note = ("; orientation issue: " + "; ".join(problems) + ". These channels record one sensor, which has one "
-                    "orientation, so the StationXML is inconsistent; OOI would have to confirm the right azimuth" if problems
-                    else " (not aligned with north)" if rotated else "")
+            note = ("; inconsistent orientation metadata: " + "; ".join(problems) + ". These channels record one sensor, "
+                    "which has one orientation, so the StationXML is inconsistent; OOI would have to confirm the right azimuth"
+                    if problems else " (misoriented: not aligned with north)" if rotated else "")
             rows.append(f"- {name} ({station.get('name') or 'COSZO station'}), {sensor or 'seismometer'}, location code "
                         f"{location or '(blank)'}, {start} to {end or 'present'}: north component {by_azimuth(north) or 'none'}, "
                         f"east component {by_azimuth(east) or 'none'}{note}.")
@@ -164,19 +166,22 @@ def orientation_chunk(stations: list[dict], by_station: dict[str, list[dict]]) -
             "of a horizontal component, clockwise from geographic north; a seismometer is aligned with north when its "
             "north (N or 1) component is at 0° and its east (E or 2) component at 90°. StationXML gives an azimuth per "
             "channel, but a station's channels at different sample rates (EH, LH, MH, SH) record one sensor with one "
-            "orientation, and its east component is 90° clockwise of its north component. A seismometer rotated from "
-            "north is not an error: its horizontal components are rotated to north and east with the recorded azimuth. "
-            "An orientation issue (an orientation problem or error) is metadata that cannot be right for one sensor.",
-            f"Seismometers with orientation issues now: {listed(issues_now)}.",
-            f"Earlier seismometer epochs with orientation issues: {listed(issues_before)}.",
-            f"Seismometers not at 0° azimuth now (rotated from north): {listed(rotated_now)}.",
-            f"Seismometers at 0° azimuth now: {listed(north_now)}.",
-            f"Earlier seismometer epochs not at 0°: {listed(rotated_before)}.",
+            "orientation, and its east component is 90° clockwise of its north component. A seismometer is misoriented "
+            "(misaligned, disoriented, not oriented to north, rotated from north, with an orientation or alignment issue) "
+            "when its north component is not at 0° or its east component not at 90°. Its data can still be used: its "
+            "horizontal components are rotated to north and east with the recorded azimuth. Apart from that, a station's "
+            "StationXML can be inconsistent: azimuths that cannot be right for one sensor, so its true orientation is "
+            "uncertain.",
+            f"Seismometers misoriented now (not aligned with north): {listed(rotated_now)}.",
+            f"Earlier seismometer epochs misoriented (not aligned with north): {listed(rotated_before)}.",
+            f"Seismometers aligned with north now (0° azimuth): {listed(north_now)}.",
+            f"Seismometers whose orientation metadata is inconsistent now: {listed(issues_now)}.",
+            f"Earlier seismometer epochs with inconsistent orientation metadata: {listed(issues_before)}.",
             "Each station's seismometer epochs:"] + rows
     return {
         "chunk_id": "station_metadata_seismometer_orientation",
-        "title": "Seismometer orientation (azimuth) of every OO station: orientation issues in the metadata, and which "
-                 "seismometers are not aligned with north",
+        "title": "Seismometer orientation (azimuth) of every OO station: which seismometers are misoriented (not "
+                 "aligned with north), and inconsistent orientation metadata",
         "text": "\n".join(text),
         "entity_ids": sorted({x["channel_id"] for chans in by_station.values() for x in chans if horizontal(x, SEISMOMETER)}),
         # Cited as itself: as one of its 27 station files' sources it was cited as OO_HYSB1.xml, a single station.

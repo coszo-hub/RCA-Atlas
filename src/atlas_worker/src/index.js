@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, orientationStations, placeStations, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, orientationStations, placeStations, orientationForStations, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
@@ -358,7 +358,10 @@ async function orientationRecords(question, env) {
   try {
     const found = await postJson(`${env.ATLAS_API_ORIGIN.replace(/\/$/, "")}/v1/chunks`, { collection_id: "station_metadata", chunk_ids: ids },
       { "x-api-key": env.ATLAS_API_KEY });
-    return ids.map((id) => (found.hits || []).find((hit) => hit.chunk_id === id)).filter(Boolean).map(withRouteCitations);
+    const stations = placeStations(question, ASSET_DIRECTORY, INSTRUMENT_IDS);
+    return ids.map((id) => (found.hits || []).find((hit) => hit.chunk_id === id)).filter(Boolean)
+      .map((hit) => hit.chunk_id === ORIENTATION_CHUNK ? { ...hit, text: orientationForStations(hit.text, stations) } : hit)
+      .map(withRouteCitations);
   } catch (error) {
     console.error("orientation lookup failed", error instanceof Error ? error.message : "unknown");
     return [];

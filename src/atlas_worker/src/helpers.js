@@ -569,11 +569,18 @@ export function typeOnlyInstruments(question, directory) {
 }
 
 // A question about which way a seismometer's horizontal components point ("how are the seismometers at Axial
-// oriented?", "the azimuth of AXEC3", "orientation issues").
+// oriented?", "the azimuth of AXEC3", "orientation issues", "which stations have disoriented components").
 export function isOrientationQuestion(question) {
   const q = String(question || "");
-  return /\b(?:orient\w*|azimuths?|aligned|alignment|misaligned|rotated from north|which way)\b/i.test(q)
+  return /\b(?:(?:dis|mis|re)?orient\w*|azimuths?|(?:mis)?align\w*|(?:mis)?rotat\w*|which way)\b/i.test(q)
     && /\b(?:seism\w*|obs|stations?|components?|channels?|horizontals?|geophones?|(?:AX|HY|CZ)[A-Z]{1,3}\d)\b/i.test(q);
+}
+
+// An orientation question that asks which stations are wrong ("which stations have misoriented components?", "not
+// oriented to north", "alignment issues"), not how they all point.
+export function isOrientationIssueQuestion(question) {
+  return isOrientationQuestion(question)
+    && /\b(?:(?:dis|mis)orient\w*|misalign\w*|misrotat\w*|rotated|not (?:\w+ )?(?:oriented|aligned|pointing)|north|issues?|problems?|errors?|wrong|bad|incorrect|disagree\w*|inconsistent)\b/i.test(String(question || ""));
 }
 
 // The OO stations an orientation question names (AXEC3) or that are at the place it names (Southern Hydrate Ridge):
@@ -587,6 +594,22 @@ export function orientationStations(question, directory, instrumentIds) {
 // The stations an orientation question asks about by the place it names (none when it names no place).
 export function placeStations(question, directory, instrumentIds) {
   return isOrientationQuestion(question) ? orientationStationParts(question, directory, instrumentIds).atPlace : [];
+}
+
+// The orientation summary cut to a place's stations: each "Label: STA (...), STA (...)." list keeps those stations
+// (none left reads "none"), and each station's epoch line is kept only for them. Asked about Axial, a model copies the
+// summary's list of every station with an issue (HYS11 too) into its first sentence however it is told not to.
+export function orientationForStations(text, stations) {
+  if (!stations.length) return String(text || "");
+  const keep = new Set(stations);
+  return String(text || "").split("\n").flatMap((line) => {
+    const epoch = line.match(/^- OO\.([A-Z0-9]+) /);
+    if (epoch) return keep.has(epoch[1]) ? [line] : [];
+    const list = line.match(/^((?:Seismometers|Earlier seismometer epochs)[^:]*: )(.*)\.$/);
+    if (!list || list[2] === "none") return [line];
+    const items = [...list[2].matchAll(/([A-Z0-9]+) \([^()]*\)/g)].filter((m) => keep.has(m[1])).map((m) => m[0]);
+    return [`${list[1]}${items.length ? items.join(", ") : "none"}.`];
+  }).join("\n");
 }
 
 function orientationStationParts(question, directory, instrumentIds) {
@@ -790,9 +813,13 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "The question asks which papers used an instrument. Full-text passages from papers that name it or describe it are in the evidence. List each paper whose passage shows it used or analyzed that instrument's data, by title with its citation and a few words on how it used it; list papers that only mention the instrument separately as mentions; leave out papers whose passages are about something else."
     : "";
   // The orientation summary lists every OO station; a question about one place is answered for that place's stations.
-  const stationInstruction = stations.length
-    ? ` The question asks about one place, whose OO seismometer stations are ${stations.join(", ")}. Answer for those stations only, each with its azimuth and any orientation issue the evidence gives it; leave every other station out, without remarking on it.`
-    : "";
+  // A question about issues names the stations with one, not every station's azimuth.
+  const issues = isOrientationIssueQuestion(question);
+  const stationInstruction = (stations.length
+    ? ` The question asks about one place, whose OO seismometer stations are ${stations.join(", ")}. Answer for those stations only${issues ? "" : ", each with its azimuth and any orientation issue the evidence gives it"}; leave every other station out of the whole answer, the first sentence too, without remarking on it.`
+    : "") + (issues
+    ? " The question asks which stations are misoriented. Misoriented, misaligned, disoriented, misrotated, not correctly oriented, not oriented to north, rotated from north, and an orientation or alignment issue all mean one thing: a seismometer whose north component is not at 0° or east component not at 90°. Name each station the evidence gives as misoriented, with its azimuth. Then, as a separate point, name any whose orientation metadata is inconsistent, with how. Say in one sentence that the other stations are aligned with north; do not list them one by one."
+    : "");
   const overviewInstruction = isDasOverview(question)
     ? `The RCA's DAS experiments are ${DAS_EXPERIMENTS.map((e) => e.about).join("; ")}. Count and describe these experiments, each once; a dataset within an experiment is part of it, not an experiment of its own.`
     : "";

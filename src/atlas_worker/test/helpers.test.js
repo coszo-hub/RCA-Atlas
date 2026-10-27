@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, placeStations, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, isOrientationIssueQuestion, placeStations, orientationForStations, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -838,7 +838,8 @@ test("a download question naming a type and no place gets every instrument of it
 test("an orientation question gets every station's orientation summary, and the records of the few stations it means", async () => {
   const { orientationChunkIds } = await import("../src/index.js");
   for (const q of ["What is the azimuth of AXEC3?", "What seismometers have orientation issues?", "How are the seismometers at Axial Seamount oriented?",
-    "What is the orientation of the seismometer at Southern Hydrate Ridge?", "Which way is the Slope Base OBS pointing? what is its orientation"]) {
+    "What is the orientation of the seismometer at Southern Hydrate Ridge?", "Which way is the Slope Base OBS pointing? what is its orientation",
+    "which axial seismic stations have disoriented components", "Are any OBS horizontals misaligned?"]) {
     assert.ok(isOrientationQuestion(q), q);
     assert.equal(orientationChunkIds(q)[0], "station_metadata_seismometer_orientation");
   }
@@ -861,4 +862,30 @@ test("an orientation question about a place is answered for that place's station
   const prompt = answerPrompt({ question: "q", evidence: "e", sources: [], mode: "full", stations: ["HYS11", "HYS12"] });
   assert.match(prompt, /stations are HYS11, HYS12\. Answer for those stations only/);
   assert.doesNotMatch(answerPrompt({ question: "q", evidence: "e", sources: [], mode: "full" }), /Answer for those stations only/);
+});
+
+test("a place's orientation summary keeps only its stations", () => {
+  const text = ["Seismometer orientation of every OO network station.",
+    "Seismometers whose orientation metadata is inconsistent now: AXID1 (its north channels disagree: EHN at 0°; LHN, MHN, SHN at 35°), HYS11 (EHN at 0°; LHN at 35°).",
+    "Earlier seismometer epochs with inconsistent orientation metadata: none.",
+    "Seismometers misoriented now (not aligned with north): AXEC1 (128°), HYS12 (35°).",
+    "- OO.AXEC1 (RSN Axial East Caldera 1), 2014-08-01 to present: north component EHN at 128°.",
+    "- OO.HYS12 (RSN Hydrate Summit 1-2), 2014-08-01 to present: north component EHN at 35°."].join("\n");
+  const axial = orientationForStations(text, ["AXEC1", "AXID1"]);
+  assert.match(axial, /inconsistent now: AXID1 \(its north channels disagree: EHN at 0°; LHN, MHN, SHN at 35°\)\./);
+  assert.match(axial, /not aligned with north\): AXEC1 \(128°\)\./);
+  assert.match(axial, /- OO\.AXEC1 /);
+  assert.doesNotMatch(axial, /HYS1/);
+  assert.match(orientationForStations(text, ["HYS12"]), /inconsistent now: none\./);
+  assert.equal(orientationForStations(text, []), text);
+});
+
+test("an orientation issue question names only the stations with an issue", () => {
+  for (const q of ["which axial seismic stations have disoriented components", "which seismic stations have misoriented components", "What seismometers have orientation issues?",
+    "Which seismometers are not oriented to north?", "Are any OBS components misrotated?", "Which stations have alignment issues?", "Which seismometers are not correctly oriented?"]) {
+    assert.ok(isOrientationIssueQuestion(q), q);
+    assert.match(answerPrompt({ question: q, evidence: "e", sources: [], mode: "compact", stations: ["AXID1"] }), /Name each station the evidence gives as misoriented/);
+  }
+  assert.ok(!isOrientationIssueQuestion("How are the seismometers at Axial Seamount oriented?"));
+  assert.match(answerPrompt({ question: "How are the seismometers at Axial Seamount oriented?", evidence: "e", sources: [], mode: "compact", stations: ["AXID1"] }), /each with its azimuth/);
 });
