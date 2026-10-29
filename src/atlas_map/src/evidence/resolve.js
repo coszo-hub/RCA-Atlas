@@ -185,6 +185,12 @@ function locate(cite, hits, idx, bundle) {
     const s = m && (m[1] ? idx.byArcada.get(`ARCADA-INSTRUMENT-${m[2]}`) : idx.byInstrument.get(`INSTRUMENT-${m[2].slice(0, 18)}`));
     if (s) return sensorItem(s, bundle);
   }
+  // 1b. A paper that is one instrument's own source (its DOI): that instrument. A record of SCPR unit 001 from its
+  // paper names the cabled SCPR it came before, which step 2 took for its place.
+  if (/^https?:\/\/(?:dx\.)?doi\.org\//i.test(cite.url ?? "")) {
+    const owners = idx.byUrl.get(normUrl(cite.url)) ?? [];
+    if (owners.length === 1) return sensorItem(owners[0], bundle);
+  }
   const urls = [cite.url, ...hits.flatMap(h => (h.citations ?? []).map(c => c.url))].filter(Boolean);
   const titles = [cite.title, ...hits.map(h => h.title)].filter(Boolean);
   const texts = [...titles, ...hits.flatMap(h => [JSON.stringify(h.metadata ?? {}), h.excerpt])].filter(Boolean);

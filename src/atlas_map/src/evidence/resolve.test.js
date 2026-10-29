@@ -217,6 +217,22 @@ describe("resolveEvidence: any ID the corpus names an instrument by", () => {
     // a named sensor beside it still wins
     expect(cited("RS01SBPD-DP01A-01-CTDPFL104 and RS01SBPD-DP01A-00-ENG000000")).toMatchObject({ kind: "sensor", id: "RS01SBPD-DP01A-01-CTDPFL104" });
   });
+  it("a paper that is one instrument's own source is that instrument, though its record names another", () => {
+    const unit = { id: "SCPR-UNIT001-2013", name: "SCPR unit 001", site: "ashes", lon: -130.01, lat: 45.93, family: "pressure",
+      sources: ["https://doi.org/10.1002/2016EA000190"] };
+    const bb = { ...b, sensors: [...b.sensors, unit], sensorById: { ...b.sensorById, [unit.id]: unit },
+      sites: [...b.sites, site("ashes", -130.01)], siteById: { ...b.siteById, ashes: site("ashes", -130.01) } };
+    const title = "SCPR unit 001, before the cabled SCPR (earlier instrument of RS03CCAL-MJ03F-09-SCPRAA301): serial numbers and components";
+    const url = "https://doi.org/10.1002/2016EA000190";
+    const r = resolveEvidence({ answer: "a [1]", answer_citations: [{ id: "SOURCED-1", title: "Sasagawa et al. (2016)", url }],
+      hits: [{ chunk_id: "ooi_assets_sourced_scpr_unit001_2013", title, citations: [{ source_id: "SOURCED-1", url }] }] }, bb);
+    expect(r.located[0]).toMatchObject({ kind: "sensor", id: "SCPR-UNIT001-2013" });
+    // A paper no instrument cites as its own source is placed as before, by the codes its record names.
+    const other = "https://doi.org/10.1000/other";
+    const r2 = resolveEvidence({ answer: "a [1]", answer_citations: [{ id: "SOURCED-2", title: "A paper", url: other }],
+      hits: [{ chunk_id: "x", title, citations: [{ source_id: "SOURCED-2", url: other }] }] }, bb);
+    expect(r2.located[0]).toMatchObject({ kind: "sensor", id: "SCPRAAA301" });
+  });
   it("a recipe overview of every instrument of a type is a document, not one of their places", () => {
     const title = "Where to download CTD data: every CTD instrument";
     const r = resolveEvidence({ answer: "a [1]", answer_citations: [{ id: "RECIPE-SOURCE-recipe_type_ctd", title, url: "" }],
