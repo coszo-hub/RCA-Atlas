@@ -463,6 +463,7 @@ def build(repo_path: Path, output: Path) -> dict:
         })
     # Serial numbers from papers, web pages and documents: one chunk an entry, cited to its source.
     sourced: dict[str, list[str]] = defaultdict(list)
+    located: dict[str, list[str]] = defaultdict(list)   # the entries that give the instrument's position
     for entry in source_serials():
         src = entry["source"]
         sid = stable_id("SOURCED-SERIALS-SOURCE", src["id"])
@@ -472,6 +473,8 @@ def build(repo_path: Path, output: Path) -> dict:
         target_id = stable_id("OOI-ASSETS-INSTRUMENT", target) if entry.get("refdes") else stable_id("OOI-ASSETS-NODE", target)
         chunk_id = f"ooi_assets_sourced_{entry['id']}"
         sourced[target].append(chunk_id)
+        if entry.get("position"):
+            located[target].append(chunk_id)
         for k, component in enumerate(entry["components"]):
             comp_id = stable_id("SOURCED-COMPONENT", entry["id"], str(k))
             entities.append({"entity_id": comp_id, "entity_type": "component", "name": f"{component['manufacturer']} {component['model']} {component['name']}",
@@ -481,7 +484,7 @@ def build(repo_path: Path, output: Path) -> dict:
         relation = f" ({entry['relation']} of {target})" if entry.get("relation") else f" ({target})"
         chunks.append({
             "chunk_id": chunk_id,
-            "title": f"{entry['subject']}{relation}: serial numbers and components, from {short_citation(src['citation'])}",
+            "title": f"{entry['subject']}{relation}: serial numbers, components{' and position' if entry.get('position') else ''}, from {short_citation(src['citation'])}",
             "text": f"{entry['subject']}{relation}. From {src['citation']}" + (f" ({src['url']})" if src.get("url") else "") + ":\n"
                     + "\n".join(f"- {fact}" for fact in entry["facts"])
                     + "\nThe source says: " + " ... ".join(f"\u201c{q['text']}\u201d" for q in entry["quotes"]),
@@ -580,7 +583,7 @@ def build(repo_path: Path, output: Path) -> dict:
         "commit": repo.commit,
         "instruments": [{"refdes": r["refdes"], "name": r["name"], "instrument": r["instrument"], "site": r["site"],
                          "codes": short_codes(r["refdes"]), "calibration": f"ooi_assets_calibration_{r['refdes']}" in {c["chunk_id"] for c in chunks},
-                         "sourced": sourced.get(r["refdes"], [])}
+                         "sourced": sourced.get(r["refdes"], []), "located": located.get(r["refdes"], [])}
                         for r in records],
         "nodes": {node: {"id": chunk_id, "name": node_place[node].get("TOC_L3") or "", "site": node_place[node].get("TOC_L2") or "",
                          "sourced": sourced.get(node, [])} for node, chunk_id in sorted(node_chunks.items())},

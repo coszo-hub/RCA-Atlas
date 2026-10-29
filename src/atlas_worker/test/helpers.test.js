@@ -648,7 +648,7 @@ test("a question about the papers that used a sensor finds the codes papers name
 const ASSETS = {
   instruments: [
     { refdes: "RS03CCAL-MJ03F-05-BOTPTA301", name: "Axial Seamount Central Caldera Seafloor Pressure", instrument: "Bottom Pressure and Tilt", site: "Central Caldera", codes: ["BOTPT", "BOTP"], calibration: false },
-    { refdes: "RS03CCAL-MJ03F-09-SCPRAA301", name: "Central Caldera Self-Calibrating Pressure Recorder", instrument: "Self-Calibrating Pressure Recorder", site: "Central Caldera", codes: ["SCPRA", "SCPR"], calibration: false, sourced: ["ooi_assets_sourced_scpr_cabled_gauges", "ooi_assets_sourced_scpr_unit001_2013"] },
+    { refdes: "RS03CCAL-MJ03F-09-SCPRAA301", name: "Central Caldera Self-Calibrating Pressure Recorder", instrument: "Self-Calibrating Pressure Recorder", site: "Central Caldera", codes: ["SCPRA", "SCPR"], calibration: false, sourced: ["ooi_assets_sourced_scpr_cabled_gauges", "ooi_assets_sourced_scpr_unit001_2013"], located: ["ooi_assets_sourced_scpr_cabled_gauges"] },
     { refdes: "RS03AXBS-LJ03A-12-CTDPFB301", name: "Axial Seamount Base Seafloor CTD", instrument: "CTD", site: "Axial Base Seafloor", codes: ["CTDPF", "CTDP"], calibration: true },
     { refdes: "RS03AXPD-DP03A-01-CTDPFL304", name: "Axial Seamount Deep Profiler CTD Profiler", instrument: "CTD", site: "Axial Base Deep Profiler Mooring", codes: ["CTDPF", "CTDP"], calibration: true },
     { refdes: "RS01SLBS-LJ01A-12-CTDPFB101", name: "Oregon Slope Base Seafloor CTD", instrument: "CTD", site: "Oregon Slope Base Seafloor", codes: ["CTDPF", "CTDP"], calibration: true },
@@ -666,9 +666,10 @@ test("an asset-metadata question asks for the records the directory names: the i
   // The instrument's record, then its components' serials from the papers, each cited to its paper.
   assert.deepEqual(assetChunkIds("what is the serial number of the SCPR at axial seamount?", ASSETS),
     ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301", "ooi_assets_sourced_scpr_cabled_gauges", "ooi_assets_sourced_scpr_unit001_2013"]);
-  // Where it is: its record, whose deployments give positions and depths, without an earlier unit's position.
+  // Where it is: its record, whose deployments give positions and depths, and the paper that gives its position,
+  // without an earlier unit's.
   for (const q of ["Where is the SCPR at Axial Seamount?", "What is the location of the SCPR at Axial Seamount?", "What are the coordinates of the SCPR?"]) {
-    assert.deepEqual(assetChunkIds(q, ASSETS), ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301"], q);
+    assert.deepEqual(assetChunkIds(q, ASSETS), ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301", "ooi_assets_sourced_scpr_cabled_gauges"], q);
   }
   assert.ok(assetChunkIds("Where was the SCPR deployed in 2013?", ASSETS).includes("ooi_assets_sourced_scpr_unit001_2013"));
   assert.deepEqual(assetChunkIds("Where is Axial Seamount?", ASSETS), []);
@@ -894,4 +895,9 @@ test("an orientation issue question names only the stations with an issue", () =
   }
   assert.ok(!isOrientationIssueQuestion("How are the seismometers at Axial Seamount oriented?"));
   assert.match(answerPrompt({ question: "How are the seismometers at Axial Seamount oriented?", evidence: "e", sources: [], mode: "compact", stations: ["AXID1"] }), /each with its azimuth/);
+});
+
+test("a location question gives an instrument's position from each source that has one", () => {
+  assert.match(answerPrompt({ question: "What is the location of the SCPR at Axial Seamount?", evidence: "e", sources: [], mode: "compact" }), /give each position with its depth and its own citation/);
+  assert.doesNotMatch(answerPrompt({ question: "What is the serial number of the SCPR?", evidence: "e", sources: [], mode: "compact" }), /give each position/);
 });

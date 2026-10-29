@@ -8,7 +8,8 @@
       "facts": [
         "Its two quartz pressure gauges are a Paroscientific model 44.4K, serial number 136576, and a Paroscientific model 46K, serial number 132123.",
         "The gauges are sampled at 1 Hz by Paroscientific model 1764 logging electronics.",
-        "The cabled system is nearly identical internally to the SCPR of Sasagawa and Zumberge (2013), in a titanium pressure case, powered and connected by the RCA."
+        "The cabled system is nearly identical internally to the SCPR of Sasagawa and Zumberge (2013), in a titanium pressure case, powered and connected by the RCA.",
+        "It was deployed from the R/V Roger Revelle with ROV Jason II on 6 July 2018 and placed in the Axial Central caldera at North latitude 45° 57.29′, East longitude −130° 0.56′ (45.954833°N, 130.009333°W; RCA Atlas note: decimal degrees converted from the paper's minutes), depth 1,535 m MSL, then cabled to junction box MJ03F."
       ],
       "components": [
         {
@@ -50,6 +51,21 @@
           "collection": "LiteratureFullText",
           "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
           "text": "The upgraded CSCPR has a titanium pressure case"
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
+          "text": "The instrument was deployed from the R/V Roger Revelle, using the ROV Jason II, on 6 July 2018."
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
+          "text": "The instrument was placed in the Axial Central caldera (North latitude 45° 57.29′, East longitude −130° 0.56′, depth 1,535 m MSL)."
+        },
+        {
+          "collection": "LiteratureFullText",
+          "chunk_id": "FULLTEXT-7874087d1ab53cabdf43",
+          "text": "After placement, the instrument cable was attached to medium power junction box MJ03F."
         }
       ],
       "source": {
@@ -57,7 +73,8 @@
         "id": "doi:10.1029/2022ea002434",
         "url": "https://doi.org/10.1029/2022EA002434",
         "citation": "Sasagawa, G. S., Zumberge, M. A., & Cook, M. J. (2023). Drift Corrected Seafloor Pressure Observations of Vertical Deformation at Axial Seamount 2018–2021. Earth and Space Science, 10(2), e2022EA002434."
-      }
+      },
+      "position": true
     },
     {
       "id": "scpr_unit001_2013",
