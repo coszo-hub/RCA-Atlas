@@ -666,6 +666,12 @@ test("an asset-metadata question asks for the records the directory names: the i
   // The instrument's record, then its components' serials from the papers, each cited to its paper.
   assert.deepEqual(assetChunkIds("what is the serial number of the SCPR at axial seamount?", ASSETS),
     ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301", "ooi_assets_sourced_scpr_cabled_gauges", "ooi_assets_sourced_scpr_unit001_2013"]);
+  // Where it is: its record, whose deployments give positions and depths, without an earlier unit's position.
+  for (const q of ["Where is the SCPR at Axial Seamount?", "What is the location of the SCPR at Axial Seamount?", "What are the coordinates of the SCPR?"]) {
+    assert.deepEqual(assetChunkIds(q, ASSETS), ["ooi_assets_RS03CCAL-MJ03F-09-SCPRAA301"], q);
+  }
+  assert.ok(assetChunkIds("Where was the SCPR deployed in 2013?", ASSETS).includes("ooi_assets_sourced_scpr_unit001_2013"));
+  assert.deepEqual(assetChunkIds("Where is Axial Seamount?", ASSETS), []);
   assert.deepEqual(assetChunkIds("What is the serial number of the junction box at Axial Base?", ASSETS),
     ["ooi_assets_node_RS03AXBS-LJ03A", "ooi_assets_sourced_lj03a_2017_swap"]);
   assert.deepEqual(assetChunkIds("When was MJ03F replaced?", ASSETS), ["ooi_assets_node_RS03CCAL-MJ03F"]);

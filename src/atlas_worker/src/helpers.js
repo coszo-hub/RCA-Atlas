@@ -459,7 +459,12 @@ export function typeInventory(question) {
 // "which instruments are deeper than 2500 m?": OOI asset-management metadata (the ooi_asset_management collection).
 // Its records are a few hundred among 22,000, so the main search ranks web pages about the same instrument above
 // them; such a question also searches that collection (assetRecords in the Worker).
-const ASSET_WORDS = /\b(?:serial|s\/n|firmware|calibrat\w*|coefficients?|deploy\w*|redeploy\w*|recover\w*|cruises?|visions|manufactur\w*|make and model|(?:what|which)\s+(?:model|make)|who makes|made by|deeper|deepest|how deep|shallower|shallowest|junction box(?:es)?|j-?box(?:es)?|timeline|history|changes?|changed|swapp?\w*|replaced)\b/i;
+const ASSET_WORDS = /\b(?:serial|s\/n|firmware|calibrat\w*|coefficients?|deploy\w*|redeploy\w*|recover\w*|cruises?|visions|manufactur\w*|make and model|(?:what|which)\s+(?:model|make)|who makes|made by|deeper|deepest|how deep|shallower|shallowest|junction box(?:es)?|j-?box(?:es)?|timeline|history|changes?|changed|swapp?\w*|replaced|where|locat\w*|positions?|coordinates?|latitude|longitude|depths?)\b/i;
+// Where an instrument is: its deployments' positions and depths are in its asset record ("where is the SCPR at Axial
+// Seamount?" otherwise found only a paper's position for an earlier unit, recovered in 2014).
+const LOCATION_WORDS = /\b(?:where|locat\w*|positions?|coordinates?|latitude|longitude|depths?|how deep)\b/i;
+// What the records of components from papers and pages answer; a location question asking none of it leaves them out.
+const SOURCED_WORDS = /\b(?:serial|s\/n|components?|gauges?|parts?|history|earlier|previous|before|first|original|20[01]\d)\b/i;
 // Makes and models ask the same records: "which CTDs are Sea-Bird SBE 16plus?".
 const MAKERS = /\b(?:sea-?bird|sbe\s?\d+\w*|teledyne|rdi|aanderaa|nortek|sunburst|satlantic|wet ?labs|g[uü]ralp|paroscientific|nobska|kongsberg|simrad|hti|benthos|sonardyne|imagenex|nanometrics|turner)\b/i;
 export const isAssetQuestion = (question) => ASSET_WORDS.test(String(question || "")) || MAKERS.test(String(question || ""));
@@ -677,7 +682,8 @@ export function assetChunkIds(question, directory) {
     for (const i of instruments) {
       ids.push(`ooi_assets_${i.refdes}`);
       if (i.calibration && CALIBRATION_WORDS.test(q)) ids.push(`ooi_assets_calibration_${i.refdes}`);
-      ids.push(...(i.sourced || []));   // its components' serial numbers from papers and pages, each cited to its source
+      // Its components' serial numbers from papers and pages, each cited to its source.
+      if (!LOCATION_WORDS.test(q) || SOURCED_WORDS.test(q)) ids.push(...(i.sourced || []));
     }
   } else if (instruments.length && places) {
     // Several at a named place ("the Axial Base ADCP": the seafloor and both profiler ones): each one's record.
