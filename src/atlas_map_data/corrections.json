@@ -33,6 +33,19 @@
         "lon": -125.3899
       },
       "reason": "Drawn as the water column of Oregon Slope Base: the shallow (RS01SBPS) and deep (RS01SBPD) profiler moorings stand about 1.5-2 km from the seafloor package (RS01SLBS), and the map shows them as that site's column."
+    },
+    {
+      "match": {
+        "id": [
+          "SCPR-UNIT001-2013"
+        ]
+      },
+      "set": {
+        "status": "RECOVERED",
+        "statusSource": "Sasagawa et al. (2016), https://doi.org/10.1002/2016EA000190",
+        "statusAsOf": "2015-08-23"
+      },
+      "reason": "SCPR unit 001 was released to the surface on 23 August 2015 (Sasagawa et al., 2016); no Nereus snapshot covers it."
     }
   ]
 }

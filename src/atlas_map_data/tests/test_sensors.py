@@ -87,10 +87,14 @@ class SensorRecordTest(unittest.TestCase):
     def test_shipped_corrections_file_loads(self):
         # Arcada's own errors (the Axial profilers placed in the caldera, the DAS experiments' placeholder position)
         # are corrected where Arcada is built; the map keeps only its drawing of the profilers as their base's column.
+        # A paper gives the status of an instrument no Nereus snapshot covers (SCPR unit 001, recovered in 2015).
         fixes = sensors.load_corrections(Path(sensors.__file__).with_name("corrections.json"))
-        self.assertEqual([sorted(f["match"]["siteCode"]) for f in fixes], [["RS03AXPD", "RS03AXPS"], ["RS01SBPD", "RS01SBPS"]])
-        self.assertEqual([f["set"] for f in fixes], [{"lat": 45.8168, "lon": -129.754}, {"lat": 44.5101, "lon": -125.3899}])
-        self.assertTrue(all(f["match"]["lat"] for f in fixes))     # a sensor with no position is not given one
+        moved = [f for f in fixes if "lat" in f["set"]]
+        self.assertEqual([sorted(f["match"]["siteCode"]) for f in moved], [["RS03AXPD", "RS03AXPS"], ["RS01SBPD", "RS01SBPS"]])
+        self.assertEqual([f["set"] for f in moved], [{"lat": 45.8168, "lon": -129.754}, {"lat": 44.5101, "lon": -125.3899}])
+        self.assertTrue(all(f["match"]["lat"] for f in moved))     # a sensor with no position is not given one
+        self.assertEqual([(f["match"], f["set"]["status"]) for f in fixes if "status" in f["set"]],
+                         [({"id": ["SCPR-UNIT001-2013"]}, "RECOVERED")])
 
 
 if __name__ == "__main__":

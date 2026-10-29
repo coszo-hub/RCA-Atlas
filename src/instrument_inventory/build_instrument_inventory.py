@@ -441,7 +441,25 @@ def build(data_root: Path, output: Path) -> None:
         instrument_code="09-SCPRAA301", latitude=45.954833, longitude=-130.009333, depth_m=1535,
         manufacturer="Scripps Institution of Oceanography", model="SCPR",
         sensor_components=["two quartz pressure gauges", "piston-gauge calibrator"], source_system="OOI PI instrument page",
-        source_urls=[sources["SOURCE-WEB-AXIAL-SCPR"]["source_url"]], arcada_document_id=None, notes=None,
+        # Its position and depth are the paper's (45° 57.29' N, 130° 0.56' W, 1,535 m), so the paper is cited too.
+        source_urls=[sources["SOURCE-WEB-AXIAL-SCPR"]["source_url"], "https://doi.org/10.1029/2022EA002434"], arcada_document_id=None,
+        notes="Earlier SCPR unit 001 (2013-2015, short mooring near ASHES) is its own record, SCPR-UNIT001-2013.",
+    )
+    # The SCPR before the cabled one: a separate instrument, about 2.3 km south-southwest, recovered in 2015.
+    add(
+        "SCPR-UNIT001-2013", "Axial Self-Calibrating Pressure Recorder unit 001 (2013-2015 short mooring)",
+        "self_calibrating_pressure_recorder", "Axial Seamount summit caldera, NE of ASHES", ["Regional Cabled Array"],
+        "time_bounded_campaign", "deployed_7_September_2013_recovered_23_August_2015",
+        [ev("SOURCE-LITERATURE", "OOI-ZOT-036", "DOI 10.1002/2016EA000190")],
+        coszo_role=None, aliases=[], site=None, node=None, station=None, network=None, instrument_code=None,
+        latitude=45.93438, longitude=-130.01178, depth_m=1541,
+        manufacturer="Scripps Institution of Oceanography", model="SCPR (unit 001)",
+        sensor_components=["two Paroscientific 410K quartz pressure gauges (serial numbers 116504 and 118710)", "piston-gauge calibrator"],
+        source_system="literature", source_urls=["https://doi.org/10.1002/2016EA000190"], arcada_document_id=None,
+        notes="Deployed with ROV Jason on 7 September 2013 as a short mooring with flotation, in the summit caldera NE of the "
+              "ASHES vent field, and released to the surface on 23 August 2015 (Sasagawa et al., 2016). Autonomous, not "
+              "cabled: an earlier instrument than the cabled SCPR RS03CCAL-MJ03F-09-SCPRAA301 at Central Caldera. The paper's "
+              "text reads 130.01178°E; its minus sign was lost in extraction, and the site is west of Greenwich.",
     )
     add(
         "AOABPA301", "Axial Central Caldera A-0-A self-calibrating pressure instrument",

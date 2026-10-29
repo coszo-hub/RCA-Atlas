@@ -19,12 +19,12 @@ class FullBuildTest(unittest.TestCase):
             summary = build_atlas_bundle.build(out, paths.RUNTIME, paths.DATA)
             self.assertEqual(summary["errors"], [])
             # 171 + 9 CE04OSBP + 11 CE02SHBP + VADCPB301, D1000A301 + 23 from OOI asset management (16 CE04OSPS,
-            # 5 CE04OSPD, the Central Caldera's PADCPA301 and FETCHA301)
-            self.assertEqual(summary["total"], 216)
-            self.assertEqual(summary["located"], 200)
+            # 5 CE04OSPD, the Central Caldera's PADCPA301 and FETCHA301) + SCPR unit 001 (2013-2015, from its paper)
+            self.assertEqual(summary["total"], 217)
+            self.assertEqual(summary["located"], 201)
             self.assertEqual(summary["unlocated"], 16)
             self.assertEqual(summary["unplaced"], 5)
-            self.assertEqual(summary["sites"], 34)    # + the Oregon Offshore shallow and deep profiler moorings
+            self.assertEqual(summary["sites"], 35)    # + the Oregon Offshore profiler moorings, SCPR unit 001's site
             self.assertTrue(summary["corpusSnapshot"])          # data/Instruments/manifest.json created_at
             bundle = json.loads((out / "sensors.json").read_text())
             by_id = {s["id"]: s for s in bundle["sensors"]}
@@ -33,6 +33,11 @@ class FullBuildTest(unittest.TestCase):
             self.assertEqual(by_id["EARTHSCOPE-OO-AXCC1"]["family"], "seismic")
             # Every ID the corpus names an instrument by: OOI's reference designator for a page's spelling, an OBS's station.
             self.assertEqual(by_id["SCPRAAA301"]["refdes"], "RS03CCAL-MJ03F-09-SCPRAA301")
+            # The SCPR before the cabled one is its own instrument and site, recovered in 2015.
+            unit001 = by_id["SCPR-UNIT001-2013"]
+            self.assertEqual((unit001["lat"], unit001["lon"], unit001["depth"]), (45.93438, -130.01178, 1541))
+            self.assertEqual((unit001["status"], unit001["statusGroup"]), ("RECOVERED", "offline"))
+            self.assertNotEqual(unit001["site"], by_id["SCPRAAA301"]["site"])
             self.assertIn("RS03CCAL-MJ03F-06-OBSBBA301", by_id["EARTHSCOPE-OO-AXCC1"]["aliases"])
             self.assertNotIn("RS03CCAL-MJ03F-06-OBSBBA301", by_id["EARTHSCOPE-OO-AXCC2"]["aliases"])
             self.assertEqual(by_id["FETCH-2504"]["family"], "acoustic")
