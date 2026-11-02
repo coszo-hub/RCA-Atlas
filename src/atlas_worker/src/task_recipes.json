@@ -22,5 +22,29 @@
   "instruments": "hydrophones",
   "task": "\\b(?:spectrograms?|spectr\\w*|psds?|power spectral density|noise|sound levels?|soundscapes?|listen\\w*|calls?|plot\\w*|figures?|graphs?|visuali[sz]\\w*)\\b",
   "about": "\\b(?:hydrophones?|acoustic\\w*|sound\\w*|underwater|whales?|ships?|HYDBB\\w*|HYDLF\\w*|LJ0[13][ACD]|PC0[13]A|AXBA1|AXCC1|AXEC2|HYS14|HYSB1)\\b"
+ },
+ {
+  "chunk_id": "task_axial_uplift",
+  "instruments": null,
+  "task": "\\b(?:uplift\\w*|inflat\\w*|deflat\\w*|deformation|deforming|subsid\\w*|detid\\w*|tides?|tidal|depth change|rates?|differential|plot\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:axial|botpt\\w*|bottom pressure|pressure|bprs?|MJ03[BDEF]|caldera|seafloor depth|volcano)\\b"
+ },
+ {
+  "chunk_id": "task_profiler_ctd_section",
+  "instruments": null,
+  "task": "\\b(?:sections?|profiles?|t-?s(?: diagram| plot)?|temperature[- ]salinity|stratification|water column|depth[- ]time|hovm\\w*ller|plot\\w*|figures?|graphs?|contour\\w*)\\b",
+  "about": "\\b(?:shallow profilers?|profil\\w*|SF0[13]A|science pod|water column|t-?s diagram|temperature[- ]salinity)\\b"
+ },
+ {
+  "chunk_id": "task_qc_time_series",
+  "instruments": null,
+  "task": "\\b(?:time ?series|daily|hourly|weekly|monthly|averag\\w*|means?|qartod|quality (?:flags?|control)|qc|flag\\w*|clean\\w*|trends?|plot\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:ctds?|temperatures?|salinity|oxygen|ph|pco2|chlorophyll|fluoromet\\w*|turbidity|nitrate|par|currents?|adcps?|velocity|conductivity|density|pressure|sensors?|instruments?|data ?sets?|erddap|ooi-[a-z0-9-]+)\\b"
+ },
+ {
+  "chunk_id": "task_adcp_currents",
+  "instruments": null,
+  "task": "\\b(?:currents?|speed|direction|velocit\\w*|flow\\w*|tidal currents?|profiles?|plot\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:adcps?|acoustic doppler|current meters?|current profilers?|currents?|ADCP\\w+|VADCP\\w*)\\b"
  }
 ]

@@ -925,6 +925,14 @@ test("a request for code for a task gets that task's recipe: its task and instru
   assert.deepEqual(taskRecipeIds("How do I plot fin whale calls on the AXCC1 hydrophone?", TASKS), hyd);
   assert.deepEqual(taskRecipeIds("Python code for the noise PSD of the AXCC1 hydrophone", TASKS), hyd);   // the hydrophone's
   assert.deepEqual(taskRecipeIds("Python code for the noise PSD of AXCC1", TASKS), psd);                  // the seismometer's
+  const up = ["task_axial_uplift"];
+  assert.deepEqual(taskRecipeIds("Write code to plot Axial Seamount's inflation over the last year", TASKS), up);
+  assert.deepEqual(taskRecipeIds("How do I compute the uplift rate from the BOTPT bottom pressure at the caldera center?", TASKS), up);
+  assert.deepEqual(taskRecipeIds("python script for the differential uplift between MJ03F and MJ03E", TASKS), up);
+  assert.deepEqual(taskRecipeIds("Write code for a T-S diagram from the Slope Base shallow profiler", TASKS), ["task_profiler_ctd_section"]);
+  assert.deepEqual(taskRecipeIds("How do I plot a depth-time section of oxygen from the Axial Base shallow profiler?", TASKS), ["task_profiler_ctd_section"]);
+  assert.deepEqual(taskRecipeIds("Write a script for daily mean temperature at the ASHES CTD without QARTOD failed data", TASKS), ["task_qc_time_series"]);
+  assert.deepEqual(taskRecipeIds("How do I plot the current speed and direction from the Axial Base ADCP?", TASKS), ["task_adcp_currents"]);
   assert.deepEqual(taskRecipeIds("Plot yesterday's biggest earthquake at AXEC2", TASKS), wave);
   // two tasks that match: the one with more of its task words
   const two = [{ chunk_id: "a", about: "seism", task: "\\b(?:plot)\\b" }, { chunk_id: "b", about: "seism", task: "\\b(?:plot|psd|noise)\\b" }];

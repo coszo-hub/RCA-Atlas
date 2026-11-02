@@ -190,5 +190,177 @@
    "task": "\\b(?:spectrograms?|spectr\\w*|psds?|power spectral density|noise|sound levels?|soundscapes?|listen\\w*|calls?|plot\\w*|figures?|graphs?|visuali[sz]\\w*)\\b",
    "about": "\\b(?:hydrophones?|acoustic\\w*|sound\\w*|underwater|whales?|ships?|HYDBB\\w*|HYDLF\\w*|LJ0[13][ACD]|PC0[13]A|AXBA1|AXCC1|AXEC2|HYS14|HYSB1)\\b"
   }
+ },
+ {
+  "id": "axial_uplift",
+  "title": "Compute and plot Axial Seamount's uplift (inflation) from the bottom pressure instruments, with uplift rates",
+  "script": "recipes/axial_uplift.py",
+  "instruments": null,
+  "summary": "Reads OOI's daily mean seafloor depth (botsflu_daydepth, de-tided with the predicted tide) from ERDDAP for the bottom pressure and tilt instruments at the center of Axial's caldera (MJ03F) and on its eastern rim (MJ03E), turns each into uplift since the first day, and takes their difference: the differential uplift of the caldera center relative to the rim, which removes the tidal residuals and oceanographic pressure changes both stations share, as Oregon State University's Axial eruption forecasts use it. It fits uplift rates over the last 1, 3 and 6 months, plots both, and writes the daily uplift as CSV.",
+  "steps": [
+   "Request only the rows that hold a daily depth (one a day): ERDDAP's constraint botsflu_daydepth!=NaN, added to the URL by hand because erddapy puts NaN in quotes, which ERDDAP refuses. A year is about 365 rows a station, so years come in one request.",
+   "Drop days whose QARTOD flag is 4 (FAIL) or 9 (MISSING), and keep the days both stations have.",
+   "Uplift is the change in depth from the first day (depths are negative, so rising makes them less negative), in cm; the differential uplift is the center's minus the rim's.",
+   "Leave out spike days, where one station's daily mean is tens of cm off: more than 6 robust standard deviations from the differential's 15-day running median.",
+   "Fit a straight line to the last 1, 3 and 6 months of each series for its rate in cm a year, and plot each station's uplift and the differential uplift with its rates."
+  ],
+  "change": "START and END for the span (UTC); RATE_MONTHS for the months the rates are fitted over; CENTER and RIM for the stations (the ERDDAP dataset IDs of the Axial bottom pressure instruments: ooi-rs03ccal-mj03f-05-botpta301 Central Caldera, ooi-rs03ecal-mj03e-06-botpta302 Eastern Caldera, ooi-rs03int2-mj03d-06-botpta303 International District, ooi-rs03ashs-mj03b-09-botpta304 ASHES).",
+  "pitfalls": [
+   "The differential uplift is smaller than the uplift at the caldera center, as the rim rises too: OSU's forecasts note a differential rate of about 10 cm/yr is equivalent to about 16 cm/yr at the center. On the recipe's test year (October 2024 to October 2025) the differential rate over the last 6 months was 9.7 cm/yr and the center's own 13.9 cm/yr.",
+   "A single station's de-tided depth keeps tidal residuals and oceanographic and barotropic pressure changes, so its rate over a month or two can be far off (over the last month of the test year, -20 cm/yr at the center); the differential removes what the stations share.",
+   "Pressure sensors drift; neither the differential nor the single-station uplift removes a drift of one sensor, which OSU checks with repeated ROV-based pressure measurements.",
+   "ERDDAP's International District data (MJ03D) end in July 2023, and each dataset ends where its newest data were processed; a span past the end returns fewer days.",
+   "botsflu_daydepth is OOI's product (from the 15-second bottom pressure means with the predicted tide removed); for the raw 20 Hz pressure use the Gold Copy's botpt_nano_sample stream from the instrument's download recipe."
+  ],
+  "sources": [
+   {
+    "title": "Eruption forecasts at Axial Seamount, Oregon State University",
+    "url": "https://axial.ceoas.oregonstate.edu/axial_blog.html"
+   },
+   {
+    "title": "Plots of OOI Regional Cabled Array data, Oregon State University",
+    "url": "https://axial.ceoas.oregonstate.edu/index.html"
+   },
+   {
+    "title": "OOI ERDDAP: Central Caldera bottom pressure and tilt",
+    "url": "https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/ooi-rs03ccal-mj03f-05-botpta301.html"
+   },
+   {
+    "title": "OOI ERDDAP: Eastern Caldera bottom pressure and tilt",
+    "url": "https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/ooi-rs03ecal-mj03e-06-botpta302.html"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:uplift\\w*|inflat\\w*|deflat\\w*|deformation|deforming|subsid\\w*|detid\\w*|tides?|tidal|depth change|rates?|differential|plot\\w*|figures?|graphs?)\\b",
+   "about": "\\b(?:axial|botpt\\w*|bottom pressure|pressure|bprs?|MJ03[BDEF]|caldera|seafloor depth|volcano)\\b"
+  }
+ },
+ {
+  "id": "profiler_ctd_section",
+  "title": "Plot a shallow profiler's CTD as a depth-time section and a T-S diagram",
+  "script": "recipes/profiler_ctd_section.py",
+  "instruments": null,
+  "summary": "Reads a shallow profiler's CTD (temperature, salinity, dissolved oxygen and pressure, with QARTOD flags) from OOI ERDDAP for a span of days, drops the values flagged as failed or missing, takes depth from pressure (TEOS-10), and plots each variable as a depth-time section of every sample, and a T-S diagram of absolute salinity and conservative temperature with potential density contours, coloured by depth; it writes the table as CSV.",
+  "steps": [
+   "Request the CTD's pressure, temperature, salinity and oxygen with their QARTOD flags (*_qc_agg) for the span from ERDDAP; a week is about 30,000 rows, and months are better requested a month at a time.",
+   "Set a value flagged 4 (FAIL) or 9 (MISSING) to missing; 3 (SUSPECT) is kept, to judge on the plot.",
+   "Take depth from pressure with TEOS-10 (gsw.z_from_p): the dataset's own depth column is empty at Axial Base. If the depths span less than 20 m, the profiler was parked at its 200 m platform, not profiling, and the script says so.",
+   "Plot each variable at each sample's time and depth: the science pod profiles from about 200 m to about 5 m below the surface, nine profiles a day, as the RCA describes it.",
+   "Convert to absolute salinity and conservative temperature (gsw.SA_from_SP and gsw.CT_from_t, at the site's latitude and longitude) and plot them over contours of potential density anomaly (gsw.sigma0)."
+  ],
+  "change": "DATASET, LAT and LON for the profiler (ooi-rs01sbps-sf01a-2a-ctdpfa102 Slope Base, 44.53, -125.39; ooi-rs03axps-sf03a-2a-ctdpfa302 Axial Base, 45.83, -129.75); START and END for the span (UTC); VARIABLES for what to plot (any of the CTD dataset's variables in its download recipe, with a label).",
+  "pitfalls": [
+   "The profiler is sometimes parked: at Axial Base it stayed at about 191 dbar from June to August 2025, so a section of those weeks is a single line; check the depths the script prints, or choose another span.",
+   "The dataset's depth column (depth_reading_profiler_depth_enabled) is empty at Axial Base; the script uses pressure instead.",
+   "The profiler's CTD dataset on ERDDAP is one row about every 19-30 s, not every sample; for every sample use the Gold Copy route in the CTD's download recipe.",
+   "A section of every sample shows the profiles as they were sampled, without gridding; gridding to regular depths and times smooths over the gaps between profiles.",
+   "TEOS-10 needs the site's position; a T-S diagram of practical salinity and in-situ temperature differs slightly from the one of absolute salinity and conservative temperature."
+  ],
+  "sources": [
+   {
+    "title": "OOI ERDDAP: Slope Base shallow profiler CTD",
+    "url": "https://erddap.dataexplorer.oceanobservatories.org/erddap/tabledap/ooi-rs01sbps-sf01a-2a-ctdpfa102.html"
+   },
+   {
+    "title": "TEOS-10 Gibbs SeaWater toolbox, gsw",
+    "url": "https://teos-10.github.io/GSW-Python/"
+   },
+   {
+    "title": "Moving Right Along!, Interactive Oceans",
+    "url": "https://interactiveoceans.washington.edu/06/2019/moving-right-along/"
+   },
+   {
+    "title": "Off to the Races, Interactive Oceans",
+    "url": "https://interactiveoceans.washington.edu/08/2021/off-to-the-races/"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:sections?|profiles?|t-?s(?: diagram| plot)?|temperature[- ]salinity|stratification|water column|depth[- ]time|hovm\\w*ller|plot\\w*|figures?|graphs?|contour\\w*)\\b",
+   "about": "\\b(?:shallow profilers?|profil\\w*|SF0[13]A|science pod|water column|t-?s diagram|temperature[- ]salinity)\\b"
+  }
+ },
+ {
+  "id": "qc_time_series",
+  "title": "Plot an OOI instrument's time series without its QARTOD-failed samples, with daily (or hourly, weekly) means",
+  "script": "recipes/qc_time_series.py",
+  "instruments": null,
+  "summary": "Reads one variable of any OOI ERDDAP dataset and its QARTOD flag (VARIABLE_qc_agg) a month at a time, counts the samples under each flag, drops those flagged as failed or missing, averages the rest over a period (daily by default) with their standard deviation, plots the samples kept, the samples dropped and the means, and writes the means as CSV.",
+  "steps": [
+   "Request the variable and its aggregate QARTOD flag a month at a time: a dataset of a row a minute is about 44,000 rows a month, and one request of many months can time out; a month with no data (ERDDAP answers 404) is skipped.",
+   "Count the samples under each flag: 1 pass, 2 not evaluated, 3 interesting/unusual or suspect, 4 fail, 9 missing (OOI's Quality Control page).",
+   "Drop the samples whose flag is in DROP (4 and 9 by default); keep 3, which OOI uses for interesting or unusual data as well as suspect data.",
+   "Average what is kept over AVERAGE (pandas resample: 1D daily, 1h hourly, 7D weekly), with the standard deviation and the number of samples in each.",
+   "Plot the kept samples, the dropped ones in red and the means with their spread, scaling the axis to the kept samples, and write the means as CSV."
+  ],
+  "change": "DATASET and VARIABLE for the instrument and what it measures (the instrument's download recipe lists its ERDDAP dataset ID and its variables with a QARTOD flag); START and END for the span (UTC); DROP for the flags to drop (add 3 to drop suspect data); AVERAGE for the averaging period.",
+  "pitfalls": [
+   "Flag 3 is not only bad data: OOI uses it for interesting or unusual data too, which at a vent field or during an event can be the signal; on the recipe's test span (ASHES seafloor CTD temperature, January to June 2025) 28,686 of 258,626 samples were flagged 3 and none 4.",
+   "Flag 2 (not evaluated) means no test ran on that sample, not that it passed.",
+   "ERDDAP's OOI datasets are about one row a minute (some every 19-30 s), not every sample; for every sample use the Gold Copy route in the instrument's download recipe.",
+   "Only variables with a QARTOD test have a _qc_agg column; the instrument's download recipe says which.",
+   "A dataset ends where its newest data were processed, and some end years early on ERDDAP (the International District bottom pressure in July 2023): a span past the end returns no rows for those months."
+  ],
+  "sources": [
+   {
+    "title": "OOI Quality Control",
+    "url": "https://oceanobservatories.org/quality-control/"
+   },
+   {
+    "title": "QARTOD Flag Statistics Using Cloud-Based Resources and Zarr Data Formats, OOI",
+    "url": "https://oceanobservatories.org/2024/05/qartod-flag-statistics-using-cloud-based-resources-and-zarr-data-formats/"
+   },
+   {
+    "title": "OOI ERDDAP",
+    "url": "https://erddap.dataexplorer.oceanobservatories.org/erddap/index.html"
+   },
+   {
+    "title": "erddapy documentation",
+    "url": "https://ioos.github.io/erddapy/"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:time ?series|daily|hourly|weekly|monthly|averag\\w*|means?|qartod|quality (?:flags?|control)|qc|flag\\w*|clean\\w*|trends?|plot\\w*|figures?|graphs?)\\b",
+   "about": "\\b(?:ctds?|temperatures?|salinity|oxygen|ph|pco2|chlorophyll|fluoromet\\w*|turbidity|nitrate|par|currents?|adcps?|velocity|conductivity|density|pressure|sensors?|instruments?|data ?sets?|erddap|ooi-[a-z0-9-]+)\\b"
+  }
+ },
+ {
+  "id": "adcp_currents",
+  "title": "Plot an ADCP's current speed and direction against depth and time",
+  "script": "recipes/adcp_currents.py",
+  "instruments": null,
+  "summary": "Reads an OOI ADCP's eastward, northward and error velocity and its bin depths from its Gold Copy stream through OPeNDAP, leaves out samples whose error velocity is large, averages over an hour (or another period) per depth bin, blanking bins with too few good samples, computes speed and the direction the water flows toward, plots both against depth and time, and writes them as NetCDF.",
+  "steps": [
+   "List the stream's Gold Copy files that overlap the span, keeping the ADCP's own files: its folder also holds the CTD files used to process it.",
+   "Read only the velocities, error velocity and bin depths for the span through OPeNDAP; OOI's east and north velocities are in Earth coordinates with the magnetic variation accounted for (the files' own description).",
+   "Leave out samples whose error velocity exceeds ERROR_MAX (0.1 m/s by default, a choice to tune): the error velocity measures how far the four beams disagree.",
+   "Average each file over AVERAGE (an hour by default; the Axial Base ADCP samples every second) and blank a bin whose share of good samples in the period is below MIN_GOOD, as far from the ADCP the echo is too weak: at Axial Base good hourly means reach about 220 m above the instrument.",
+   "Speed is the magnitude of east and north; direction is where the water flows toward, in degrees clockwise from north. Plot both against bin depth and time, with a cyclic colour map for direction."
+  ],
+  "change": "DATASET for the ADCP's Gold Copy stream (its download recipe names the stream, such as RS03AXBS-LJ03A-10-ADCPTE303-streamed-adcp_velocity_beam at Axial Base); START and END for the span (UTC); AVERAGE for the averaging period; ERROR_MAX and MIN_GOOD for the screening.",
+  "pitfalls": [
+   "A sample a second is about 86,400 rows of 50 bins a day: keep spans to days, or average longer; the script averages each file before combining.",
+   "Direction here is where the water goes (oceanographic convention), not where it comes from (as wind is given).",
+   "Bins far from the ADCP are noise: blank them (MIN_GOOD) rather than trusting their means.",
+   "A tidal current's direction turns through 360 degrees about twice a day near the seafloor at Axial Base; an hourly mean over a longer period averages the tide away, which is what a mean current needs.",
+   "Other ADCPs' streams have other names; use the stream the instrument's download recipe gives, and a stream without eastward_seawater_velocity (some give beam velocities only) does not work with this script."
+  ],
+  "sources": [
+   {
+    "title": "OOI Gold Copy THREDDS",
+    "url": "https://thredds.dataexplorer.oceanobservatories.org/thredds/catalog/ooigoldcopy/public/catalog.html"
+   },
+   {
+    "title": "OOI Gold Copy: Axial Base ADCP stream",
+    "url": "https://thredds.dataexplorer.oceanobservatories.org/thredds/catalog/ooigoldcopy/public/RS03AXBS-LJ03A-10-ADCPTE303-streamed-adcp_velocity_beam/catalog.html"
+   },
+   {
+    "title": "xarray: reading OPeNDAP",
+    "url": "https://docs.xarray.dev/en/stable/user-guide/io.html"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:currents?|speed|direction|velocit\\w*|flow\\w*|tidal currents?|profiles?|plot\\w*|figures?|graphs?)\\b",
+   "about": "\\b(?:adcps?|acoustic doppler|current meters?|current profilers?|currents?|ADCP\\w+|VADCP\\w*)\\b"
+  }
  }
 ]

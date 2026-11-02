@@ -14,11 +14,11 @@ class RuntimeContractTests(unittest.TestCase):
         self.assertTrue(manifest["passed"])
         self.assertEqual(manifest["counts"]["collections"], 20)
         self.assertEqual(manifest["counts"]["source_files"], 129)
-        self.assertEqual(manifest["counts"]["node_records"], 43_334)
-        self.assertEqual(manifest["counts"]["nodes"], 41_581)
-        self.assertEqual(manifest["counts"]["chunks"], 22_421)
-        self.assertEqual(manifest["counts"]["edge_records"], 52_327)
-        self.assertEqual(manifest["counts"]["edge_facts"], 51_519)
+        self.assertEqual(manifest["counts"]["node_records"], 43_382)
+        self.assertEqual(manifest["counts"]["nodes"], 41_629)
+        self.assertEqual(manifest["counts"]["chunks"], 22_428)
+        self.assertEqual(manifest["counts"]["edge_records"], 52_357)
+        self.assertEqual(manifest["counts"]["edge_facts"], 51_549)
         self.assertEqual(manifest["counts"]["structured_records"], 154_948)
 
     def test_each_embedding_file_retains_both_roles(self):

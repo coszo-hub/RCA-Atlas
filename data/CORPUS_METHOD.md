@@ -988,8 +988,10 @@ Builder: `src/data_recipes/build_data_recipes.py`.
 
 ## Task recipes (`data/TaskRecipes`)
 
-One record per task a question may ask code for (plot an earthquake's waveform with the response removed and a
-bandpass filter, ...): what the script does, its steps and why each is there, a Python script, what to change in it for
+One record per task a question may ask code for (eight: an earthquake's waveform with the response removed and a
+bandpass filter; a seismometer's noise PSD; STA/LTA detection compared with the Axial catalog; a calibrated hydrophone
+spectrogram; Axial's uplift from the bottom pressure instruments; a shallow profiler's CTD section and T-S diagram; a
+time series without QARTOD-failed samples, with daily means; an ADCP's currents against depth): what the script does, its steps and why each is there, a Python script, what to change in it for
 another instrument or time, its pitfalls, the instruments it works for (the seismometer stations and their channels,
 from EarthScope) and its sources (ObsPy's documentation, and the paper a value comes from, such as the 4-50 Hz band
 Waldhauser et al. 2020 use for Axial microearthquakes). Each script was run in the download recipes' sandbox, and
