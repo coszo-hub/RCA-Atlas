@@ -51,7 +51,21 @@ def seismometers() -> str:
     return "Stations it works for (network OO, channels now): " + "; ".join(lines) + "."
 
 
-INSTRUMENTS = {"seismometers": seismometers}
+def hydrophones() -> str:
+    """The broadband hydrophones (OOIPy's nodes) and the low-frequency ones (their seismic stations), from the map."""
+    sensors = json.loads(BUNDLE.read_text())["sensors"]
+    broadband = sorted({(s["refdes"].split("-")[1], s["name"]) for s in sensors
+                        if re.fullmatch(r"(?:RS|CE)\w{6}-\w{5}-\w{2}-HYDBB\w+", s.get("refdes") or "")})
+    low = sorted({(s["refdes"], s["name"]) for s in sensors if re.fullmatch(r"RS\w{6}-\w{5}-\w{2}-HYDLF\w+", s.get("refdes") or "")})
+    sources = json.loads(RECIPE_SOURCES.read_text())["earthscope"]
+    stations = {s: [c["channel"] for c in info["channels"] if c["channel"] == "HDH" and not c["end"]] for s, info in sources.items()}
+    lf = [f"{st.split('.')[1]} ({name})" for refdes, name in low for st, chans in stations.items() if chans
+          and any(a.get("station") == st.split(".")[1] for s in sensors if s.get("refdes") == refdes for a in s.get("access", []))]
+    return ("Hydrophones it works for: broadband (64 kHz, HYDROPHONE = its node) " + "; ".join(f"{n} ({name})" for n, name in broadband)
+            + "; low-frequency (200 Hz, HYDROPHONE = its seismic station) " + "; ".join(lf) + ".")
+
+
+INSTRUMENTS = {"seismometers": seismometers, "hydrophones": hydrophones}
 
 
 def chunk(task: dict, result: dict) -> dict:

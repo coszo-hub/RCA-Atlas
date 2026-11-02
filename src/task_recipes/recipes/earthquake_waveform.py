@@ -21,7 +21,11 @@ if CHANNELS is None:   # seismometer channels (instrument code H) at the highest
     CHANNELS = max(found[0][0], key=lambda c: c.sample_rate).code[:2] + "?"
 st = client.get_waveforms(NETWORK, STATION, "*", CHANNELS, t1 - PAD, t2 + PAD)
 inv = client.get_stations(network=NETWORK, station=STATION, channel=CHANNELS, starttime=t1, endtime=t2, level="response")
+for tr in st:   # records can give the rate a few ppm off (200.00006 Hz), which stops merging; a few ms over hours
+    tr.stats.sampling_rate = round(tr.stats.sampling_rate, 3)
 st.merge(method=1, fill_value="interpolate")   # one trace per channel, short gaps filled
+if not st:
+    raise SystemExit(f"no {CHANNELS} data at {NETWORK}.{STATION} around {ORIGIN}")
 
 
 def pre_filt(tr):

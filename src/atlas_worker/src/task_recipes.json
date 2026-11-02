@@ -4,5 +4,23 @@
   "instruments": "seismometers",
   "task": "\\b(?:plot\\w*|seismograms?|(?:instrument )?response|band-?pass\\w*|filter\\w*|ground (?:motion|velocity|displacement)|velocity|displacement|acceleration|visuali[sz]\\w*|figures?|graphs?)\\b",
   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+ },
+ {
+  "chunk_id": "task_seismic_noise_psd",
+  "instruments": "seismometers",
+  "task": "\\b(?:psds?|ppsds?|power spectr\\w*|spectral density|spectr(?:um|a|al)|noise|nlnm|nhnm|peterson|microseism\\w*|background)\\b",
+  "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+ },
+ {
+  "chunk_id": "task_sta_lta_detection",
+  "instruments": "seismometers",
+  "task": "\\b(?:detect\\w*|triggers?|triggering|sta ?/ ?lta|stalta|short[- ]term average|picks?|picking|picker|(?:count\\w*|find) (?:\\w+ ){0,2}(?:earthquakes|events)|catalog\\w*)\\b",
+  "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+ },
+ {
+  "chunk_id": "task_hydrophone_spectrogram",
+  "instruments": "hydrophones",
+  "task": "\\b(?:spectrograms?|spectr\\w*|psds?|power spectral density|noise|sound levels?|soundscapes?|listen\\w*|calls?|plot\\w*|figures?|graphs?|visuali[sz]\\w*)\\b",
+  "about": "\\b(?:hydrophones?|acoustic\\w*|sound\\w*|underwater|whales?|ships?|HYDBB\\w*|HYDLF\\w*|LJ0[13][ACD]|PC0[13]A|AXBA1|AXCC1|AXEC2|HYS14|HYSB1)\\b"
  }
 ]

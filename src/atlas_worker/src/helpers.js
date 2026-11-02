@@ -525,14 +525,19 @@ const MAX_ASSET_CHUNKS = 6;
 // dataset has its own download routes (namedDas).
 // A request for code for a task ("write a script to plot the waveform of an Axial earthquake at AXCC1"): the task
 // recipe (task_recipes.json, build_task_recipes.py) whose task words and instrument words it both has, the one whose
-// task words it has most of. Asking for code, how to do it, or the task itself ("plot …") counts as a request.
+// task and instrument words it has most of. Asking for code, how to do it, or the task itself ("plot …") counts as a request.
 const TASK_REQUEST = /\b(?:scripts?|code|python|programs?|notebooks?|functions?|how (?:do|can|would|should|could) (?:i|we|you|one)|how to|write|make|show me)\b|^\s*(?:please\s+)?(?:plot|compute|calculate|make|draw|show|detect|remove|filter)\b/i;
+// Words any task may draw ("plot the noise at AXCC1") count only between tasks with the same specific words.
+const GENERIC_TASK_WORD = /^(?:plot\w*|figures?|graphs?|visuali[sz]\w*)$/;
 export function taskRecipeIds(question, tasks) {
   const q = String(question || "");
   if (!TASK_REQUEST.test(q)) return [];
+  const found = (pattern) => [...new Set((q.match(new RegExp(pattern, "gi")) || []).map((w) => w.toLowerCase()))];
+  const score = (words) => { const specific = words.filter((w) => !GENERIC_TASK_WORD.test(w)).length; return specific ? specific * 100 : words.length; };
+  // Its instrument words count too: "the noise PSD of the AXCC1 hydrophone" is the hydrophone's task, not the seismometer's.
   const scored = (tasks || []).filter((t) => new RegExp(t.about, "i").test(q))
-    .map((t) => [t, new Set((q.match(new RegExp(t.task, "gi")) || []).map((w) => w.toLowerCase())).size])
-    .filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    .map((t) => [t, score(found(t.task)), found(t.about).length * 100])
+    .filter(([, n]) => n > 0).map(([t, n, m]) => [t, n + m]).sort((a, b) => b[1] - a[1]);
   return scored.length ? [scored[0][0].chunk_id] : [];
 }
 

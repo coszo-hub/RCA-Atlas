@@ -784,7 +784,9 @@ export default {
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
-      const liveToolResult = await liveAxialCount(query, typeof body?.tz === "string" ? body.tz.slice(0, 64) : undefined);
+      // A request for code for a task ("write code to count Axial earthquakes on 15 October") gets the code, not the count.
+      const liveToolResult = taskRecipeIds(query, TASK_RECIPES).length ? null
+        : await liveAxialCount(query, typeof body?.tz === "string" ? body.tz.slice(0, 64) : undefined);
       if (liveToolResult) return response(liveToolResult, 200, cors);
       if (!env.ATLAS_API_KEY || !env.ATLAS_API_ORIGIN) {
         return response({ error: "service is not configured" }, 503, cors);

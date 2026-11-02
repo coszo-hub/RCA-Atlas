@@ -17,7 +17,7 @@
    "A pre-filter or band above Nyquist fails: the 40 Hz B and S channels and the 8 Hz M channels need a lower FREQMAX (the script caps it at 0.45 of the sampling rate).",
    "A short window cannot resolve a broadband seismometer's long periods: the script's pre-filter starts no lower than 2 divided by the record's length, so lengthen PAD to look at long-period motion.",
    "One component alone (CHANNELS = \"HHZ\") is not rotated; rotation needs all three.",
-   "MiniSEED from EarthScope can have gaps; st.merge fills short ones by interpolation, and a request with no data raises FDSNNoDataException.",
+   "MiniSEED from EarthScope can have gaps, and its records can give the sampling rate a few parts per million off (200.00006 Hz), which stops ObsPy merging them; the script rounds the rate (moving samples by milliseconds at most) and fills gaps by interpolation, so a long gap plots as a straight line. A window inside a gap ends with \"no data\".",
    "The HN channels (CMG-5T accelerometer) and HDH (hydrophone, in pascals) are other instruments at the broadband stations; HH, EH, SH and BH are the seismometers."
   ],
   "sources": [
@@ -45,6 +45,150 @@
   "match": {
    "task": "\\b(?:plot\\w*|seismograms?|(?:instrument )?response|band-?pass\\w*|filter\\w*|ground (?:motion|velocity|displacement)|velocity|displacement|acceleration|visuali[sz]\\w*|figures?|graphs?)\\b",
    "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+  }
+ },
+ {
+  "id": "seismic_noise_psd",
+  "title": "Compute and plot a seismometer's noise power spectral density (PPSD) over days",
+  "script": "recipes/seismic_noise_psd.py",
+  "instruments": "seismometers",
+  "summary": "Gets one OOI seismometer channel from EarthScope a day at a time and computes its probabilistic power spectral density with ObsPy's PPSD (McNamara and Buland 2004): the instrument response removed, power in dB relative to 1 (m/s^2)^2/Hz in one-hour windows, plotted as the probability of each power at each frequency with the median and Peterson's 1993 low and high noise models, and as a spectrogram of how the power changed over the days; it also writes the median as a CSV table and the PPSD as an .npz file.",
+  "steps": [
+   "Choose the channel: by default the station's fastest vertical seismometer channel (HHZ at a broadband station, EHZ at a short-period one), read from the station metadata.",
+   "Request one day at a time, so a long period never holds more than a day of 200 Hz data (about 70 MB) in memory; a day with no data is skipped.",
+   "Round each trace's sampling rate: EarthScope's records can give it a few parts per million off (200.00006 Hz), and PPSD skips a trace whose rate differs from the first.",
+   "Add each day to one PPSD built from the station's response (metadata=inv), which removes the instrument response itself; skip_on_gaps=True computes a PSD only where an hour has no gap, instead of filling the gap with zeros, which gives outlier PSDs.",
+   "Plot the PPSD against frequency with its median and Peterson's noise models, and the spectrogram of the hourly PSDs; write the median PSD as CSV and the PPSD as .npz, which PPSD.load_npz reads back to add more days."
+  ],
+  "change": "NETWORK and STATION for the station; CHANNEL stays None for the fastest vertical seismometer channel, unless the question names one (a horizontal such as HHN, a slower band such as BHZ, or the hydrophone HDH at a broadband station, whose PSD is then in dB relative to 1 Pa^2/Hz); START for the first day and DAYS for how many (UTC); PPSD_LENGTH for the seconds in each PSD (longer resolves lower frequencies).",
+  "pitfalls": [
+   "A seafloor seismometer's noise is not a land station's: at Hydrate Ridge and Slope Base the secondary microseism peak (0.14-0.2 Hz) is up to about 20 dB higher than at coastal stations, and below 0.03 Hz infragravity waves dominate the vertical (Hilmo and Wilcock 2020); expect the median above Peterson's low noise model there.",
+   "Below about 0.1 Hz the horizontals are dominated by tilt noise from seafloor currents, and the vertical by seafloor compliance near 0.02 Hz and by tilt (Crawford and Webb 2000): the horizontals are much noisier than the vertical at long periods.",
+   "The short-period CMG-6TF seismometers (EHZ) are flat only above about 1 Hz: their PSD below that is the response divided out of a small signal, and is not reliable at long periods.",
+   "One hour (PPSD_LENGTH = 3600) resolves down to about 0.003 Hz; the plot starts at ten times that.",
+   "Many days at 200 Hz take a while to download; for long periods a slower channel (BHZ, 40 Hz) is enough below 15 Hz."
+  ],
+  "sources": [
+   {
+    "title": "ObsPy: PPSD",
+    "url": "https://docs.obspy.org/packages/autogen/obspy.signal.spectral_estimation.PPSD.html"
+   },
+   {
+    "title": "McNamara and Buland 2004, Ambient Noise Levels in the Continental United States",
+    "url": "https://doi.org/10.1785/012003001"
+   },
+   {
+    "title": "Peterson 1993, Observations and Modeling of Seismic Background Noise",
+    "url": "https://pubs.usgs.gov/publication/ofr93322"
+   },
+   {
+    "title": "Hilmo and Wilcock 2020, Physical Sources of High-Frequency Seismic Noise on Cascadia Initiative Ocean Bottom Seismometers",
+    "url": "https://doi.org/10.1029/2020gc009085"
+   },
+   {
+    "title": "Crawford and Webb 2000, Identifying and Removing Tilt Noise from Low-Frequency Seafloor Vertical Seismic Data",
+    "url": "https://doi.org/10.1785/0119990121"
+   },
+   {
+    "title": "EarthScope FDSN web services",
+    "url": "https://service.earthscope.org"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:psds?|ppsds?|power spectr\\w*|spectral density|spectr(?:um|a|al)|noise|nlnm|nhnm|peterson|microseism\\w*|background)\\b",
+   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+  }
+ },
+ {
+  "id": "sta_lta_detection",
+  "title": "Detect earthquakes with an STA/LTA coincidence trigger across OOI seismometers, and compare with the Axial catalog",
+  "script": "recipes/sta_lta_detection.py",
+  "instruments": "seismometers",
+  "summary": "Gets the vertical channel of several OOI seismometers from EarthScope for a span of hours, bandpass filters them, runs a recursive STA/LTA (short-term over long-term average) on each, and counts a detection when enough stations trigger together (ObsPy's coincidence_trigger). It then reads the Axial Seamount Earthquake Catalog for the same hours and marks which detections are catalogued earthquakes; it writes the detections as CSV and plots them on one station's record with hourly counts beside the catalog's.",
+  "steps": [
+   "For each station, take its fastest vertical seismometer channel (HHZ or EHZ) from the station metadata, request the span with a margin of three LTA windows before it, round the sampling rate (records can give it a few ppm off) and merge, filling gaps with zeros, which do not trigger.",
+   "Bandpass each trace. The default band, 35-80 Hz, lies above fin whale calls: on the recipe's test day (15 October 2025, six hours at Axial) a 7-50 Hz band gave 191 detections, nearly all of them fin whale calls (downsweeps from about 30 to 18 Hz every 23 s, on the seismometers and hydrophones alike), while 35-80 Hz gave 40, with 6 of the catalog's 7 earthquakes (magnitudes -0.1 to 0.7). Caplan-Auerbach et al. 2017 used 7-50 Hz for Axial microearthquakes, then screened out in-water sources such as whale calls.",
+   "Run the recursive STA/LTA (STA 0.2 s, LTA 10 s) on each trace and count a detection when MIN_STATIONS stations are above ON together, until they fall below OFF (coincidence_trigger); drop detections inside the margin, where the LTA is still settling.",
+   "Read the catalog's daily hypo71 files for the span and match each detection to an earthquake that began up to 3 s before it (P waves cross Axial's caldera in a second or two).",
+   "Write the detections (time, duration, stations, the matching catalog ID and magnitude) as CSV and plot them on the first station's filtered record, with detections and catalog earthquakes per hour."
+  ],
+  "change": "STATIONS for the stations (OOI stations elsewhere, such as Hydrate Ridge's HYS11-HYS14 and HYSB1, work too, but the catalog comparison is Axial's only); START and HOURS for the span (UTC); FREQMIN and FREQMAX for the band; STA, LTA, ON, OFF and MIN_STATIONS for the trigger. Lower ON or MIN_STATIONS finds smaller earthquakes and more noise.",
+  "pitfalls": [
+   "A band that includes about 15-35 Hz triggers on fin whale calls, which can outnumber earthquakes many times over; the 35-80 Hz default avoids them but loses some of the smallest earthquakes, and needs the 200 Hz channels.",
+   "A detection is not an earthquake: compare with the catalog, and look at the record. Detections not in the catalog may be earthquakes too small to locate, or noise.",
+   "One earthquake can give more than one detection a few seconds apart (later arrivals and reverberations); the CSV gives them the same catalog ID.",
+   "The catalog is the University of Washington's live Axial catalog of located earthquakes; its newest hours may not be located yet, and it covers Axial only.",
+   "Hours of 200 Hz data from seven stations take a minute or more to download; long spans are better run a day at a time."
+  ],
+  "sources": [
+   {
+    "title": "ObsPy: coincidence_trigger",
+    "url": "https://docs.obspy.org/packages/autogen/obspy.signal.trigger.coincidence_trigger.html"
+   },
+   {
+    "title": "ObsPy trigger and picker tutorial",
+    "url": "https://docs.obspy.org/tutorial/code_snippets/trigger_tutorial.html"
+   },
+   {
+    "title": "Caplan-Auerbach et al. 2017, Explosive processes during the 2015 eruption of Axial Seamount, as recorded by seafloor hydrophones",
+    "url": "https://doi.org/10.1002/2016gc006734"
+   },
+   {
+    "title": "Axial Seamount Earthquake Catalog",
+    "url": "http://axial.ocean.washington.edu/"
+   },
+   {
+    "title": "EarthScope FDSN web services",
+    "url": "https://service.earthscope.org"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:detect\\w*|triggers?|triggering|sta ?/ ?lta|stalta|short[- ]term average|picks?|picking|picker|(?:count\\w*|find) (?:\\w+ ){0,2}(?:earthquakes|events)|catalog\\w*)\\b",
+   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+  }
+ },
+ {
+  "id": "hydrophone_spectrogram",
+  "title": "Plot a calibrated spectrogram of an OOI hydrophone, broadband or low-frequency",
+  "script": "recipes/hydrophone_spectrogram.py",
+  "instruments": "hydrophones",
+  "summary": "Gets a span of an OOI hydrophone's record with OOIPy, the RCA's Python toolbox for its hydrophones: a broadband hydrophone (64 kHz) from the OOI raw-data archive, or a low-frequency one (200 Hz, at the broadband seismic stations) from EarthScope. It computes a spectrogram whose columns are Welch power spectral densities with median averaging, corrected by the hydrophone's frequency-dependent sensitivity from its calibration sheet, in dB relative to 1 uPa^2/Hz, plots it on a log frequency axis and writes it as NetCDF.",
+  "steps": [
+   "Choose the hydrophone: a broadband one by its node (LJ03A Axial Base seafloor, PC03A Axial Base 200 m platform, LJ01A Oregon Slope Base seafloor, PC01A Slope Base 200 m platform, LJ01C Oregon Offshore, LJ01D Oregon Shelf), or a low-frequency one by its seismic station (AXBA1, AXCC1, AXEC2, HYS14, HYSB1).",
+   "Download the span with ooipy.get_acoustic_data (broadband, from the archive's 5-minute MiniSEED files) or ooipy.get_acoustic_data_LF (low-frequency, from EarthScope).",
+   "For a broadband hydrophone, find which hydrophone (asset ID) was deployed then in OOI's deployments list: OOIPy 1.3.0 does this itself, but fails for the hydrophone deployed now, whose end time is blank, so the script looks it up and gives it to OOIPy.",
+   "Compute the spectrogram with Welch's method and median averaging over AVERAGE seconds per column (data.compute_spectrogram): the median keeps the broadband hydrophones' ADCP pings from dominating, as Ragland et al. 2022 explain, and OOIPy applies the sensitivity correction, giving dB relative to 1 uPa^2/Hz.",
+   "Plot the asked frequencies on a log axis, with a colour scale spanning every frequency's typical level, and write the spectrogram as NetCDF."
+  ],
+  "change": "HYDROPHONE for the hydrophone (a broadband node or a low-frequency station, as listed in the script), START and MINUTES for the span (UTC), FMIN and FMAX for the frequencies plotted; AVERAGE and L stay None unless the question asks for a time or frequency resolution (None gives 1 s and 3.9 Hz bins for a broadband hydrophone, 10 s and 0.39 Hz for a low-frequency one).",
+  "pitfalls": [
+   "Broadband data are large: each 5-minute file is about 38 MB, so an hour is about 450 MB to download; for hours or days use the low-frequency hydrophones, or a longer AVERAGE on a few minutes at a time.",
+   "A low-frequency hydrophone samples at 200 Hz, so its spectrogram stops at 100 Hz; a broadband one's falls off above about 25 kHz, where the digitizer's anti-alias filter cuts in.",
+   "OOIPy 1.3.0 is pinned: the script works around its calibration lookup for the current deployment, which a later version may change.",
+   "Fin whale calls (about 18-30 Hz) fill the low-frequency band in autumn and winter; at 3.9 Hz bins a broadband spectrogram shows them only roughly, so use a low-frequency hydrophone or a larger L to see them.",
+   "A span spanning a gap in the archive returns less data or none; OOIPy merges what there is."
+  ],
+  "sources": [
+   {
+    "title": "OOIPy on GitHub",
+    "url": "https://github.com/Ocean-Data-Lab/ooipy"
+   },
+   {
+    "title": "OOIPy 1.3.0 on PyPI",
+    "url": "https://pypi.org/project/ooipy/1.3.0/"
+   },
+   {
+    "title": "Ragland et al. 2022, An overview of ambient sound using Ocean Observatories Initiative hydrophones",
+    "url": "https://doi.org/10.1121/10.0009836"
+   },
+   {
+    "title": "OOI Cabled Array hydrophone deployments",
+    "url": "https://github.com/OOI-CabledArray/deployments"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:spectrograms?|spectr\\w*|psds?|power spectral density|noise|sound levels?|soundscapes?|listen\\w*|calls?|plot\\w*|figures?|graphs?|visuali[sz]\\w*)\\b",
+   "about": "\\b(?:hydrophones?|acoustic\\w*|sound\\w*|underwater|whales?|ships?|HYDBB\\w*|HYDLF\\w*|LJ0[13][ACD]|PC0[13]A|AXBA1|AXCC1|AXEC2|HYS14|HYSB1)\\b"
   }
  }
 ]

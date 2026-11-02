@@ -912,6 +912,20 @@ test("a request for code for a task gets that task's recipe: its task and instru
   assert.deepEqual(taskRecipeIds("What does the waveform of an Axial earthquake look like?", TASKS), []);   // no request for code
   assert.deepEqual(taskRecipeIds("Write a script to download CTD temperature at Axial Base", TASKS), []);   // no task of it
   assert.deepEqual(taskRecipeIds("a script for AXBA1 waveforms", TASKS), []);   // getting the data: its download recipe
+  const psd = ["task_seismic_noise_psd"];
+  assert.deepEqual(taskRecipeIds("Write code to compute the PPSD of AXCC1 for a week", TASKS), psd);
+  assert.deepEqual(taskRecipeIds("plot the noise at AXCC1", TASKS), psd);   // plot is any task's; noise is this one's
+  assert.deepEqual(taskRecipeIds("How do I make a power spectral density of the HYSB1 seismometer compared with Peterson's noise models?", TASKS), psd);
+  const sta = ["task_sta_lta_detection"];
+  assert.deepEqual(taskRecipeIds("Write a script to detect earthquakes at Axial yesterday with STA/LTA", TASKS), sta);
+  assert.deepEqual(taskRecipeIds("Write code to count Axial earthquakes on 15 October 2025", TASKS), sta);   // code, not the live count
+  assert.deepEqual(taskRecipeIds("How many earthquakes were there at Axial yesterday?", TASKS), []);   // the live count
+  const hyd = ["task_hydrophone_spectrogram"];
+  assert.deepEqual(taskRecipeIds("Write code for a spectrogram of the Axial Base broadband hydrophone", TASKS), hyd);
+  assert.deepEqual(taskRecipeIds("How do I plot fin whale calls on the AXCC1 hydrophone?", TASKS), hyd);
+  assert.deepEqual(taskRecipeIds("Python code for the noise PSD of the AXCC1 hydrophone", TASKS), hyd);   // the hydrophone's
+  assert.deepEqual(taskRecipeIds("Python code for the noise PSD of AXCC1", TASKS), psd);                  // the seismometer's
+  assert.deepEqual(taskRecipeIds("Plot yesterday's biggest earthquake at AXEC2", TASKS), wave);
   // two tasks that match: the one with more of its task words
   const two = [{ chunk_id: "a", about: "seism", task: "\\b(?:plot)\\b" }, { chunk_id: "b", about: "seism", task: "\\b(?:plot|psd|noise)\\b" }];
   assert.deepEqual(taskRecipeIds("plot the noise PSD of a seismometer", two), ["b"]);
