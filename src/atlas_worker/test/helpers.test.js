@@ -712,6 +712,9 @@ test("other questions ask for no asset records", () => {
   }
   assert.equal(isAssetQuestion("When was the BOTPT last recovered?"), true);
   assert.equal(isAssetQuestion("Which CTDs are Sea-Bird?"), true);
+  // "self-calibrating" names the SCPR, and the absolute SCPR (ASCPR) is a campaign instrument, not the cabled one
+  assert.equal(isAssetQuestion("How accurate are the absolute self-calibrating pressure recorder (ASCPR) campaign measurements off Newport?"), false);
+  assert.deepEqual(assetChunkIds("How accurate are the absolute self-calibrating pressure recorder (ASCPR) campaign measurements off Newport, Oregon, and where were they made?", ASSETS), []);
 });
 
 test("an asset question fetches the directory's records by id and leads the evidence with them", async (t) => {

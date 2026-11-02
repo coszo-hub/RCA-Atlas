@@ -472,7 +472,9 @@ const LOCATION_WORDS = /\b(?:where|locat\w*|positions?|coordinates?|latitude|lon
 const SOURCED_WORDS = /\b(?:serial|s\/n|components?|gauges?|parts?|history|earlier|previous|before|first|original|20[01]\d)\b/i;
 // Makes and models ask the same records: "which CTDs are Sea-Bird SBE 16plus?".
 const MAKERS = /\b(?:sea-?bird|sbe\s?\d+\w*|teledyne|rdi|aanderaa|nortek|sunburst|satlantic|wet ?labs|g[uü]ralp|paroscientific|nobska|kongsberg|simrad|hti|benthos|sonardyne|imagenex|nanometrics|turner)\b/i;
-export const isAssetQuestion = (question) => ASSET_WORDS.test(String(question || "")) || MAKERS.test(String(question || ""));
+// "Self-calibrating" names the SCPR; it asks nothing about calibrations.
+const unnamed = (question) => String(question || "").replace(/\bself[- ]calibrating\b/gi, " ");
+export const isAssetQuestion = (question) => ASSET_WORDS.test(unnamed(question)) || MAKERS.test(String(question || ""));
 
 // The asset-management chunks a question needs, by id, from the directory the asset builder writes
 // (asset_directory.json): the named instrument's record (and its calibrations when asked), else the record of every
@@ -495,7 +497,8 @@ const ASSET_PLATFORMS = [[/\bshallow profiler\b|\b200 m platform\b/i, /Shallow P
 const ASSET_TYPES = [
   [/\bctds?\b/i, /^CTD$/], [/\badcps?\b|\bcurrent profilers?\b|\bvelocity profilers?\b/i, /ADCP|Velocity Profiler/],
   [/\bbotpts?\b|\bbpts?\b|bottom pressure and tilt|\btilt\b/i, /^Bottom Pressure and Tilt$/],
-  [/\bscprs?\b|self[- ]calibrating pressure/i, /^Self-Calibrating Pressure Recorder$/],
+  // The absolute SCPR (ASCPR) is a campaign instrument carried by ROV, not the cabled SCPR.
+  [/\bscprs?\b|(?<!absolute\s)self[- ]calibrating pressure/i, /^Self-Calibrating Pressure Recorder$/],
   [/\baccelerometers?\b|\bscta\b/i, /Accelerometer/], [/\ba-0-a\b|\ba0a\b/i, /^A-0-A/],
   [/broadband hydrophones?/i, /^Broadband Acoustic Receiver/], [/low[- ]frequency hydrophones?/i, /^Low Frequency Acoustic Receiver/],
   [/\bhydrophones?\b/i, /Hydrophone/], [/broadband (?:ocean bottom )?seismometers?|\bobsbb\b/i, /^Broadband Ocean Bottom Seismometer$/],
@@ -745,7 +748,7 @@ export function assetChunkIds(question, directory) {
   if (instruments.length && instruments.length <= 3) {
     for (const i of instruments) {
       ids.push(`ooi_assets_${i.refdes}`);
-      if (i.calibration && CALIBRATION_WORDS.test(q)) ids.push(`ooi_assets_calibration_${i.refdes}`);
+      if (i.calibration && CALIBRATION_WORDS.test(unnamed(q))) ids.push(`ooi_assets_calibration_${i.refdes}`);
       // Its components' serial numbers from papers and pages, each cited to its source; a location question gets only
       // those that give its position (a paper's beside the asset record's), not an earlier unit's.
       ids.push(...((!LOCATION_WORDS.test(q) || SOURCED_WORDS.test(q)) ? i.sourced || [] : i.located || []));
