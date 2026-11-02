@@ -61,6 +61,7 @@ function CodeBlock({ lang, text }) {
 export default function AskPanel({ bundle, evidence, activeN, hoverN, panelOpen = false, onShow, onHover, onSelect, onOpenChange }) {
   const [open, setOpen] = useState(askStartsOpen);
   const [entries, setEntries] = useState([]), [draft, setDraft] = useState(""), [model, setModel] = useState("auto");
+  const [code, setCode] = useState(false);   // the Code toggle: answers are scripts from tested recipes
   const busy = entries.some(e => e.status === "pending");
   const threadRef = useRef(null), abortRef = useRef(null), nextId = useRef(1);
 
@@ -74,11 +75,11 @@ export default function AskPanel({ bundle, evidence, activeN, hoverN, panelOpen 
   }, [open, onOpenChange]);
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const run = async (id, q, m) => {
+  const run = async (id, q, m, c) => {
     abortRef.current?.abort();
     const ctl = (abortRef.current = new AbortController());
     let r;
-    try { r = await askAtlas(q, { model: m, signal: ctl.signal }); } catch { return; }   // aborted: a newer question took over
+    try { r = await askAtlas(q, { model: m, code: c, signal: ctl.signal }); } catch { return; }   // aborted: a newer question took over
     const ev = r.ok ? { id, ...resolveEvidence(r.data, bundle) } : null;
     setEntries(list => list.map(e => (e.id !== id ? e : r.ok ? { ...e, status: "ok", data: r.data, ms: r.ms, ev } : { ...e, status: "error", message: r.message })));
     if (ev) onShow(ev);
@@ -87,11 +88,11 @@ export default function AskPanel({ bundle, evidence, activeN, hoverN, panelOpen 
     const q = question.trim();
     if (q.length < 2 || busy) return;
     const id = nextId.current++;
-    setEntries(list => [...list, { id, q, model, status: "pending" }]);
+    setEntries(list => [...list, { id, q, model, code, status: "pending" }]);
     setDraft("");
-    run(id, q, model);
+    run(id, q, model, code);
   };
-  const retry = e => { setEntries(list => list.map(x => (x.id === e.id ? { ...x, status: "pending" } : x))); run(e.id, e.q, e.model); };
+  const retry = e => { setEntries(list => list.map(x => (x.id === e.id ? { ...x, status: "pending" } : x))); run(e.id, e.q, e.model, e.code); };
 
   // The newest question scrolls into view (its headline at the top) when asked and when answered.
   const last = entries[entries.length - 1];
@@ -146,8 +147,10 @@ export default function AskPanel({ bundle, evidence, activeN, hoverN, panelOpen 
       </div>
       <form className="ask-composer" onSubmit={e => { e.preventDefault(); ask(draft); }}>
         <textarea data-ask-composer="" aria-label="Ask a question" rows="1" value={draft}
-          placeholder={entries.length ? "Ask a follow-up…" : "Ask the Atlas…"} onChange={e => setDraft(e.target.value)}
+          placeholder={code ? "Ask for code…" : entries.length ? "Ask a follow-up…" : "Ask the Atlas…"} onChange={e => setDraft(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); ask(draft); } }} />
+        <button type="button" className="ask-code-toggle" aria-pressed={code} onClick={() => setCode(c => !c)}
+          title="Answer with a script from a tested recipe">Code</button>
         <label className="ask-model"><span className="sr-only">Answer model</span>
           <select aria-label="Answer model" value={model} onChange={e => setModel(e.target.value)}>
             {MODELS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}

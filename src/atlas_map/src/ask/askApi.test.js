@@ -13,6 +13,12 @@ describe("askAtlas", () => {
     expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual({ query: "What is at Axial?", answer_mode: "evidence", model: "gemini-2.5-flash", tz: "America/Los_Angeles" });
     expect(r).toEqual({ ok: true, data: { answer: "A.", answer_citations: [] }, ms: 900 });
   });
+  it("the Code toggle asks for code", async () => {
+    const fetchImpl = respond(200, { answer: "A." });
+    await askAtlas("q?", { code: true, tz: "UTC", fetchImpl });
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toMatchObject({ answer_mode: "code" });
+    expect(modelLabel("RCA Atlas code recipes")).toBe("code recipes");
+  });
   it("the Worker's error is stated plainly", async () => {
     const r = await askAtlas("q?", { fetchImpl: respond(503, { error: "answer temporarily unavailable" }) });
     expect(r).toEqual({ ok: false, message: "Answer temporarily unavailable (HTTP 503)." });

@@ -128,7 +128,7 @@ def build(tasks: list[dict]) -> None:
         "corpus": "RCA Atlas task recipes", "built_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "task_count": len(passed), "chunk_count": len(chunks), "entity_count": len(entities),
         "relationship_count": len(relationships), "source_document_count": len(sources)}, indent=2))
-    WORKER.write_text(json.dumps([{"chunk_id": f"task_{t['id']}", "instruments": t.get("instruments"), **t["match"]}
+    WORKER.write_text(json.dumps([{"chunk_id": f"task_{t['id']}", "title": t["title"], "instruments": t.get("instruments"), **t["match"]}
                                   for t in passed], indent=1) + "\n")
     print(f"{len(passed)} task recipes of {len(tasks)}")
 

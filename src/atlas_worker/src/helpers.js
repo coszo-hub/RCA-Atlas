@@ -529,9 +529,10 @@ const MAX_ASSET_CHUNKS = 6;
 const TASK_REQUEST = /\b(?:scripts?|code|python|programs?|notebooks?|functions?|how (?:do|can|would|should|could) (?:i|we|you|one)|how to|write|make|show me)\b|^\s*(?:please\s+)?(?:plot|compute|calculate|make|draw|show|detect|remove|filter)\b/i;
 // Words any task may draw ("plot the noise at AXCC1") count only between tasks with the same specific words.
 const GENERIC_TASK_WORD = /^(?:plot\w*|figures?|graphs?|visuali[sz]\w*)$/;
-export function taskRecipeIds(question, tasks) {
+// In code mode (the chat's Code toggle) every question asks for code, in whatever words.
+export function taskRecipeIds(question, tasks, { code = false } = {}) {
   const q = String(question || "");
-  if (!TASK_REQUEST.test(q)) return [];
+  if (!code && !TASK_REQUEST.test(q)) return [];
   const found = (pattern) => [...new Set((q.match(new RegExp(pattern, "gi")) || []).map((w) => w.toLowerCase()))];
   const score = (words) => { const specific = words.filter((w) => !GENERIC_TASK_WORD.test(w)).length; return specific ? specific * 100 : words.length; };
   // Its instrument words count too: "the noise PSD of the AXCC1 hydrophone" is the hydrophone's task, not the seismometer's.
@@ -539,6 +540,46 @@ export function taskRecipeIds(question, tasks) {
     .map((t) => [t, score(found(t.task)), found(t.about).length * 100])
     .filter(([, n]) => n > 0).map(([t, n, m]) => [t, n + m]).sort((a, b) => b[1] - a[1]);
   return scored.length ? [scored[0][0].chunk_id] : [];
+}
+
+// A task answer's script is the task recipe's tested script with the model's settings: its top-level constants
+// (STATION, START, VARIABLES ...), each as the model wrote it. Copying 60 lines, the model dropped a quote now and
+// then (protocol="tabledap, response="csv"); every other line is the recipe's own. A setting the model broke (an odd
+// number of double quotes) keeps the recipe's.
+const PYTHON_BLOCK = /```python\n([\s\S]*?)```/;
+function settings(code) {
+  const lines = code.split("\n"), found = new Map();
+  const opened = (line) => {
+    const bare = line.replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, "").replace(/#.*$/, "");
+    return (bare.match(/[([{]/g) || []).length - (bare.match(/[)\]}]/g) || []).length;
+  };
+  for (let i = 0; i < lines.length; i += 1) {
+    const m = /^([A-Z][A-Z0-9_]*(?:\s*,\s*[A-Z][A-Z0-9_]*)*)\s*=(?!=)/.exec(lines[i]);
+    if (!m) continue;
+    let end = i, depth = opened(lines[i]);
+    while (depth > 0 && end + 1 < lines.length) { end += 1; depth += opened(lines[end]); }
+    const name = m[1].replace(/\s+/g, "");
+    if (!found.has(name)) found.set(name, { start: i, end, text: lines.slice(i, end + 1) });
+    i = end;
+  }
+  return found;
+}
+export function withTestedScript(answer, recipeText) {
+  const tested = PYTHON_BLOCK.exec(String(recipeText || "")), written = PYTHON_BLOCK.exec(String(answer || ""));
+  if (!tested || !written) return answer;
+  const mine = settings(written[1]), lines = tested[1].split("\n");
+  const balanced = (text) => text.every((line) => (line.replace(/\\"/g, "").match(/"/g) || []).length % 2 === 0);
+  const edits = [...settings(tested[1])].filter(([name]) => mine.has(name) && balanced(mine.get(name).text))
+    .sort((a, b) => b[1].start - a[1].start);
+  for (const [name, at] of edits) lines.splice(at.start, at.end - at.start + 1, ...mine.get(name).text);
+  return String(answer).replace(PYTHON_BLOCK, () => "```python\n" + lines.join("\n") + "```");
+}
+
+// Code mode with no tested recipe for the question: say which tasks have one, rather than write untested code.
+export function codeModeAnswer(tasks) {
+  return "Code mode writes code only from tested recipes, and none matches this question. Tasks with a tested recipe:\n"
+    + (tasks || []).map((t) => `- ${t.title}`).join("\n")
+    + "\nAsk for one of these, naming the instrument, place and time; or name an instrument to get a script that downloads its data.";
 }
 
 export function isDataAccessQuestion(question) {
@@ -833,7 +874,7 @@ export function liveStatusHit(hit, refdes, live) {
   return { chunk_id: `LIVE-${refdes}`, collection_id: "live_status", title: `Live status: ${name}`, text, citations: hit.citations || [], live: true };
 }
 
-export function answerPrompt({ question, evidence, sources, mode, product = null, access = false, stations = [] }) {
+export function answerPrompt({ question, evidence, sources, mode, product = null, access = false, stations = [], today = new Date().toISOString().slice(0, 10) }) {
   const recipes = /\(download recipe\) \| sources:/.test(evidence);
   const task = /\(task recipe\) \| sources:/.test(evidence);
   const typeOverview = /^Where to download .* data: every .* \(download recipe\) \| sources:/m.test(evidence);
@@ -869,12 +910,12 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
   // A download recipe: the easiest route for what was asked, then a script for this dataset and timeframe from the
   // recipe's tested code, changing only the timeframe and variables.
   const recipeInstruction = recipes
-    ? "Records marked (download recipe) give, for one instrument, its tested routes to the data, easiest first, each with a Python script. Answer with the route that best fits what was asked: the one marked Easiest unless the question wants something it does not give (every sample or a variable only another route has; the original files; waveforms). Say in one sentence why that route. Then write one complete Python script for the asked instrument, variables and timeframe, in a single ```python fenced block: copy that route's script from the recipe and change only its START and END (and its VARIABLES or e.variables to the asked ones, using only variable names the recipe lists). Times are UTC; when the question gives no timeframe, use the last day before the recipe's coverage ends and say so. Never invent a dataset ID, stream, variable, URL or file name the recipe does not give, and never put a password, username or token in a script. After the script, one line each for at most two other routes the recipe gives. Cite the recipe. "
+    ? `Records marked (download recipe) give, for one instrument, its tested routes to the data, easiest first, each with a Python script. Answer with the route that best fits what was asked: the one marked Easiest unless the question wants something it does not give (every sample or a variable only another route has; the original files; waveforms). Say in one sentence why that route. Then write one complete Python script for the asked instrument, variables and timeframe, in a single \`\`\`python fenced block: copy that route's script from the recipe and change only its START and END (and its VARIABLES or e.variables to the asked ones, using only variable names the recipe lists). Times are UTC, and today is ${today}; when the question gives no timeframe, use the last day before the recipe's coverage ends and say so. Never invent a dataset ID, stream, variable, URL or file name the recipe does not give, and never put a password, username or token in a script. After the script, one line each for at most two other routes the recipe gives. Cite the recipe. `
     + (typeOverview ? "The question names no place, and the record headed Where to download ... data: every ... lists every instrument of that type. Begin by saying how many there are and, in one hyphen bullet each, where each one is and what it is on (seafloor, the 200 m platform, or a profiler), with its dataset ID or other easiest route, as that record gives them. Then give the script from the example recipe for its instrument, saying which instrument it is for, and say in one sentence that for another instrument the script changes only the dataset ID (and the variable names, which that instrument's own recipe lists). Ask no question back. " : "")
     : "";
   // A task recipe: its tested script, changed only where its To change line says, every processing step kept.
   const taskInstruction = task
-    ? "The record marked (task recipe) gives, for the asked task, its steps, a Python script that was run, what to change in it, its pitfalls and the instruments it works for; a record marked (download recipe), when there is one, gives the asked instrument's channels or dataset. Begin with two or three sentences on what the script does and why each processing step is there, as the recipe's steps say. Then write one complete Python script in a single ```python fenced block: copy the task recipe's script and change only the values its To change line names, to the asked station or instrument, channels, time and parameters, using only station codes, channels, dataset IDs and variable names the evidence gives. Keep every processing step and comment of the script. When the question gives no time, keep the script's example time and say so. Never invent a station, channel, dataset ID, URL or parameter the evidence does not give, and never put a password, username or token in a script. After the script, at most three hyphen bullets from the recipe's pitfalls that matter for what was asked. Cite the task recipe, and cite a paper where a value comes from it. "
+    ? `The record marked (task recipe) gives, for the asked task, its steps, a Python script that was run, what to change in it, its pitfalls and the instruments it works for; a record marked (download recipe), when there is one, gives the asked instrument's channels or dataset. Begin with two or three sentences on what the script does and why each processing step is there, as the recipe's steps say. Then write one complete Python script in a single \`\`\`python fenced block: copy the task recipe's script and change only the values its To change line names, to the asked station or instrument, channels, time and parameters, using only station codes, channels, dataset IDs and variable names the evidence gives. Keep every processing step and comment of the script. When the question gives no time, keep the script's example time and say so. Never invent a station, channel, dataset ID, URL or parameter the evidence does not give, and never put a password, username or token in a script. Today is ${today} (UTC): a time such as yesterday or last week is counted from it. After the script, at most three hyphen bullets from the recipe's pitfalls that matter for what was asked; end there, with no note on what the evidence lacks, as the script fetches the data itself. Cite the task recipe, and cite a paper where a value comes from it. `
     : "";
   const compactInstruction = task ? taskInstruction : recipes ? recipeInstruction : access ? accessInstruction : mode === "compact"
     ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it by its source's title, with its years, coverage and file formats, cited with its source number; when one dataset has several numbered sources (download routes), add one hyphen bullet per source, giving its name and only what the evidence ties to that source itself. Sub-folders that the evidence names inside one source (such as the 2021 dataset's OptaSense and Silixa folders) are described in one bullet of that dataset, not bullets of their own. Add one bullet for the folder layout or a caveat (such as very many files per day) when the evidence gives one. Include every numbered download source; never drop one. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
@@ -885,7 +926,7 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";
   const citationInstruction = "Cite the evidence with the bracketed source numbers [n] from the evidence headers (for example [2] or [1, 3]), placed directly after the claim they support. Use only those numbers. Do not include chunk IDs, source IDs, database identifiers, URLs, titles in brackets, or any other provenance notation in the answer text; the interface renders the numbered source list separately below the answer.";
-  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction}${stationInstruction}${positionInstruction} ${overviewInstruction} ${liveInstruction} ${papersInstruction} ${formatInstruction} ${mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "If the evidence leaves part of the question unanswered, say in one short closing section what is missing. When the evidence answers the question fully, add no such section and do not hedge a supported answer. A total, maximum, ranking or comparison over a period (a year, or since 2015) is complete only if the evidence covers every part of that period: when it covers some months of a year, give the figure for the months covered, name them, and say the others are missing; never present a partial sum as the total."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
+  return `Retrieved RCA Atlas evidence:\n\n${evidence}\n\n---\nQuestion: ${question}\n\nRCA Atlas defaults to the OOI Regional Cabled Array and COSZO. Unless the user explicitly asks for a global comparison, answer in that scope and exclude tangential sites or literature outside it. First compare the individual named records in the evidence against the question. Then answer the user's exact question directly. Do not lead with a generic instrument definition when the user asks which instruments exist or where they are. ${compactInstruction}${stationInstruction}${positionInstruction} ${overviewInstruction} ${liveInstruction} ${papersInstruction} ${formatInstruction} ${task ? "" : mode === "compact" ? "If a requested dataset is missing from the evidence, say so in one sentence." : "If the evidence leaves part of the question unanswered, say in one short closing section what is missing. When the evidence answers the question fully, add no such section and do not hedge a supported answer. A total, maximum, ranking or comparison over a period (a year, or since 2015) is complete only if the evidence covers every part of that period: when it covers some months of a year, give the figure for the months covered, name them, and say the others are missing; never present a partial sum as the total."} ${citationInstruction} Evidence headers mark scientific literature and websites. When sources disagree about a fact or number, give the scientific literature's value and cite it; a website, news post or blog that reports it differently does not override the paper. Answer each quantity the question asks for with the value a source states for that same quantity: do not substitute a related finding (a range where one effect is weak for the stated peak or best value, a total for a subset), and do not attach one study's sites, instruments or depths to another study. Do not invent live values or tool results. Evidence sources available to you: ${sourceListText}`;
 }
 
 // The map places a paper by the atlas sites its full text names most (the passage search returns them): they are

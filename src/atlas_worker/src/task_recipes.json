@@ -1,48 +1,56 @@
 [
  {
   "chunk_id": "task_earthquake_waveform",
+  "title": "Plot an earthquake's waveform at an OOI seismometer, with the instrument response removed and a bandpass filter",
   "instruments": "seismometers",
   "task": "\\b(?:plot\\w*|seismograms?|(?:instrument )?response|band-?pass\\w*|filter\\w*|ground (?:motion|velocity|displacement)|velocity|displacement|acceleration|visuali[sz]\\w*|figures?|graphs?)\\b",
   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
  },
  {
   "chunk_id": "task_seismic_noise_psd",
+  "title": "Compute and plot a seismometer's noise power spectral density (PPSD) over days",
   "instruments": "seismometers",
   "task": "\\b(?:psds?|ppsds?|power spectr\\w*|spectral density|spectr(?:um|a|al)|noise|nlnm|nhnm|peterson|microseism\\w*|background)\\b",
   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
  },
  {
   "chunk_id": "task_sta_lta_detection",
+  "title": "Detect earthquakes with an STA/LTA coincidence trigger across OOI seismometers, and compare with the Axial catalog",
   "instruments": "seismometers",
   "task": "\\b(?:detect\\w*|triggers?|triggering|sta ?/ ?lta|stalta|short[- ]term average|picks?|picking|picker|(?:count\\w*|find) (?:\\w+ ){0,2}(?:earthquakes|events)|catalog\\w*)\\b",
   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
  },
  {
   "chunk_id": "task_hydrophone_spectrogram",
+  "title": "Plot a calibrated spectrogram of an OOI hydrophone, broadband or low-frequency",
   "instruments": "hydrophones",
   "task": "\\b(?:spectrograms?|spectr\\w*|psds?|power spectral density|noise|sound levels?|soundscapes?|listen\\w*|calls?|plot\\w*|figures?|graphs?|visuali[sz]\\w*)\\b",
   "about": "\\b(?:hydrophones?|acoustic\\w*|sound\\w*|underwater|whales?|ships?|HYDBB\\w*|HYDLF\\w*|LJ0[13][ACD]|PC0[13]A|AXBA1|AXCC1|AXEC2|HYS14|HYSB1)\\b"
  },
  {
   "chunk_id": "task_axial_uplift",
+  "title": "Compute and plot Axial Seamount's uplift (inflation) from the bottom pressure instruments, with uplift rates",
   "instruments": null,
   "task": "\\b(?:uplift\\w*|inflat\\w*|deflat\\w*|deformation|deforming|subsid\\w*|detid\\w*|tides?|tidal|depth change|rates?|differential|plot\\w*|figures?|graphs?)\\b",
   "about": "\\b(?:axial|botpt\\w*|bottom pressure|pressure|bprs?|MJ03[BDEF]|caldera|seafloor depth|volcano)\\b"
  },
  {
   "chunk_id": "task_profiler_ctd_section",
+  "title": "Plot a shallow profiler's CTD as a depth-time section and a T-S diagram",
   "instruments": null,
   "task": "\\b(?:sections?|profiles?|t-?s(?: diagram| plot)?|temperature[- ]salinity|stratification|water column|depth[- ]time|hovm\\w*ller|plot\\w*|figures?|graphs?|contour\\w*)\\b",
   "about": "\\b(?:shallow profilers?|profil\\w*|SF0[13]A|science pod|water column|t-?s diagram|temperature[- ]salinity)\\b"
  },
  {
   "chunk_id": "task_qc_time_series",
+  "title": "Plot an OOI instrument's time series without its QARTOD-failed samples, with daily (or hourly, weekly) means",
   "instruments": null,
   "task": "\\b(?:time ?series|daily|hourly|weekly|monthly|averag\\w*|means?|qartod|quality (?:flags?|control)|qc|flag\\w*|clean\\w*|trends?|plot\\w*|figures?|graphs?)\\b",
   "about": "\\b(?:ctds?|temperatures?|salinity|oxygen|ph|pco2|chlorophyll|fluoromet\\w*|turbidity|nitrate|par|currents?|adcps?|velocity|conductivity|density|pressure|sensors?|instruments?|data ?sets?|erddap|ooi-[a-z0-9-]+)\\b"
  },
  {
   "chunk_id": "task_adcp_currents",
+  "title": "Plot an ADCP's current speed and direction against depth and time",
   "instruments": null,
   "task": "\\b(?:currents?|speed|direction|velocit\\w*|flow\\w*|tidal currents?|profiles?|plot\\w*|figures?|graphs?)\\b",
   "about": "\\b(?:adcps?|acoustic doppler|current meters?|current profilers?|currents?|ADCP\\w+|VADCP\\w*)\\b"

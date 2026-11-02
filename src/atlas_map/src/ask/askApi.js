@@ -10,18 +10,19 @@ export const MODELS = [
   ["groq-gpt-oss-120b", "GPT-OSS 120B"], ["groq-qwen3-8-27b", "Qwen3 27B"], ["ooi-gemma-4-26b", "OOI Gemma 4 26B"], ["gpt-5.4-mini", "GPT-5.4 mini"],
 ];
 
-const LABELS = { "axial_count_events (live catalog)": "live catalog", "RCA Atlas graph route": "graph route",
+const LABELS = { "axial_count_events (live catalog)": "live catalog", "RCA Atlas graph route": "graph route", "RCA Atlas code recipes": "code recipes",
   "RCA Atlas graph evidence (no LLM)": "no LLM", "RCA Atlas evidence routing": "evidence route" };
 export const modelLabel = model => LABELS[model] ?? model ?? "";
 
-// tz: the asker's IANA zone, so "today" and "yesterday" in a catalog question are their days, not UTC's.
+// tz: the asker's IANA zone, so "today" and "yesterday" in a catalog question are their days, not UTC's. code: the
+// Code toggle, which asks for a script from a tested task or download recipe whatever the question's words.
 const localZone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined; } catch { return undefined; } };
-export async function askAtlas(question, { model = "auto", tz = localZone(), signal, fetchImpl = fetch, now = () => performance.now() } = {}) {
+export async function askAtlas(question, { model = "auto", code = false, tz = localZone(), signal, fetchImpl = fetch, now = () => performance.now() } = {}) {
   const t0 = now();
   let res;
   try {
     res = await fetchImpl(ASK_URL, { method: "POST", signal, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: question, answer_mode: "evidence", model, tz }) });
+      body: JSON.stringify({ query: question, answer_mode: code ? "code" : "evidence", model, tz }) });
   } catch (err) {
     if (err?.name === "AbortError") throw err;
     return { ok: false, message: "The Atlas answer service could not be reached." };

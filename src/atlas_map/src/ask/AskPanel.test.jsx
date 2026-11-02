@@ -233,4 +233,22 @@ describe("AskPanel", () => {
     expect(within(pick).getAllByRole("option").map(o => o.value)).toContain("groq-gpt-oss-120b");
     expect(pick).toHaveValue("auto");
   });
+
+  it("the Code toggle asks for code: answer_mode code, and the composer says so; a retry keeps it", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ok(inflation2)));
+    render(<Harness />);
+    const toggle = screen.getByRole("button", { name: "Code" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("textbox", { name: /Ask/ })).toHaveAttribute("placeholder", "Ask for code…");
+    await askIt("Axial's inflation this year");
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject({ answer_mode: "code" });
+    fireEvent.click(toggle);
+    await waitFor(() => expect(screen.getByText(/which record the seafloor rising/)).toBeInTheDocument());
+    await askIt("And the rim?");
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toMatchObject({ answer_mode: "evidence" });
+  });
 });

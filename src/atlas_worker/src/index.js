@@ -2,7 +2,7 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { RECIPE_COLLECTION, TASK_COLLECTION, taskRecipeIds, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, orientationStations, placeStations, orientationForStations, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { RECIPE_COLLECTION, TASK_COLLECTION, taskRecipeIds, codeModeAnswer, withTestedScript, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, orientationStations, placeStations, orientationForStations, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
@@ -423,13 +423,15 @@ export function typeRecipeIds(refdes) {
   return [...overviews, ...(example ? [example] : [])];
 }
 
-async function dataAccessRecords(question, env) {
+async function dataAccessRecords(question, env, code = false) {
   const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
-  // A task's recipe, and the download recipe of the instrument the question names (its channels or dataset), if any:
-  // the task recipe lists the instruments it works for, so a place alone needs no more.
-  const tasks = taskRecipeIds(question, TASK_RECIPES);
+  // A task's recipe, and the download recipe of the instrument the question names (its channels or dataset), if any.
+  // A task recipe that lists the instruments it works for (the seismometers) needs no more for a place alone; for
+  // the others, the instrument the question describes ("the Axial Base seafloor CTD") gives its dataset and variables.
+  const tasks = taskRecipeIds(question, TASK_RECIPES, { code });
   if (tasks.length) {
-    const named = recipeChunkIds(question, []).slice(0, 1);
+    const listed = TASK_RECIPES.find((t) => t.chunk_id === tasks[0])?.instruments;
+    const named = recipeChunkIds(question, listed ? [] : dataAccessInstruments(question, ASSET_DIRECTORY)).slice(0, 1);
     try {
       const [task, recipes] = await Promise.all([
         postJson(`${api}/v1/chunks`, { collection_id: TASK_COLLECTION, chunk_ids: tasks }, headers),
@@ -780,12 +782,13 @@ export default {
     const body = await readJson(request);
     const query = typeof body?.query === "string" ? body.query.trim() : "";
     const quick = body?.answer_mode === "quick";
+    const code = body?.answer_mode === "code";   // the chat's Code toggle: answer with a script from a tested recipe
     const requestedModel = ["gemini-2.5-flash", "gemini-3.5-flash-lite", ...Object.keys(GROQ_MODELS), OOI_MODEL, ...OPENAI_MODELS].includes(body?.model)
       ? body.model : "auto";
     if (query.length < 2 || query.length > MAX_QUERY_LENGTH) return response({ error: "invalid query" }, 400, cors);
     try {
       // A request for code for a task ("write code to count Axial earthquakes on 15 October") gets the code, not the count.
-      const liveToolResult = taskRecipeIds(query, TASK_RECIPES).length ? null
+      const liveToolResult = code || taskRecipeIds(query, TASK_RECIPES).length ? null
         : await liveAxialCount(query, typeof body?.tz === "string" ? body.tz.slice(0, 64) : undefined);
       if (liveToolResult) return response(liveToolResult, 200, cors);
       if (!env.ATLAS_API_KEY || !env.ATLAS_API_ORIGIN) {
@@ -806,7 +809,11 @@ export default {
       // Download recipes reach the evidence only through the data access lookup: in the general results they named
       // other instruments' routes beside an answer ("AXBA1" brought the HPIES and current meter recipes).
       context.hits = (context.hits || []).filter((hit) => hit.collection_id !== RECIPE_COLLECTION && hit.collection_id !== TASK_COLLECTION);
-      if (isDataAccessQuestion(query) || taskRecipeIds(query, TASK_RECIPES).length) context.access = await dataAccessRecords(query, env);
+      if (code || isDataAccessQuestion(query) || taskRecipeIds(query, TASK_RECIPES).length) context.access = await dataAccessRecords(query, env, code);
+      if (code && !(context.access || []).some((hit) => [TASK_COLLECTION, RECIPE_COLLECTION].includes(hit.collection_id))) {
+        return response({ query, answer: codeModeAnswer(TASK_RECIPES), answer_model: "RCA Atlas code recipes", answer_citations: [],
+          hits: [], neighbors: [], tool_hints: [] }, 200, cors);
+      }
       const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);
       const routed = isDasOverview(query) || isStatusQuestion(query) || context.access?.length || context.assets?.length || context.inventory?.length || context.papers?.length;
@@ -855,8 +862,9 @@ export default {
         }, 200, cors);
       }
       const generated = await generateAnswer(query, context, env, requestedModel);
+      const task = (context.access || []).find((hit) => hit.collection_id === TASK_COLLECTION);
       return response({
-        query, answer: generated.answer, answer_model: generated.model,
+        query, answer: task ? withTestedScript(generated.answer, task.text) : generated.answer, answer_model: generated.model,
         answer_citations: citations(evidenceHits),
         answer_links: answerLinks(query, evidenceHits),
         hits: (context.hits || []).map(publicHit),

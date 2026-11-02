@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, isOrientationIssueQuestion, placeStations, orientationForStations, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave, taskRecipeIds } from "../src/helpers.js";
+import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, isOrientationIssueQuestion, placeStations, orientationForStations, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave, taskRecipeIds, codeModeAnswer, withTestedScript } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -961,4 +961,32 @@ test("a task recipe in the evidence: its script changed only where it says, ever
   assert.match(prompt, /never put a password, username or token/);
   assert.doesNotMatch(prompt, /change only its START and END/);   // not the download recipe's answer
   assert.match(prompt, /under 250/);
+  assert.match(answerPrompt({ question: "q", evidence, sources: [], mode: "compact", access: true, today: "2026-11-02" }), /Today is 2026-11-02 \(UTC\): a time such as yesterday/);
+  assert.doesNotMatch(prompt, /If a requested dataset is missing|say in one short closing section what is missing/);   // no missing-evidence note
+});
+
+test("code mode (the chat's Code toggle): any question about a task gets its recipe; none matching lists the tasks", async () => {
+  const TASKS = (await import("../src/task_recipes.json", { with: { type: "json" } })).default;
+  assert.deepEqual(taskRecipeIds("Axial's noise at AXCC1 last week", TASKS), []);                       // not asked for code
+  assert.deepEqual(taskRecipeIds("Axial's noise at AXCC1 last week", TASKS, { code: true }), ["task_seismic_noise_psd"]);
+  assert.deepEqual(taskRecipeIds("fin whale calls on the AXEC2 hydrophone", TASKS, { code: true }), ["task_hydrophone_spectrogram"]);
+  assert.deepEqual(taskRecipeIds("What is Axial Seamount?", TASKS, { code: true }), []);
+  const answer = codeModeAnswer(TASKS);
+  assert.match(answer, /none matches this question/);
+  assert.equal(answer.split("\n").filter((line) => line.startsWith("- ")).length, TASKS.length);
+  assert.ok(TASKS.every((t) => t.title));
+});
+
+test("a task answer's script is the tested script with the model's settings; a broken setting keeps the recipe's", () => {
+  const recipe = "Steps.\n```python\nimport x\nSTATION = \"AXCC1\"   # the station\nSTART, END = \"2025-01-01\", \"2025-01-02\"\nVARS = {\n    \"a\": 1,\n}\ne = x.E(server=\"s\", protocol=\"tabledap\", response=\"csv\")\n```\nPitfalls.";
+  const answer = "Why.\n\n```python\nimport x\nSTATION = \"AXEC2\"   # the station\nSTART, END = \"2025-03-01, \"2025-03-02\"\nVARS = {\n    \"a\": 1,\n    \"b\": 2,\n}\nNEW = 3\ne = x.E(server=\"s\", protocol=\"tabledap, response=\"csv\")\n```\n- A pitfall [1].";
+  const out = withTestedScript(answer, recipe);
+  assert.match(out, /STATION = "AXEC2"/);                                   // the model's setting
+  assert.match(out, /START, END = "2025-01-01", "2025-01-02"/);            // its broken one: the recipe's
+  assert.match(out, /VARS = \{\n {4}"a": 1,\n {4}"b": 2,\n\}/);           // a setting over several lines
+  assert.match(out, /protocol="tabledap", response="csv"/);                // every other line is the recipe's
+  assert.doesNotMatch(out, /NEW = 3/);
+  assert.match(out, /^Why\./);
+  assert.match(out, /- A pitfall \[1\]\.$/);
+  assert.equal(withTestedScript("No script.", recipe), "No script.");
 });
