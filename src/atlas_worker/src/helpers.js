@@ -56,8 +56,11 @@ const isLayer = (hit) => hit.layer === true || hit.collection_id === FULLTEXT_CO
 // Download recipes (data/DataRecipes) have room of their own too: one instrument's runs to ~7,000 characters, and the
 // site page and instrument records still lead the main evidence.
 export const RECIPE_COLLECTION = "data_recipes";
+// Task recipes (data/TaskRecipes): a task's steps and tested script share that room with the instrument's download recipe.
+export const TASK_COLLECTION = "task_recipes";
 const RECIPE_CHARS = 16_000;
-const isRecipe = (hit) => hit.collection_id === RECIPE_COLLECTION;
+const isTask = (hit) => hit.collection_id === TASK_COLLECTION;
+const isRecipe = (hit) => hit.collection_id === RECIPE_COLLECTION || isTask(hit);
 
 // The keys the passage search knows a paper by: its DOI (no resolver prefix) and its catalog or document ID. A
 // paper the evidence only names by DOI (an OOI page "adapted from Philip et al., 2023, doi: 10.1126/...") counts
@@ -239,9 +242,11 @@ export const dasDataset = (url) => DAS_DATASETS.find((d) => d.route.test(url || 
 // DAS25 MultiDAS (http://…); DAS25 OptoDAS (http://…)."), but carries only the first as its citation, so the
 // other routes never reached the answer's sources. Each named route becomes a citation of its own.
 const ROUTE_LIST = /available to download from (.+?\))\.(?:\s|$)/;
+// A task recipe lists its sources the same way ("Sources: ObsPy: Trace.remove_response (https://…); …").
+const SOURCE_LIST = /(?:^|\n)Sources: (.+?\))\.(?:\s|$)/;
 const ROUTE = /([^;()]+?)\s*\((https?:\/\/[^\s)]+)\)/g;
 export function withRouteCitations(hit) {
-  const list = ROUTE_LIST.exec(String(hit.text || ""));
+  const list = ROUTE_LIST.exec(String(hit.text || "")) || (isTask(hit) ? SOURCE_LIST.exec(String(hit.text || "")) : null);
   if (!list) return hit;
   const labels = new Map([...list[1].matchAll(ROUTE)].map(([, label, url]) => [url, label.trim()]));
   const cited = hit.citations || [], base = cited[0] || { source_id: hit.chunk_id };
@@ -276,7 +281,7 @@ export function evidencePackage(hits, sourceNumbers) {
     const budget = isLayer(hit) ? "layer" : isRecipe(hit) ? "recipe" : "main";
     if (room[budget] <= 0) continue;
     const refs = [...new Set((hit.citations || []).map((c) => sourceNumbers.get(sourceKey(c.source_id || hit.chunk_id, c.url))).filter(Boolean))];
-    const kind = isLayer(hit) ? "scientific literature, full text" : isRecipe(hit) ? "download recipe" : sourceKind(hit);
+    const kind = isLayer(hit) ? "scientific literature, full text" : isTask(hit) ? "task recipe" : isRecipe(hit) ? "download recipe" : sourceKind(hit);
     const header = `${hit.title}${kind ? ` (${kind})` : ""}${refs.length ? ` | sources: ${refs.map((n) => `[${n}]`).join(" ")}` : ""}\n`;
     const text = String(hit.text || "").slice(0, isLayer(hit) ? PASSAGE_CHARS : undefined).slice(0, Math.max(0, room[budget] - header.length));
     sections.push(`${header}${text}`);
@@ -518,6 +523,19 @@ const MAX_ASSET_CHUNKS = 6;
 
 // A question about getting data ("how do I download data from the shallow profiler at Slope Base?"); a named DAS
 // dataset has its own download routes (namedDas).
+// A request for code for a task ("write a script to plot the waveform of an Axial earthquake at AXCC1"): the task
+// recipe (task_recipes.json, build_task_recipes.py) whose task words and instrument words it both has, the one whose
+// task words it has most of. Asking for code, how to do it, or the task itself ("plot …") counts as a request.
+const TASK_REQUEST = /\b(?:scripts?|code|python|programs?|notebooks?|functions?|how (?:do|can|would|should|could) (?:i|we|you|one)|how to|write|make|show me)\b|^\s*(?:please\s+)?(?:plot|compute|calculate|make|draw|show|detect|remove|filter)\b/i;
+export function taskRecipeIds(question, tasks) {
+  const q = String(question || "");
+  if (!TASK_REQUEST.test(q)) return [];
+  const scored = (tasks || []).filter((t) => new RegExp(t.about, "i").test(q))
+    .map((t) => [t, new Set((q.match(new RegExp(t.task, "gi")) || []).map((w) => w.toLowerCase())).size])
+    .filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  return scored.length ? [scored[0][0].chunk_id] : [];
+}
+
 export function isDataAccessQuestion(question) {
   const q = String(question || "");
   // Or a request for code ("a Python script for the Axial Base CTD temperature in March 2025"), which may name no data.
@@ -812,6 +830,7 @@ export function liveStatusHit(hit, refdes, live) {
 
 export function answerPrompt({ question, evidence, sources, mode, product = null, access = false, stations = [] }) {
   const recipes = /\(download recipe\) \| sources:/.test(evidence);
+  const task = /\(task recipe\) \| sources:/.test(evidence);
   const typeOverview = /^Where to download .* data: every .* \(download recipe\) \| sources:/m.test(evidence);
   const liveInstruction = isStatusQuestion(question) && /^Live status: /m.test(evidence)
     ? "Records titled \"Live status\" were checked against the live monitor moments ago: say from them whether each instrument is operating now, with the time of its data check, ahead of any older or catalog status in other records."
@@ -848,11 +867,15 @@ export function answerPrompt({ question, evidence, sources, mode, product = null
     ? "Records marked (download recipe) give, for one instrument, its tested routes to the data, easiest first, each with a Python script. Answer with the route that best fits what was asked: the one marked Easiest unless the question wants something it does not give (every sample or a variable only another route has; the original files; waveforms). Say in one sentence why that route. Then write one complete Python script for the asked instrument, variables and timeframe, in a single ```python fenced block: copy that route's script from the recipe and change only its START and END (and its VARIABLES or e.variables to the asked ones, using only variable names the recipe lists). Times are UTC; when the question gives no timeframe, use the last day before the recipe's coverage ends and say so. Never invent a dataset ID, stream, variable, URL or file name the recipe does not give, and never put a password, username or token in a script. After the script, one line each for at most two other routes the recipe gives. Cite the recipe. "
     + (typeOverview ? "The question names no place, and the record headed Where to download ... data: every ... lists every instrument of that type. Begin by saying how many there are and, in one hyphen bullet each, where each one is and what it is on (seafloor, the 200 m platform, or a profiler), with its dataset ID or other easiest route, as that record gives them. Then give the script from the example recipe for its instrument, saying which instrument it is for, and say in one sentence that for another instrument the script changes only the dataset ID (and the variable names, which that instrument's own recipe lists). Ask no question back. " : "")
     : "";
-  const compactInstruction = recipes ? recipeInstruction : access ? accessInstruction : mode === "compact"
+  // A task recipe: its tested script, changed only where its To change line says, every processing step kept.
+  const taskInstruction = task
+    ? "The record marked (task recipe) gives, for the asked task, its steps, a Python script that was run, what to change in it, its pitfalls and the instruments it works for; a record marked (download recipe), when there is one, gives the asked instrument's channels or dataset. Begin with two or three sentences on what the script does and why each processing step is there, as the recipe's steps say. Then write one complete Python script in a single ```python fenced block: copy the task recipe's script and change only the values its To change line names, to the asked station or instrument, channels, time and parameters, using only station codes, channels, dataset IDs and variable names the evidence gives. Keep every processing step and comment of the script. When the question gives no time, keep the script's example time and say so. Never invent a station, channel, dataset ID, URL or parameter the evidence does not give, and never put a password, username or token in a script. After the script, at most three hyphen bullets from the recipe's pitfalls that matter for what was asked. Cite the task recipe, and cite a paper where a value comes from it. "
+    : "";
+  const compactInstruction = task ? taskInstruction : recipes ? recipeInstruction : access ? accessInstruction : mode === "compact"
     ? `This is a data-availability, download, or list question. ${namedProductInstruction} Give a one-sentence direct answer. Then, for each dataset or experiment, one plain line naming it by its source's title, with its years, coverage and file formats, cited with its source number; when one dataset has several numbered sources (download routes), add one hyphen bullet per source, giving its name and only what the evidence ties to that source itself. Sub-folders that the evidence names inside one source (such as the 2021 dataset's OptaSense and Silixa folders) are described in one bullet of that dataset, not bullets of their own. Add one bullet for the folder layout or a caveat (such as very many files per day) when the evidence gives one. Include every numbered download source; never drop one. Leave out evidence that is not a downloadable dataset (papers, methods, policies) entirely, without remarking on it. Use no capability descriptions, deployment background, or calibration details. Keep the whole answer under 230 words. The interface links each cited source.`
     : "Write a complete, useful research answer from the evidence, but do not pad it with loosely related instruments, background, or speculation. For an instrument inventory question, identify every matching named instrument record you can support, then describe its identity, site or location, capabilities or measurements, and where its data are available when the evidence provides that. Never infer that a sensor type is absent merely because it is not in a partial evidence set; say that the retrieved evidence is incomplete instead.";
-  const formatInstruction = recipes
-    ? `Use plain text outside the one \`\`\`python block, with no Markdown headings or asterisks. Keep the words outside the script under ${typeOverview ? 400 : 150}.`
+  const formatInstruction = recipes || task
+    ? `Use plain text outside the one \`\`\`python block, with no Markdown headings or asterisks. Keep the words outside the script under ${task ? 250 : typeOverview ? 400 : 150}.`
     : mode === "compact"
     ? "Use plain text, with no Markdown hashes or asterisks, and no URLs. Obey the 230-word limit."
     : "Structure the response as plain text: a brief direct answer, then section labels on their own lines and hyphen bullets where there are multiple locations, instruments, or findings. Do not use Markdown hashes or asterisks.";

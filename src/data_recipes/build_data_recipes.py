@@ -554,14 +554,28 @@ def earthscope_route(station: str, info: dict, route: dict) -> tuple[str, str]:
     recorded = "Channels it recorded" if info.get("closed") else "Channels now"
     example = (datetime.fromisoformat(info["closed"]) - timedelta(days=1)).strftime("%Y-%m-%d") if info.get("closed") else "2025-03-01"
     cha = route.get("channel") or "HHZ"
+    # The channel's instrument code says what it measures: a seismometer (H) ground velocity, an accelerometer (N)
+    # ground acceleration, a hydrophone or pressure gauge (D) pressure, in the response's own units (pascals).
+    output, units = {"N": ("ACC", "ground acceleration in m/s**2"), "D": ("DEF", "pressure in pascals")}.get(
+        cha[1:2], ("VEL", "ground velocity in m/s"))
     text = (f"EarthScope FDSN web services (formerly IRIS): seismic and hydrophone waveforms as MiniSEED, with the "
             f"instrument response; public, no login. Network {net}, station {sta}, {span}. {recorded}: {channels}.\n"
-            f"```python\n# pip install obspy\nfrom obspy import UTCDateTime\nfrom obspy.clients.fdsn import Client\n\n"
+            f"```python\n# pip install obspy\nimport numpy as np\nfrom obspy import UTCDateTime\nfrom obspy.clients.fdsn import Client\n\n"
             f'client = Client({FDSN!r})\n'
             f't1, t2 = UTCDateTime("{example}T00:00:00"), UTCDateTime("{example}T01:00:00")   # the timeframe, UTC\n'
             f'st = client.get_waveforms({net!r}, {sta!r}, "*", {cha!r}, t1, t2)\n'
             f'inv = client.get_stations(network={net!r}, station={sta!r}, channel={cha!r}, starttime=t1, endtime=t2, level="response")\n'
-            f'st.remove_response(inventory=inv, output="VEL")   # ground velocity in m/s; leave out for raw counts\n'
+            f"# Counts to {units}; leave this loop out for raw counts. The pre-filter tapers the spectrum off outside\n"
+            f"# the band the instrument records (the flat part of its response, below Nyquist), where dividing by its tiny\n"
+            f"# response would blow up noise.\n"
+            f"for tr in st:\n"
+            f'    f = np.logspace(-4, np.log10(tr.stats.sampling_rate / 2), 500)\n'
+            f'    amp = np.abs(inv.get_response(tr.id, tr.stats.starttime).get_evalresp_response_for_frequencies(f, output="DEF"))\n'
+            f"    flat = f[amp >= amp.max() / np.sqrt(2)]\n"
+            f"    low = max(flat[0], 2 / (tr.stats.endtime - tr.stats.starttime))   # no lower than the record resolves\n"
+            f"    high = min(flat[-1], 0.45 * tr.stats.sampling_rate)\n"
+            f'    tr.detrend("linear")\n'
+            f"    tr.remove_response(inventory=inv, output={output!r}, pre_filt=(low / 2, low, 0.8 * high, high), water_level=None)\n"
             f'st.write({f"{net}.{sta}.{cha}_"!r} + f"{{t1.date}}.mseed", format="MSEED")\n```\n'
             f"Without Python: curl -o {sta}.mseed \"{FDSN}/fdsnws/dataselect/1/query?net={net}&sta={sta}&cha={cha}"
             f"&starttime=START&endtime=END\" (times as 2025-03-01T00:00:00).")

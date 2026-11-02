@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, isOrientationIssueQuestion, placeStations, orientationForStations, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave } from "../src/helpers.js";
+import { assetChunkIds, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, isOrientationIssueQuestion, placeStations, orientationForStations, isDataAccessQuestion, distinctiveWords, isAssetQuestion, questionCodes, askedPlace, isPaperUsageQuestion, instrumentSearch, instrumentCodes, typeInventory, statusSearch, askedType, liveTargetOf, isStatusQuestion, refdesOf, liveStatusHit, locatedUntil, magnitudeFloor, isDasOverview, DAS_EXPERIMENTS, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, excerpt, isInstrumentInventoryQuestion, namedDas, parseHypo71Events, publicHit, searchText, sourceKey, sourceKind, fullTextFor, paperKeys, withPlaces, withRouteCitations, questionParts, interleave, taskRecipeIds } from "../src/helpers.js";
 
 const hypo71 = await readFile(new URL("./fixtures/hypo71_20260923.dat", import.meta.url), "utf8");
 
@@ -900,4 +900,43 @@ test("an orientation issue question names only the stations with an issue", () =
 test("a location question gives an instrument's position from each source that has one", () => {
   assert.match(answerPrompt({ question: "What is the location of the SCPR at Axial Seamount?", evidence: "e", sources: [], mode: "compact" }), /give each position with its depth and its own citation/);
   assert.doesNotMatch(answerPrompt({ question: "What is the serial number of the SCPR?", evidence: "e", sources: [], mode: "compact" }), /give each position/);
+});
+
+test("a request for code for a task gets that task's recipe: its task and instrument words, the most task words", async () => {
+  const TASKS = (await import("../src/task_recipes.json", { with: { type: "json" } })).default;
+  const wave = ["task_earthquake_waveform"];
+  assert.deepEqual(taskRecipeIds("Write a script to plot the waveform of an Axial earthquake at AXCC1", TASKS), wave);
+  assert.deepEqual(taskRecipeIds("how do I remove the instrument response from a seismometer and bandpass it?", TASKS), wave);
+  assert.deepEqual(taskRecipeIds("Plot yesterday's biggest earthquake at AXEC2", TASKS), wave);
+  assert.deepEqual(taskRecipeIds("python code for the seismogram of the 2015 eruption's largest quake at AXCC1", TASKS), wave);
+  assert.deepEqual(taskRecipeIds("What does the waveform of an Axial earthquake look like?", TASKS), []);   // no request for code
+  assert.deepEqual(taskRecipeIds("Write a script to download CTD temperature at Axial Base", TASKS), []);   // no task of it
+  assert.deepEqual(taskRecipeIds("a script for AXBA1 waveforms", TASKS), []);   // getting the data: its download recipe
+  // two tasks that match: the one with more of its task words
+  const two = [{ chunk_id: "a", about: "seism", task: "\\b(?:plot)\\b" }, { chunk_id: "b", about: "seism", task: "\\b(?:plot|psd|noise)\\b" }];
+  assert.deepEqual(taskRecipeIds("plot the noise PSD of a seismometer", two), ["b"]);
+});
+
+test("a task recipe's Sources line is one citation each; its header says task recipe; it shares the recipes' room", () => {
+  const hit = { chunk_id: "task_x", collection_id: "task_recipes", title: "Task recipe: X",
+    text: "How to x (task recipe).\nSources: ObsPy: Trace.remove_response (https://docs.obspy.org/a.html); Waldhauser et al. 2020, Precision Seismic Monitoring (https://doi.org/10.1029/2019jb018796).",
+    citations: [{ source_id: "TASK-SOURCE-x", title: "Task recipe: X", url: "https://docs.obspy.org/a.html" }] };
+  const cited = withRouteCitations(hit).citations;
+  assert.deepEqual(cited.map((c) => c.url), ["https://docs.obspy.org/a.html", "https://doi.org/10.1029/2019jb018796"]);
+  assert.equal(cited[0].title, "Task recipe: X");
+  assert.equal(cited[1].title, "Waldhauser et al. 2020, Precision Seismic Monitoring");
+  // only a task recipe's Sources line counts
+  assert.equal(withRouteCitations({ ...hit, collection_id: "websites" }).citations.length, 1);
+  const numbers = new Map(cited.map((c, i) => [sourceKey(c.source_id, c.url), i + 1]));
+  assert.match(evidencePackage([withRouteCitations(hit)], numbers), /^Task recipe: X \(task recipe\) \| sources: \[1\] \[2\]/);
+});
+
+test("a task recipe in the evidence: its script changed only where it says, every step kept, nothing invented", () => {
+  const evidence = "Task recipe: Plot X (task recipe) | sources: [1]\n...\n\nHow to download AXCC1 data (download recipe) | sources: [2]\n...";
+  const prompt = answerPrompt({ question: "write code to plot an earthquake at AXCC1", evidence, sources: [], mode: "compact", access: true });
+  assert.match(prompt, /copy the task recipe's script and change only the values its To change line names/);
+  assert.match(prompt, /Keep every processing step/);
+  assert.match(prompt, /never put a password, username or token/);
+  assert.doesNotMatch(prompt, /change only its START and END/);   // not the download recipe's answer
+  assert.match(prompt, /under 250/);
 });

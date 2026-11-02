@@ -1,0 +1,50 @@
+[
+ {
+  "id": "earthquake_waveform",
+  "title": "Plot an earthquake's waveform at an OOI seismometer, with the instrument response removed and a bandpass filter",
+  "script": "recipes/earthquake_waveform.py",
+  "instruments": "seismometers",
+  "summary": "Gets an earthquake's record at one OOI seismometer from EarthScope, converts it from counts to ground velocity (or displacement or acceleration) by removing the instrument response, turns the horizontal components to true north and east, bandpass filters it, and plots each component against seconds after the origin time; it also writes the corrected traces as MiniSEED.",
+  "steps": [
+   "Request the waveforms with a margin of PAD seconds on each side of the plotted window, and the station's response (level=\"response\"); the margin is cut off at the end, so the taper and the filter's edges fall outside the plot.",
+   "Detrend and taper each trace, then remove the response with a pre-filter (pre_filt): four corner frequencies that taper the spectrum off outside the band where the instrument records ground motion, since dividing by its tiny response there would blow up noise. The script finds that band from each channel's own response: its low corner is the instrument's (about 1 Hz for the short-period CMG-6TF seismometers, 360 s for the broadband CMG-1T) or what the record's length can resolve, and its high corner is just below Nyquist. With pre_filt, the water level is turned off (water_level=None), as ObsPy's documentation advises.",
+   "With all three components, rotate the horizontals to true north and east (st.rotate(\"->ZNE\", inventory=inv, components=(\"ZNE\", \"Z12\", \"123\"))): the channels are named N and E, but some OOI seismometers' horizontals are not aligned with north, and their StationXML gives the azimuths. Without \"ZNE\" in components, ObsPy leaves channels named N and E as they are.",
+   "Bandpass filter for display (FREQMIN to FREQMAX, 4 corners, zero phase). This band is a choice for seeing the earthquake, separate from the pre-filter: Waldhauser et al. (2020) plot Axial microearthquakes at 4-50 Hz. Its top is kept below Nyquist (20 Hz on the 40 Hz B and S channels).",
+   "Trim to the window and plot each component against seconds after the origin time."
+  ],
+  "change": "NETWORK and STATION for the station; CHANNELS stays None, so the script takes the station's fastest seismometer channels (HH? at a broadband station, EH? at a short-period one), unless the question names channels (? stands for every component, as BH?), ORIGIN for the earthquake's origin time (UTC; the Axial Seamount Earthquake Catalog gives Axial's), BEFORE and AFTER for the window, OUTPUT for ground velocity, displacement or acceleration, and FREQMIN and FREQMAX for the display band. Leave pre_filt to the script: it is computed from each channel's response.",
+  "pitfalls": [
+   "A pre-filter or band above Nyquist fails: the 40 Hz B and S channels and the 8 Hz M channels need a lower FREQMAX (the script caps it at 0.45 of the sampling rate).",
+   "A short window cannot resolve a broadband seismometer's long periods: the script's pre-filter starts no lower than 2 divided by the record's length, so lengthen PAD to look at long-period motion.",
+   "One component alone (CHANNELS = \"HHZ\") is not rotated; rotation needs all three.",
+   "MiniSEED from EarthScope can have gaps; st.merge fills short ones by interpolation, and a request with no data raises FDSNNoDataException.",
+   "The HN channels (CMG-5T accelerometer) and HDH (hydrophone, in pascals) are other instruments at the broadband stations; HH, EH, SH and BH are the seismometers."
+  ],
+  "sources": [
+   {
+    "title": "ObsPy: Trace.remove_response",
+    "url": "https://docs.obspy.org/packages/autogen/obspy.core.trace.Trace.remove_response.html"
+   },
+   {
+    "title": "ObsPy: Stream.rotate",
+    "url": "https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.rotate.html"
+   },
+   {
+    "title": "Waldhauser et al. 2020, Precision Seismic Monitoring and Analysis at Axial Seamount Using a Real-Time Double-Difference System",
+    "url": "https://doi.org/10.1029/2019jb018796"
+   },
+   {
+    "title": "Axial Seamount Earthquake Catalog",
+    "url": "http://axial.ocean.washington.edu/"
+   },
+   {
+    "title": "EarthScope FDSN web services",
+    "url": "https://service.earthscope.org"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:plot\\w*|seismograms?|(?:instrument )?response|band-?pass\\w*|filter\\w*|ground (?:motion|velocity|displacement)|velocity|displacement|acceleration|visuali[sz]\\w*|figures?|graphs?)\\b",
+   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+  }
+ }
+]

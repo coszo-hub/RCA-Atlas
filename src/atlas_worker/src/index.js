@@ -2,12 +2,13 @@
 // Browser requests contain only a question. The Worker fetches evidence itself
 // and returns stable corpus citations, never a Gemini key or Graph-RAG API key.
 
-import { RECIPE_COLLECTION, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, orientationStations, placeStations, orientationForStations, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
+import { RECIPE_COLLECTION, TASK_COLLECTION, taskRecipeIds, answerPrompt, axialDayWindow, evidencePackage, eventsInWindow, fullTextFor, interleave, isInstrumentInventoryQuestion, isDasOverview, DAS_EXPERIMENTS, locatedUntil, magnitudeFloor, isPaperUsageQuestion, isAssetQuestion, assetChunkIds, isDataAccessQuestion, dataAccessSites, dataAccessInstruments, typeOnlyInstruments, isOrientationQuestion, orientationStations, placeStations, orientationForStations, distinctiveWords, instrumentSearch, instrumentCodes, questionCodes, askedPlace, typeInventory, isStatusQuestion, statusSearch, askedType, instrumentKey, liveTargetOf, liveStatusHit, namedDas, paperKey, paperKeys, publicHit, questionParts, searchText, sourceKey, sourceKind, withPlaces, withRouteCitations } from "./helpers.js";
 // Which OOI asset-management chunk holds which instrument, site, type, cruise year and depth band (written by
 // src/ooi_asset_management/build_asset_metadata.py).
 import ASSET_DIRECTORY from "./asset_directory.json" with { type: "json" };
 import INSTRUMENT_IDS from "./instrument_ids.json" with { type: "json" };
 import RECIPE_IDS from "./recipe_ids.json" with { type: "json" };
+import TASK_RECIPES from "./task_recipes.json" with { type: "json" };
 
 const MAX_QUERY_LENGTH = 1_000;
 const MAX_HITS = 10;
@@ -424,6 +425,22 @@ export function typeRecipeIds(refdes) {
 
 async function dataAccessRecords(question, env) {
   const api = env.ATLAS_API_ORIGIN.replace(/\/$/, ""), headers = { "x-api-key": env.ATLAS_API_KEY };
+  // A task's recipe, and the download recipe of the instrument the question names (its channels or dataset), if any:
+  // the task recipe lists the instruments it works for, so a place alone needs no more.
+  const tasks = taskRecipeIds(question, TASK_RECIPES);
+  if (tasks.length) {
+    const named = recipeChunkIds(question, []).slice(0, 1);
+    try {
+      const [task, recipes] = await Promise.all([
+        postJson(`${api}/v1/chunks`, { collection_id: TASK_COLLECTION, chunk_ids: tasks }, headers),
+        named.length ? postJson(`${api}/v1/chunks`, { collection_id: "data_recipes", chunk_ids: named }, headers) : { hits: [] },
+      ]);
+      return [...(task.hits || []), ...(recipes.hits || [])].map(withRouteCitations);
+    } catch (error) {
+      console.error("task recipe lookup failed", error instanceof Error ? error.message : "unknown");
+      return [];
+    }
+  }
   const sites = dataAccessSites(question, ASSET_DIRECTORY);
   const named = recipeChunkIds(question, []);
   const everywhere = named.length ? [] : typeOnlyInstruments(question, ASSET_DIRECTORY);
@@ -786,8 +803,8 @@ export default {
       if (isOrientationQuestion(query)) context.orientation = await orientationRecords(query, env);
       // Download recipes reach the evidence only through the data access lookup: in the general results they named
       // other instruments' routes beside an answer ("AXBA1" brought the HPIES and current meter recipes).
-      context.hits = (context.hits || []).filter((hit) => hit.collection_id !== RECIPE_COLLECTION);
-      if (isDataAccessQuestion(query)) context.access = await dataAccessRecords(query, env);
+      context.hits = (context.hits || []).filter((hit) => hit.collection_id !== RECIPE_COLLECTION && hit.collection_id !== TASK_COLLECTION);
+      if (isDataAccessQuestion(query) || taskRecipeIds(query, TASK_RECIPES).length) context.access = await dataAccessRecords(query, env);
       const inventory = !context.papers?.length && typeInventory(query);
       if (inventory) context.inventory = await typeRecords(inventory, env);
       const routed = isDasOverview(query) || isStatusQuestion(query) || context.access?.length || context.assets?.length || context.inventory?.length || context.papers?.length;

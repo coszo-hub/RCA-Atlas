@@ -41,6 +41,7 @@ COLLECTION_NAMES = {
     "PIPortal": ("pi_portal", "RCA PI data portal"),
     "QAQC/graphrag": ("qaqc", "RCA QA/QC capabilities"),
     "StationMetadata": ("station_metadata", "OOI StationXML metadata"),
+    "TaskRecipes": ("task_recipes", "Task code recipes"),
     "Websites": ("websites", "RCA and COSZO websites"),
     "coszo/graphrag": ("coszo_documents", "COSZO documents"),
 }

@@ -168,6 +168,7 @@ build can be retained for rollback. Current normalized outputs live under
 | `COSZOHub` | `chunks.jsonl` | repositories, tools, metrics, diagnostics, artifacts | live rescan of growing output directories |
 | `PIPortal` | `chunks.jsonl` | PI instruments, physical sites, download endpoints, tools, routing policy | corpus-first availability answer; user-invoked live browse/download |
 | `DataRecipes` | `chunks.jsonl` | one download recipe per instrument, its routes and their services; one overview per instrument type | `build_data_recipes.py --refresh`, then `test_recipes.py` in the sandbox |
+| `TaskRecipes` | `chunks.jsonl` | one recipe per task (its steps, a tested script, what to change, pitfalls, the instruments it works for, its sources) | `build_task_recipes.py --test` in the same sandbox |
 
 The `manifest.json` in each collection is authoritative for the node files,
 edge file, embedding input, record counts, source revision, and known
@@ -980,7 +981,24 @@ Each instrument type also has an overview record (31), listing every instrument 
 is mounted on (seafloor junction box, the 200 m platform, a profiler), its depth and its easiest route with the
 dataset ID, and naming one recipe as its example: a download question that names a type and no place ("how do I
 download oxygen sensor data?") gets the overview and the example's recipe.
+An EarthScope script converts counts to the channel's physical units: ground velocity for a seismometer, acceleration
+for an accelerometer, pascals for a hydrophone, with a pre-filter from the channel's own response (its flat band, below
+Nyquist) and no water level, since dividing by the response where it is tiny blows up noise.
 Builder: `src/data_recipes/build_data_recipes.py`.
+
+## Task recipes (`data/TaskRecipes`)
+
+One record per task a question may ask code for (plot an earthquake's waveform with the response removed and a
+bandpass filter, ...): what the script does, its steps and why each is there, a Python script, what to change in it for
+another instrument or time, its pitfalls, the instruments it works for (the seismometer stations and their channels,
+from EarthScope) and its sources (ObsPy's documentation, and the paper a value comes from, such as the 4-50 Hz band
+Waldhauser et al. 2020 use for Axial microearthquakes). Each script was run in the download recipes' sandbox, and
+checked by eye on a real event (the horizontals' rotation to true north against a rotation by the StationXML
+azimuths, at misoriented AXEC1); a task whose script has not passed is left out. Ask Atlas fetches a task's recipe
+for a request for code whose words name the task and its instruments (`task_recipes.json`), with the download recipe
+of the station it names, and writes the script from the recipe's, changing only what the recipe says to change. Each
+source in a recipe's Sources line is cited on its own.
+Builder: `src/task_recipes/build_task_recipes.py`.
 
 ## Network-information exclusion
 

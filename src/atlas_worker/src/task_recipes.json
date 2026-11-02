@@ -1,0 +1,8 @@
+[
+ {
+  "chunk_id": "task_earthquake_waveform",
+  "instruments": "seismometers",
+  "task": "\\b(?:plot\\w*|seismograms?|(?:instrument )?response|band-?pass\\w*|filter\\w*|ground (?:motion|velocity|displacement)|velocity|displacement|acceleration|visuali[sz]\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+ }
+]
