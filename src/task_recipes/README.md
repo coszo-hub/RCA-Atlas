@@ -16,6 +16,11 @@ question names, and writes the script from the recipe's.
 | A shallow profiler's CTD as a depth-time section and a T-S diagram | `recipes/profiler_ctd_section.py` | Slope Base and Axial Base shallow profilers (ERDDAP) |
 | Any ERDDAP variable's time series without QARTOD-failed samples, with daily means | `recipes/qc_time_series.py` | any instrument in OOI ERDDAP |
 | An ADCP's current speed and direction against depth and time | `recipes/adcp_currents.py` | ADCPs in the Gold Copy |
+| When channels have data: daily availability, outages and gaps (MUSTANG, or the data where it has no metrics) | `recipes/earthscope_availability.py` | OO channels on EarthScope: seismometers, accelerometers, hydrophones, BOTPT |
+| When an instrument's variables have data on ERDDAP, day by day, with the gaps | `recipes/erddap_coverage.py` | any instrument in OOI ERDDAP |
+| Many earthquakes at many stations: response removed, rotated to ZRT, MiniSEED, StationXML and SAC, a record section | `recipes/event_waveform_package.py` | OO seismometers; events from USGS ComCat or the Axial catalog |
+| BOTPT pressure de-tided hour by hour (UTide fitted to a year, Godin, OOI's BOTSFLU) | `recipes/botpt_detide.py` | Axial's four BOTPTs (Gold Copy 15-s means over OPeNDAP) |
+| A station's channels, epochs, orientations and responses, explained | `recipes/station_response.py` | OO stations on EarthScope |
 
 ## A task in `tasks.json`
 
@@ -32,6 +37,6 @@ python src/task_recipes/build_task_recipes.py --test   # run each script in the 
 python src/task_recipes/build_task_recipes.py          # write data/TaskRecipes and task_recipes.json from the results
 ```
 
-Scripts run in the download recipes' sandbox, whose requirements include what the task recipes need (OOIPy, gsw) (`src/data_recipes/test_recipes.py`): a fresh container with no host
+Scripts run in the download recipes' sandbox, whose requirements include what the task recipes need (OOIPy, gsw, UTide) (`src/data_recipes/test_recipes.py`): a fresh container with no host
 folder and a capped work folder. A script passes when it exits cleanly having written a file that is not empty; a
 task that has not passed is left out. Check a new script's figure by eye on a real case before adding it.

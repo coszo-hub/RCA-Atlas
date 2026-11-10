@@ -937,6 +937,33 @@ test("a request for code for a task gets that task's recipe: its task and instru
   assert.deepEqual(taskRecipeIds("Write a script for daily mean temperature at the ASHES CTD without QARTOD failed data", TASKS), ["task_qc_time_series"]);
   assert.deepEqual(taskRecipeIds("How do I plot the current speed and direction from the Axial Base ADCP?", TASKS), ["task_adcp_currents"]);
   assert.deepEqual(taskRecipeIds("Plot yesterday's biggest earthquake at AXEC2", TASKS), wave);
+  const avail = ["task_earthscope_availability"], cover = ["task_erddap_coverage"];
+  assert.deepEqual(taskRecipeIds("Write code to check which Axial seismometers had data in 2023 and their gaps", TASKS), avail);
+  assert.deepEqual(taskRecipeIds("python script for the daily availability of the AXCC1 hydrophone (HDH) last month", TASKS), avail);
+  assert.deepEqual(taskRecipeIds("How do I find outages at the Hydrate Ridge stations HYS11-HYS14?", TASKS), avail);
+  assert.deepEqual(taskRecipeIds("Write code to find when the caldera BOTPT pressure has data on ERDDAP", TASKS), cover);
+  assert.deepEqual(taskRecipeIds("how do I check which days the Axial Base CTD oxygen is missing?", TASKS), cover);
+  assert.deepEqual(taskRecipeIds("script for the data coverage of RS03CCAL-MJ03F-05-BOTPTA301", TASKS), cover);
+  assert.deepEqual(taskRecipeIds("Write code to plot the waveform of the 2015 eruption's largest quake at AXCC1", TASKS), wave);   // not availability
+  assert.deepEqual(taskRecipeIds("Write a script for daily mean temperature at the ASHES CTD without QARTOD failed data", TASKS), ["task_qc_time_series"]);
+  assert.deepEqual(taskRecipeIds("data availability of AXEC2's seismometer", TASKS, { code: true }), avail);
+  const tide = ["task_botpt_detide"];
+  assert.deepEqual(taskRecipeIds("Write code to detide the caldera center BOTPT bottom pressure", TASKS), tide);
+  assert.deepEqual(taskRecipeIds("How do I remove the tides from the MJ03D pressure with UTide?", TASKS), tide);
+  assert.deepEqual(taskRecipeIds("python script for hourly seafloor depth at ASHES without tides", TASKS), tide);
+  assert.deepEqual(taskRecipeIds("Write code to plot Axial Seamount's inflation over the last year", TASKS), up);   // still the uplift's
+  assert.deepEqual(taskRecipeIds("How do I compute the uplift rate from the BOTPT bottom pressure at the caldera center?", TASKS), up);
+  const meta = ["task_station_response"];
+  assert.deepEqual(taskRecipeIds("Write code to list the channel epochs and sensitivities of the OO short-period stations", TASKS), meta);
+  assert.deepEqual(taskRecipeIds("python script to get AXEC1's orientation and azimuths from StationXML", TASKS), meta);
+  assert.deepEqual(taskRecipeIds("How do I convert HYS13 counts to physical units with its sensitivity?", TASKS), meta);
+  assert.deepEqual(taskRecipeIds("how do I remove the instrument response from a seismometer and bandpass it?", TASKS), wave);   // still the waveform's
+  const pack = ["task_event_waveform_package"];
+  assert.deepEqual(taskRecipeIds("Write code for a record section of the Kamchatka M8.8 at the OO broadbands", TASKS), pack);
+  assert.deepEqual(taskRecipeIds("python script to save SAC files of every M2+ Axial earthquake last week at AXCC1 and AXEC2", TASKS), pack);
+  assert.deepEqual(taskRecipeIds("How do I cut teleseismic P windows rotated to radial and transverse at HYSB1?", TASKS), pack);
+  assert.deepEqual(taskRecipeIds("Write a script to detect Axial earthquakes with STA/LTA and compare with the catalog", TASKS), sta);   // detection's
+  assert.deepEqual(taskRecipeIds("Plot the waveform of the 2015 eruption's largest earthquake at AXCC1", TASKS), wave);   // one event: the waveform's
   // two tasks that match: the one with more of its task words
   const two = [{ chunk_id: "a", about: "seism", task: "\\b(?:plot)\\b" }, { chunk_id: "b", about: "seism", task: "\\b(?:plot|psd|noise)\\b" }];
   assert.deepEqual(taskRecipeIds("plot the noise PSD of a seismometer", two), ["b"]);

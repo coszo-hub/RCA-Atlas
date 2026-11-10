@@ -231,7 +231,7 @@
    }
   ],
   "match": {
-   "task": "\\b(?:uplift\\w*|inflat\\w*|deflat\\w*|deformation|deforming|subsid\\w*|detid\\w*|tides?|tidal|depth change|rates?|differential|plot\\w*|figures?|graphs?)\\b",
+   "task": "\\b(?:uplift\\w*|inflat\\w*|deflat\\w*|deformation|deforming|subsid\\w*|depth change|rates?|differential|plot\\w*|figures?|graphs?)\\b",
    "about": "\\b(?:axial|botpt\\w*|bottom pressure|pressure|bprs?|MJ03[BDEF]|caldera|seafloor depth|volcano)\\b"
   }
  },
@@ -361,6 +361,245 @@
   "match": {
    "task": "\\b(?:currents?|speed|direction|velocit\\w*|flow\\w*|tidal currents?|profiles?|plot\\w*|figures?|graphs?)\\b",
    "about": "\\b(?:adcps?|acoustic doppler|current meters?|current profilers?|currents?|ADCP\\w+|VADCP\\w*)\\b"
+  }
+ },
+ {
+  "id": "earthscope_availability",
+  "title": "Find when OOI seismometers, hydrophones or other EarthScope channels have data, with daily availability, outages and gaps",
+  "script": "recipes/earthscope_availability.py",
+  "instruments": "seismometers",
+  "summary": "For OO network channels on EarthScope (seismometers, accelerometers, low-frequency hydrophones, BOTPT), finds when each channel was installed from the station metadata, the percent of each day it has data from EarthScope's MUSTANG quality metrics (or, for channels MUSTANG does not cover, by downloading each day), and writes a summary per channel (days with data, outages, longest outage, first and last day with data), the daily percents as CSV, a channel-by-day heatmap, and optionally every gap with its start and end.",
+  "steps": [
+   "Get each channel's epochs (when it was installed) from the FDSN station service at level=channel, so a day without data is told apart from a day before the channel existed.",
+   "Get the daily percent_availability and num_gaps of every channel at once from EarthScope's MUSTANG measurements service (one row per channel per day, years in seconds). MUSTANG computes them only for seismometer and accelerometer channels, a day or two after the data arrive.",
+   "For channels MUSTANG has no metrics for (the hydrophone HDH, BOTPT pressure BDO and tilt LAX/LAY at location 11), or for every channel when LIST_GAPS is True, download each installed day from FDSN dataselect and measure it: the seconds with samples over 86,400, and each gap between records longer than MIN_GAP (ObsPy's get_gaps, before merging, plus the day's edges). MAX_DOWNLOAD_DAYS stops a span that would download too much: a day of a 200 Hz channel is about 25 MB.",
+   "Label each channel-day: not installed, no data (0 %), partial, full, or not computed yet (installed but MUSTANG has no value: its last day or two).",
+   "Summarise each channel and plot the daily percents as a channel-by-day heatmap (monthly means for spans over a year), grey where the channel was not installed or not computed."
+  ],
+  "change": "STATIONS (a list or wildcards: AX* is Axial's, HYS* Hydrate Ridge's), CHANNELS (HHZ broadband and EHZ short-period seismometers; HN? the accelerometer; HDH the hydrophone; BDO the BOTPT pressure), START and END (days, UTC, END not included), LIST_GAPS = True with a span of days to list each gap, MIN_GAP for the shortest gap listed, MAX_DOWNLOAD_DAYS to allow a longer download.",
+  "pitfalls": [
+   "EarthScope has retired its availability services: fdsnws/availability and irisws/timeseries answer \"This service has been retired\", and the station service refuses includeavailability and matchtimeseries (410 Gone), so scripts that use them fail; MUSTANG's metrics and the data themselves are what remain.",
+   "An open epoch in the station metadata does not mean data: the BOTPT channels at AXCC1, AXEC2 and AXID1 (location 11) are open, but their data on EarthScope end on 14 February 2024; the COSZO stations CZMID, CZOFF, CZOSH and CZSHF are listed from 22 August 2026 but had 0 % availability to 8 November 2026.",
+   "One instrument's availability is not another's at the same station: on 29 January 2025 AXCC1's seismometer (HHZ) missed three hours (87.5 %) while its hydrophone (HDH) recorded the whole day.",
+   "Outages often hit a whole node: Hydrate Ridge's HYS11, HYS12 and HYS14 had no data from 19 August 2020 to 9 August 2022, and HYSB1 had long outages in 2021 and 2023-2024; Axial's stations averaged about 95 % in 2025.",
+   "MUSTANG's last day or two are missing or partial and recomputed later; check the newest days again or download them.",
+   "BH, MH and LH channels are lower-rate copies of the HH and EH channels; ask for HH and EH to see what was recorded."
+  ],
+  "sources": [
+   {
+    "title": "EarthScope MUSTANG measurements web service",
+    "url": "https://service.earthscope.org/mustang/measurements/1/"
+   },
+   {
+    "title": "EarthScope FDSN web services",
+    "url": "https://service.earthscope.org"
+   },
+   {
+    "title": "ObsPy: Stream.get_gaps",
+    "url": "https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.get_gaps.html"
+   },
+   {
+    "title": "OOI Seismic Network OO",
+    "url": "https://doi.org/10.7914/SN/OO"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:availab\\w*|coverage|gaps?|gappy|outages?|down ?time|uptime|missing|complete(?:ness)?|continuous|holdings|(?:had|has|have|with|without) (?:any )?data|data (?:exist|there)|when (?:did|was|were)\\b.{0,40}\\b(?:record\\w*|working|online|offline|running)|which (?:stations?|channels?|hydrophones?|seismometers?)\\b.{0,40}\\b(?:record\\w*|working|online))\\b",
+   "about": "\\b(?:seism\\w*|OBS|accelerometers?|hydrophones?|HDH|HH[ZNE?]|EH[ZNE?]|HN[ZNE?]|channels?|stations?|earthscope|iris|fdsn|mseed|miniseed|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*|CZ(?:MID|OFF|OSH|SHF))\\b"
+  }
+ },
+ {
+  "id": "erddap_coverage",
+  "title": "Find when an OOI instrument's variables have data on ERDDAP, day by day, with the gaps",
+  "script": "recipes/erddap_coverage.py",
+  "instruments": null,
+  "summary": "For any OOI instrument on the Data Explorer's ERDDAP (BOTPT, CTD, oxygen, ADCP ...), counts the values each of its variables has on each day in one request a year (ERDDAP's orderByCount), and writes a summary per variable (values in a full day, days with data, first and last day, gaps of MIN_GAP_DAYS or more), the gaps, the daily counts as CSV and a variable-by-day heatmap of the percent of a full day.",
+  "steps": [
+   "Read the dataset's variables and units from ERDDAP's info page (dataset ID \"ooi-\" + the reference designator in lower case) and keep the measurements, not coordinates or QC flags.",
+   "Ask ERDDAP for the number of values each variable has on each day (orderByCount(\"time/1day\") counts values that are not missing, per variable), a year at a time so a long record does not time out; a year with no rows answers 404 and is skipped.",
+   "Take a variable's usual count on a day with data (the median: 1440 for 1-minute data, 1 for a daily product) as a full day, and each day's count as a percent of it.",
+   "List each run of days without data at least MIN_GAP_DAYS long, and summarise each variable.",
+   "Plot the percents as a variable-by-day heatmap (monthly means for spans over a year and a half)."
+  ],
+  "change": "REFDES for the instrument (its download recipe gives the reference designator and ERDDAP dataset); keep VARIABLES = None, which counts every variable of the dataset, so the one asked about is there whatever its ERDDAP name (a CTD's oxygen is moles_of_oxygen_per_unit_mass_in_sea_water); START and END (days, UTC, END not included; None is today); MIN_GAP_DAYS for the shortest gap listed.",
+  "pitfalls": [
+   "ERDDAP answers a span without data with rows of NaN, not with nothing, so count the values, not the rows: Axial's caldera-centre BOTPT (RS03CCAL-MJ03F-05-BOTPTA301) has raw pressure (botpres) only from 11 August 2025 (Eastern Caldera and ASHES from 10 August 2025; International District 2014 to September 2022), while its de-tided depth (botsflu_meandepth) and tilt run from 2014.",
+   "Variables of one instrument have different gaps: the caldera-centre BOTPT's de-tided depth and tilt stop from 26 February to 21 June 2026 while its raw pressure continues; Axial Base's CTD (RS03AXBS-LJ03A-12-CTDPFB301) has depth_reading only from 11 August to 22 October 2025 in 2024-2025, while its temperature, salinity and pressure cover 99.5 % of days.",
+   "A model's prediction is not data: predtide and botsflu_predtide are tide predictions and are present on days the sensor recorded nothing.",
+   "Values present are not values that passed QC: the QC time-series task recipe drops QARTOD-failed samples.",
+   "ERDDAP's OOI datasets are about one value a minute; a day with all 1440 can still have gaps shorter than a minute in the full-rate data on the Gold Copy."
+  ],
+  "sources": [
+   {
+    "title": "ERDDAP tabledap documentation, orderByCount",
+    "url": "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/documentation.html#orderByCount"
+   },
+   {
+    "title": "OOI Data Explorer ERDDAP",
+    "url": "https://erddap.dataexplorer.oceanobservatories.org/erddap/index.html"
+   },
+   {
+    "title": "OOI Quality Control",
+    "url": "https://oceanobservatories.org/quality-control/"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:availab\\w*|coverage|gaps?|gappy|outages?|down ?time|uptime|missing|empty|nan|populated|complete(?:ness)?|continuous|holdings|(?:had|has|have|with|without) (?:any )?data|data (?:exist|there)|when (?:did|was|were|does|do)\\b.{0,40}\\b(?:record\\w*|working|online|offline|running|start\\w*|end\\w*|stop\\w*)|which (?:years?|months?|days?|dates?))\\b",
+   "about": "\\b(?:ctds?|temperatures?|salinity|oxygen|ph|pco2|chlorophyll|fluoromet\\w*|turbidity|nitrate|par|currents?|adcps?|vel3d|conductivity|density|pressure|botpt\\w*|bottom pressure|tilt\\w*|tmpsf|thermistors?|trhph|prest\\w*|data ?sets?|variables?|erddap|ooi-[a-z0-9-]+|(?:RS|CE)\\d\\d[A-Z0-9]{4}-[A-Z0-9]{5}-\\d\\d-[A-Z0-9]{9})\\b"
+  }
+ },
+ {
+  "id": "event_waveform_package",
+  "title": "Save the waveforms of a list of earthquakes at several OOI seismometers, response removed and rotated to radial and transverse, with a record section",
+  "script": "recipes/event_waveform_package.py",
+  "instruments": "seismometers",
+  "summary": "Takes earthquakes from the USGS catalogue (anywhere in the world), the Axial Seamount Earthquake Catalog or a list of origin times, and for each event and station downloads a window around the predicted P arrival, removes the instrument response, rotates the horizontals to true north and east and then to radial and transverse, and saves MiniSEED, StationXML and SAC files with the event and station in the SAC header, a table of what was saved for each event and station (or why not), and a record section of the vertical components by distance.",
+  "steps": [
+   "Get the events: USGS ComCat's largest MAX_EVENTS in QUERY, within REGION's radius of its point when set, or the Axial catalogue's daily hypo71 files (latitude and longitude in degrees and minutes, west), or EVENTS as a list of origin times with their location when known.",
+   "For each station, compute the distance, azimuth and back azimuth to the event and the predicted first P arrival in the iasp91 model (ObsPy TauP); with no location, the window is set from the origin time and the horizontals stay north and east.",
+   "Pick the channels: at each station its slowest seismometer channels sampled at MIN_RATE or more (BH or SH at 40 Hz for distant events, HH or EH at 200 Hz for local ones with MIN_RATE = 100), unless CHANNELS names them.",
+   "Download BEFORE to AFTER seconds around P with PAD seconds more each side, merge (rates rounded, short gaps filled and counted), detrend, taper, and remove the response with a pre-filter from each channel's own response and no water level.",
+   "With three components, rotate to true north and east with the metadata's azimuths, then to radial and transverse with the back azimuth (ZRT); filter a copy of the vertical for the record section, then cut everything to the window; a station with less than 90 % of the window is reported as incomplete.",
+   "Save per event: MiniSEED and StationXML per station, a SAC file per component with stla, stlo, evla, evlo, evdp, mag, gcarc, az, baz, the origin (o) and P (a) in its header, and the record section; and the table of every event and station."
+  ],
+  "change": "CATALOG and QUERY for the events (starttime, endtime, minmagnitude), and REGION for where (latitude, longitude and a radius in degrees: the script's comment gives the Blanco fracture zone, Axial's caldera and Mendocino; None is the whole world, so a question naming a place needs REGION), or EVENTS for your own list; MAX_EVENTS; STATIONS; MIN_RATE (20 for distant events, 100 for local ones) or CHANNELS; BEFORE and AFTER around P; OUTPUT; FREQMIN and FREQMAX for the record section only (the saved traces are not filtered).",
+  "pitfalls": [
+   "Predicted P is a model's time, not a pick: for the M8.8 Kamchatka earthquake of 29 July 2025 the onset showed 1 s after iasp91 P at the quiet land station IU.ANMO but 13 s after it at AXCC1 and 19 s at HYSB1 (0.5-2 Hz), as the rupture's weak start is hidden in seafloor noise; Axial microearthquakes arrive 0.2-0.4 s after iasp91 P, as the shallow crust is slower than the model.",
+   "At Axial's caldera (about 1,520 m deep) arrivals about 2.0 and 4.1 s after P on every station are the sea surface's reflections (twice the water depth at 1.5 km/s), not S waves or more earthquakes.",
+   "Short-period stations (AXAS1, AXAS2, AXEC1, AXEC3, AXID1, HYS11-13, CMG-6TF with a 1 s corner) do not record long periods: the pre-filter keeps their records above about 0.5 Hz, so a distant event's surface waves are seen properly only on the broadbands (AXBA1, AXCC1, AXEC2, HYS14, HYSB1).",
+   "Rotation to radial and transverse needs all three components and the event's location; a station with one component, or an event with only an origin time, stays in Z, N and E.",
+   "The OO stations had long outages (Hydrate Ridge from August 2020 to August 2022): a station with no data or an incomplete window is listed in events_stations.csv rather than saved.",
+   "USGS ComCat returns the largest MAX_EVENTS of the search, which for a great earthquake's days are its aftershocks too; narrow QUERY or raise minmagnitude."
+  ],
+  "sources": [
+   {
+    "title": "ObsPy: TauP travel times",
+    "url": "https://docs.obspy.org/packages/obspy.taup.html"
+   },
+   {
+    "title": "ObsPy: Stream.rotate",
+    "url": "https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.rotate.html"
+   },
+   {
+    "title": "SAC file format and header",
+    "url": "https://ds.iris.edu/files/sac-manual/manual/file_format.html"
+   },
+   {
+    "title": "USGS ComCat FDSN event web service",
+    "url": "https://earthquake.usgs.gov/fdsnws/event/1/"
+   },
+   {
+    "title": "Axial Seamount Earthquake Catalog",
+    "url": "http://axial.ocean.washington.edu/"
+   },
+   {
+    "title": "Kennett and Engdahl 1991, Traveltimes for global earthquake location and phase identification",
+    "url": "https://doi.org/10.1111/j.1365-246X.1991.tb06724.x"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:record sections?|packages?|bundles?|sac(?: files?)?|catalog(?:ue)?s?|teleseism\\w*|distant (?:earthquakes?|events?)|radial|transverse|zrt|stress drops?|receiver functions?|moment tensors?|event windows?|(?:each|every|several|multiple|many|all|these|list of) (?:the )?(?:earthquakes?|events?|quakes?))\\b",
+   "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|teleseism\\w*|broadbands?|short-period|M ?\\d(?:\\.\\d)?|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+  }
+ },
+ {
+  "id": "botpt_detide",
+  "title": "Remove the tides from an Axial BOTPT's bottom pressure and get the seafloor's depth change, hour by hour",
+  "script": "recipes/botpt_detide.py",
+  "instruments": null,
+  "summary": "Reads an Axial bottom pressure and tilt instrument's 15-second mean pressure from OOI's Gold Copy over OPeNDAP (only the span is downloaded, for any date since 2014), converts it to depth with TEOS-10, fits the tides to a year of hourly depths with UTide and takes the daily and faster ones away, also low-passes the depth with a Godin filter, compares both with OOI's own de-tided depth, and writes hourly CSV, the tidal constituents and a plot, with the depth trend.",
+  "steps": [
+   "List the Gold Copy THREDDS folder REFDES-streamed-botpt_nano_sample_15sec and open, over OPeNDAP, the files whose time span overlaps the year before END (or the span asked for, if longer), reading only botsflu_meanpres (15-s mean pressure, psi) and OOI's botsflu_meandepth for those times.",
+   "Convert to sea pressure (psi to dbar, less one standard atmosphere, as the gauge reads absolute pressure) and to depth with TEOS-10 (gsw.z_from_p) at the site's latitude; average hourly, keeping hours with at least half their 240 means.",
+   "Fit the tides with UTide (ordinary least squares, with a linear trend so uplift does not leak into the tides) to FIT_DAYS of hourly depths ending at END: a year separates K1 from P1 and S2 from K2, which are 182 days apart in beat.",
+   "Predict the daily and faster constituents over the span asked for and subtract them; the fortnightly, monthly and seasonal constituents stay in the residual, as they are as much ocean and volcano as tide.",
+   "Low-pass the hourly depth with a Godin filter (24, 24 and 25-hour running means) as a check that needs no tide model, and compare with OOI's BOTSFLU de-tided depth.",
+   "Report the tide left in each de-tided series (rms about a 2-day running mean), the largest constituents and the trend over the span and over the fit's year; write the hourly series, the constituents and the plot."
+  ],
+  "change": "REFDES for the site (RS03CCAL-MJ03F-05-BOTPTA301 caldera centre, RS03ECAL-MJ03E-06-BOTPTA302 eastern rim, RS03INT2-MJ03D-06-BOTPTA303 International District, RS03ASHS-MJ03B-09-BOTPTA304 ASHES), START and END (UTC, END not included), FIT_DAYS for the tide's fit (keep a year), GODIN.",
+  "pitfalls": [
+   "Each route covers different years: EarthScope's 20 Hz pressure (OO.AXCC1, AXEC2, AXID1 location 11, BDO) ends on 14 February 2024; ERDDAP's 1-minute botpres has the caldera centre, eastern rim and ASHES only from August 2025 and the International District only to September 2022, and ERDDAP's de-tided depth and tilt stop from 26 February to 21 June 2026. The Gold Copy's 15-s product covered every day of 2024 and 2025 at the caldera centre, and the International District through March 2026.",
+   "A tide fitted to less than about six months leaves the K1-P1 beat behind: at the caldera centre, a fit to January-March 2025 left 8.4 cm rms of tide, a fit to the year before 1.6 cm; one-month fits give K1 phases from 218 to 250 degrees as P1 hides in K1, while M2's stayed within a degree, so the clock is not to blame.",
+   "A month's trend is mostly ocean: at the International District, March 2026 gave +29 cm/yr while the year to it gave -9.4 cm/yr; for uplift use months to years, or the differential uplift of the Axial uplift task recipe, which cancels what the ocean does to both sites.",
+   "A single gauge's trend includes its own drift, which only campaign pressure measurements at the same benchmarks can correct.",
+   "The Godin filter loses the first and last 35 hours, and it takes away everything faster than about two days, not only tides.",
+   "Depth here is from TEOS-10 sea pressure; OOI's BOTSFLU depth uses its own conversion and tide model, so compare their changes, not their levels."
+  ],
+  "sources": [
+   {
+    "title": "Codiga 2011, Unified Tidal Analysis and Prediction Using the UTide Matlab Functions",
+    "url": "https://www.po.gso.uri.edu/~codiga/utide/2011Codiga-UTide-Report.pdf"
+   },
+   {
+    "title": "UTide for Python",
+    "url": "https://github.com/wesleybowman/UTide"
+   },
+   {
+    "title": "OOI Gold Copy THREDDS catalog",
+    "url": "https://thredds.dataexplorer.oceanobservatories.org/thredds/catalog/ooigoldcopy/public/catalog.html"
+   },
+   {
+    "title": "TEOS-10 GSW z_from_p",
+    "url": "https://teos-10.github.io/GSW-Python/conversions.html"
+   },
+   {
+    "title": "Nooner and Chadwick 2016, Inflation-predictable behavior and co-eruption deformation at Axial Seamount",
+    "url": "https://doi.org/10.1126/science.aah4666"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:detid\\w*|de-tid\\w*|tides?|tidal|harmonic|utide|t_tide|godin|constituents?|m2|(?:remove|take out|subtract)\\w* (?:the )?tides?|hourly|15-?s(?:ec\\w*)?|high-rate|raw pressure)\\b",
+   "about": "\\b(?:axial|botpt\\w*|bottom pressure|pressure|bprs?|nano|MJ03[BDEF]|caldera|seafloor depth|ashes|international district)\\b"
+  }
+ },
+ {
+  "id": "station_response",
+  "title": "List an OOI seismic station's channels, epochs, orientations and instrument responses, and explain them",
+  "script": "recipes/station_response.py",
+  "instruments": "seismometers",
+  "summary": "Reads the StationXML of OO network stations from EarthScope at the response level and writes a table of every channel epoch (what each channel code means, sampling rate, azimuth and dip, sensor and datalogger, sensitivity with its frequency and units, units per count, the band within 3 dB of flat, and the response's stages), checks that each sensor's two horizontals are 90 degrees apart, explains how counts become physical units, and plots each kind of channel's response.",
+  "steps": [
+   "Request the stations' channels at level=response from EarthScope's FDSN station service, for every epoch or for one TIME.",
+   "For each channel epoch, decode its SEED code (band: sampling rate and broadband or short-period; instrument: seismometer H, accelerometer N, pressure D, temperature K, tilt A; orientation) and read its azimuth, dip, sensor, datalogger and overall sensitivity (counts per input unit at a stated frequency).",
+   "Compute the response's amplitude over frequency and find where it is within 3 dB of its largest value: the band where dividing by the sensitivity gives the physical value; outside it the full response must be removed.",
+   "List each stage (poles and zeros, gain, FIR) with its gain, and write the table as CSV.",
+   "Check each sensor's two horizontals (N and E, or 1 and 2) are 90 degrees apart, and flag those that are not.",
+   "Plot one channel of each kind's latest response (amplitude divided by sensitivity, and phase) against frequency."
+  ],
+  "change": "STATIONS (a list or wildcards), CHANNELS (EarthScope takes * and ? and comma lists, not [ ] ranges), LOCATION (\"\" for seismometers and hydrophone, 11 for the BOTPT channels), TIME for the metadata at one time.",
+  "pitfalls": [
+   "HYS11's metadata gives EHN an azimuth of 0 and EHE 125 degrees, which are not at right angles (HYS12 and HYS13 nearby give 35 and 125), so one is wrong and rotating HYS11 with them gives wrong north and east; the script flags it.",
+   "Some horizontals are turned from north: AXEC1's EHN points 128 and EHE 218 degrees, AXEC3's 35 and 125, and HYS12's and HYS13's 35 and 125; channels named N and E must be rotated with their azimuths (ObsPy's Stream.rotate with the inventory and components including ZNE).",
+   "The low-frequency hydrophones' (HDH) metadata response is flat down to 0.0001 Hz, but the hydrophone is not: at AXCC1 on 1 June 2023, HDH converted with it gave the microseism (0.2-0.3 Hz, coherence 0.95-0.98 with the BOTPT pressure gauge) at 0.1-0.3 % of the gauge's pressure, so HDH pressures below a few hertz are far too small.",
+   "The BOTPT pressure channel (location 11, BDO) holds float32 psi, not digitiser counts: its sensitivity, 1.45038e-4 per Pa, is 1/6894.757, so dividing by it gives pascals; its data on EarthScope end on 14 February 2024. Its tilt (LAX, LAY in microradians) and temperature (BK1, in C) are in their units already, with a sensitivity of 1.",
+   "Most OO channels have one epoch from 2014 to now; HYS13's have three (new on 25 June 2019 and 21 August 2022), each with its own sensitivity, so remove the response with the epoch covering the data's time (ObsPy does when given the inventory).",
+   "The sensitivity is exact only at its frequency; a broadband record's long periods (below its 360 s corner) and every record near Nyquist need the full response removed, with a pre-filter."
+  ],
+  "sources": [
+   {
+    "title": "SEED channel naming",
+    "url": "https://ds.iris.edu/ds/nodes/dmc/data/formats/seed-channel-naming/"
+   },
+   {
+    "title": "FDSN StationXML",
+    "url": "https://docs.fdsn.org/projects/stationxml/en/latest/"
+   },
+   {
+    "title": "ObsPy: Response",
+    "url": "https://docs.obspy.org/packages/autogen/obspy.core.inventory.response.Response.html"
+   },
+   {
+    "title": "EarthScope FDSN web services",
+    "url": "https://service.earthscope.org"
+   },
+   {
+    "title": "OOI Seismic Network OO",
+    "url": "https://doi.org/10.7914/SN/OO"
+   }
+  ],
+  "match": {
+   "task": "\\b(?:metadata|stationxml|station ?xml|epochs?|sensitivit\\w*|gains?|poles?|zeros|transfer functions?|frequency response|response (?:curves?|functions?|stages?|chain|plots?)|bode|stages?|counts?|units?|channel codes?|orientations?|azimuths?|dips?|oriented|band codes?|datalogger|digiti[sz]er|sensor models?|inventor(?:y|ies)|list (?:the |its )?channels)\\b",
+   "about": "\\b(?:seism\\w*|OBS|accelerometers?|hydrophones?|HDH|BDO|channels?|stations?|earthscope|iris|fdsn|stationxml|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*|CZ(?:MID|OFF|OSH|SHF))\\b"
   }
  }
 ]

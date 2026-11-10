@@ -31,7 +31,7 @@
   "chunk_id": "task_axial_uplift",
   "title": "Compute and plot Axial Seamount's uplift (inflation) from the bottom pressure instruments, with uplift rates",
   "instruments": null,
-  "task": "\\b(?:uplift\\w*|inflat\\w*|deflat\\w*|deformation|deforming|subsid\\w*|detid\\w*|tides?|tidal|depth change|rates?|differential|plot\\w*|figures?|graphs?)\\b",
+  "task": "\\b(?:uplift\\w*|inflat\\w*|deflat\\w*|deformation|deforming|subsid\\w*|depth change|rates?|differential|plot\\w*|figures?|graphs?)\\b",
   "about": "\\b(?:axial|botpt\\w*|bottom pressure|pressure|bprs?|MJ03[BDEF]|caldera|seafloor depth|volcano)\\b"
  },
  {
@@ -54,5 +54,40 @@
   "instruments": null,
   "task": "\\b(?:currents?|speed|direction|velocit\\w*|flow\\w*|tidal currents?|profiles?|plot\\w*|figures?|graphs?)\\b",
   "about": "\\b(?:adcps?|acoustic doppler|current meters?|current profilers?|currents?|ADCP\\w+|VADCP\\w*)\\b"
+ },
+ {
+  "chunk_id": "task_earthscope_availability",
+  "title": "Find when OOI seismometers, hydrophones or other EarthScope channels have data, with daily availability, outages and gaps",
+  "instruments": "seismometers",
+  "task": "\\b(?:availab\\w*|coverage|gaps?|gappy|outages?|down ?time|uptime|missing|complete(?:ness)?|continuous|holdings|(?:had|has|have|with|without) (?:any )?data|data (?:exist|there)|when (?:did|was|were)\\b.{0,40}\\b(?:record\\w*|working|online|offline|running)|which (?:stations?|channels?|hydrophones?|seismometers?)\\b.{0,40}\\b(?:record\\w*|working|online))\\b",
+  "about": "\\b(?:seism\\w*|OBS|accelerometers?|hydrophones?|HDH|HH[ZNE?]|EH[ZNE?]|HN[ZNE?]|channels?|stations?|earthscope|iris|fdsn|mseed|miniseed|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*|CZ(?:MID|OFF|OSH|SHF))\\b"
+ },
+ {
+  "chunk_id": "task_erddap_coverage",
+  "title": "Find when an OOI instrument's variables have data on ERDDAP, day by day, with the gaps",
+  "instruments": null,
+  "task": "\\b(?:availab\\w*|coverage|gaps?|gappy|outages?|down ?time|uptime|missing|empty|nan|populated|complete(?:ness)?|continuous|holdings|(?:had|has|have|with|without) (?:any )?data|data (?:exist|there)|when (?:did|was|were|does|do)\\b.{0,40}\\b(?:record\\w*|working|online|offline|running|start\\w*|end\\w*|stop\\w*)|which (?:years?|months?|days?|dates?))\\b",
+  "about": "\\b(?:ctds?|temperatures?|salinity|oxygen|ph|pco2|chlorophyll|fluoromet\\w*|turbidity|nitrate|par|currents?|adcps?|vel3d|conductivity|density|pressure|botpt\\w*|bottom pressure|tilt\\w*|tmpsf|thermistors?|trhph|prest\\w*|data ?sets?|variables?|erddap|ooi-[a-z0-9-]+|(?:RS|CE)\\d\\d[A-Z0-9]{4}-[A-Z0-9]{5}-\\d\\d-[A-Z0-9]{9})\\b"
+ },
+ {
+  "chunk_id": "task_event_waveform_package",
+  "title": "Save the waveforms of a list of earthquakes at several OOI seismometers, response removed and rotated to radial and transverse, with a record section",
+  "instruments": "seismometers",
+  "task": "\\b(?:record sections?|packages?|bundles?|sac(?: files?)?|catalog(?:ue)?s?|teleseism\\w*|distant (?:earthquakes?|events?)|radial|transverse|zrt|stress drops?|receiver functions?|moment tensors?|event windows?|(?:each|every|several|multiple|many|all|these|list of) (?:the )?(?:earthquakes?|events?|quakes?))\\b",
+  "about": "\\b(?:earthquakes?|quakes?|events?|seism\\w*|teleseism\\w*|broadbands?|short-period|M ?\\d(?:\\.\\d)?|OBS|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*)\\b"
+ },
+ {
+  "chunk_id": "task_botpt_detide",
+  "title": "Remove the tides from an Axial BOTPT's bottom pressure and get the seafloor's depth change, hour by hour",
+  "instruments": null,
+  "task": "\\b(?:detid\\w*|de-tid\\w*|tides?|tidal|harmonic|utide|t_tide|godin|constituents?|m2|(?:remove|take out|subtract)\\w* (?:the )?tides?|hourly|15-?s(?:ec\\w*)?|high-rate|raw pressure)\\b",
+  "about": "\\b(?:axial|botpt\\w*|bottom pressure|pressure|bprs?|nano|MJ03[BDEF]|caldera|seafloor depth|ashes|international district)\\b"
+ },
+ {
+  "chunk_id": "task_station_response",
+  "title": "List an OOI seismic station's channels, epochs, orientations and instrument responses, and explain them",
+  "instruments": "seismometers",
+  "task": "\\b(?:metadata|stationxml|station ?xml|epochs?|sensitivit\\w*|gains?|poles?|zeros|transfer functions?|frequency response|response (?:curves?|functions?|stages?|chain|plots?)|bode|stages?|counts?|units?|channel codes?|orientations?|azimuths?|dips?|oriented|band codes?|datalogger|digiti[sz]er|sensor models?|inventor(?:y|ies)|list (?:the |its )?channels)\\b",
+  "about": "\\b(?:seism\\w*|OBS|accelerometers?|hydrophones?|HDH|BDO|channels?|stations?|earthscope|iris|fdsn|stationxml|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*|CZ(?:MID|OFF|OSH|SHF))\\b"
  }
 ]
