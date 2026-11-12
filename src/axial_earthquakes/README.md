@@ -48,8 +48,9 @@ No credentials are required. The site currently serves catalog data over HTTP, s
 ## Refresh the snapshot
 
 ```bash
-python3 src/axial_earthquakes/snapshot_axial.py --output-dir tmp/axial-source
-python3 src/axial_earthquakes/build_axial_corpus.py \
+python3 src/axial_earthquakes/snapshot_axial.py --output-dir tmp/axial-source \
+  --previous source_material/AxialEarthquakes/source_snapshot   # keeps focal mechanisms the site has dropped
+.venv/bin/python src/axial_earthquakes/build_axial_corpus.py \
   --source-dir tmp/axial-source \
   --output-dir data/AxialEarthquakes/graphrag \
   --runtime-dir runtime_data/AxialEarthquakes/graphrag \

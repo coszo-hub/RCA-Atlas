@@ -10,7 +10,7 @@ import json
 import shutil
 import sqlite3
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from axial_agent_tools import FIGURES, TOOL_SCHEMAS, _finite_float, parse_focal_csv, parse_hypo71
@@ -72,6 +72,58 @@ def summary_row(key: str, events: list[dict], period: str) -> dict:
         "largest_event_id": largest["event_id"] if largest else None, "largest_event_record_key": largest["record_key"] if largest else None,
         "source_url": f"{BASE}/hypo71.dat", "site_id": "axial_seamount",
     }
+
+
+WHALE_METHOD = ("The University of Washington earthquake pipeline flags every signal that at least three OOI cabled "
+    "seismometers at Axial record in the 4-30 Hz band, and labels those with the frequency and shape of the 20 Hz fin whale "
+    "pulse as fin whale calls. One flagged signal is roughly one call; faint calls are missed, so the counts are a lower "
+    "bound, and days without seismic data have no count. Calls are located near the sea surface from their arrival-time "
+    "differences (sound at 1.48 km/s, a grid search like Wilcock 2012, doi:10.1121/1.4747017), kept when at least four "
+    "stations fit within 0.1 s, and calls under three minutes apart that a whale could swim between are joined into tracks "
+    "of at least 20 calls. Positions are reliable within about 5 km of the caldera stations. Fin whales call most from "
+    "November to February and are nearly silent from May to July, as a hydrophone on Axial found in 2006-2013 "
+    "(Weirathmueller et al. 2017, doi:10.1371/journal.pone.0186127). The site keeps tracks only for the three days of the "
+    "last 90 with the most calls; the counts are updated once a day.")
+
+
+def whale_months(source: Path) -> dict:
+    """whale-counts.json (WhaleTracking/counts.json) → {YYYY-MM: {calls, days}}; {} when it was not downloaded."""
+    path = source/"whale-counts.json"
+    if not path.exists(): return {}
+    data = json.loads(path.read_text())
+    start, out = datetime.fromisoformat(data["start"]), defaultdict(lambda: {"calls": 0, "days": 0})
+    for i, n in enumerate(data["fin"]):
+        if n is None: continue
+        m = out[(start + timedelta(days=i)).strftime("%Y-%m")]
+        m["calls"] += n; m["days"] += 1
+    return dict(out)
+
+
+def whale_chunks(source: Path, months: dict) -> list[dict]:
+    """An overview of the whale product and one chunk a calling season (July to June)."""
+    if not months: return []
+    data = json.loads((source/"whale-counts.json").read_text())
+    days = sum(m["days"] for m in months.values()); calls = sum(m["calls"] for m in months.values())
+    first = min(k for k, m in months.items() if m["days"]); last = max(months)
+    chunks = [{"chunk_id": "axial_whales_overview", "title": "Fin whale calls at Axial Seamount",
+               "text": f"Daily counts of fin whale calls recorded by the OOI cabled seismometers at Axial Seamount run from {first} to {last} "
+                       f"(updated {data.get('updated', '')}): {calls:,} calls on {days:,} days with data. {WHALE_METHOD}",
+               "entity_ids": ["axial_fin_whale_calls", "axial_seamount"], "source_ids": ["axial_whales"]}]
+    seasons = defaultdict(dict)
+    for k, m in months.items():
+        y, mo = int(k[:4]), int(k[5:])
+        seasons[y if mo >= 7 else y - 1][k] = m
+    for y, ms in sorted(seasons.items()):
+        total = sum(m["calls"] for m in ms.values()); d = sum(m["days"] for m in ms.values())
+        if not d: continue
+        peak = max(ms, key=lambda k: ms[k]["calls"] / max(ms[k]["days"], 1))
+        per = "; ".join(f"{k}: {m['calls']:,} on {m['days']} days" for k, m in sorted(ms.items()) if m["days"])
+        chunks.append({"chunk_id": f"axial_whales_season_{y}", "title": f"Fin whale calls at Axial, July {y} to June {y + 1}",
+                       "text": f"From July {y} to June {y + 1} the Axial seismometers recorded {total:,} fin whale calls on {d} days with data "
+                               f"({total / d:,.0f} a day); the most a day came in {peak}. By month: {per}. Counts are a lower bound.",
+                       "entity_ids": ["axial_fin_whale_calls"], "source_ids": ["axial_whales"],
+                       "metadata": {"season": f"{y}-{y + 1}", "calls": total, "days": d, "months": ms}})
+    return chunks
 
 
 def main() -> None:
@@ -146,18 +198,21 @@ def main() -> None:
         {"source_id":"axial_hypo71_full","title":"Axial HYPO71 earthquake catalog","url":f"{BASE}/hypo71.dat","source_type":"structured_catalog","record_count":len(events)},
         {"source_id":"axial_hypo71_daily","title":"Axial daily HYPO71 catalogs","url":f"{BASE}/hypo71.html","source_type":"daily_catalog_index","date_semantics":"UTC"},
         {"source_id":"axial_ph2dt_daily","title":"Axial daily ph2dt arrival catalogs","url":f"{BASE}/ph2dt.html","source_type":"phase_pick_catalog_index","date_semantics":"UTC"},
-        {"source_id":"axial_focal","title":"Axial focal mechanisms","url":f"{BASE}/Focal%20Mechanisms.html","source_type":"focal_mechanism_catalog"},
+        {"source_id":"axial_focal","title":"Axial focal mechanisms","url":f"{BASE}/FocalMechanisms.html","source_type":"focal_mechanism_catalog"},
+        {"source_id":"axial_whales","title":"Fin whale calls at Axial Seamount","url":f"{BASE}/WhaleTracking.html","source_type":"daily_counts_and_tracks","update_frequency":"daily"},
         {"source_id":"axial_rsam","title":"Axial RSAM","url":f"{BASE}/rsam.html","source_type":"continuous_amplitude_figures","update_frequency":"hourly"},
     ]
     entities = [
         {"entity_id":"axial_seamount","entity_type":"volcano","name":"Axial Seamount","description":"Active submarine volcano on the Juan de Fuca Ridge observed by the OOI Regional Cabled Array."},
         {"entity_id":"axial_earthquake_catalog","entity_type":"catalog","name":"Axial Seamount Earthquake Catalog","description":"Near-real-time detections and HYPOINVERSE locations derived from OOI cabled seismic data."},
         {"entity_id":"axial_focal_method","entity_type":"method","name":"Axial focal-mechanism workflow","description":"Near-real-time P-polarity analog selection and HASH focal-mechanism estimation for eligible located earthquakes."},
+        {"entity_id":"axial_fin_whale_calls","entity_type":"measurement_product","name":"Axial fin whale calls","description":"Daily counts of 20 Hz fin whale calls detected by the Axial earthquake pipeline on the OOI cabled seismometers, and whale tracks over the caldera."},
         {"entity_id":"axial_rsam","entity_type":"measurement_product","name":"Axial RSAM","description":"One-minute median absolute vertical-channel amplitudes in 1–2 Hz and 2–4 Hz bands."},
     ] + [{"entity_id":f"station_{k.lower()}","entity_type":"seismic_station","name":k,"description":v} for k,v in STATIONS.items()]
     relationships = [
         {"relationship_id":"catalog_describes_axial","source_id":"axial_earthquake_catalog","target_id":"axial_seamount","relationship_type":"DESCRIBES"},
         {"relationship_id":"focal_derives_catalog","source_id":"axial_focal_method","target_id":"axial_earthquake_catalog","relationship_type":"DERIVES_FROM"},
+        {"relationship_id":"whales_derive_catalog","source_id":"axial_fin_whale_calls","target_id":"axial_earthquake_catalog","relationship_type":"DERIVES_FROM"},
         {"relationship_id":"rsam_observes_axial","source_id":"axial_rsam","target_id":"axial_seamount","relationship_type":"OBSERVES"},
     ] + [{"relationship_id":f"{k.lower()}_observes_axial","source_id":f"station_{k.lower()}","target_id":"axial_seamount","relationship_type":"OBSERVES"} for k in STATIONS]
 
@@ -170,6 +225,13 @@ def main() -> None:
     for row in monthly:
         chunks.append({"chunk_id":row["summary_id"],"title":f"Axial earthquake activity in {row['period_utc']}","text":f"In {row['period_utc']} UTC, the Axial catalog contains {row['earthquake_count']:,} earthquake rows. Magnitudes range from {row['magnitude_min']} to {row['magnitude_max']}; the largest row is event {row['largest_event_id']}. Exact event details are in events.sqlite and events.jsonl.gz.","entity_ids":["axial_seamount","axial_earthquake_catalog"],"source_ids":["axial_hypo71_full"],"metadata":row})
 
+    by_month_whales = whale_months(source)
+    chunks += whale_chunks(source, by_month_whales)
+    for c in chunks:
+        if c["chunk_id"].startswith("axial_month_") and (w := by_month_whales.get(c["chunk_id"][-7:])):
+            c["text"] += f" The seismometers recorded {w['calls']:,} fin whale calls that month ({w['days']} days with data)."
+            c["metadata"] = {**c["metadata"], "fin_whale_calls": w["calls"], "fin_whale_days": w["days"]}
+
     figure_manifest = [{"figure_id":f"axial_{name}","name":name,"source_url":f"{BASE}/{path}","scope":"Axial Seamount","retrieval_mode":"live","mime_type":"image/jpeg"} for name,path in FIGURES.items()]
     figure_manifest += [
         {"figure_id":"axial_daily_caldera_map","name":"daily_caldera_map","url_pattern":f"{BASE}/mapCaldera/dailyCalderaMap_YYYYMMDD.jpg","date_semantics":"UTC","retrieval_mode":"live"},
@@ -179,7 +241,7 @@ def main() -> None:
 
     raw_dir = source_archive
     raw_dir.mkdir(exist_ok=True)
-    for name in ["hypo71.dat","axial_focal_mechanisms.csv","FM_ML_2022_2025.txt","FM_XC_2015_2021.txt","index.html","focal-mechanisms.html","rsam.html","hypo71-index.html","ph2dt-index.html","map1-index.html","map2-index.html"]:
+    for name in ["whale-counts.json","whale-tracking.html","hypo71.dat","axial_focal_mechanisms.csv","FM_ML_2022_2025.txt","FM_XC_2015_2021.txt","index.html","focal-mechanisms.html","rsam.html","hypo71-index.html","ph2dt-index.html","map1-index.html","map2-index.html"]:
         p = source/name
         if not p.exists(): continue
         if p.stat().st_size > 5_000_000:
@@ -195,7 +257,7 @@ def main() -> None:
     }
     (out/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
     (out/"tool_manifest.json").write_text(json.dumps({"tools":TOOL_SCHEMAS},indent=2)+"\n")
-    validation = {"ok":True,"event_rows_match_source":len(events)==317696,"record_keys_unique":len({e['record_key'] for e in events})==len(events),"chronological":all(events[i]['origin_time_utc']<=events[i+1]['origin_time_utc'] for i in range(len(events)-1)),"duplicate_id_groups":manifest["duplicate_id_groups"],"event_count_2026_09_18":len(by_day.get("2026-09-18",[])),"focal_schema_normalized":True}
+    validation = {"ok":True,"event_rows_match_source":len(events)==sum(1 for line in (source/"hypo71.dat").read_text(encoding="utf-8", errors="replace").splitlines()[1:] if line.strip()),"record_keys_unique":len({e['record_key'] for e in events})==len(events),"chronological":all(events[i]['origin_time_utc']<=events[i+1]['origin_time_utc'] for i in range(len(events)-1)),"duplicate_id_groups":manifest["duplicate_id_groups"],"event_count_2026_09_18":len(by_day.get("2026-09-18",[])),"focal_schema_normalized":True}
     (out/"validation_report.json").write_text(json.dumps(validation,indent=2)+"\n")
 
 
