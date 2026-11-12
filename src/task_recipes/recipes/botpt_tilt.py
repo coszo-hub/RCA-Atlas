@@ -18,6 +18,9 @@ GAP_JUMP = 10.0    # microradians across a gap of more than an hour: an offset w
 REMOVE = ("relevel", "across gap", "step")   # the kinds of step taken out; leave out "step" or "across gap" to keep
                    # them (an eruption tilts the ground hundreds of microradians in hours: April 2015 needs a look)
 CLIP = 329.9       # the LILY reads +-330 microradians at most; samples beyond this are clipped and dropped
+WARMUP = 0.1       # degrees C: after a gap of over an hour the LILY restarts cold (unpowered, it cools ~1.5 C) and its tilt
+                   # is 15-25 microradians off until it warms, ~12 hours; samples are dropped until its temperature is
+                   # within this of the hour before the gap
 THREDDS = "https://thredds.dataexplorer.oceanobservatories.org/thredds"
 
 # 1. The Gold Copy's LILY samples (1 Hz, 2014 to now at all four sites), every file overlapping the span, read over
@@ -59,6 +62,18 @@ print(f"{len(df)} samples, {df.index[0]} to {df.index[-1]}; QARTOD flags on the 
 clipped = (df["x"].abs() > CLIP) | (df["y"].abs() > CLIP)
 df.loc[clipped, ["x", "y"]] = np.nan
 print(f"{clipped.sum()} samples at the LILY's +-330 microradian limit dropped")
+warming, restarts = pd.Series(False, index=df.index), 0
+for i in np.flatnonzero(df.index.to_series().diff() > pd.Timedelta(hours=1)):
+    t, last = df.index[i], df.index[i - 1]   # the first sample after the gap, and the last before it
+    before = df.loc[(df.index <= last) & (df.index > last - pd.Timedelta(hours=1)), "temp"].median()
+    later = df.loc[(df.index >= t) & (df.index < t + pd.Timedelta(days=3)), "temp"]
+    if np.isnan(before) or not len(later) or later.iloc[0] >= before - WARMUP:
+        continue
+    warm = later.index[later >= before - WARMUP]
+    warming[(df.index >= t) & (df.index < (warm[0] if len(warm) else later.index[-1]))] = True
+    restarts += 1
+df.loc[warming, ["x", "y"]] = np.nan
+print(f"{restarts} restarts after a gap: {warming.sum()} samples while the LILY warmed up dropped")
 
 # 2. Steps. A relevel: the LILY drives itself back to level when its tilt nears its range, so x and y go to near zero
 #    within minutes. A step: a jump of more than JUMP between samples under an hour apart, not a relevel. Across a
