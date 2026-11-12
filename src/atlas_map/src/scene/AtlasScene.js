@@ -335,13 +335,14 @@ export class AtlasScene {
   setQuakesThrough(i) { this.subsurface?.setThrough(i); }
   // Colour the earthquakes by time (recent ones bright) or by their focal mechanism's faulting type.
   setQuakeColor(by) { this.subsurface?.setColorBy(by); }
-  // Show a day's fin whale calls and tracks (null hides them), flying in over them from afar.
+  // Show a day's fin whale calls and tracks (null hides them), flying in over them from afar, aimed between the
+  // whales near the sea surface and the seafloor beneath.
   setWhaleDay(day) {
     this.whales?.setDay(day);
     if (!day || !this.whales?.day) return;
     const w = dayExtent(this.whales.data.days[day]), t = this.controls.target, off = this.camera.position.clone().sub(t);
     if (Math.hypot(t.x - w.x, t.z - w.z) < w.r && off.length() < w.r * 6) return;
-    const exag = this.U.exag.value, target = new THREE.Vector3(w.x, this.elevAt ? -1500 * exag * 0.001 : 0, w.z);
+    const exag = this.U.exag.value, target = new THREE.Vector3(w.x, -750 * exag * 0.001, w.z);
     const pos = target.clone().add(new THREE.Vector3().setFromSphericalCoords(Math.max(w.r * 3, 8), 0.75, Math.atan2(off.x, off.z)));
     this._fly(pos, target, exag, 1800);
   }

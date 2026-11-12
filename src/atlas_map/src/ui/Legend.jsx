@@ -70,7 +70,7 @@ export default function Legend({ credit, auv = false, subsurface = null, realtim
       {whales && <div><div className="eyebrow">Fin whales, {whales.day}</div>
         <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#7fb2ff" strokeWidth="2" /><circle cx="6" cy="6" r="2" fill="#7fb2ff" /></svg>A whale's track, one colour each ({whales.tracks.length})</div>
         <div className="row"><svg className="glyph"><circle cx="6" cy="6" r="2" fill="#9a988f" /></svg>Call in no track</div>
-        <div className="row">{whales.tracked.toLocaleString("en-US")} of {whales.detected.toLocaleString("en-US")} calls detected that day were located in a track. Whales call near the sea surface; they are drawn on the seafloor beneath.</div></div>}
+        <div className="row">{whales.tracked.toLocaleString("en-US")} of {whales.detected.toLocaleString("en-US")} calls detected that day were located in a track. Calls are located 20 m below the sea surface, where the whales were; the faint dashed lines are the tracks' shadows on the seafloor.</div></div>}
       <div className="attribution">Bathymetry: {credit}.{auv && " Axial summit: MBARI AUV survey (cruise V2506), 1 m."} Cable: NOAA/BOEM Marine Cadastre, OOI mariner notices; west of the US EEZ and at Axial, ooi_cables.csv (M. Kidiwela). Faults: USGS Quaternary Fault and Fold Database. Status: Nereus.{subsurface && ` ${subsurface}.`}{whales && ` ${whales.credit}.`}</div>
     </div>
   );

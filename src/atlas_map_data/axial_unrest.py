@@ -46,8 +46,8 @@ CELL_DEG = 0.01 / 60                       # the catalog gives positions to 0.01
 DATUM_M = 1500.0
 DAY0 = datetime(2015, 1, 22)               # the relocated catalog's first day: one timeline for both
 REFERENCE_DAY = "2015-04-23"               # the last day before the eruption began on 24 April 2015
-WHALE_CREDIT = ("Fin whale calls and tracks: University of Washington Axial earthquake pipeline (W. Wilcock); located near "
-                "the sea surface (drawn on the seafloor below), reliable within about 5 km of the caldera stations")
+WHALE_CREDIT = ("Fin whale calls and tracks: University of Washington Axial earthquake pipeline (W. Wilcock); located 20 m "
+                "below the sea surface, reliable within about 5 km of the caldera stations")
 FOCAL = paths.REPO / "runtime_data" / "AxialEarthquakes" / "graphrag" / "focal_mechanisms.jsonl.gz"   # axial_earthquakes
 TYPES = "NRSU"   # normal, reverse, strike-slip, unclassified: codes 1-4 (0, none)
 CREDIT = ("Earthquakes after 2021: University of Washington Axial Seamount real-time catalog (W. Wilcock, M. Zhang); "

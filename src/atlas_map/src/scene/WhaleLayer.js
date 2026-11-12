@@ -8,7 +8,8 @@ import { atlasUrl } from "../data/bundle.js";
 // One colour a track; calls in no track are grey.
 export const TRACK_COLORS = ["#7fb2ff", "#ffcc85", "#9be59b", "#f28fb1", "#c6a3ff", "#62d7d2", "#ffe27a", "#ff9d6c"];
 const UNTRACKED = "#9a988f";
-const LIFT_M = 25;   // above the seafloor, so the dots are not buried in the relief
+const CALL_DEPTH_M = 20;   // the whale locator places calls 20 m below the sea surface (WhaleTracking's SRC_Z)
+const LIFT_M = 25;         // the shadow on the seafloor: above it, so it is not buried in the relief
 
 export async function loadWhales(fetchImpl = fetch) {
   try {
@@ -43,8 +44,8 @@ export function dayExtent(day) {
   return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, r: Math.max(x1 - x0, z1 - z0) / 2 };
 }
 
-// Fin whale calls and tracks for one day (the whale locator places calls near the sea surface; they are drawn on the
-// seafloor beneath, where the stations that heard them are). setDay(null) hides them.
+// Fin whale calls and tracks for one day, at their true depth, 20 m below the sea surface, with a faint shadow of the
+// tracks on the seafloor beneath, where the stations that heard them are. setDay(null) hides them.
 export class WhaleLayer {
   constructor(scene3d, data) {
     this.data = data; this.credit = data.credit;
@@ -67,7 +68,16 @@ export class WhaleLayer {
     if (!this.day || this._built === `${this.day}:${e}`) return;
     this._clear();
     const { tracks, loose } = dayTracks(this.data.days[this.day]);
-    const at = (lon, lat) => [toX(lon), (elevAt(lon, lat) + LIFT_M) * e, toZ(lat)];
+    const at = (lon, lat) => [toX(lon), -CALL_DEPTH_M * e, toZ(lat)];
+    const floor = (lon, lat) => [toX(lon), (elevAt(lon, lat) + LIFT_M) * e, toZ(lat)];
+    const line = (pts, place, hex, width, opacity, dashed = false) => {
+      const g = new LineGeometry(); g.setPositions(pts.flatMap(([lon, lat]) => place(lon, lat)));
+      const m = new LineMaterial({ color: hex, linewidth: width, transparent: true, opacity, dashed, dashSize: 0.08, gapSize: 0.08 });
+      m.resolution.set(innerWidth, innerHeight); this.mats.push(m);
+      const l = new Line2(g, m);
+      if (dashed) l.computeLineDistances();
+      this.group.add(l);
+    };
     const pos = [], col = [], c = new THREE.Color();
     const add = (pts, hex) => { c.set(hex); for (const [lon, lat] of pts) { pos.push(...at(lon, lat)); col.push(c.r, c.g, c.b); } };
     add(loose, UNTRACKED);
@@ -75,10 +85,9 @@ export class WhaleLayer {
       const hex = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
       add(pts, hex);
       if (pts.length < 2) return;
-      const g = new LineGeometry(); g.setPositions(smoothTrack(pts).flatMap(([lon, lat]) => at(lon, lat)));
-      const m = new LineMaterial({ color: hex, linewidth: 2, transparent: true, opacity: 0.9 });
-      m.resolution.set(innerWidth, innerHeight); this.mats.push(m);
-      this.group.add(new Line2(g, m));
+      const path = smoothTrack(pts);
+      line(path, at, hex, 2, 0.9);
+      line(path, floor, hex, 1, 0.18, true);   // its shadow on the seafloor: faint and dashed, never mistaken for a track
     });
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
