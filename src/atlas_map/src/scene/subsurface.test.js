@@ -70,5 +70,15 @@ describe("subsurface", () => {
     expect(s.lines.A[0][0]).toEqual([0, 0]);
     expect(upliftAt(unrest, "A", m, 0, "2015-01-22")).toBe(20);       // January's last day with a value
   });
+
+  it("carries each earthquake's faulting type, relocated and real-time", () => {
+    const rel = quakeArrays(eq, "N-S");
+    expect(Array.from(rel.fault)).toEqual([1, 0, 3]);
+    expect(Array.from(quakeArrays(eq).fault)).toEqual([0, 0, 0]);       // none built
+    const meta = { fields: ["dLon", "dLat", "depthM", "minute", "mw100", "type"], scale: 1e-5, lon0: -130, lat0: 46, day0: "2015-01-22" };
+    const rt = realtimeArrays(meta, new Int32Array([0, 0, 1500, 60, 0, 2, 0, 0, 1500, 120, 0, 0]).buffer, "2015-01-22");
+    expect(Array.from(rt.fault)).toEqual([2, 0]);
+    expect(Array.from(joinQuakes(rel, rt).fault)).toEqual([1, 0, 3, 2, 0]);
+  });
 });
 

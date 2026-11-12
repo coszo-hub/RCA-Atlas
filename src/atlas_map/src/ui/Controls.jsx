@@ -42,6 +42,25 @@ function UnrestStrip({ strip, month, last, onMonth }) {
   );
 }
 
+// Fin whale calls a day (each month's calls over its days with data; square-root scale, so every season shows), on
+// the strip's months: the same seismometers, so the calling season shows against the earthquakes.
+function WhaleStrip({ calls, days, month, last, onMonth }) {
+  const W = 300, H = 18, n = calls.length, bw = W / n;
+  const rate = calls.map((c, i) => (days[i] ? c / days[i] : null)), top = Math.max(...rate.filter(r => r != null));
+  const pick = e => {
+    const r = e.currentTarget.getBoundingClientRect();
+    onMonth(Math.max(0, Math.min(last, Math.floor(((e.clientX - r.left) / r.width) * n))));
+  };
+  return (
+    <svg className="unrest whales" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"
+      onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); pick(e); }} onPointerMove={e => { if (e.buttons) pick(e); }}>
+      {rate.map((r, i) => r > 0 && <rect key={i} x={i * bw} width={Math.max(bw - 0.4, 0.4)} y={H - Math.sqrt(r / top) * H}
+        height={Math.sqrt(r / top) * H} className={i <= month ? "whale on" : "whale"} />)}
+      <line x1={(month + 1) * bw} x2={(month + 1) * bw} y1="0" y2={H} className="cursor" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
 // The earthquake timeline beneath Axial: a month slider (cumulative through that month) with play/pause, and the
 // unrest strip above it when it is built.
 function QuakeTimeline({ scene, sub }) {
@@ -58,15 +77,20 @@ function QuakeTimeline({ scene, sub }) {
   const label = sub.months[month].label, n = sub.countThrough(month).toLocaleString("en-US");
   const up = sub.unrest && upliftAt(sub.unrest, "MJ03F", sub.months, month, sub.day0);
   const fmt = v => (v == null ? "no data" : `${v > 0 ? "+" : ""}${Math.round(v)} cm`);
+  const wm = sub.unrest?.monthly, whaleShift = strip && wm?.whaleCalls ? strip.offset : null;
+  const wCalls = whaleShift != null ? sub.months.map((_, i) => wm.whaleCalls[i - whaleShift] ?? 0) : null;
+  const wDays = whaleShift != null ? sub.months.map((_, i) => wm.whaleDays[i - whaleShift] ?? 0) : null;
+  const perDay = wCalls && wDays[month] ? Math.round(wCalls[month] / wDays[month]) : null;
   return (
     <div className="timeline">
       <div className="ctl-row"><span className="eyebrow">Earthquakes</span><span className="mono readout">to {label} · {n}</span></div>
       {strip && <>
         <UnrestStrip strip={strip} month={month} last={last} onMonth={m => { setPlaying(false); setMonth(m); }} />
-        <div className="unrest-readout mono" title="That month's earthquakes, and the caldera-centre (MJ03F) depth change since 23 April 2015, the eve of the eruption">
-          {label}: {strip.bars[month].count.toLocaleString("en-US")} quakes · uplift {fmt(up)}
+        {wCalls && <WhaleStrip calls={wCalls} days={wDays} month={month} last={last} onMonth={m => { setPlaying(false); setMonth(m); }} />}
+        <div className="unrest-readout mono" title="That month's earthquakes, the caldera-centre (MJ03F) depth change since 23 April 2015 (the eve of the eruption), and fin whale calls a day">
+          {label}: {strip.bars[month].count.toLocaleString("en-US")} quakes · uplift {fmt(up)}{wCalls && ` · ${perDay == null ? "no" : perDay.toLocaleString("en-US")} whale calls/day`}
         </div>
-        <div className="unrest-key">Bars: earthquakes a month (log). Line: caldera-centre uplift; dashed: its level on the eve of the 2015 eruption. Gauge drift not corrected.</div>
+        <div className="unrest-key">Bars: earthquakes a month (log). Line: caldera-centre uplift; dashed: its level on the eve of the 2015 eruption (gauge drift not corrected).{wCalls && " Blue: fin whale calls a day (square root), recorded by the same seismometers."}</div>
       </>}
       <div className="ctl-row">
         <button className="play" aria-label={playing ? "Pause" : "Play month by month"} onClick={() => {
@@ -87,7 +111,9 @@ function QuakeTimeline({ scene, sub }) {
 
 // The terrain popover in the HUD dock. The dock keeps it mounted while closed, so the switches keep their state.
 // deep: whether Axial's subsurface is shown (App owns it; the legend and credits follow it).
-export default function Controls({ scene, deep = false, onDeep }) {
+// whaleDay: the fin whale day shown, or null (HudDock owns it; the legend follows it).
+// quakeColor: how the earthquakes are coloured, "time" or "fault" (by focal mechanism), likewise.
+export default function Controls({ scene, deep = false, onDeep, whaleDay = null, onWhaleDay, quakeColor = "time", onQuakeColor }) {
   const sub = scene?.subsurface;
   const [view, setView] = useState("3d"), [style, setStyle] = useState("relief"), [color, setColor] = useState("depth");
   const [exag, setExag] = useState(scene?.U?.exag?.value ?? 6);
@@ -125,6 +151,15 @@ export default function Controls({ scene, deep = false, onDeep }) {
       {sub && <Seg label="Subsurface" options={[["off", "Off"], ["on", "On"]]} value={deep ? "on" : "off"}
         onChange={v => { onDeep?.(v === "on"); scene.setSubsurface(v === "on"); }} />}
       {sub && deep && <QuakeTimeline scene={scene} sub={sub} />}
+      {sub?.hasFaults && deep && <Seg label="Quake colour" options={[["time", "Time"], ["fault", "Faulting"]]} value={quakeColor}
+        onChange={v => { onQuakeColor?.(v); scene.setQuakeColor(v); }} />}
+      {scene?.whales && <div className="ctl-row">
+        <label className="eyebrow" htmlFor="whale-day">Fin whale tracks</label>
+        <select id="whale-day" value={whaleDay ?? ""} onChange={e => { const d = e.target.value || null; onWhaleDay?.(d); scene.setWhaleDay(d); }}>
+          <option value="">Off</option>
+          {scene.whales.days.map(d => <option key={d} value={d}>{d} · {scene.whales.data.days[d].tracks.length} tracks</option>)}
+        </select>
+      </div>}
     </div>
   );
 }

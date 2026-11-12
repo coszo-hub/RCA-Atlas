@@ -47,7 +47,7 @@ const frag = `
     if (uHoles > 0.5 && (inBox(uHoleA) || inBox(uHoleB))) discard;
     if (uHoleCOn > 0.5 && inBox(uHoleC)) discard;
     if (uClipOn > 0.5 && !inBox(uClip)) discard;
-    float glass = uSee * (1.0 - smoothstep(uGlass.z * 0.7, uGlass.z, distance(vPos.xz, uGlass.xy)));
+    float glass = uSee * (1.0 - smoothstep(uGlass.z * 0.5, uGlass.z, distance(vPos.xz, uGlass.xy)));   // a soft edge
     if (glass > 0.01 && vHidden > 0.0) discard;
     vec3 n = normalize(vN);
     float shade = clamp(dot(n, normalize(vec3(-0.8, 1.0, -0.9))), 0.0, 1.0);

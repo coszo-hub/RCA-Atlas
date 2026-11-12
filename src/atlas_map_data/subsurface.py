@@ -134,11 +134,11 @@ def amc(src: Path, n=110):
 
 def earthquakes(src: Path):
     arr = np.atleast_1d(loadmat(src / "FA_Cl_ALL_simple.mat", squeeze_me=True, struct_as_record=False)["Po_Clu"])
-    lat, lon, dep, on = (_field(arr, f) for f in ("lat", "lon", "depth", "on"))
+    lat, lon, dep, on, ids = (_field(arr, f) for f in ("lat", "lon", "depth", "on", "ID"))
     ok = np.isfinite(lat) & np.isfinite(lon) & np.isfinite(dep) & np.isfinite(on)
-    lat, lon, dep, on = lat[ok], lon[ok], dep[ok], on[ok]
+    lat, lon, dep, on, ids = lat[ok], lon[ok], dep[ok], on[ok], ids[ok]
     order = np.argsort(on)
-    lat, lon, dep, on = lat[order], lon[order], dep[order], on[order]
+    lat, lon, dep, on, ids = lat[order], lon[order], dep[order], on[order], ids[order]
     t0 = _datenum(float(on[0])).date()
     day0 = datetime(t0.year, t0.month, t0.day)
     days = np.array([(_datenum(float(v)) - day0).total_seconds() / 86400 for v in on])
@@ -146,7 +146,8 @@ def earthquakes(src: Path):
                          np.round(DATUM_M + dep * 1000.0), np.round(days, 2)])
     return {"count": int(len(q)), "day0": day0.date().isoformat(), "lon0": LON0, "lat0": LAT0, "scale": 1e-5,
             "fields": ["dLon", "dLat", "depthM", "day"],
-            "rows": [[int(a), int(b), int(c), float(d)] for a, b, c, d in q]}
+            "rows": [[int(a), int(b), int(c), float(d)] for a, b, c, d in q],
+            "ids": [int(i) if np.isfinite(i) else None for i in ids]}   # catalog event IDs, for their focal mechanisms
 
 
 def rim(src: Path):

@@ -9,7 +9,10 @@ import { sceneSignature } from "./renderGate.js";
 import { terrainMaterial } from "./terrainMaterial.js";
 import { AuvLod } from "./AuvLod.js";
 import { SubsurfaceLayer, loadSubsurface } from "./SubsurfaceLayer.js";
+import { WhaleLayer, dayExtent, loadWhales } from "./WhaleLayer.js";
 import { approach, centerShift, ease, fitDist, isMoveKey, motionDuration, moveStep, rotateSpeedFor, viewPose } from "./cameraMath.js";
+
+const SUBSURFACE_EXAG = 1;   // the vertical exaggeration while Axial's subsurface is shown: true scale
 
 export { loadGrids } from "./grid.js";
 
@@ -41,6 +44,7 @@ export class AtlasScene {
     this.terrainMats = []; this.terrainLods = [];
     this.ready = (async () => {
       const sub = loadSubsurface();   // optional, like the AUV tiles: null when it is not built
+      const whales = loadWhales();     // optional too
       const base = stack([grids.axial, grids.hydrate, grids.overview]);
       // The GMRT grids draw first; the summit survey loads behind them (hidden until the camera is close), and
       // the Axial patch opens a hole for it only once it exists.
@@ -57,6 +61,8 @@ export class AtlasScene {
         const w = this.subsurface.window;
         this.U.glass.value.set(w.x, w.z, w.r);
       }
+      const whaleData = await whales;
+      if (whaleData) this.whales = new WhaleLayer(this.scene, whaleData);
       this.elevAt = (lon, lat) => this.auv?.sample(lon, lat) ?? base(lon, lat);
     })();
 
@@ -258,7 +264,7 @@ export class AtlasScene {
   }
 
   _resolution() {
-    for (const m of [...Object.values(this.mats ?? {}), ...Object.values(this.faultMats ?? {}), this.subsurface?.rimMat]) m?.resolution?.set(innerWidth, innerHeight);
+    for (const m of [...Object.values(this.mats ?? {}), ...Object.values(this.faultMats ?? {}), this.subsurface?.rimMat, ...(this.whales?.mats ?? [])]) m?.resolution?.set(innerWidth, innerHeight);
   }
 
   get reducedMotion() { return !!this._motion?.matches; }
@@ -301,21 +307,45 @@ export class AtlasScene {
   setStyle(s) { this.targets.lines = s === "contours" ? 1 : 0; }
   setColor(c) { this.targets.mode = c === "mono" ? 1 : 0; }
   setMute(m) { this.targets.mute = m; }
-  // Show Axial's subsurface. From afar, fly in over the caldera (keeping the heading), aimed below the seafloor at
-  // the middle of the layers (earthquakes 1.5-3 km deep, the magma chamber at 2.6-3.7 km) so they are in frame.
+  // Show Axial's subsurface at true scale (×1: the earthquakes, magma chamber, wall faults and beachballs in their real
+  // geometry); turning it off brings back the exaggeration it replaced. From afar, fly in over the caldera (keeping
+  // the heading), aimed below the seafloor at the middle of the layers (earthquakes 1.5-3 km deep, the magma chamber
+  // at 2.6-3.7 km); close by, the view stays and only its height follows the new exaggeration.
   setSubsurface(on) {
     this.targets.see = on ? 1 : 0;
     const w = this.subsurface?.window;
-    if (!on || !w) return;
-    this._resolution();
+    if (!w) return;
+    const from = this.U.exag.value;
+    if (on) this._exagBefore ??= from;
+    const exag = on ? SUBSURFACE_EXAG : (this._exagBefore ?? from);
+    if (!on) this._exagBefore = null;
     const t = this.controls.target, off = this.camera.position.clone().sub(t);
-    if (Math.hypot(t.x - w.x, t.z - w.z) < w.r && off.length() < w.r * 5) return;
-    const exag = this.U.exag.value, dist = w.r * 3.2, polar = 0.85, az = Math.atan2(off.x, off.z);
+    const core = w.core ?? w.r;   // frame the layers, not the wider glass around them
+    if (!on || (Math.hypot(t.x - w.x, t.z - w.z) < core && off.length() < core * 5)) {
+      if (exag === from) return;
+      const target = t.clone(); target.y *= exag / from;
+      this._fly(target.clone().add(off), target, exag, 900);
+      return;
+    }
+    this._resolution();
+    const dist = core * 3.2, polar = 0.85, az = Math.atan2(off.x, off.z);
     const target = new THREE.Vector3(w.x, -2600 * exag * 0.001, w.z);
     const pos = target.clone().add(new THREE.Vector3().setFromSphericalCoords(dist, polar, az));
     this._fly(pos, target, exag, 1800);
   }
   setQuakesThrough(i) { this.subsurface?.setThrough(i); }
+  // Colour the earthquakes by time (recent ones bright) or by their focal mechanism's faulting type.
+  setQuakeColor(by) { this.subsurface?.setColorBy(by); }
+  // Show a day's fin whale calls and tracks (null hides them), flying in over them from afar.
+  setWhaleDay(day) {
+    this.whales?.setDay(day);
+    if (!day || !this.whales?.day) return;
+    const w = dayExtent(this.whales.data.days[day]), t = this.controls.target, off = this.camera.position.clone().sub(t);
+    if (Math.hypot(t.x - w.x, t.z - w.z) < w.r && off.length() < w.r * 6) return;
+    const exag = this.U.exag.value, target = new THREE.Vector3(w.x, this.elevAt ? -1500 * exag * 0.001 : 0, w.z);
+    const pos = target.clone().add(new THREE.Vector3().setFromSphericalCoords(Math.max(w.r * 3, 8), 0.75, Math.atan2(off.x, off.z)));
+    this._fly(pos, target, exag, 1800);
+  }
   setView(v) {
     if (v === this._view) return;   // re-clicking the active view must not overwrite the saved tilt
     this._view = v;
@@ -356,6 +386,7 @@ export class AtlasScene {
     const glassy = this.U.see.value > 0;
     if (glassy !== this._glassy) { this._glassy = glassy; for (const m of this.terrainMats) m.transparent = glassy; }
     this.subsurface?.update(this.e, this.elevAt);
+    if (this.elevAt) this.whales?.update(this.e, this.elevAt);
     if (this._shift[0] !== this._shiftTo[0] || this._shift[1] !== this._shiftTo[1]) {
       this._shift = this._shift.map((v, i) => { const to = this._shiftTo[i]; return Math.abs(to - v) < 0.5 ? to : approach(v, to, dt, 10, reduced); });
       this._applyShift();

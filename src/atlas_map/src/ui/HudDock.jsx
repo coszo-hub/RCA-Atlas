@@ -26,6 +26,8 @@ function Help() {
 // stateless and mount only while open (the legend fits its height from where it opens).
 export default function HudDock({ scene, deep = false, onDeep, credit, auv = false, subsurface = null }) {
   const [open, setOpen] = useState(() => new Set());
+  const [whaleDay, setWhaleDay] = useState(null);
+  const [quakeColor, setQuakeColor] = useState("time");   // the earthquakes' colouring, likewise   // the fin whale day on the map (Controls picks it; Legend shows its key)
   const toggle = key => setOpen(o => { const n = new Set(o); if (!n.delete(key)) n.add(key); return n; });
   const pop = key => `hud-pop-${key}`;
   return (
@@ -41,10 +43,12 @@ export default function HudDock({ scene, deep = false, onDeep, credit, auv = fal
       </div>
       <div className="dock-pops">
         <div id={pop("terrain")} className="dock-pop" role="group" aria-label="Terrain controls" hidden={!open.has("terrain")}>
-          <Controls scene={scene} deep={deep} onDeep={onDeep} />
+          <Controls scene={scene} deep={deep} onDeep={onDeep} whaleDay={whaleDay} onWhaleDay={setWhaleDay} quakeColor={quakeColor} onQuakeColor={setQuakeColor} />
         </div>
         {open.has("legend") && <div id={pop("legend")} className="dock-pop" role="group" aria-label="Legend">
-          <Legend credit={credit} auv={auv} subsurface={subsurface} realtime={!!scene?.subsurface?.unrest} /></div>}
+          <Legend credit={credit} auv={auv} subsurface={subsurface} realtime={!!scene?.subsurface?.unrest}
+            whales={whaleDay ? { day: whaleDay, ...scene.whales.data.days[whaleDay], credit: scene.whales.credit } : null}
+            byFault={!!subsurface && quakeColor === "fault"} /></div>}
         {open.has("help") && <div id={pop("help")} className="dock-pop" role="group" aria-label="Help"><Help /></div>}
       </div>
     </div>

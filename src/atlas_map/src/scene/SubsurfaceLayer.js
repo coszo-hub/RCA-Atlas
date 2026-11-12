@@ -3,7 +3,7 @@ import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { toX, toZ } from "./geo.js";
-import { countBefore, glassWindow, joinQuakes, months, quakeArrays, realtimeArrays, surfaceArrays } from "./subsurface.js";
+import { FAULT_COLORS, FAULT_TYPES, countBefore, glassWindow, joinQuakes, months, quakeArrays, realtimeArrays, surfaceArrays } from "./subsurface.js";
 import { atlasUrl } from "../data/bundle.js";
 
 // Each layer draws twice. The plain pass goes first (quakes writing depth, then the translucent surfaces), and the
@@ -17,27 +17,34 @@ const SURFACE_STYLE = {
 };
 
 const quakeVert = `
-  attribute float elev; attribute float day; attribute float mag;
+  attribute float elev; attribute float day; attribute float mag; attribute float fault;
   uniform float uExag, uFlat, uThrough, uShow, uPx;
-  varying float vAge;
+  varying float vAge; varying float vFault;
   void main() {
     vec3 p = position; p.y = elev * 0.001 * uExag * (1.0 - uFlat);
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
-    vAge = uThrough - day;
+    vAge = uThrough - day; vFault = fault;
     float fresh = 1.0 - smoothstep(0.0, 60.0, vAge);
     float size = mag < -9.0 ? 1.0 : clamp(0.75 + 0.3 * mag, 0.6, 1.9);   // by magnitude, where the catalog gives one
     gl_PointSize = (vAge < 0.0 || uShow < 0.01) ? 0.0 : uPx * size * mix(2.0, 3.4, fresh) * clamp(14.0 / -mv.z, 0.8, 2.0);
   }`;
 const quakeFrag = `
-  uniform float uShow, uGhost, uHistory;
-  varying float vAge;
+  uniform float uShow, uGhost, uHistory, uByFault;
+  uniform vec3 uFault[4];
+  varying float vAge; varying float vFault;
   void main() {
     if (vAge < 0.0) discard;
     if (length(gl_PointCoord - 0.5) > 0.5) discard;
     float fresh = 1.0 - smoothstep(0.0, 60.0, vAge);
     vec3 col = mix(vec3(0.66, 0.65, 0.61), vec3(1.0, 0.80, 0.52), fresh);
-    gl_FragColor = vec4(col, mix(0.55, 1.0, fresh) * uShow * uGhost * uHistory);
+    float a = mix(0.55, 1.0, fresh);
+    if (uByFault > 0.5) {   // by faulting type; earthquakes with no mechanism recede
+      int k = int(vFault + 0.5) - 1;
+      if (k < 0) { col = vec3(0.5, 0.5, 0.48); a = 0.12; }
+      else { col = k == 0 ? uFault[0] : k == 1 ? uFault[1] : k == 2 ? uFault[2] : uFault[3]; a = mix(0.8, 1.0, fresh); }
+    }
+    gl_FragColor = vec4(col, a * uShow * uGhost * uHistory);
   }`;
 
 const surfVert = `
@@ -90,7 +97,11 @@ export class SubsurfaceLayer {
   constructor(scene3d, U, data) {
     this.data = data; this.credit = data.unrest ? `${data.credit}. ${data.unrest.credit}` : data.credit;
     const eq = data.earthquakes, u = data.unrest;
-    const q = u ? joinQuakes(quakeArrays(eq), realtimeArrays({ ...u.realtime, day0: u.day0 }, u.buffer, eq.day0)) : quakeArrays(eq);
+    const relocated = quakeArrays(eq, u?.relocatedTypes);
+    const q = u ? joinQuakes(relocated, realtimeArrays({ ...u.realtime, day0: u.day0 }, u.buffer, eq.day0)) : relocated;
+    this.hasFaults = q.fault.some(f => f > 0);
+    this.byFault = { value: 0 };   // 1: colour by faulting type (setColorBy)
+    const faultColors = { value: [...FAULT_TYPES].map(t => new THREE.Color(FAULT_COLORS[t])) };
     this.unrest = u && { ...u, buffer: undefined };
     this.day0 = eq.day0; this.days = q.day; this.months = months(eq.day0, q.day[q.day.length - 1]);
     this.window = glassWindow(data);
@@ -105,11 +116,13 @@ export class SubsurfaceLayer {
     g.setAttribute("elev", new THREE.BufferAttribute(q.elev, 1));
     g.setAttribute("day", new THREE.BufferAttribute(q.day, 1));
     g.setAttribute("mag", new THREE.BufferAttribute(q.mag, 1));
+    g.setAttribute("fault", new THREE.BufferAttribute(q.fault, 1));
     for (const [alpha, ghost] of passes) {
       add(new THREE.Points(g, new THREE.ShaderMaterial({
         vertexShader: quakeVert, fragmentShader: quakeFrag, transparent: true, depthWrite: !ghost,
         depthFunc: ghost ? THREE.GreaterDepth : THREE.LessEqualDepth,
         uniforms: { uExag: U.exag, uFlat: U.flat, uThrough: this.through, uShow: U.see, uGhost: { value: alpha }, uHistory: this.history,
+                    uByFault: this.byFault, uFault: faultColors,
                     uPx: { value: Math.min(devicePixelRatio, 2) } },
       })), ghost ? ORDER.ghost : ORDER.quakes);
     }
@@ -137,6 +150,7 @@ export class SubsurfaceLayer {
   // Cumulative count through the end of month i.
   countThrough(i) { return countBefore(this.days, this.months[i].end); }
   setThrough(i) { this.through.value = this.months[i].end; }
+  setColorBy(by) { this.byFault.value = by === "fault" ? 1 : 0; }
 
   // Once a frame: e converts meters to world units; elevAt drapes the rim.
   update(e, elevAt) {

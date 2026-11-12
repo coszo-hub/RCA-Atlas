@@ -113,8 +113,13 @@ input[type=range]:disabled { opacity: 0.35; }
 .unrest .uplift.MJ03F { stroke: #ffcc85; }
 .unrest .uplift.MJ03E { stroke: #ffcc85; opacity: 0.35; }
 .unrest .cursor { stroke: var(--text-primary); stroke-width: 1; }
+.unrest.whales { height: 18px; }
+.unrest .whale { fill: #7fb2ff; opacity: 0.3; }
+.unrest .whale.on { opacity: 0.8; }
 .unrest-readout { font-size: 11px; color: var(--text-secondary); }
 .unrest-key { font-size: 10px; line-height: 1.35; color: var(--text-tertiary, var(--text-secondary)); }
 .play { flex: none; display: grid; place-items: center; width: 26px; height: 22px; background: transparent; border: 1px solid var(--hairline-strong);
   border-radius: 4px; color: var(--text-secondary); cursor: pointer; }
 .play:hover { color: var(--text-primary); }
+.controls select { max-width: 150px; background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--hairline-strong);
+  border-radius: 4px; font: inherit; font-size: 11px; padding: 2px 4px; }

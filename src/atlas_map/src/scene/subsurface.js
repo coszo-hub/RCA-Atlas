@@ -1,39 +1,49 @@
 import { toX, toZ } from "./geo.js";
 
+// Faulting types of focal mechanisms (codes 1-4; 0 none) and their colours: normal, reverse, strike-slip, unclassified.
+export const FAULT_TYPES = "NRSU";
+export const FAULT_NAMES = { N: "Normal", R: "Reverse", S: "Strike-slip", U: "Unclassified" };
+export const FAULT_COLORS = { N: "#4ea8ff", R: "#ff5fa2", S: "#7be08a", U: "#c9b8f0" };   // none near the magma chamber's ember
+
 // Earthquake rows are [dLon / scale, dLat / scale, metres below sea level, days since day0], sorted by time. The
-// relocated catalog gives no magnitude (-99, as shaders cannot test for NaN).
-export function quakeArrays(eq) {
+// relocated catalog gives no magnitude (-99, as shaders cannot test for NaN); types is a string of their faulting
+// types in row order (FAULT_TYPES, "-" none), when built (axial_unrest.py).
+export function quakeArrays(eq, types = null) {
   const n = eq.rows.length, positions = new Float32Array(n * 3), elev = new Float32Array(n), day = new Float32Array(n);
   eq.rows.forEach(([a, b, d, t], i) => {
     positions[i * 3] = toX(eq.lon0 + a * eq.scale); positions[i * 3 + 2] = toZ(eq.lat0 + b * eq.scale);
     elev[i] = -d; day[i] = t;
   });
-  return { positions, elev, day, mag: new Float32Array(n).fill(-99) };
+  const fault = new Float32Array(n);
+  if (types) for (let i = 0; i < n; i++) fault[i] = FAULT_TYPES.indexOf(types[i]) + 1;
+  return { positions, elev, day, mag: new Float32Array(n).fill(-99), fault };
 }
 
 // The real-time catalog after the relocated one (axial_unrest.py): little-endian int32 rows of [dLon, dLat] / scale,
-// metres below sea level, minutes since meta.day0 and Mw x 100, sorted by time. Days are counted from day0, the
+// metres below sea level, minutes since meta.day0, Mw x 100 and, when built, the faulting type (0 none, 1-4
+// FAULT_TYPES), sorted by time. Days are counted from day0, the
 // relocated catalog's first day, so both share one timeline.
 export function realtimeArrays(meta, buffer, day0) {
   const a = new Int32Array(buffer), W = meta.fields.length, n = a.length / W;
   const shift = (Date.parse(`${meta.day0}T00:00:00Z`) - Date.parse(`${day0}T00:00:00Z`)) / 86400000;
-  const positions = new Float32Array(n * 3), elev = new Float32Array(n), day = new Float32Array(n), mag = new Float32Array(n);
+  const positions = new Float32Array(n * 3), elev = new Float32Array(n), day = new Float32Array(n), mag = new Float32Array(n), fault = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const r = i * W;
     positions[i * 3] = toX(meta.lon0 + a[r] * meta.scale); positions[i * 3 + 2] = toZ(meta.lat0 + a[r + 1] * meta.scale);
-    elev[i] = -a[r + 2]; day[i] = a[r + 3] / 1440 + shift; mag[i] = a[r + 4] / 100;
+    elev[i] = -a[r + 2]; day[i] = a[r + 3] / 1440 + shift; mag[i] = a[r + 4] / 100; fault[i] = W > 5 ? a[r + 5] : 0;
   }
-  return { positions, elev, day, mag };
+  return { positions, elev, day, mag, fault };
 }
 
 // Two sets of quake arrays, the second all later than the first, as one.
 export function joinQuakes(a, b) {
   const cat = (x, y) => { const out = new Float32Array(x.length + y.length); out.set(x); out.set(y, x.length); return out; };
-  return { positions: cat(a.positions, b.positions), elev: cat(a.elev, b.elev), day: cat(a.day, b.day), mag: cat(a.mag, b.mag) };
+  return { positions: cat(a.positions, b.positions), elev: cat(a.elev, b.elev), day: cat(a.day, b.day), mag: cat(a.mag, b.mag), fault: cat(a.fault, b.fault) };
 }
 
 // The unrest strip beneath the month slider: month i's bar height (0..1, log scale: 1 to the busiest month) and the
-// uplift line, one point a day, as [x 0..1 across the months, y 0..1 within the uplift's range], gaps as breaks.
+// uplift line, one point a day, as [x 0..1 across the months, y 0..1 within the uplift's range], gaps as breaks;
+// offset: the slider's month index minus the counts' index.
 export function unrestStrip(unrest, monthList, day0) {
   const counts = unrest.monthly.counts, top = Math.log10(Math.max(...counts) + 1);
   const offset = monthIndex(unrest.monthly.start) - monthIndex(monthList[0].label);
@@ -52,7 +62,7 @@ export function unrestStrip(unrest, monthList, day0) {
     lines[site] = segs.filter(s => s.length > 1);
   }
   const latest = Object.fromEntries(Object.entries(unrest.uplift.sites).map(([k, v]) => [k, v.filter(x => x != null).at(-1)]));
-  return { bars, lines, zero: (0 - lo) / (hi - lo), lo, hi, latest };
+  return { bars, lines, zero: (0 - lo) / (hi - lo), lo, hi, latest, offset };
 }
 
 // The uplift (cm) at a site on the last day of month i with a value, looking back at most 45 days (the Gold Copy's
@@ -94,9 +104,10 @@ export function countBefore(days, t) {
   return lo;
 }
 
-// The terrain turns to glass inside this circle (world units) so the layers beneath show through.
-// It covers every surface vertex and 98% of the earthquakes, plus a margin.
-export function glassWindow(data, marginKm = 1.2) {
+// The terrain turns to glass inside this circle (world units) so the layers beneath show through. core covers every
+// surface vertex and 98% of the earthquakes; r adds a wide margin, so the glass reads as a region of seafloor rather
+// than a hole around the caldera (the camera frames core).
+export function glassWindow(data, marginKm = 5) {
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
   const pts = [];
   for (const s of data.surfaces) for (const p of s.points) if (p) pts.push([toX(p[0]), toZ(p[1]), true]);
@@ -107,5 +118,5 @@ export function glassWindow(data, marginKm = 1.2) {
   const rs = pts.filter(p => !p[2]).map(([px, pz]) => Math.hypot(px - x, pz - z)).sort((a, b) => a - b);
   let r = rs.length ? rs[Math.floor(0.98 * (rs.length - 1))] : 0;
   for (const [px, pz, surf] of pts) if (surf) r = Math.max(r, Math.hypot(px - x, pz - z));
-  return { x, z, r: r + marginKm };
+  return { x, z, r: r + marginKm, core: r };
 }
