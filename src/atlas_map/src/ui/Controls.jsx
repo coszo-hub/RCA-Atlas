@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { unrestStrip, upliftAt } from "../scene/subsurface.js";
 import "./ui.css";
 
 function Seg({ label, options, value, onChange }) {
@@ -14,7 +15,35 @@ function Seg({ label, options, value, onChange }) {
   );
 }
 
-// The earthquake timeline beneath Axial: a month slider (cumulative through that month) with play/pause.
+// Axial's unrest since 2015, when the real-time catalog and uplift are built: each month's earthquakes (bars, log
+// scale) and the caldera's uplift against the eve of the 2015 eruption (lines; dashed, that level). A click or drag
+// picks the month.
+function UnrestStrip({ strip, month, last, onMonth }) {
+  const W = 300, H = 64, n = strip.bars.length, bw = W / n;
+  const pick = e => {
+    const r = e.currentTarget.getBoundingClientRect();
+    onMonth(Math.max(0, Math.min(last, Math.floor(((e.clientX - r.left) / r.width) * n))));
+  };
+  const path = segs => segs.map(seg => "M" + seg.map(([x, y]) => `${(x * W).toFixed(1)},${((1 - y) * (H - 4) + 2).toFixed(1)}`).join("L")).join("");
+  return (
+    <svg className="unrest" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"
+      onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); pick(e); }}
+      onPointerMove={e => { if (e.buttons) pick(e); }}>
+      {strip.bars.map((b, i) => b.count > 0 && (
+        <rect key={i} x={i * bw} width={Math.max(bw - 0.4, 0.4)} y={H - b.h * H * 0.62} height={b.h * H * 0.62}
+          className={i <= month ? "bar on" : "bar"} />
+      ))}
+      <line x1="0" x2={W} y1={(1 - strip.zero) * (H - 4) + 2} y2={(1 - strip.zero) * (H - 4) + 2} className="zero" vectorEffect="non-scaling-stroke" />
+      {Object.entries(strip.lines).map(([site, segs]) => (
+        <path key={site} d={path(segs)} className={`uplift ${site}`} vectorEffect="non-scaling-stroke" />
+      ))}
+      <line x1={(month + 1) * bw} x2={(month + 1) * bw} y1="0" y2={H} className="cursor" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+// The earthquake timeline beneath Axial: a month slider (cumulative through that month) with play/pause, and the
+// unrest strip above it when it is built.
 function QuakeTimeline({ scene, sub }) {
   const last = sub.months.length - 1;
   const [month, setMonth] = useState(last), [playing, setPlaying] = useState(false);
@@ -25,10 +54,20 @@ function QuakeTimeline({ scene, sub }) {
     return () => clearInterval(id);
   }, [playing, last]);
   useEffect(() => { if (month === last) setPlaying(false); }, [month, last]);
+  const strip = useMemo(() => sub.unrest && unrestStrip(sub.unrest, sub.months, sub.day0), [sub]);
   const label = sub.months[month].label, n = sub.countThrough(month).toLocaleString("en-US");
+  const up = sub.unrest && upliftAt(sub.unrest, "MJ03F", sub.months, month, sub.day0);
+  const fmt = v => (v == null ? "no data" : `${v > 0 ? "+" : ""}${Math.round(v)} cm`);
   return (
     <div className="timeline">
       <div className="ctl-row"><span className="eyebrow">Earthquakes</span><span className="mono readout">to {label} · {n}</span></div>
+      {strip && <>
+        <UnrestStrip strip={strip} month={month} last={last} onMonth={m => { setPlaying(false); setMonth(m); }} />
+        <div className="unrest-readout mono" title="That month's earthquakes, and the caldera-centre (MJ03F) depth change since 23 April 2015, the eve of the eruption">
+          {label}: {strip.bars[month].count.toLocaleString("en-US")} quakes · uplift {fmt(up)}
+        </div>
+        <div className="unrest-key">Bars: earthquakes a month (log). Line: caldera-centre uplift; dashed: its level on the eve of the 2015 eruption. Gauge drift not corrected.</div>
+      </>}
       <div className="ctl-row">
         <button className="play" aria-label={playing ? "Pause" : "Play month by month"} onClick={() => {
           if (!playing && month === last) setMonth(0);
@@ -39,7 +78,8 @@ function QuakeTimeline({ scene, sub }) {
           </svg>
         </button>
         <input type="range" min="0" max={last} step="1" value={month} aria-label="Earthquakes through month"
-          aria-valuetext={`Through ${label}: ${n} earthquakes`} onChange={e => { setPlaying(false); setMonth(+e.target.value); }} />
+          aria-valuetext={`Through ${label}: ${n} earthquakes${strip ? `; ${strip.bars[month].count} that month; caldera-centre uplift ${fmt(up)} against the eve of the 2015 eruption` : ""}`}
+          onChange={e => { setPlaying(false); setMonth(+e.target.value); }} />
       </div>
     </div>
   );

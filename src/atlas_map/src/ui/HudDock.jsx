@@ -44,7 +44,7 @@ export default function HudDock({ scene, deep = false, onDeep, credit, auv = fal
           <Controls scene={scene} deep={deep} onDeep={onDeep} />
         </div>
         {open.has("legend") && <div id={pop("legend")} className="dock-pop" role="group" aria-label="Legend">
-          <Legend credit={credit} auv={auv} subsurface={subsurface} /></div>}
+          <Legend credit={credit} auv={auv} subsurface={subsurface} realtime={!!scene?.subsurface?.unrest} /></div>}
         {open.has("help") && <div id={pop("help")} className="dock-pop" role="group" aria-label="Help"><Help /></div>}
       </div>
     </div>

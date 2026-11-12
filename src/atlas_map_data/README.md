@@ -42,3 +42,9 @@ Earthquakes (2015–2021), the magma chamber (AMC) top, and the west and east ca
     PYTHONPATH=src .venv/bin/python -m atlas_map_data.subsurface --source <dir>
 
 This writes `src/atlas_map/public/atlas/subsurface.json`, about 1.3 MB.
+
+Then Axial's unrest since 2015: the University of Washington's real-time catalog after the relocated one (events located to within 1 km, packed as int32), monthly earthquake counts, and OOI's daily depths at the caldera centre and eastern rim as uplift against the eve of the 2015 eruption. `--refresh` downloads the catalog (40 MB) and the Gold Copy's daily depths into `source_material/AxialEarthquakes/latest` first:
+
+    PYTHONPATH=src .venv/bin/python -m atlas_map_data.axial_unrest --refresh
+
+This writes `axial_unrest.json` (about 50 kB) and `quakes_realtime.bin.gz` (about 1 MB). It reads `subsurface.json`, so run it after that.

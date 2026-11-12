@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toX, toZ } from "./geo.js";
-import { countBefore, glassWindow, months, quakeArrays, surfaceArrays } from "./subsurface.js";
+import { countBefore, glassWindow, joinQuakes, months, quakeArrays, realtimeArrays, surfaceArrays, unrestStrip, upliftAt } from "./subsurface.js";
 
 const eq = { lon0: -130, lat0: 46, scale: 1e-5, day0: "2015-01-22",
   rows: [[0, 0, 1600, 0.5], [1000, -2000, 2400, 9.25], [-500, 500, 1500, 40]] };
@@ -41,4 +41,34 @@ describe("subsurface", () => {
     const w = glassWindow(data, 1);
     expect(w.r).toBeGreaterThanOrEqual(Math.abs(toX(-130.05) - w.x) + 1 - 1e-9);
   });
+
+  it("unpacks the real-time catalog onto the relocated one's timeline", () => {
+    const meta = { fields: ["dLon", "dLat", "depthM", "minute", "mw100"], scale: 1e-5, lon0: -130, lat0: 46, day0: "2015-01-22" };
+    const rows = new Int32Array([1000, -2000, 2600, 1440 * 10 + 720, 150]);
+    const r = realtimeArrays(meta, rows.buffer, "2015-01-20");          // a day0 two days earlier: two days later
+    expect(r.positions[0]).toBeCloseTo(toX(-129.99), 4);
+    expect(r.positions[2]).toBeCloseTo(toZ(45.98), 4);
+    expect(r.elev[0]).toBe(-2600);
+    expect(r.day[0]).toBeCloseTo(12.5, 5);
+    expect(r.mag[0]).toBeCloseTo(1.5, 5);
+    const j = joinQuakes(quakeArrays(eq), r);
+    expect(Array.from(j.day)).toEqual([0.5, 9.25, 40, 12.5]);
+    expect(j.mag[0]).toBe(-99);                                       // the relocated catalog has no magnitude
+    expect(j.positions.length).toBe(12);
+  });
+
+  it("lays out the unrest strip: log-scaled monthly bars and the uplift against its reference", () => {
+    const m = months("2015-01-22", 40);                                // 2015-01, 2015-02, 2015-03
+    const unrest = { monthly: { start: "2015-01", counts: [9, 99, 0] },
+      uplift: { start: "2015-01-20", sites: { A: [null, null, -10, 0, 10, null, 20] } } };
+    const s = unrestStrip(unrest, m, "2015-01-22");
+    expect(s.bars.map(b => b.count)).toEqual([9, 99, 0]);
+    expect(s.bars[1].h).toBe(1);
+    expect(s.bars[0].h).toBeCloseTo(0.5, 5);                           // log10(10) / log10(100)
+    expect(s.zero).toBeCloseTo(1 / 3, 5);                              // 0 within -10..20
+    expect(s.lines.A).toHaveLength(1);                                 // days before day0 and the gap are breaks
+    expect(s.lines.A[0][0]).toEqual([0, 0]);
+    expect(upliftAt(unrest, "A", m, 0, "2015-01-22")).toBe(20);       // January's last day with a value
+  });
 });
+

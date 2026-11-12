@@ -3,7 +3,7 @@ import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { toX, toZ } from "./geo.js";
-import { countBefore, glassWindow, months, quakeArrays, surfaceArrays } from "./subsurface.js";
+import { countBefore, glassWindow, joinQuakes, months, quakeArrays, realtimeArrays, surfaceArrays } from "./subsurface.js";
 import { atlasUrl } from "../data/bundle.js";
 
 // Each layer draws twice. The plain pass goes first (quakes writing depth, then the translucent surfaces), and the
@@ -17,7 +17,7 @@ const SURFACE_STYLE = {
 };
 
 const quakeVert = `
-  attribute float elev; attribute float day;
+  attribute float elev; attribute float day; attribute float mag;
   uniform float uExag, uFlat, uThrough, uShow, uPx;
   varying float vAge;
   void main() {
@@ -26,7 +26,8 @@ const quakeVert = `
     gl_Position = projectionMatrix * mv;
     vAge = uThrough - day;
     float fresh = 1.0 - smoothstep(0.0, 60.0, vAge);
-    gl_PointSize = (vAge < 0.0 || uShow < 0.01) ? 0.0 : uPx * mix(2.0, 3.4, fresh) * clamp(14.0 / -mv.z, 0.8, 2.0);
+    float size = mag < -9.0 ? 1.0 : clamp(0.75 + 0.3 * mag, 0.6, 1.9);   // by magnitude, where the catalog gives one
+    gl_PointSize = (vAge < 0.0 || uShow < 0.01) ? 0.0 : uPx * size * mix(2.0, 3.4, fresh) * clamp(14.0 / -mv.z, 0.8, 2.0);
   }`;
 const quakeFrag = `
   uniform float uShow, uGhost, uHistory;
@@ -62,17 +63,36 @@ export async function loadSubsurface(fetchImpl = fetch) {
   try {
     const res = await fetchImpl(atlasUrl("subsurface.json"));
     if (!res.ok || res.headers?.get("content-type")?.includes("html")) return null;
-    return await res.json();
+    const data = await res.json();
+    data.unrest = await loadUnrest(fetchImpl);
+    return data;
   } catch { return null; }
 }
 
-// Axial's subsurface in place beneath the seafloor: earthquakes, the magma chamber (AMC) top, and the caldera-wall
-// faults, plus the caldera rim draped on the terrain. U.see (0..1) shows it; the terrain turns to glass above it.
+// The real-time catalog after the relocated one, monthly counts and uplift (axial_unrest.py); null when not built.
+export async function loadUnrest(fetchImpl = fetch) {
+  try {
+    const res = await fetchImpl(atlasUrl("axial_unrest.json"));
+    if (!res.ok || res.headers?.get("content-type")?.includes("html")) return null;
+    const unrest = await res.json(), bin = await fetchImpl(atlasUrl(unrest.realtime.file));
+    if (!bin.ok) return null;
+    let buffer = await bin.arrayBuffer();
+    const head = new Uint8Array(buffer, 0, 2);   // still gzip unless the server sent it with Content-Encoding
+    if (head[0] === 0x1f && head[1] === 0x8b) buffer = await new Response(new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    return { ...unrest, buffer };
+  } catch { return null; }
+}
+
+// Axial's subsurface in place beneath the seafloor: earthquakes (the relocated catalog to 2021, then the real-time
+// one), the magma chamber (AMC) top, and the caldera-wall faults, plus the caldera rim draped on the terrain. U.see
+// (0..1) shows it; the terrain turns to glass above it.
 export class SubsurfaceLayer {
   constructor(scene3d, U, data) {
-    this.data = data; this.credit = data.credit;
-    const eq = data.earthquakes, q = quakeArrays(eq);
-    this.days = q.day; this.months = months(eq.day0, q.day[q.day.length - 1]);
+    this.data = data; this.credit = data.unrest ? `${data.credit}. ${data.unrest.credit}` : data.credit;
+    const eq = data.earthquakes, u = data.unrest;
+    const q = u ? joinQuakes(quakeArrays(eq), realtimeArrays({ ...u.realtime, day0: u.day0 }, u.buffer, eq.day0)) : quakeArrays(eq);
+    this.unrest = u && { ...u, buffer: undefined };
+    this.day0 = eq.day0; this.days = q.day; this.months = months(eq.day0, q.day[q.day.length - 1]);
     this.window = glassWindow(data);
     this.show = U.see; this.through = { value: this.months[this.months.length - 1].end };
     this.history = { value: 1 };   // the relocated catalog fades back while an answer's live quakes are shown
@@ -84,6 +104,7 @@ export class SubsurfaceLayer {
     g.setAttribute("position", new THREE.BufferAttribute(q.positions, 3));
     g.setAttribute("elev", new THREE.BufferAttribute(q.elev, 1));
     g.setAttribute("day", new THREE.BufferAttribute(q.day, 1));
+    g.setAttribute("mag", new THREE.BufferAttribute(q.mag, 1));
     for (const [alpha, ghost] of passes) {
       add(new THREE.Points(g, new THREE.ShaderMaterial({
         vertexShader: quakeVert, fragmentShader: quakeFrag, transparent: true, depthWrite: !ghost,

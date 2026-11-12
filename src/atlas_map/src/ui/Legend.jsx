@@ -2,8 +2,8 @@ import { useLayoutEffect, useRef } from "react";
 import "./ui.css";
 
 // The legend popover in the HUD dock, mounted while it is open. The map credits stay visible either way (Credit.jsx).
-// subsurface: its credit while Axial's subsurface is shown, else null.
-export default function Legend({ credit, auv = false, subsurface = null }) {
+// subsurface: its credit while Axial's subsurface is shown, else null; realtime: whether the real-time catalog after 2021 is in.
+export default function Legend({ credit, auv = false, subsurface = null, realtime = false }) {
   const ref = useRef(null);
   // The legend is taller than a short window: measured from its top under the dock, it ends 16 px above the bottom
   // edge, or 8 px above the family strip when the strip reaches under it, and scrolls. The strip changes width with
@@ -48,7 +48,10 @@ export default function Legend({ credit, auv = false, subsurface = null }) {
         <div className="row"><svg className="glyph"><path d="M0 6h12" stroke="#62d7d2" strokeWidth="2.5" strokeDasharray="2 1.4" /></svg>2025–2026 OptoDAS first south span</div>
         <div className="row">Gold and cyan extents are schematic where their exact channel coordinates are unpublished.</div></div>
       {subsurface && <div><div className="eyebrow">Beneath Axial</div>
-        <div className="row"><svg className="glyph"><circle cx="6" cy="6" r="2.2" fill="#a8a69d" /></svg>Earthquake, 2015–2021</div>
+        {realtime ? <>
+          <div className="row"><svg className="glyph"><circle cx="6" cy="6" r="2.2" fill="#a8a69d" /></svg>Earthquake: relocated to 2021, real-time after</div>
+          <div className="row"><svg className="glyph"><circle cx="4" cy="6" r="1.5" fill="#a8a69d" /><circle cx="10" cy="6" r="3" fill="#a8a69d" /></svg>Real-time: larger is a higher magnitude</div>
+        </> : <div className="row"><svg className="glyph"><circle cx="6" cy="6" r="2.2" fill="#a8a69d" /></svg>Earthquake, 2015–2021</div>}
         <div className="row"><svg className="glyph"><circle cx="6" cy="6" r="3" fill="#ffcc85" /></svg>Within 60 days of the slider month</div>
         <div className="row"><svg className="glyph"><rect x="1" y="2" width="14" height="8" rx="1" fill="#cc6340" opacity="0.75" /></svg>Magma chamber (AMC) top</div>
         <div className="row"><svg className="glyph"><rect x="1.5" y="2.5" width="13" height="7" rx="1" fill="#edebe0" fillOpacity="0.12" stroke="#edebe0" strokeOpacity="0.5" /></svg>Caldera-wall faults</div>
