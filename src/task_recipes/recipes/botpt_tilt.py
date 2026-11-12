@@ -24,6 +24,16 @@ THREDDS = "https://thredds.dataexplorer.oceanobservatories.org/thredds"
 #    OPeNDAP one in STEP so only those are downloaded.
 folder = f"ooigoldcopy/public/{REFDES}-streamed-botpt_lily_sample"
 listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
+if "urlPath" not in listing:   # no such folder: a designator written short (RS03CCAL-MJ03F-BOTPTA301) is matched in full
+    top = requests.get(f"{THREDDS}/catalog/ooigoldcopy/public/catalog.xml", timeout=120).text
+    full = [t.split("-streamed-")[0] for t in re.findall(r'title="([^"]+-streamed-botpt_lily_sample)"', top)
+            if set(REFDES.upper().split("-")) <= set(t.split("-"))]
+    if len(full) != 1:
+        raise SystemExit(f"no Gold Copy LILY folder for {REFDES}; name it in full ({', '.join(full) or 'none match'})")
+    print(f"{REFDES} is {full[0]}")
+    REFDES = full[0]
+    folder = f"ooigoldcopy/public/{REFDES}-streamed-botpt_lily_sample"
+    listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
 start, end = pd.Timestamp(START), pd.Timestamp(END)
 names = ["lily_x_tilt", "lily_y_tilt", "corrected_compass_direction", "lily_temp", "seafloor_tilt_magnitude_qartod_results"]
 parts, broken = [], []

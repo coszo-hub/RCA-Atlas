@@ -77,6 +77,13 @@ tides = []
 if (end - start).days >= 15 and table["warm"].any():
     folder = f"ooigoldcopy/public/{BOTPT}-streamed-botpt_nano_sample_15sec"
     listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
+    if "urlPath" not in listing:   # no such folder: a designator written short (RS03ASHS-MJ03B-BOTPTA304) is matched in full
+        top = requests.get(f"{THREDDS}/catalog/ooigoldcopy/public/catalog.xml", timeout=120).text
+        full = [t.split("-streamed-")[0] for t in re.findall(r'title="([^"]+-streamed-botpt_nano_sample_15sec)"', top)
+                if set(BOTPT.upper().split("-")) <= set(t.split("-"))]
+        if len(full) == 1:
+            folder = f"ooigoldcopy/public/{full[0]}-streamed-botpt_nano_sample_15sec"
+            listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
     pres = []
     for path in sorted(set(re.findall(r'urlPath="([^"]+\.nc)"', listing))):
         a, b = (pd.Timestamp(x[:15]) for x in re.search(r"_(\d{8}T\d{6})[\d.]*-(\d{8}T\d{6})[\d.]*\.nc$", path).groups())

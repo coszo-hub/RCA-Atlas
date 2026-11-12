@@ -11,8 +11,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-REFDES = "RS03CCAL-MJ03F-05-BOTPTA301"   # Axial's BOTPTs: MJ03F caldera centre, MJ03E eastern rim (BOTPTA302),
-                                         # MJ03D International District (RS03INT2-MJ03D-06-BOTPTA303), MJ03B ASHES (RS03ASHS-MJ03B-09-BOTPTA304)
+REFDES = "RS03CCAL-MJ03F-05-BOTPTA301"   # Axial's BOTPTs: MJ03F caldera centre, RS03ECAL-MJ03E-06-BOTPTA302 eastern rim,
+                                         # RS03INT2-MJ03D-06-BOTPTA303 International District, RS03ASHS-MJ03B-09-BOTPTA304 ASHES
 START, END = "2025-01-01", "2025-04-01"  # UTC; END is not included
 FIT_DAYS = 365                           # the tide is fitted to this many days ending at END (a year separates K1 from
                                          # P1 and S2 from K2; less leaves their beat in the residual)
@@ -25,6 +25,16 @@ ATMOSPHERE_DBAR = 10.1325                # the gauge reads absolute pressure: se
 #    read over OPeNDAP so only the span is downloaded.
 folder = f"ooigoldcopy/public/{REFDES}-streamed-botpt_nano_sample_15sec"
 listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
+if "urlPath" not in listing:   # no such folder: a designator written short (RS03CCAL-MJ03F-BOTPTA301) is matched in full
+    top = requests.get(f"{THREDDS}/catalog/ooigoldcopy/public/catalog.xml", timeout=120).text
+    full = [t.split("-streamed-")[0] for t in re.findall(r'title="([^"]+-streamed-botpt_nano_sample_15sec)"', top)
+            if set(REFDES.upper().split("-")) <= set(t.split("-"))]
+    if len(full) != 1:
+        raise SystemExit(f"no Gold Copy BOTPT folder for {REFDES}; name it in full ({', '.join(full) or 'none match'})")
+    print(f"{REFDES} is {full[0]}")
+    REFDES = full[0]
+    folder = f"ooigoldcopy/public/{REFDES}-streamed-botpt_nano_sample_15sec"
+    listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
 start, end = pd.Timestamp(START), pd.Timestamp(END)
 fit_start = min(start, end - pd.Timedelta(days=FIT_DAYS))
 parts = []

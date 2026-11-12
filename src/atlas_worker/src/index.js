@@ -828,8 +828,10 @@ export default {
       if (isStatusQuestion(query)) context.live = await liveStatuses(selectedEvidenceHits(context, query), query, env, context.hits);
       context.hits = withPlaces(context.hits, context.fulltext);
       const evidenceHits = selectedEvidenceHits(context, query);
-      const downloadSource = isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
-      const multiSpanSource = isDownloadQuestion(query) && isMultiSpanQuestion(query)
+      const task = (context.access || []).find((hit) => hit.collection_id === TASK_COLLECTION);
+      // A task's code is the answer to a request for it, not the link to the files ("code to get a minute of DAS strain").
+      const downloadSource = !task && isDownloadQuestion(query) && directDownloadSource(query, evidenceHits);
+      const multiSpanSource = !task && isDownloadQuestion(query) && isMultiSpanQuestion(query)
         ? citations(evidenceHits).find((source) => /\/das25\/data\/multidas\/?$/i.test(source.url))
         : null;
       if (multiSpanSource) {
@@ -862,7 +864,6 @@ export default {
         }, 200, cors);
       }
       const generated = await generateAnswer(query, context, env, requestedModel);
-      const task = (context.access || []).find((hit) => hit.collection_id === TASK_COLLECTION);
       return response({
         query, answer: task ? withTestedScript(generated.answer, task.text) : generated.answer, answer_model: generated.model,
         answer_citations: citations(evidenceHits),

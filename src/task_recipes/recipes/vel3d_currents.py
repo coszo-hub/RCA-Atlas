@@ -35,6 +35,16 @@ extra = beams + ([] if vector else ["pitch", "roll"])
 #    OPeNDAP one sample in every SAMPLE_SECONDS, with each velocity's QARTOD result.
 folder = f"ooigoldcopy/public/{REFDES}-streamed-{stream}"
 listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
+if "urlPath" not in listing:   # no such folder: a designator written short (CE04OSBP-LJ01C-VEL3DC107) is matched in full
+    top = requests.get(f"{THREDDS}/catalog/ooigoldcopy/public/catalog.xml", timeout=120).text
+    full = [t.split("-streamed-")[0] for t in re.findall(rf'title="([^"]+-streamed-{stream})"', top)
+            if set(REFDES.upper().split("-")) <= set(t.split("-"))]
+    if len(full) != 1:
+        raise SystemExit(f"no Gold Copy {stream} folder for {REFDES}; name it in full ({', '.join(full) or 'none match'})")
+    print(f"{REFDES} is {full[0]}")
+    REFDES = full[0]
+    folder = f"ooigoldcopy/public/{REFDES}-streamed-{stream}"
+    listing = requests.get(f"{THREDDS}/catalog/{folder}/catalog.xml", timeout=120).text
 start, end = pd.Timestamp(START), pd.Timestamp(END)
 parts, broken, lat = [], [], None
 for path in sorted(set(re.findall(rf'urlPath="([^"]+{stream}_[^"]+\.nc)"', listing))):
