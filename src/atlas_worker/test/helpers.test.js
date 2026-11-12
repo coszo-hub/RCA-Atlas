@@ -1040,4 +1040,9 @@ test("a task answer's script is the tested script with the model's settings; a b
   assert.match(out, /^Why\./);
   assert.match(out, /- A pitfall \[1\]\.$/);
   assert.equal(withTestedScript("No script.", recipe), "No script.");
+  // Cut off at the token limit inside the script: the whole script, with the settings written before the last line.
+  const cut = withTestedScript("Why.\n\n```python\nimport x\nSTATION = \"AXEC2\"   # the station\nSTART, END = \"2025-03-01\", \"2025-03", recipe);
+  assert.match(cut, /STATION = "AXEC2"/);
+  assert.match(cut, /START, END = "2025-01-01", "2025-01-02"/);
+  assert.match(cut, /response="csv"\)\n```$/);
 });

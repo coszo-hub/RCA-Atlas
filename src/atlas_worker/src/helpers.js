@@ -548,8 +548,10 @@ export function taskRecipeIds(question, tasks, { code = false } = {}) {
 // A task answer's script is the task recipe's tested script with the model's settings: its top-level constants
 // (STATION, START, VARIABLES ...), each as the model wrote it. Copying 60 lines, the model dropped a quote now and
 // then (protocol="tabledap, response="csv"); every other line is the recipe's own. A setting the model broke (an odd
-// number of double quotes) keeps the recipe's.
+// number of double quotes) keeps the recipe's. An answer cut off at the model's token limit inside the script (Gemma
+// copying the 14,000-character DAS recipe) gets the whole script from the settings it wrote, all but its last line's.
 const PYTHON_BLOCK = /```python\n([\s\S]*?)```/;
+const OPEN_PYTHON_BLOCK = /```python\n([\s\S]*?)(?:```|$)/;
 function settings(code) {
   const lines = code.split("\n"), found = new Map();
   const opened = (line) => {
@@ -568,14 +570,15 @@ function settings(code) {
   return found;
 }
 export function withTestedScript(answer, recipeText) {
-  const tested = PYTHON_BLOCK.exec(String(recipeText || "")), written = PYTHON_BLOCK.exec(String(answer || ""));
+  const tested = PYTHON_BLOCK.exec(String(recipeText || "")), written = OPEN_PYTHON_BLOCK.exec(String(answer || ""));
   if (!tested || !written) return answer;
-  const mine = settings(written[1]), lines = tested[1].split("\n");
+  const cut = !written[0].endsWith("```"), last = written[1].split("\n").length - 1;
+  const mine = new Map([...settings(written[1])].filter(([, at]) => !cut || at.end < last)), lines = tested[1].split("\n");
   const balanced = (text) => text.every((line) => (line.replace(/\\"/g, "").match(/"/g) || []).length % 2 === 0);
   const edits = [...settings(tested[1])].filter(([name]) => mine.has(name) && balanced(mine.get(name).text))
     .sort((a, b) => b[1].start - a[1].start);
   for (const [name, at] of edits) lines.splice(at.start, at.end - at.start + 1, ...mine.get(name).text);
-  return String(answer).replace(PYTHON_BLOCK, () => "```python\n" + lines.join("\n") + "```");
+  return String(answer).replace(OPEN_PYTHON_BLOCK, () => "```python\n" + lines.join("\n") + "```");
 }
 
 // Code mode with no tested recipe for the question: say which tasks have one, rather than write untested code.
