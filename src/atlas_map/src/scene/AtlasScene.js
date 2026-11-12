@@ -13,6 +13,7 @@ import { WhaleLayer, dayExtent, loadWhales } from "./WhaleLayer.js";
 import { approach, centerShift, ease, fitDist, isMoveKey, motionDuration, moveStep, rotateSpeedFor, viewPose } from "./cameraMath.js";
 
 const SUBSURFACE_EXAG = 1;   // the vertical exaggeration while Axial's subsurface is shown: true scale
+const SURFACE_EXAG = 3;      // and after it is turned off
 
 export { loadGrids } from "./grid.js";
 
@@ -308,7 +309,7 @@ export class AtlasScene {
   setColor(c) { this.targets.mode = c === "mono" ? 1 : 0; }
   setMute(m) { this.targets.mute = m; }
   // Show Axial's subsurface at true scale (×1: the earthquakes, magma chamber, wall faults and beachballs in their real
-  // geometry); turning it off brings back the exaggeration it replaced. From afar, fly in over the caldera (keeping
+  // geometry); turning it off sets ×3. From afar, fly in over the caldera (keeping
   // the heading), aimed below the seafloor at the middle of the layers (earthquakes 1.5-3 km deep, the magma chamber
   // at 2.6-3.7 km); close by, the view stays and only its height follows the new exaggeration.
   setSubsurface(on) {
@@ -316,9 +317,7 @@ export class AtlasScene {
     const w = this.subsurface?.window;
     if (!w) return;
     const from = this.U.exag.value;
-    if (on) this._exagBefore ??= from;
-    const exag = on ? SUBSURFACE_EXAG : (this._exagBefore ?? from);
-    if (!on) this._exagBefore = null;
+    const exag = on ? SUBSURFACE_EXAG : SURFACE_EXAG;
     const t = this.controls.target, off = this.camera.position.clone().sub(t);
     const core = w.core ?? w.r;   // frame the layers, not the wider glass around them
     if (!on || (Math.hypot(t.x - w.x, t.z - w.z) < core && off.length() < core * 5)) {
