@@ -964,6 +964,27 @@ test("a request for code for a task gets that task's recipe: its task and instru
   assert.deepEqual(taskRecipeIds("How do I cut teleseismic P windows rotated to radial and transverse at HYSB1?", TASKS), pack);
   assert.deepEqual(taskRecipeIds("Write a script to detect Axial earthquakes with STA/LTA and compare with the catalog", TASKS), sta);   // detection's
   assert.deepEqual(taskRecipeIds("Plot the waveform of the 2015 eruption's largest earthquake at AXCC1", TASKS), wave);   // one event: the waveform's
+  const das = ["task_das_strain"];
+  assert.deepEqual(taskRecipeIds("How do I open one of the 2021 OptaSense minute files from the South cable and convert the raw phase to strain?", TASKS), das);
+  assert.deepEqual(taskRecipeIds("Write code to turn a minute of the May 2024 OptoDAS strain rate into strain and plot it", TASKS), das);
+  assert.deepEqual(taskRecipeIds("python script to plot fin whale calls on the RCA south cable DAS in November 2021", TASKS), das);   // not the hydrophone's
+  assert.deepEqual(taskRecipeIds("das25 OptoDAS header: dataScale, sensitivities, true dx and gauge length", TASKS, { code: true }), das);
+  const tilt = ["task_botpt_tilt"];
+  assert.deepEqual(taskRecipeIds("Write code to get hourly LILY tilt from the eastern caldera BOTPT with the relevels stitched", TASKS), tilt);
+  assert.deepEqual(taskRecipeIds("How do I remove the jumps in the x and y tilt of the Axial caldera BOTPT?", TASKS), tilt);
+  assert.deepEqual(taskRecipeIds("python script for the hourly tilt at MJ03D since 2023", TASKS), tilt);   // not the detide's hourly
+  assert.deepEqual(taskRecipeIds("Write code to plot Axial Seamount's inflation over the last year", TASKS), up);   // still the uplift's
+  const vel = ["task_vel3d_currents"];
+  assert.deepEqual(taskRecipeIds("Write code for hourly currents from the MAVS point current meter at International District", TASKS), vel);
+  assert.deepEqual(taskRecipeIds("How do I get a QC'd week of Axial Base bottom currents from the VEL3D?", TASKS), vel);
+  assert.deepEqual(taskRecipeIds("python script for 15-min mean speed from the Oregon Offshore Vector current meter", TASKS), vel);
+  assert.deepEqual(taskRecipeIds("How do I plot the current speed and direction from the Axial Base ADCP?", TASKS), ["task_adcp_currents"]);   // still the ADCP's
+  const vent = ["task_tmpsf_vent_temperature"];
+  assert.deepEqual(taskRecipeIds("Write code to find which TMPSF thermistors at ASHES are warm and which read ambient", TASKS), vent);
+  assert.deepEqual(taskRecipeIds("How do I check whether the diffuse-flow temperatures at ASHES breathe with the tide?", TASKS), vent);
+  assert.deepEqual(taskRecipeIds("python code for hourly means of the 24 vent thermistors in March 2019", TASKS), vent);
+  assert.deepEqual(taskRecipeIds("python script for hourly seafloor depth at ASHES without tides", TASKS), tide);   // still the detide's
+  assert.deepEqual(taskRecipeIds("script for the data coverage of the ASHES TMPSF", TASKS), cover);   // coverage, not the thermistors' task
   // two tasks that match: the one with more of its task words
   const two = [{ chunk_id: "a", about: "seism", task: "\\b(?:plot)\\b" }, { chunk_id: "b", about: "seism", task: "\\b(?:plot|psd|noise)\\b" }];
   assert.deepEqual(taskRecipeIds("plot the noise PSD of a seismometer", two), ["b"]);

@@ -21,6 +21,10 @@ question names, and writes the script from the recipe's.
 | Many earthquakes at many stations: response removed, rotated to ZRT, MiniSEED, StationXML and SAC, a record section | `recipes/event_waveform_package.py` | OO seismometers; events from USGS ComCat or the Axial catalog |
 | BOTPT pressure de-tided hour by hour (UTide fitted to a year, Godin, OOI's BOTSFLU) | `recipes/botpt_detide.py` | Axial's four BOTPTs (Gold Copy 15-s means over OPeNDAP) |
 | A station's channels, epochs, orientations and responses, explained | `recipes/station_response.py` | OO stations on EarthScope |
+| Fibre-optic DAS read and converted to strain or strain rate, joined, filtered, with channel quality | `recipes/das_strain.py` | 2021 OptaSense, 2024 and 2025 OptoDAS (PI data portal) |
+| An Axial BOTPT's LILY tilt with relevels and steps taken out, as east and north | `recipes/botpt_tilt.py` | Axial's four BOTPTs (Gold Copy 1-Hz tilt over OPeNDAP) |
+| A seafloor point current meter's cleaned currents, tides and subtidal flow | `recipes/vel3d_currents.py` | MAVS and Vector VEL3Ds (Gold Copy) |
+| Which ASHES vent thermistors are warm, and how they follow the tide | `recipes/tmpsf_vent_temperature.py` | ASHES TMPSF (ERDDAP), with its CTD and BOTPT |
 
 ## A task in `tasks.json`
 
@@ -37,6 +41,6 @@ python src/task_recipes/build_task_recipes.py --test   # run each script in the 
 python src/task_recipes/build_task_recipes.py          # write data/TaskRecipes and task_recipes.json from the results
 ```
 
-Scripts run in the download recipes' sandbox, whose requirements include what the task recipes need (OOIPy, gsw, UTide) (`src/data_recipes/test_recipes.py`): a fresh container with no host
+Scripts run in the download recipes' sandbox, whose requirements include what the task recipes need (OOIPy, gsw, UTide, h5py) (`src/data_recipes/test_recipes.py`): a fresh container with no host
 folder and a capped work folder. A script passes when it exits cleanly having written a file that is not empty; a
 task that has not passed is left out. Check a new script's figure by eye on a real case before adding it.

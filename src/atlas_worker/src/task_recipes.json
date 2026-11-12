@@ -53,7 +53,7 @@
   "title": "Plot an ADCP's current speed and direction against depth and time",
   "instruments": null,
   "task": "\\b(?:currents?|speed|direction|velocit\\w*|flow\\w*|tidal currents?|profiles?|plot\\w*|figures?|graphs?)\\b",
-  "about": "\\b(?:adcps?|acoustic doppler|current meters?|current profilers?|currents?|ADCP\\w+|VADCP\\w*)\\b"
+  "about": "\\b(?:adcps?|acoustic doppler|current profilers?|currents?|ADCP\\w+|VADCP\\w*)\\b"
  },
  {
   "chunk_id": "task_earthscope_availability",
@@ -89,5 +89,33 @@
   "instruments": "seismometers",
   "task": "\\b(?:metadata|stationxml|station ?xml|epochs?|sensitivit\\w*|gains?|poles?|zeros|transfer functions?|frequency response|response (?:curves?|functions?|stages?|chain|plots?)|bode|stages?|counts?|units?|channel codes?|orientations?|azimuths?|dips?|oriented|band codes?|datalogger|digiti[sz]er|sensor models?|inventor(?:y|ies)|list (?:the |its )?channels)\\b",
   "about": "\\b(?:seism\\w*|OBS|accelerometers?|hydrophones?|HDH|BDO|channels?|stations?|earthscope|iris|fdsn|stationxml|AX(?:AS|BA|CC|EC|ID)\\d|HYS\\w*|CZ(?:MID|OFF|OSH|SHF))\\b"
+ },
+ {
+  "chunk_id": "task_das_strain",
+  "title": "Read the RCA's fibre-optic DAS data (2021 OptaSense, 2024 and 2025 OptoDAS) and convert it to strain or strain rate",
+  "instruments": null,
+  "task": "\\b(?:strain(?:[- ]?rates?)?|phase|convert\\w*|waterfall|read\\w*|open\\w*|load\\w*|channels?|gauge lengths?|fin whales?|whale calls?|common[- ]mode|band-?pass\\w*|filter\\w*|packag\\w*|netcdf|hdf5|minutes?|subset\\w*|geolocat\\w*|plot\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:das|distributed acoustic sensing|fib(?:er|re)(?:[- ]optic)?s?|optodas|optasense|quantx|das2[45]|das ?2021|interrogators?|(?:north|south) cable)\\b"
+ },
+ {
+  "chunk_id": "task_botpt_tilt",
+  "title": "Get an Axial BOTPT's seafloor tilt (LILY), with its relevels and steps taken out, as east and north",
+  "instruments": null,
+  "task": "\\b(?:tilt\\w*|tiltmeters?|lily|relevel\\w*|re-level\\w*|levell?ing|jumps?|steps?|offsets?|x[- ]?tilt|y[- ]?tilt|xtlt|ytlt|tmag|tdir|ccmp|compass|stitch\\w*|east(?:ward)?|north(?:ward)?|hourly|daily|averag\\w*|plot\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:axial|botpt\\w*|bottilt\\w*|lily|MJ03[BDEF]|caldera|ashes|international district|seafloor tilt)\\b"
+ },
+ {
+  "chunk_id": "task_vel3d_currents",
+  "title": "Get a seafloor point current meter's (VEL3D: MAVS or Vector) currents, cleaned, with tides and subtidal flow",
+  "instruments": null,
+  "task": "\\b(?:currents?|speed|direction|velocit\\w*|flow\\w*|tid\\w*|ellipses?|principal ax[ie]s|subtidal|low-?pass\\w*|progressive vector|averag\\w*|hourly|bursts?|turbulen\\w*|despik\\w*|qartod|qc|flags?|clean\\w*|plot\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:vel3d\\w*|mavs\\w*|nortek|vectors?|point (?:current|velocity) meters?|single[- ]point|3-?d (?:current|velocity|point)\\w*|current meters?|near-?bed|bottom[- ]currents?|bottom boundary layer|benthic (?:currents?|flow)|VEL3D[ABC]\\d+)\\b"
+ },
+ {
+  "chunk_id": "task_tmpsf_vent_temperature",
+  "title": "Find which of the ASHES diffuse-flow thermistors are in warm water, and how their temperature follows the tide",
+  "instruments": null,
+  "task": "\\b(?:temperatures?|thermistors?|probes?|warm\\w*|hot\\w*|ambient|background|heat\\w*|tid\\w*|breath\\w*|modulat\\w*|hourly|daily|averag\\w*|qartod|qc|flags?|coverage|stuck|flat-?lin\\w*|plot\\w*|figures?|graphs?)\\b",
+  "about": "\\b(?:tmpsf\\w*|tempsfl\\w*|diffuse[- ](?:flow|vent\\w*)|vent (?:fluids?|temperatures?|thermistors?|array)|thermistor (?:arrays?|strings?)|temperature arrays?|hydrothermal|hot springs?|vents?)\\b"
  }
 ]
