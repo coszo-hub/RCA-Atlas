@@ -100,6 +100,8 @@ export class SubsurfaceLayer {
     const relocated = quakeArrays(eq, u?.relocatedTypes);
     const q = u ? joinQuakes(relocated, realtimeArrays({ ...u.realtime, day0: u.day0 }, u.buffer, eq.day0)) : relocated;
     this.hasFaults = q.fault.some(f => f > 0);
+    this.faultCounts = { none: 0, ...Object.fromEntries([...FAULT_TYPES].map(t => [t, 0])) };   // earthquakes of each type
+    for (const f of q.fault) this.faultCounts[f > 0 ? FAULT_TYPES[f - 1] : "none"] += 1;
     this.byFault = { value: 0 };   // 1: colour by faulting type (setColorBy)
     const faultColors = { value: [...FAULT_TYPES].map(t => new THREE.Color(FAULT_COLORS[t])) };
     this.unrest = u && { ...u, buffer: undefined };

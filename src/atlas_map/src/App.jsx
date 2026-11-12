@@ -3,6 +3,7 @@ import { BUILD_COMMAND, BundleMissingError, loadBundle } from "./data/bundle.js"
 import { AtlasScene, loadGrids } from "./scene/AtlasScene.js";
 import { OverlayLayer } from "./overlay/OverlayLayer.js";
 import FamilyFilter from "./ui/FamilyFilter.jsx";
+import FaultKey from "./ui/FaultKey.jsx";
 import Header from "./ui/Header.jsx";
 import HudDock from "./ui/HudDock.jsx";
 import RegionNav from "./ui/RegionNav.jsx";
@@ -53,6 +54,7 @@ function Atlas({ bundle, onError }) {
   // (click, ←/→; its station is in the side panel), and the one under the pointer (a superscript, a table row, or a spike).
   const [ask, setAsk] = useState({ evidence: null, activeN: null, hoverN: null });
   const [deep, setDeep] = useState(false);   // Axial's subsurface (earthquakes, magma chamber, faults) is shown
+  const [quakeColor, setQuakeColor] = useState("time");   // its earthquakes coloured by time or by faulting ("fault")
   const evidenceDeep = useRef(false);   // the subsurface was turned on to show an answer's earthquakes
 
   // One right-hand panel at a time: a site (with its sensors) or the unplaced list (with theirs).
@@ -192,7 +194,8 @@ function Atlas({ bundle, onError }) {
   }, [panelOpen, sideMin, sideInset]);
 
   // The map centers on the area the panels leave free: between the chat and side panels, below the top-row
-  // HUD (header and regions, or the dock if it is lower), and above the family strip.
+  // HUD (header and regions, or the dock if it is lower), and above the family strip (or the faulting key in its place,
+  // so the effect re-binds when one replaces the other).
   // Layout effects, so the first framing (the overview, fitted to that area) is in place before the first paint.
   useLayoutEffect(() => {
     const head = hudRef.current, right = rightRef.current;
@@ -204,7 +207,7 @@ function Atlas({ bundle, onError }) {
     for (const el of [head, right, row, strip]) if (el) ro.observe(el);
     addEventListener("resize", settle);
     return () => { ro.disconnect(); removeEventListener("resize", settle); };
-  }, [scene]);
+  }, [scene, deep && quakeColor === "fault"]);
   useLayoutEffect(() => {
     if (!scene) return;
     const first = !scene.framed;
@@ -232,11 +235,13 @@ function Atlas({ bundle, onError }) {
             </div>
             <div className="right-stack" ref={rightRef}>
               <HudDock scene={scene} deep={deep} onDeep={setDeep} credit={bundle.terrainMeta.credit} auv={!!scene.auv}
-                subsurface={deep ? scene.subsurface?.credit : null} />
+                subsurface={deep ? scene.subsurface?.credit : null} quakeColor={quakeColor} onQuakeColor={setQuakeColor} />
             </div>
           </div>
           <Credit credit={bundle.terrainMeta.credit} auv={!!scene.auv} subsurface={deep} />
-          <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />
+          {deep && quakeColor === "fault" && scene.subsurface?.faultCounts
+            ? <FaultKey counts={scene.subsurface.faultCounts} />   // the earthquakes' colours, in place of the families
+            : <FamilyFilter families={bundle.families} sensors={bundle.sensors} focus={focus} onChange={setFocus} />}
           <Tooltip hover={hover} bundle={bundle} />
           <AskPanel bundle={bundle} evidence={onMap} activeN={ask.activeN} hoverN={ask.hoverN} panelOpen={panelOpen}
             onShow={ev => setAsk({ evidence: ev, activeN: null, hoverN: null })} onHover={n => setAsk(a => ({ ...a, hoverN: n }))}

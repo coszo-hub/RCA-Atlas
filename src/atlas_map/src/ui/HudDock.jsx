@@ -24,10 +24,10 @@ function Help() {
 // which stays open until that button is clicked again; open panels stack under the dock in the buttons' order.
 // The terrain controls stay mounted while closed so their switches keep their state; the legend and help are
 // stateless and mount only while open (the legend fits its height from where it opens).
-export default function HudDock({ scene, deep = false, onDeep, credit, auv = false, subsurface = null }) {
+// quakeColor: how Axial's earthquakes are coloured, "time" or "fault" (App owns it; the bottom bar follows it).
+export default function HudDock({ scene, deep = false, onDeep, credit, auv = false, subsurface = null, quakeColor = "time", onQuakeColor }) {
   const [open, setOpen] = useState(() => new Set());
-  const [whaleDay, setWhaleDay] = useState(null);
-  const [quakeColor, setQuakeColor] = useState("time");   // the earthquakes' colouring, likewise   // the fin whale day on the map (Controls picks it; Legend shows its key)
+  const [whaleDay, setWhaleDay] = useState(null);   // the fin whale day on the map (Controls picks it; Legend shows its key)
   const toggle = key => setOpen(o => { const n = new Set(o); if (!n.delete(key)) n.add(key); return n; });
   const pop = key => `hud-pop-${key}`;
   return (
@@ -43,7 +43,7 @@ export default function HudDock({ scene, deep = false, onDeep, credit, auv = fal
       </div>
       <div className="dock-pops">
         <div id={pop("terrain")} className="dock-pop" role="group" aria-label="Terrain controls" hidden={!open.has("terrain")}>
-          <Controls scene={scene} deep={deep} onDeep={onDeep} whaleDay={whaleDay} onWhaleDay={setWhaleDay} quakeColor={quakeColor} onQuakeColor={setQuakeColor} />
+          <Controls scene={scene} deep={deep} onDeep={onDeep} whaleDay={whaleDay} onWhaleDay={setWhaleDay} quakeColor={quakeColor} onQuakeColor={onQuakeColor} />
         </div>
         {open.has("legend") && <div id={pop("legend")} className="dock-pop" role="group" aria-label="Legend">
           <Legend credit={credit} auv={auv} subsurface={subsurface} realtime={!!scene?.subsurface?.unrest}

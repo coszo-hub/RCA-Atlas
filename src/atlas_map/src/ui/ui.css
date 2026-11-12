@@ -60,6 +60,8 @@ input[type=range]:disabled { opacity: 0.35; }
 .families button:hover { background: var(--surface-2); }
 .families button.muted { opacity: 0.35; }
 .families .n { color: var(--text-muted); font-size: 12px; }
+.fault-key { align-items: center; }
+.fault-item { display: flex; align-items: center; gap: 8px; padding: 7px 11px; white-space: nowrap; }
 /* The legend's max-height is set to the room left below its top (Legend.jsx); past that it scrolls. */
 .legend { width: 252px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; overscroll-behavior: contain;
   scrollbar-width: thin; scrollbar-color: var(--hairline-strong) transparent; }
