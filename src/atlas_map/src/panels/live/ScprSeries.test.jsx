@@ -34,7 +34,12 @@ describe("SCPR hourly series", () => {
     vi.stubGlobal("fetch", f);
     render(<LiveData sensor={scpr} />);
     await screen.findByTestId("chart");
+    expect(screen.queryByRole("group", { name: "Tides" })).toBeNull();   // uplift is detided already
     fireEvent.change(screen.getByRole("combobox", { name: "Measurement" }), { target: { value: "raw" } });
+    // Tides are removed by default, and four scattered hours fill no filter window.
+    expect(screen.getByRole("button", { name: "Tides removed" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText(/No raw pressure values in this range/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Tides in" }));
     expect(screen.getByTestId("chart")).toHaveTextContent("4 rows kPa");
     fireEvent.click(screen.getByRole("button", { name: "30d" }));
     expect(screen.getByTestId("chart")).toHaveTextContent("2 rows kPa");

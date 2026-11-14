@@ -9,8 +9,9 @@ import { useLive } from "./useLive.js";
 // regenerated file shows without rebuilding the atlas. Uplift by default: the caldera's inflation is the story.
 export default function ScprSeries({ route }) {
   const live = useLive(`scpr:${route.csvUrl}`, o => fetchScpr(route.csvUrl, o));
-  const [measure, setMeasure] = useState("uplift"), [range, setRange] = useState("All");
-  const lines = useMemo(() => (live.data ? scprLines(live.data, measure, range) : null), [live.data, measure, range]);
+  const [measure, setMeasure] = useState("uplift"), [range, setRange] = useState("All"), [tides, setTides] = useState("removed");
+  const detide = tides === "removed";
+  const lines = useMemo(() => (live.data ? scprLines(live.data, measure, range, detide) : null), [live.data, measure, range, detide]);
 
   if (live.state === "loading") return <p className="muted">Loading the SCPR hourly record…</p>;
   if (live.state === "error") return <Failure error={live.error} retry={live.retry} />;
@@ -25,6 +26,12 @@ export default function ScprSeries({ route }) {
         <div className="seg" role="group" aria-label="Time range">
           {Object.keys(RANGES).map(k => <button key={k} aria-pressed={range === k} onClick={() => setRange(k)}>{k}</button>)}
         </div>
+        {measure !== "uplift" && (
+          <div className="seg" role="group" aria-label="Tides">
+            {[["kept", "Tides in"], ["removed", "Tides removed"]].map(([k, label]) =>
+              <button key={k} aria-pressed={tides === k} onClick={() => setTides(k)}>{label}</button>)}
+          </div>
+        )}
       </div>
       {lines.readings
         ? <Chart lines={lines} unit={lines.measure.unit} />
@@ -38,6 +45,7 @@ export default function ScprSeries({ route }) {
       </p>
       <p className="chart-foot">
         {measure === "uplift" ? "Uplift is relative to the mean of 6 July to 4 August 2018, with tides filtered out; ocean pressure changes are not removed. " : ""}
+        {measure !== "uplift" && detide ? "Tides removed with the file's own Godin filter (24, 24 and 25 h running means), as for uplift; it leaves out about a day at each gap and at the newest end. " : ""}
         {measure !== "raw" && provisionalAfter ? `The drift after the last calibration (${fmtDate(provisionalAfter)}) is extrapolated, so recent values are provisional.` : ""}
       </p>
     </div>

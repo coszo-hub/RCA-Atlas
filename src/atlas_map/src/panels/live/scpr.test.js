@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fetchScpr, parseScpr, scprLines } from "./scpr.js";
+import { fetchScpr, godin, parseScpr, scprLines } from "./scpr.js";
 import { SCPR_CSV } from "../../test/fixtures/scpr.js";
 
 describe("parseScpr", () => {
@@ -46,5 +46,36 @@ describe("fetchScpr", () => {
     expect(down).toMatchObject({ ok: false, source: "GitHub", message: "the SCPR file returned HTTP 404" });
     const offline = await fetchScpr("u", { fetchImpl: vi.fn(async () => { throw new TypeError("Failed to fetch"); }) });
     expect(offline).toMatchObject({ ok: false, kind: "upstream", source: "GitHub" });
+  });
+});
+
+describe("godin", () => {
+  const H = 3600e3, t0 = Date.parse("2026-01-01T00:00:00Z");
+  // Ten days of hourly pressure: a slow rise plus M2 and K1 tides of a few kPa.
+  const hours = Array.from({ length: 240 }, (_, i) => i);
+  const t = hours.map(i => t0 + i * H);
+  const trend = i => 1.55e7 + 10 * i;
+  const tide = i => 3000 * Math.cos(2 * Math.PI * i / 12.4206) + 1500 * Math.cos(2 * Math.PI * i / 23.9345);
+  it("removes diurnal and semidiurnal tides and keeps the trend", () => {
+    const y = godin(t, hours.map(i => trend(i) + tide(i)));
+    const kept = hours.filter(i => y[i] != null);
+    expect(kept[0]).toBeGreaterThan(24);   // a day or more lost at each end
+    expect(240 - 1 - kept.at(-1)).toBeGreaterThan(24);
+    for (const i of kept) expect(Math.abs(y[i] - trend(i))).toBeLessThan(30);   // of a 3 kPa tide
+  });
+  it("puts missing hours back on the grid and leaves out what a gap leaves too thin", () => {
+    const gone = new Set(hours.filter(i => i >= 100 && i < 110));   // ten hours with no row
+    const y = godin(t.filter((_, i) => !gone.has(i)), hours.filter(i => !gone.has(i)).map(i => trend(i) + tide(i)));
+    const at = Object.fromEntries(hours.filter(i => !gone.has(i)).map((i, k) => [i, y[k]]));
+    expect(at[99]).toBeNull();
+    expect(Math.abs(at[60] - trend(60))).toBeLessThan(30);
+    expect(Math.abs(at[170] - trend(170))).toBeLessThan(30);
+  });
+  it("detided pressure ends a day or more before the newest row", () => {
+    const d = { t, cols: { paro1_raw_pa: hours.map(i => trend(i) + tide(i)), paro2_raw_pa: hours.map(() => null) } };
+    const l = scprLines(d, "raw", "All", true);
+    expect(l.readings).toBe(true);
+    expect(t.at(-1) - l.lastValueAt).toBeGreaterThan(24 * H);
+    expect(scprLines(d, "raw", "All", false).lastValueAt).toBe(t.at(-1));
   });
 });

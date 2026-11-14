@@ -39,18 +39,55 @@ export function parseScpr(text) {
   };
 }
 
-// The chart's lines for one measurement over the range ending at the newest row, in the measurement's unit.
-export function scprLines(data, measureKey, range) {
+const HOUR = 3600e3;
+
+// The file's own tidal filter (scpr_export.py's godin): running means of 24, 24 and 25 hours, each null where its
+// window is less than 90 % covered, so about a day next to a gap or either end of the file is left out. The file
+// omits missing hours as rows, so the values go back on an hourly grid first; windows align as numpy's "same".
+export function godin(t, values) {
+  const n = Math.round((t[t.length - 1] - t[0]) / HOUR) + 1;
+  let y = new Float64Array(n).fill(NaN);
+  t.forEach((ms, i) => { if (values[i] != null) y[Math.round((ms - t[0]) / HOUR)] = values[i]; });
+  for (const w of [24, 24, 25]) {
+    const sum = new Float64Array(n + 1), cnt = new Float64Array(n + 1);
+    for (let i = 0; i < n; i++) {
+      const ok = !Number.isNaN(y[i]);
+      sum[i + 1] = sum[i] + (ok ? y[i] : 0);
+      cnt[i + 1] = cnt[i] + (ok ? 1 : 0);
+    }
+    const ahead = (w - 1) >> 1, out = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const lo = Math.max(0, i + ahead - w + 1), hi = Math.min(n, i + ahead + 1);
+      const k = cnt[hi] - cnt[lo];
+      out[i] = k >= 0.9 * w ? (sum[hi] - sum[lo]) / k : NaN;
+    }
+    y = out;
+  }
+  return t.map(ms => { const v = y[Math.round((ms - t[0]) / HOUR)]; return Number.isNaN(v) ? null : v; });
+}
+
+const detidedCache = new WeakMap();
+function detided(data, col) {
+  if (!detidedCache.has(data)) detidedCache.set(data, {});
+  const c = detidedCache.get(data);
+  return (c[col] ??= godin(data.t, data.cols[col]));
+}
+
+// The chart's lines for one measurement over the range ending at the newest row, in the measurement's unit;
+// with `detide`, a pressure's tides are removed as the file removes them for uplift (uplift is already detided).
+export function scprLines(data, measureKey, range, detide = false) {
   const m = MEASURES.find(x => x.key === measureKey) ?? MEASURES[0];
+  const tidesOut = detide && m.key !== "uplift";
+  const col = c => (tidesOut ? detided(data, c) : data.cols[c]);
   const start = data.t[data.t.length - 1] - (RANGES[range] ?? Infinity);
   let i0 = 0;
   while (i0 < data.t.length && data.t[i0] < start) i0++;
-  const series = m.cols.map((c, j) => ({ ...GAUGES[j], values: data.cols[c].slice(i0).map(v => (v == null ? null : v * m.scale)) }));
+  const series = m.cols.map((c, j) => ({ ...GAUGES[j], values: col(c).slice(i0).map(v => (v == null ? null : v * m.scale)) }));
   const count = data.t.length - i0;
   // The corrected and uplift columns can stop well before the raw one (the file blanks them once the drift is too
   // uncertain), so each measurement reports its own newest value, wherever the range is.
   let last = data.t.length - 1;
-  while (last >= 0 && m.cols.every(c => data.cols[c][last] == null)) last--;
+  while (last >= 0 && m.cols.every(c => col(c)[last] == null)) last--;
   return { x: data.t.slice(i0), series, measure: m, count, readings: series.some(s => s.values.some(v => v != null)),
     lastValueAt: last >= 0 ? data.t[last] : null };
 }
