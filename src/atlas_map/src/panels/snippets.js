@@ -16,5 +16,12 @@ df = e.to_pandas()   # ${sensor.name}` };
 `curl -o ${route.network}.${route.station}.mseed "https://service.earthscope.org/fdsnws/dataselect/1/query?net=${route.network}&sta=${route.station}&cha=${cha}&loc=--&starttime=${iso(new Date(end.getTime() - 3600e3))}&endtime=${iso(end)}"` };
   }
   if (route.kind === "pi_portal") return { label: "List files", code: `curl -s "${route.url}"` };
+  if (route.kind === "scpr_hourly") {
+    return { label: "Python (pandas)", code:
+`import pandas as pd
+
+df = pd.read_csv("${route.csvUrl}",
+                 comment="#", parse_dates=["time_utc"], index_col="time_utc")   # ${sensor.name}` };
+  }
   return null;
 }

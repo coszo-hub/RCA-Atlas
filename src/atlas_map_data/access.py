@@ -39,6 +39,16 @@ ALLOWED_HOSTS = {
     "piweb.ooirsn.uw.edu", "service.earthscope.org", "ds.iris.edu", "www.earthscope.org",
     "interactiveoceans.washington.edu", "axial.ceoas.oregonstate.edu", "coszo.org", "www.coszo.org", "github.com", "doi.org",
 }
+# The cabled SCPR's hourly means (both gauges: raw, drift-corrected, and seafloor uplift), which the Axial-Seamount
+# self-calibrating-pressure repository regenerates every day. The map reads the CSV from GitHub when the panel opens,
+# so the chart follows the daily update without a bundle rebuild.
+SCPR_REFDES = "RS03CCAL-MJ03F-09-SCPRAA301"
+SCPR_HOURLY_PATH = "Axial-Seamount/self-calibrating-pressure/main/SCPR-data-collection/timeseries/scpr_pressure_hourly.csv"
+SCPR_HOURLY = {"kind": "scpr_hourly", "label": "SCPR hourly pressure and uplift (GitHub)",
+               "url": "https://github.com/" + SCPR_HOURLY_PATH.replace("/main/", "/blob/main/", 1),
+               "csvUrl": "https://raw.githubusercontent.com/" + SCPR_HOURLY_PATH,
+               "how": "Hourly means of both gauges since July 2018: raw and drift-corrected pressure (Pa) and estimated "
+                      "seafloor uplift (m), as CSV, regenerated daily. Lines starting with # describe the columns."}
 
 
 def erddap_dataset_id(refdes: str) -> str:
@@ -159,6 +169,8 @@ def build_access(record: dict, external: dict, pi_endpoints: dict[str, list[dict
                            "url": f"{QAQC}/", "how": "Pre-rendered charts of recent data, updated by the RCA team."})
         if refdes in external.get("osu_axial", {}):
             routes.append(external["osu_axial"][refdes])
+        if refdes == SCPR_REFDES:
+            routes.append(dict(SCPR_HOURLY))
         routes.append({"kind": "ooi_explorer", "label": "OOI Data Explorer", "refdes": refdes,
                        "url": f"{OOI_EXPLORER}/#ooi/search/{urllib.parse.quote(refdes)}",
                        "how": "Browse and request OOI data products for this instrument."})

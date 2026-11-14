@@ -7,7 +7,7 @@ import { fmtDepth, fmtRange } from "../data/format.js";
 // `backLabel` names where the back control returns (a site, or the unplaced list); it defaults to the sensor's site.
 export default function SensorDetail({ sensor, bundle, onBack, backLabel }) {
   const fam = bundle.familyByKey[sensor.family];
-  const hasLive = sensor.access.some(a => ["erddap", "earthscope", "qaqc", "pi_portal"].includes(a.kind));
+  const hasLive = sensor.access.some(a => ["erddap", "earthscope", "scpr_hourly", "qaqc", "pi_portal"].includes(a.kind));
   return (
     <div className="sensor-detail">
       <button className="back" onClick={onBack}>← {backLabel ?? bundle.siteById[sensor.site]?.label ?? "Back"}</button>

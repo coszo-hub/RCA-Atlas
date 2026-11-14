@@ -35,6 +35,16 @@ class AccessTest(unittest.TestCase):
         self.assertNotIn("erddap", [r["kind"] for r in routes])
         self.assertIn("ooi_explorer", [r["kind"] for r in routes])
 
+    def test_cabled_scpr_gets_its_hourly_csv(self):
+        routes = access.build_access(rec(refdes="RS03CCAL-MJ03F-09-SCPRAA301"), EXT, PI, {})
+        scpr = next(r for r in routes if r["kind"] == "scpr_hourly")
+        self.assertEqual(scpr["url"], "https://github.com/Axial-Seamount/self-calibrating-pressure/blob/main/"
+                                      "SCPR-data-collection/timeseries/scpr_pressure_hourly.csv")
+        self.assertEqual(scpr["csvUrl"], "https://raw.githubusercontent.com/Axial-Seamount/self-calibrating-pressure/main/"
+                                         "SCPR-data-collection/timeseries/scpr_pressure_hourly.csv")
+        other = access.build_access(rec(refdes="RS03CCAL-MJ03F-05-BOTPTA301"), EXT, PI, {})
+        self.assertNotIn("scpr_hourly", [r["kind"] for r in other])
+
     def test_earthscope_station(self):
         r = rec(id="EARTHSCOPE-OO-AXCC1")
         self.assertEqual(access.earthscope_station(r), ("OO", "AXCC1"))
